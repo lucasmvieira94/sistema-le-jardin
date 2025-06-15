@@ -1,8 +1,7 @@
-
 // Dashboard de boas-vindas com cards para cada função principal
 
 import { Link } from "react-router-dom";
-import { Clock8, CalendarRange, FileBarChart2, FileCheck2 } from "lucide-react";
+import { Clock8, CalendarRange, FileBarChart2, FileCheck2, Users } from "lucide-react";
 
 const cards = [
   {
@@ -32,6 +31,13 @@ const cards = [
     icon: <FileCheck2 className="w-8 h-8 text-primary" />,
     link: "/faltas",
     color: "from-emerald-400 to-lime-400",
+  },
+  {
+    title: "Funcionários",
+    desc: "Cadastre, edite e gerencie os colaboradores da empresa.",
+    icon: <Users className="w-8 h-8 text-primary" />,
+    link: "/funcionarios",
+    color: "from-emerald-500 to-emerald-700",
   },
 ];
 
