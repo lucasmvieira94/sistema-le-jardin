@@ -1,11 +1,14 @@
 
+import React from "react";
 import { CalendarRange, LogIn, LogOut, PauseCircle } from "lucide-react";
+import CadastroFuncionarioForm from "@/components/CadastroFuncionarioForm";
 
 export default function RegistroPonto() {
   return (
     <div className="container mx-auto max-w-2xl pt-12 font-heebo">
       <h2 className="text-3xl font-bold mb-3 text-primary">Registro de Ponto</h2>
       <div className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-3">
+        <CadastroFuncionarioForm />
         <div className="flex flex-col md:flex-row md:items-baseline gap-4 justify-between">
           <div>
             <div className="text-lg font-semibold">Hoje: {new Date().toLocaleDateString('pt-BR')}</div>

@@ -9,7 +9,83 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      escalas: {
+        Row: {
+          created_at: string
+          dias_semana: string[]
+          entrada: string
+          id: number
+          nome: string
+          saida: string
+        }
+        Insert: {
+          created_at?: string
+          dias_semana: string[]
+          entrada: string
+          id?: number
+          nome: string
+          saida: string
+        }
+        Update: {
+          created_at?: string
+          dias_semana?: string[]
+          entrada?: string
+          id?: number
+          nome?: string
+          saida?: string
+        }
+        Relationships: []
+      }
+      funcionarios: {
+        Row: {
+          codigo_4_digitos: string
+          cpf: string
+          created_at: string
+          data_admissao: string
+          data_inicio_vigencia: string
+          data_nascimento: string
+          email: string
+          escala_id: number
+          funcao: string
+          id: string
+          nome_completo: string
+        }
+        Insert: {
+          codigo_4_digitos: string
+          cpf: string
+          created_at?: string
+          data_admissao: string
+          data_inicio_vigencia: string
+          data_nascimento: string
+          email: string
+          escala_id: number
+          funcao: string
+          id?: string
+          nome_completo: string
+        }
+        Update: {
+          codigo_4_digitos?: string
+          cpf?: string
+          created_at?: string
+          data_admissao?: string
+          data_inicio_vigencia?: string
+          data_nascimento?: string
+          email?: string
+          escala_id?: number
+          funcao?: string
+          id?: string
+          nome_completo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
