@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 
+import EscalaNomeField from "./EscalaNomeField";
+import TipoJornadaSelect from "./TipoJornadaSelect";
+import HorariosFields from "./HorariosFields";
+import IntervaloFields from "./IntervaloFields";
+import ObservacoesField from "./ObservacoesField";
+
 const tiposJornada = [
   "Jornada Diurna (8h/dia)",
   "Jornada Noturna (7h/dia – entre 22h e 5h)",
@@ -89,114 +95,31 @@ type Props = {
 export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EscalaCadastro>({
     resolver: zodResolver(escalaSchema),
-    defaultValues: { }
+    defaultValues: {}
   });
 
-  // Multiselect gerenciado manualmente pelo useState
-  const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
-
   const onSubmit = async (data: EscalaCadastro) => {
-    // Aqui você salvaria no Supabase. Por enquanto, só simula e reseta.
     toast({
       title: "Escala cadastrada!",
       description: "Sua escala foi salva com sucesso.",
       duration: 4000,
     });
     reset();
-    setDiasSelecionados([]);
     if (onCreated) onCreated();
-  };
-
-  const toggleDia = (dia: string) => {
-    setDiasSelecionados((prev) =>
-      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia]
-    );
   };
 
   return (
     <form 
-      onSubmit={handleSubmit((form) => onSubmit({ ...form }))}
+      onSubmit={handleSubmit(onSubmit)}
       className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0 animate-fade-in"
       autoComplete="off"
     >
       <h2 className="text-2xl font-bold text-green-700 mb-3">Nova Escala de Trabalho</h2>
-
-      {/* Nome da escala */}
-      <div>
-        <label className="block mb-1 font-semibold text-green-800">
-          Nome da Escala <span className="text-red-600">*</span>
-        </label>
-        <Input {...register("nomeEscala")} placeholder="Ex: Jornada 12x36" />
-        {errors.nomeEscala && <span className="text-red-600 text-sm">{errors.nomeEscala.message}</span>}
-      </div>
-
-      {/* Tipo de jornada */}
-      <div>
-        <label className="block mb-1 font-semibold text-green-800">
-          Tipo de Jornada <span className="text-red-600">*</span>
-        </label>
-        <Controller
-          name="tipoJornada"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo de jornada" />
-              </SelectTrigger>
-              <SelectContent>
-                {tiposJornada.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.tipoJornada && <span className="text-red-600 text-sm">{errors.tipoJornada.message}</span>}
-      </div>
-
-      {/* Horários */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <label className="block mb-1 font-semibold text-green-800">
-            Entrada <span className="text-red-600">*</span>
-          </label>
-          <Input type="time" {...register("entrada")} />
-          {errors.entrada && <span className="text-red-600 text-sm">{errors.entrada.message}</span>}
-        </div>
-        <div className="flex-1">
-          <label className="block mb-1 font-semibold text-green-800">
-            Saída <span className="text-red-600">*</span>
-          </label>
-          <Input type="time" {...register("saida")} />
-          {errors.saida && <span className="text-red-600 text-sm">{errors.saida.message}</span>}
-        </div>
-      </div>
-
-      {/* Intervalo */}
-      <div>
-        <label className="block mb-1 font-semibold text-green-800">
-          Intervalo (opcional)
-        </label>
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <Input type="time" {...register("intervaloInicio")} placeholder="Início" />
-          </div>
-          <span className="self-center text-muted-foreground">às</span>
-          <div className="flex-1">
-            <Input type="time" {...register("intervaloFim")} placeholder="Fim" />
-          </div>
-        </div>
-        {errors.intervaloFim && <span className="text-red-600 text-sm">{errors.intervaloFim.message}</span>}
-      </div>
-
-      {/* Dias da semana multiselect REMOVIDO */}
-
-      {/* Observações */}
-      <div>
-        <label className="block mb-1 font-semibold text-green-800">Observações</label>
-        <Textarea {...register("observacoes")} rows={2} placeholder="Ex: Escala noturna, considerar adicional noturno." />
-      </div>
-
+      <EscalaNomeField register={register} errors={errors} />
+      <TipoJornadaSelect control={control} errors={errors} />
+      <HorariosFields register={register} errors={errors} />
+      <IntervaloFields register={register} errors={errors} />
+      <ObservacoesField register={register} />
       <div className="pt-2 flex justify-end gap-2">
         <Button
           type="button"
