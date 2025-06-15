@@ -19,6 +19,11 @@ type Props = {
   errors: FieldErrors<any>;
 };
 export default function TipoJornadaSelect({ control, errors }: Props) {
+  const message =
+    typeof errors.tipoJornada?.message === "string"
+      ? errors.tipoJornada.message
+      : undefined;
+
   return (
     <div>
       <label className="block mb-1 font-semibold text-green-800">
@@ -40,8 +45,8 @@ export default function TipoJornadaSelect({ control, errors }: Props) {
           </Select>
         )}
       />
-      {errors.tipoJornada?.message && (
-        <span className="text-red-600 text-sm">{errors.tipoJornada.message}</span>
+      {message && (
+        <span className="text-red-600 text-sm">{message}</span>
       )}
     </div>
   );

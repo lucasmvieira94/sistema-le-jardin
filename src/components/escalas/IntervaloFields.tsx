@@ -8,6 +8,11 @@ type Props = {
 };
 
 export default function IntervaloFields({ register, errors }: Props) {
+  const intervaloMsg =
+    typeof errors.intervaloFim?.message === "string"
+      ? errors.intervaloFim.message
+      : undefined;
+
   return (
     <div>
       <label className="block mb-1 font-semibold text-green-800">
@@ -22,8 +27,8 @@ export default function IntervaloFields({ register, errors }: Props) {
           <Input type="time" {...register("intervaloFim")} placeholder="Fim" />
         </div>
       </div>
-      {errors.intervaloFim?.message && (
-        <span className="text-red-600 text-sm">{errors.intervaloFim.message}</span>
+      {intervaloMsg && (
+        <span className="text-red-600 text-sm">{intervaloMsg}</span>
       )}
     </div>
   );

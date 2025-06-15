@@ -8,6 +8,15 @@ type Props = {
 };
 
 export default function HorariosFields({ register, errors }: Props) {
+  const entradaMsg =
+    typeof errors.entrada?.message === "string"
+      ? errors.entrada.message
+      : undefined;
+  const saidaMsg =
+    typeof errors.saida?.message === "string"
+      ? errors.saida.message
+      : undefined;
+
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <div className="flex-1">
@@ -15,8 +24,8 @@ export default function HorariosFields({ register, errors }: Props) {
           Entrada <span className="text-red-600">*</span>
         </label>
         <Input type="time" {...register("entrada")} />
-        {errors.entrada?.message && (
-          <span className="text-red-600 text-sm">{errors.entrada.message}</span>
+        {entradaMsg && (
+          <span className="text-red-600 text-sm">{entradaMsg}</span>
         )}
       </div>
       <div className="flex-1">
@@ -24,8 +33,8 @@ export default function HorariosFields({ register, errors }: Props) {
           Saída <span className="text-red-600">*</span>
         </label>
         <Input type="time" {...register("saida")} />
-        {errors.saida?.message && (
-          <span className="text-red-600 text-sm">{errors.saida.message}</span>
+        {saidaMsg && (
+          <span className="text-red-600 text-sm">{saidaMsg}</span>
         )}
       </div>
     </div>
