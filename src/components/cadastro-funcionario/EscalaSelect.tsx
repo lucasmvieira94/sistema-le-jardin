@@ -1,6 +1,6 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectTrigger, SelectItem, SelectContent, SelectLabel, SelectValue } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectItem, SelectContent, SelectLabel, SelectValue, SelectGroup } from "@/components/ui/select";
 
 type Escala = {
   id: number;
@@ -33,12 +33,14 @@ export default function EscalaSelect({
               <SelectValue placeholder="Selecione uma escala" />
             </SelectTrigger>
             <SelectContent>
-              <SelectLabel>Escalas disponíveis</SelectLabel>
-              {escalas.map((escala) => (
-                <SelectItem key={escala.id} value={String(escala.id)}>
-                  {escala.nome} ({escala.entrada} às {escala.saida})
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                <SelectLabel>Escalas disponíveis</SelectLabel>
+                {escalas.map((escala) => (
+                  <SelectItem key={escala.id} value={String(escala.id)}>
+                    {escala.nome} ({escala.entrada} às {escala.saida})
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
           <FormMessage />
