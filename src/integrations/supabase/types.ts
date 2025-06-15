@@ -38,6 +38,7 @@ export type Database = {
       }
       funcionarios: {
         Row: {
+          ativo: boolean
           codigo_4_digitos: string
           cpf: string
           created_at: string
@@ -51,6 +52,7 @@ export type Database = {
           nome_completo: string
         }
         Insert: {
+          ativo?: boolean
           codigo_4_digitos: string
           cpf: string
           created_at?: string
@@ -64,6 +66,7 @@ export type Database = {
           nome_completo: string
         }
         Update: {
+          ativo?: boolean
           codigo_4_digitos?: string
           cpf?: string
           created_at?: string

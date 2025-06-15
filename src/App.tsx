@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,8 @@ import Relatorios from "./pages/Relatorios";
 import Faltas from "./pages/Faltas";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
+import Funcionarios from "./pages/Funcionarios";
+import NovoFuncionario from "./pages/NovoFuncionario";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/registro" element={<RegistroPonto />} />
+            <Route path="/funcionarios" element={<Funcionarios />} />
+            <Route path="/funcionarios/novo" element={<NovoFuncionario />} />
+            {/* A rota de edição não está implementada ainda */}
             <Route path="/escalas" element={<Escalas />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/faltas" element={<Faltas />} />
