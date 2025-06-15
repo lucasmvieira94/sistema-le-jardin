@@ -80,7 +80,13 @@ function getIntervaloMinutos(i: string | undefined, f: string | undefined) {
 // Omit observacoes do type, pois é opcional
 type EscalaCadastro = z.infer<typeof escalaSchema>;
 
-export default function EscalaCadastroForm() {
+// Adicione a tipagem das props:
+type Props = {
+  onCreated?: () => void;
+  onCancel?: () => void;
+};
+
+export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EscalaCadastro>({
     resolver: zodResolver(escalaSchema),
     defaultValues: { }
@@ -98,6 +104,7 @@ export default function EscalaCadastroForm() {
     });
     reset();
     setDiasSelecionados([]);
+    if (onCreated) onCreated();
   };
 
   const toggleDia = (dia: string) => {
@@ -109,7 +116,7 @@ export default function EscalaCadastroForm() {
   return (
     <form 
       onSubmit={handleSubmit((form) => onSubmit({ ...form }))}
-      className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0"
+      className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0 animate-fade-in"
       autoComplete="off"
     >
       <h2 className="text-2xl font-bold text-green-700 mb-3">Nova Escala de Trabalho</h2>
@@ -190,7 +197,15 @@ export default function EscalaCadastroForm() {
         <Textarea {...register("observacoes")} rows={2} placeholder="Ex: Escala noturna, considerar adicional noturno." />
       </div>
 
-      <div className="pt-2 flex justify-end">
+      <div className="pt-2 flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          className="px-6 py-2 rounded-lg transition"
+        >
+          Cancelar
+        </Button>
         <Button
           type="submit"
           className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
