@@ -1,3 +1,4 @@
+
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,36 +46,35 @@ const escalaSchema = z.object({
   intervaloInicio: z.string().optional(),
   intervaloFim: z.string().optional(),
   observacoes: z.string().optional(),
-}).refine((data) => {
-    if (!data.entrada || !data.saida) return true;
-    return data.entrada < data.saida;
-  }, {
-    message: "Horário de entrada deve ser menor que o de saída",
-    path: ["saida"],
-  })
-  .refine((data) => {
-    if (
-      [
-        "Jornada Diurna (8h/dia)",
-        "Escala 6x1",
-        "Jornada 12x36",
-        "Escala 5x2",
-        "Escala 4x2"
-      ].includes(data.tipoJornada)
-    ) {
-      // Intervalo obrigatório e mínimo de 1h para essas jornadas (maiores que 6h)
-      return (
-        !!data.intervaloInicio &&
-        !!data.intervaloFim &&
-        data.intervaloFim > data.intervaloInicio &&
-        getIntervaloMinutos(data.intervaloInicio, data.intervaloFim) >= 60
-      );
-    }
-    return true;
-  }, {
-    message: "Obrigatório ao menos 1h de intervalo para jornadas acima de 6h",
-    path: ["intervaloFim"],
-  });
+})
+/** 
+ * Não mais impede que entrada < saída.
+ * Com essa atualização, se "saida" for menor que "entrada"
+ * trata-se de uma escala noturna/virada de dia.
+ */
+.refine((data) => {
+  if (
+    [
+      "Jornada Diurna (8h/dia)",
+      "Escala 6x1",
+      "Jornada 12x36",
+      "Escala 5x2",
+      "Escala 4x2"
+    ].includes(data.tipoJornada)
+  ) {
+    // Intervalo obrigatório e mínimo de 1h para essas jornadas (maiores que 6h)
+    return (
+      !!data.intervaloInicio &&
+      !!data.intervaloFim &&
+      data.intervaloFim > data.intervaloInicio &&
+      getIntervaloMinutos(data.intervaloInicio, data.intervaloFim) >= 60
+    );
+  }
+  return true;
+}, {
+  message: "Obrigatório ao menos 1h de intervalo para jornadas acima de 6h",
+  path: ["intervaloFim"],
+});
 
 function getIntervaloMinutos(i: string | undefined, f: string | undefined) {
   if (!i || !f) return 0;
