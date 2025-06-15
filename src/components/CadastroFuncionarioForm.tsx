@@ -1,13 +1,17 @@
 
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectTrigger, SelectItem, SelectContent, SelectLabel, SelectValue } from "@/components/ui/select";
+import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import NomeInput from "./cadastro-funcionario/NomeInput";
+import EmailInput from "./cadastro-funcionario/EmailInput";
+import CpfInput from "./cadastro-funcionario/CpfInput";
+import DataInput from "./cadastro-funcionario/DataInput";
+import FuncaoInput from "./cadastro-funcionario/FuncaoInput";
+import EscalaSelect from "./cadastro-funcionario/EscalaSelect";
 
 type Escala = {
   id: number;
@@ -29,7 +33,6 @@ type FormData = {
 };
 
 function gerarCodigoAleatorio() {
-  // Gera um número de 4 dígitos entre 1000-9999
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
@@ -47,7 +50,6 @@ export default function CadastroFuncionarioForm() {
   }, []);
 
   async function geraCodigoUnico() {
-    // Garante código não repetido na tabela
     let codigo;
     let existe = true;
     do {
@@ -65,7 +67,6 @@ export default function CadastroFuncionarioForm() {
   async function onSubmit(values: FormData) {
     setIsSubmitting(true);
     try {
-      // Verifica se já existe funcionário com cpf ou email
       const { data: existeCpf } = await supabase
         .from("funcionarios")
         .select("id")
@@ -100,7 +101,6 @@ export default function CadastroFuncionarioForm() {
         throw error;
       }
 
-      // Chama edge function para enviar email
       const resp = await fetch(
         "https://kvjgmqicictxxfnvhuwl.functions.supabase.co/enviar-codigo",
         {
@@ -128,131 +128,20 @@ export default function CadastroFuncionarioForm() {
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          control={form.control}
-          name="nome_completo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome Completo</FormLabel>
-              <FormControl>
-                <Input placeholder="Nome Completo" {...field} required />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <NomeInput control={form.control} />
         <div className="flex flex-col md:flex-row gap-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="email@exemplo.com" {...field} required />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="cpf"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>CPF</FormLabel>
-                <FormControl>
-                  <Input placeholder="999.999.999-99" maxLength={14} minLength={11} {...field} required />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <EmailInput control={form.control} />
+          <CpfInput control={form.control} />
         </div>
         <div className="flex flex-col md:flex-row gap-4">
-          <FormField
-            control={form.control}
-            name="data_nascimento"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Data de Nascimento</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} required />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="data_admissao"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Data de Admissão</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} required />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <DataInput control={form.control} name="data_nascimento" label="Data de Nascimento" />
+          <DataInput control={form.control} name="data_admissao" label="Data de Admissão" />
         </div>
         <div className="flex flex-col md:flex-row gap-4">
-          <FormField
-            control={form.control}
-            name="data_inicio_vigencia"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Início da Vigência</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} required />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="funcao"
-            render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Função</FormLabel>
-                <FormControl>
-                  <Input placeholder="Cargo/Função" {...field} required />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <DataInput control={form.control} name="data_inicio_vigencia" label="Início da Vigência" />
+          <FuncaoInput control={form.control} />
         </div>
-        <FormField
-          control={form.control}
-          name="escala_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Escala</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-                defaultValue={field.value}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma escala" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectLabel>Escalas disponíveis</SelectLabel>
-                  {escalas.map((escala) => (
-                    <SelectItem key={escala.id} value={String(escala.id)}>
-                      {escala.nome} ({escala.entrada} às {escala.saida})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <EscalaSelect control={form.control} escalas={escalas} />
         <Button className="w-full" type="submit" disabled={isSubmitting}>
           {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Cadastrar Funcionário"}
         </Button>
