@@ -182,29 +182,7 @@ export default function EscalaCadastroForm() {
         {errors.intervaloFim && <span className="text-red-600 text-sm">{errors.intervaloFim.message}</span>}
       </div>
 
-      {/* Dias da semana multiselect */}
-      <div>
-        <label className="block mb-1 font-semibold text-green-800">
-          Dias da Semana <span className="text-red-600">*</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {diasSemanaTodos.map((dia) => (
-            <button
-              type="button"
-              key={dia}
-              className={`px-3 py-1 rounded-lg border
-              ${diasSelecionados.includes(dia)
-                  ? "bg-green-600 text-white border-green-700"
-                  : "bg-green-50 text-green-900 border-green-300"
-                } hover:bg-green-200 transition`}
-              onClick={() => toggleDia(dia)}
-            >
-              {dia}
-            </button>
-          ))}
-        </div>
-        {errors.diasSemana && <span className="text-red-600 text-sm">{errors.diasSemana.message}</span>}
-      </div>
+      {/* Dias da semana multiselect REMOVIDO */}
 
       {/* Observações */}
       <div>
