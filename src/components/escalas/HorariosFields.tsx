@@ -15,14 +15,18 @@ export default function HorariosFields({ register, errors }: Props) {
           Entrada <span className="text-red-600">*</span>
         </label>
         <Input type="time" {...register("entrada")} />
-        {errors.entrada && <span className="text-red-600 text-sm">{errors.entrada.message}</span>}
+        {errors.entrada?.message && (
+          <span className="text-red-600 text-sm">{errors.entrada.message}</span>
+        )}
       </div>
       <div className="flex-1">
         <label className="block mb-1 font-semibold text-green-800">
           Saída <span className="text-red-600">*</span>
         </label>
         <Input type="time" {...register("saida")} />
-        {errors.saida && <span className="text-red-600 text-sm">{errors.saida.message}</span>}
+        {errors.saida?.message && (
+          <span className="text-red-600 text-sm">{errors.saida.message}</span>
+        )}
       </div>
     </div>
   );

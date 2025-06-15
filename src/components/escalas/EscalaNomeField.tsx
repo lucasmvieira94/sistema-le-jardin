@@ -13,7 +13,9 @@ export default function EscalaNomeField({ register, errors }: Props) {
         Nome da Escala <span className="text-red-600">*</span>
       </label>
       <Input {...register("nomeEscala")} placeholder="Ex: Jornada 12x36" />
-      {errors.nomeEscala && <span className="text-red-600 text-sm">{errors.nomeEscala.message}</span>}
+      {errors.nomeEscala?.message && (
+        <span className="text-red-600 text-sm">{errors.nomeEscala.message}</span>
+      )}
     </div>
   );
 }

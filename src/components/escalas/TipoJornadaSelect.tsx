@@ -40,7 +40,9 @@ export default function TipoJornadaSelect({ control, errors }: Props) {
           </Select>
         )}
       />
-      {errors.tipoJornada && <span className="text-red-600 text-sm">{errors.tipoJornada.message}</span>}
+      {errors.tipoJornada?.message && (
+        <span className="text-red-600 text-sm">{errors.tipoJornada.message}</span>
+      )}
     </div>
   );
 }
