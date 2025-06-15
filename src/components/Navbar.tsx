@@ -1,7 +1,9 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BadgeCheck, CalendarRange, Clock8, FileBarChart2, FileCheck2 } from "lucide-react";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { LogOut, LogIn } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: BadgeCheck },
@@ -12,7 +14,13 @@ const navItems = [
 ];
 
 export default function Navbar() {
+  const { user } = useAuthSession();
   const { pathname } = useLocation();
+
+  async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+    if (!error) window.location.href = "/auth";
+  }
 
   return (
     <nav className="bg-primary text-primary-foreground shadow-md font-heebo">
@@ -40,6 +48,30 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
+          {/* Botão Login/Logout à direita */}
+          {user ? (
+            <li>
+              <button
+                className="flex items-center gap-1 px-3 py-2 rounded-md transition-colors hover:bg-accent hover:text-primary"
+                onClick={handleLogout}
+                title="Sair"
+              >
+                <LogOut className="w-5 h-5 mr-1" />
+                Sair
+              </button>
+            </li>
+          ) : (
+            <li>
+              <Link
+                to="/auth"
+                className="flex items-center gap-1 px-3 py-2 rounded-md transition-colors hover:bg-accent hover:text-primary"
+                title="Entrar"
+              >
+                <LogIn className="w-5 h-5 mr-1" />
+                Entrar
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
     </nav>

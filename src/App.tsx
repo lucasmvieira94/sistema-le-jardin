@@ -12,8 +12,21 @@ import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuthSession();
+  if (loading) return <div className="flex justify-center items-center min-h-screen">Carregando...</div>;
+  if (!user) {
+    // Not authenticated, redirect to /auth
+    window.location.href = "/auth";
+    return null;
+  }
+  return <>{children}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,14 +37,59 @@ const App = () => (
         <Navbar />
         <div className="bg-background min-h-[calc(100vh-60px)]">
           <Routes>
+            <Route path="/auth" element={<Auth />} />
+            {/* Public: home e auth */}
             <Route path="/" element={<Index />} />
-            <Route path="/registro" element={<RegistroPonto />} />
-            <Route path="/funcionarios" element={<Funcionarios />} />
-            <Route path="/funcionarios/novo" element={<NovoFuncionario />} />
+            {/* Protegidas */}
+            <Route
+              path="/registro"
+              element={
+                <ProtectedRoute>
+                  <RegistroPonto />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/funcionarios"
+              element={
+                <ProtectedRoute>
+                  <Funcionarios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/funcionarios/novo"
+              element={
+                <ProtectedRoute>
+                  <NovoFuncionario />
+                </ProtectedRoute>
+              }
+            />
             {/* A rota de edição não está implementada ainda */}
-            <Route path="/escalas" element={<Escalas />} />
-            <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/faltas" element={<Faltas />} />
+            <Route
+              path="/escalas"
+              element={
+                <ProtectedRoute>
+                  <Escalas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/relatorios"
+              element={
+                <ProtectedRoute>
+                  <Relatorios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/faltas"
+              element={
+                <ProtectedRoute>
+                  <Faltas />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
