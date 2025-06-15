@@ -1,4 +1,3 @@
-
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 import EscalaNomeField from "./EscalaNomeField";
 import TipoJornadaSelect from "./TipoJornadaSelect";
@@ -99,6 +99,26 @@ export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
   });
 
   const onSubmit = async (data: EscalaCadastro) => {
+    // Enviar para o Supabase
+    const { error } = await supabase.from("escalas").insert({
+      nome: data.nomeEscala,
+      tipo_jornada: data.tipoJornada, // opcional: pode-se remover se não existir no banco
+      entrada: data.entrada,
+      saida: data.saida,
+      dias_semana: diasSemanaTodos, // por padrão, todos os dias (ajustar depois se quiser selecionar dias)
+      // Campos como "intervaloInicio", "intervaloFim", "observacoes" não existem na tabela do Supabase atual,
+      // mas você pode ajustar para salvar em campos futuros.
+    });
+
+    if (error) {
+      toast({
+        title: "Erro ao salvar escala",
+        description: "Ocorreu um erro ao salvar a escala. Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Escala cadastrada!",
       description: "Sua escala foi salva com sucesso.",
