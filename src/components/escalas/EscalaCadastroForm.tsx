@@ -1,4 +1,3 @@
-
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,7 +38,6 @@ const escalaSchema = z.object({
   saida: z.string().min(1, "Informe o horário"),
   intervaloInicio: z.string().optional(),
   intervaloFim: z.string().optional(),
-  diasSemana: z.array(z.string()).min(1, "Selecione pelo menos um dia"),
   observacoes: z.string().optional(),
 }).refine((data) => {
     if (!data.entrada || !data.saida) return true;
@@ -85,7 +83,7 @@ type EscalaCadastro = z.infer<typeof escalaSchema>;
 export default function EscalaCadastroForm() {
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EscalaCadastro>({
     resolver: zodResolver(escalaSchema),
-    defaultValues: { diasSemana: [] }
+    defaultValues: { }
   });
 
   // Multiselect gerenciado manualmente pelo useState
@@ -110,7 +108,7 @@ export default function EscalaCadastroForm() {
 
   return (
     <form 
-      onSubmit={handleSubmit((form) => onSubmit({ ...form, diasSemana: diasSelecionados }))}
+      onSubmit={handleSubmit((form) => onSubmit({ ...form }))}
       className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0"
       autoComplete="off"
     >
