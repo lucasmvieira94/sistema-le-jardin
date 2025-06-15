@@ -99,15 +99,13 @@ export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
   });
 
   const onSubmit = async (data: EscalaCadastro) => {
-    // Enviar para o Supabase
+    // Enviar para o Supabase (corrigido: removido 'tipo_jornada')
     const { error } = await supabase.from("escalas").insert({
       nome: data.nomeEscala,
-      tipo_jornada: data.tipoJornada, // opcional: pode-se remover se não existir no banco
       entrada: data.entrada,
       saida: data.saida,
-      dias_semana: diasSemanaTodos, // por padrão, todos os dias (ajustar depois se quiser selecionar dias)
-      // Campos como "intervaloInicio", "intervaloFim", "observacoes" não existem na tabela do Supabase atual,
-      // mas você pode ajustar para salvar em campos futuros.
+      dias_semana: diasSemanaTodos, // por padrão, todos os dias
+      // Se quiser salvar campos extra, adicione no futuro conforme o banco permitir.
     });
 
     if (error) {
