@@ -144,6 +144,8 @@ export type Database = {
           intervalo_fim: string | null
           intervalo_inicio: string | null
           justificativa: string | null
+          latitude: number | null
+          longitude: number | null
           observacoes: string | null
           saida: string | null
           tipo_registro: string | null
@@ -158,6 +160,8 @@ export type Database = {
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
           justificativa?: string | null
+          latitude?: number | null
+          longitude?: number | null
           observacoes?: string | null
           saida?: string | null
           tipo_registro?: string | null
@@ -172,6 +176,8 @@ export type Database = {
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
           justificativa?: string | null
+          latitude?: number | null
+          longitude?: number | null
           observacoes?: string | null
           saida?: string | null
           tipo_registro?: string | null
