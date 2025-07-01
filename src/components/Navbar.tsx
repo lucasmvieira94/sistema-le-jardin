@@ -1,16 +1,18 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BadgeCheck, CalendarRange, Clock8, FileBarChart2, FileCheck2 } from "lucide-react";
+import { BadgeCheck, CalendarRange, Clock8, FileBarChart2, FileCheck2, Users } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { LogOut, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: BadgeCheck },
-  { to: "/registro", label: "Registro de Ponto", icon: Clock8 },
-  { to: "/escalas", label: "Escalas", icon: CalendarRange },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart2 },
-  { to: "/faltas", label: "Faltas & Abonos", icon: FileCheck2 },
+  { to: "/", label: "Registro de Ponto", icon: Clock8, requiresAuth: false },
+  { to: "/dashboard", label: "Dashboard", icon: BadgeCheck, requiresAuth: true },
+  { to: "/funcionarios", label: "Funcionários", icon: Users, requiresAuth: true },
+  { to: "/escalas", label: "Escalas", icon: CalendarRange, requiresAuth: true },
+  { to: "/relatorios", label: "Relatórios", icon: FileBarChart2, requiresAuth: true },
+  { to: "/faltas", label: "Faltas & Abonos", icon: FileCheck2, requiresAuth: true },
 ];
 
 export default function Navbar() {
@@ -19,7 +21,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     const { error } = await supabase.auth.signOut();
-    if (!error) window.location.href = "/auth";
+    if (!error) window.location.href = "/";
   }
 
   return (
@@ -32,22 +34,27 @@ export default function Navbar() {
           Sistema de Ponto Eletrônico
         </div>
         <ul className="flex items-center gap-2 text-base">
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                className={
-                  "flex items-center gap-1 px-3 py-2 rounded-md transition-colors " +
-                  (pathname === to
-                    ? "bg-emerald-700 text-white shadow"
-                    : "hover:bg-accent hover:text-primary")
-                }
-              >
-                <Icon className="w-5 h-5 mr-1" />
-                {label}
-              </Link>
-            </li>
-          ))}
+          {navItems.map(({ to, label, icon: Icon, requiresAuth }) => {
+            // Mostrar item se não requer auth ou se o usuário está logado
+            if (requiresAuth && !user) return null;
+            
+            return (
+              <li key={to}>
+                <Link
+                  to={to}
+                  className={
+                    "flex items-center gap-1 px-3 py-2 rounded-md transition-colors " +
+                    (pathname === to
+                      ? "bg-emerald-700 text-white shadow"
+                      : "hover:bg-accent hover:text-primary")
+                  }
+                >
+                  <Icon className="w-5 h-5 mr-1" />
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
           {/* Botão Login/Logout à direita */}
           {user ? (
             <li>

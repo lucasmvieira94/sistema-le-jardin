@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,17 +39,18 @@ const App = () => (
         <div className="bg-background min-h-[calc(100vh-60px)]">
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            {/* Public: home e auth */}
-            <Route path="/" element={<Index />} />
-            {/* Protegidas */}
+            {/* Página inicial: Registro de Ponto (sem proteção) */}
+            <Route path="/" element={<RegistroPonto />} />
+            {/* Dashboard protegido */}
             <Route
-              path="/registro"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <RegistroPonto />
+                  <Index />
                 </ProtectedRoute>
               }
             />
+            {/* Outras rotas protegidas */}
             <Route
               path="/funcionarios"
               element={
@@ -65,7 +67,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* A rota de edição não está implementada ainda */}
             <Route
               path="/escalas"
               element={
