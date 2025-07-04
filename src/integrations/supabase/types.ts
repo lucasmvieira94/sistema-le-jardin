@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      afastamentos: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          funcionario_id: string
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string
+          observacoes: string | null
+          quantidade_dias: number | null
+          quantidade_horas: number | null
+          tipo_afastamento_id: number
+          tipo_periodo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio: string
+          funcionario_id: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          observacoes?: string | null
+          quantidade_dias?: number | null
+          quantidade_horas?: number | null
+          tipo_afastamento_id: number
+          tipo_periodo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          funcionario_id?: string
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string
+          observacoes?: string | null
+          quantidade_dias?: number | null
+          quantidade_horas?: number | null
+          tipo_afastamento_id?: number
+          tipo_periodo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamentos_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afastamentos_tipo_afastamento_id_fkey"
+            columns: ["tipo_afastamento_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_afastamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes_empresa: {
         Row: {
           adicional_hora_extra_100: number | null
@@ -192,6 +255,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tipos_afastamento: {
+        Row: {
+          categoria: string
+          codigo: string
+          created_at: string
+          descricao: string
+          id: number
+          remunerado: boolean
+        }
+        Insert: {
+          categoria: string
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: number
+          remunerado?: boolean
+        }
+        Update: {
+          categoria?: string
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: number
+          remunerado?: boolean
+        }
+        Relationships: []
       }
     }
     Views: {

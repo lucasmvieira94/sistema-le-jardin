@@ -1,22 +1,26 @@
 
-import { FileCheck2, Upload } from "lucide-react";
+import { FileX } from "lucide-react";
+import AfastamentoForm from "@/components/afastamentos/AfastamentoForm";
+import AfastamentosList from "@/components/afastamentos/AfastamentosList";
 
 export default function Faltas() {
   return (
-    <div className="container mx-auto max-w-2xl pt-12 font-heebo">
-      <h2 className="text-3xl font-bold mb-3 text-primary">Faltas & Abonos</h2>
+    <div className="container mx-auto max-w-4xl pt-12 font-heebo">
+      <h2 className="text-3xl font-bold mb-3 text-primary">Afastamentos</h2>
       <div className="bg-white rounded-xl p-6 shadow-lg">
-        <p className="mb-3 text-muted-foreground">
-          Registre faltas justificadas, atestados médicos ou envie comprovantes (imagem ou PDF).
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button className="bg-primary hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-lg flex items-center gap-2 shadow transition">
-            <Upload className="w-5 h-5" /> Nova Justificativa
-          </button>
+        <div className="flex items-center gap-3 mb-6">
+          <FileX className="w-6 h-6 text-primary" />
+          <div>
+            <h3 className="text-xl font-semibold">Registro de Afastamentos</h3>
+            <p className="text-muted-foreground">
+              Registre afastamentos de funcionários por motivos previstos na CLT, abonos ou outros tipos.
+              Os registros são automaticamente lançados na folha de ponto.
+            </p>
+          </div>
         </div>
-        <div className="mt-8 text-center text-muted-foreground">
-          Nenhuma falta/abono registrado até o momento.
-        </div>
+        
+        <AfastamentoForm />
+        <AfastamentosList />
       </div>
     </div>
   );

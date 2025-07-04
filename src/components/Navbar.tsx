@@ -1,85 +1,83 @@
 
-import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { BadgeCheck, CalendarRange, Clock8, FileBarChart2, FileCheck2, Users } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { LogOut, LogIn } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-const navItems = [
-  { to: "/", label: "Registro de Ponto", icon: Clock8, requiresAuth: false },
-  { to: "/dashboard", label: "Dashboard", icon: BadgeCheck, requiresAuth: true },
-  { to: "/funcionarios", label: "Funcionários", icon: Users, requiresAuth: true },
-  { to: "/escalas", label: "Escalas", icon: CalendarRange, requiresAuth: true },
-  { to: "/relatorios", label: "Relatórios", icon: FileBarChart2, requiresAuth: true },
-  { to: "/faltas", label: "Faltas & Abonos", icon: FileCheck2, requiresAuth: true },
-];
+import { Button } from "@/components/ui/button";
+import { Home, Users, Calendar, FileText, FileX, LogOut, User } from "lucide-react";
 
 export default function Navbar() {
+  const location = useLocation();
   const { user } = useAuthSession();
-  const { pathname } = useLocation();
 
-  async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-    if (!error) window.location.href = "/";
-  }
+  const handleLogout = async () => {
+    // Implementar logout se necessário
+    window.location.href = "/auth";
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navItems = [
+    { path: "/", icon: Home, label: "Registro Ponto", public: true },
+    { path: "/dashboard", icon: FileText, label: "Dashboard", public: false },
+    { path: "/funcionarios", icon: Users, label: "Funcionários", public: false },
+    { path: "/escalas", icon: Calendar, label: "Escalas", public: false },
+    { path: "/relatorios", icon: FileText, label: "Relatórios", public: false },
+    { path: "/faltas", icon: FileX, label: "Afastamentos", public: false },
+  ];
 
   return (
-    <nav className="bg-primary text-primary-foreground shadow-md font-heebo">
-      <div className="container mx-auto flex items-center justify-between py-2 px-4">
-        <div className="flex items-center gap-3 font-bold text-2xl tracking-wide">
-          <span className="inline-block bg-emerald-600 w-9 h-9 rounded-full flex items-center justify-center mr-2">
-            <Clock8 className="text-white w-5 h-5" />
-          </span>
-          Sistema de Ponto Eletrônico
-        </div>
-        <ul className="flex items-center gap-2 text-base">
-          {navItems.map(({ to, label, icon: Icon, requiresAuth }) => {
-            // Mostrar item se não requer auth ou se o usuário está logado
-            if (requiresAuth && !user) return null;
+    <nav className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4">
+      <div className="flex items-center space-x-6">
+        <Link to="/" className="font-bold text-xl text-primary">
+          SenexCare
+        </Link>
+        
+        <div className="flex space-x-4">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const shouldShow = item.public || user;
+            
+            if (!shouldShow) return null;
             
             return (
-              <li key={to}>
-                <Link
-                  to={to}
-                  className={
-                    "flex items-center gap-1 px-3 py-2 rounded-md transition-colors " +
-                    (pathname === to
-                      ? "bg-emerald-700 text-white shadow"
-                      : "hover:bg-accent hover:text-primary")
-                  }
-                >
-                  <Icon className="w-5 h-5 mr-1" />
-                  {label}
-                </Link>
-              </li>
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive(item.path)
+                    ? "bg-primary text-white"
+                    : "text-gray-600 hover:text-primary hover:bg-gray-100"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </Link>
             );
           })}
-          {/* Botão Login/Logout à direita */}
-          {user ? (
-            <li>
-              <button
-                className="flex items-center gap-1 px-3 py-2 rounded-md transition-colors hover:bg-accent hover:text-primary"
-                onClick={handleLogout}
-                title="Sair"
-              >
-                <LogOut className="w-5 h-5 mr-1" />
-                Sair
-              </button>
-            </li>
-          ) : (
-            <li>
-              <Link
-                to="/auth"
-                className="flex items-center gap-1 px-3 py-2 rounded-md transition-colors hover:bg-accent hover:text-primary"
-                title="Entrar"
-              >
-                <LogIn className="w-5 h-5 mr-1" />
-                Entrar
-              </Link>
-            </li>
-          )}
-        </ul>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-4">
+        {user ? (
+          <div className="flex items-center space-x-2">
+            <User className="w-4 h-4 text-gray-600" />
+            <span className="text-sm text-gray-600">{user.email}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-red-600 hover:text-red-700"
+            >
+              <LogOut className="w-4 h-4 mr-1" />
+              Sair
+            </Button>
+          </div>
+        ) : (
+          <Link to="/auth">
+            <Button variant="outline" size="sm">
+              Entrar
+            </Button>
+          </Link>
+        )}
       </div>
     </nav>
   );
