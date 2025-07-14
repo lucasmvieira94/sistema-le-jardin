@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY"); // will be set by user
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -24,6 +29,15 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: "Chave RESEND_API_KEY não configurada." }), { status: 500, headers: corsHeaders });
     }
 
+    // Buscar configurações da empresa para obter o domínio
+    const { data: config } = await supabase
+      .from('configuracoes_empresa')
+      .select('dominio_email, nome_empresa')
+      .single();
+
+    const dominioEmail = config?.dominio_email || "no-reply@resend.dev";
+    const nomeEmpresa = config?.nome_empresa || "Controle de Ponto";
+
     // Enviar email via Resend
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -32,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Controle de Ponto <no-reply@resend.dev>",
+        from: `${nomeEmpresa} <${dominioEmail}>`,
         to: [email],
         subject: `Bem-vindo(a)! Seu código de registro`,
         html: `<h2>Olá, ${nome || "Funcionário"}!</h2>

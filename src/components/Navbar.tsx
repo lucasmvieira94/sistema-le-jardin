@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { Button } from "@/components/ui/button";
-import { Home, Users, Calendar, FileText, FileX, LogOut, User, Clock } from "lucide-react";
+import { Home, Users, Calendar, FileText, FileX, LogOut, User, Clock, Settings } from "lucide-react";
 
 export default function Navbar() {
   const location = useLocation();
@@ -22,6 +22,7 @@ export default function Navbar() {
     { path: "/apropriacao", icon: Clock, label: "Apropriação", public: false },
     { path: "/relatorios", icon: FileText, label: "Relatórios", public: false },
     { path: "/faltas", icon: FileX, label: "Afastamentos", public: false },
+    { path: "/configuracoes", icon: Settings, label: "Configurações", public: false },
   ];
 
   return (

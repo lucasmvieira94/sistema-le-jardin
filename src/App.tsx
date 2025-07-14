@@ -10,6 +10,7 @@ import Escalas from "./pages/Escalas";
 import Relatorios from "./pages/Relatorios";
 import Faltas from "./pages/Faltas";
 import ApropriacaoHoras from "./pages/ApropriacaoHoras";
+import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Funcionarios from "./pages/Funcionarios";
@@ -97,6 +98,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Faltas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracoes"
+              element={
+                <ProtectedRoute>
+                  <Configuracoes />
                 </ProtectedRoute>
               }
             />
