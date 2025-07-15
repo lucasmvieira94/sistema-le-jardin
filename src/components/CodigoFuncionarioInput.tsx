@@ -4,8 +4,10 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Shield } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import { validateFuncionarioCode } from '@/utils/validation';
 
 interface CodigoFuncionarioInputProps {
   onFuncionarioValidado: (funcionarioId: string, nome: string) => void;
@@ -15,13 +17,25 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
   const [codigo, setCodigo] = useState('');
   const [validando, setValidando] = useState(false);
   const { latitude, longitude, error: geoError, loading: geoLoading } = useGeolocation();
+  const { checkRateLimit, isBlocked } = useRateLimit();
 
   const validarCodigo = async () => {
-    if (codigo.length !== 4) {
+    if (!validateFuncionarioCode(codigo)) {
       toast({
         variant: "destructive",
         title: "Código inválido",
-        description: "O código deve ter 4 dígitos"
+        description: "O código deve ter 4 dígitos numéricos"
+      });
+      return;
+    }
+
+    // Check rate limiting
+    const allowed = await checkRateLimit(codigo);
+    if (!allowed) {
+      toast({
+        variant: "destructive",
+        title: "Muitas tentativas",
+        description: "Você foi temporariamente bloqueado devido a muitas tentativas. Tente novamente em 1 hora."
       });
       return;
     }
@@ -84,7 +98,7 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
 
       <Button
         onClick={validarCodigo}
-        disabled={codigo.length !== 4 || validando}
+        disabled={codigo.length !== 4 || validando || isBlocked}
         className="w-full"
         size="lg"
       >
@@ -98,16 +112,25 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
         )}
       </Button>
 
-      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <MapPin className="h-4 w-4" />
-        {geoLoading ? (
-          <span>Obtendo localização...</span>
-        ) : geoError ? (
-          <span className="text-red-500">{geoError}</span>
-        ) : latitude && longitude ? (
-          <span className="text-green-600">Localização obtida</span>
-        ) : (
-          <span>Localização não disponível</span>
+      <div className="space-y-2">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          {geoLoading ? (
+            <span>Obtendo localização...</span>
+          ) : geoError ? (
+            <span className="text-red-500">{geoError}</span>
+          ) : latitude && longitude ? (
+            <span className="text-green-600">Localização obtida</span>
+          ) : (
+            <span>Localização não disponível</span>
+          )}
+        </div>
+        
+        {isBlocked && (
+          <div className="flex items-center justify-center gap-2 text-sm text-red-500">
+            <Shield className="h-4 w-4" />
+            <span>Acesso temporariamente bloqueado</span>
+          </div>
         )}
       </div>
     </div>

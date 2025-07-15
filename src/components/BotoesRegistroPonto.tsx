@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuditLog } from '@/hooks/useAuditLog';
+import { validateTime } from '@/utils/validation';
 
 interface BotoesRegistroPontoProps {
   funcionarioId: string;
@@ -23,6 +25,7 @@ export default function BotoesRegistroPonto({
   onRegistroRealizado 
 }: BotoesRegistroPontoProps) {
   const [registrando, setRegistrando] = useState<TipoRegistro | null>(null);
+  const { logEvent } = useAuditLog();
 
   const registrarPonto = async (tipo: TipoRegistro) => {
     setRegistrando(tipo);
@@ -31,6 +34,11 @@ export default function BotoesRegistroPonto({
       const agora = new Date();
       const data = agora.toISOString().split('T')[0];
       const horario = agora.toTimeString().split(' ')[0];
+
+      // Validate time format
+      if (!validateTime(horario)) {
+        throw new Error('Invalid time format');
+      }
 
       // Verificar se já existe registro para hoje
       const { data: registroExistente, error: errorBusca } = await supabase
@@ -66,6 +74,9 @@ export default function BotoesRegistroPonto({
       }
 
       if (registroExistente) {
+        // Log audit event for update
+        await logEvent('registros_ponto', 'UPDATE', registroExistente, updateData);
+        
         // Atualizar registro existente
         const { error } = await supabase
           .from('registros_ponto')
@@ -74,14 +85,19 @@ export default function BotoesRegistroPonto({
 
         if (error) throw error;
       } else {
+        const newRecord = {
+          funcionario_id: funcionarioId,
+          data: data,
+          ...updateData,
+        };
+        
+        // Log audit event for insert
+        await logEvent('registros_ponto', 'INSERT', null, newRecord);
+        
         // Criar novo registro
         const { error } = await supabase
           .from('registros_ponto')
-          .insert({
-            funcionario_id: funcionarioId,
-            data: data,
-            ...updateData,
-          });
+          .insert(newRecord);
 
         if (error) throw error;
       }

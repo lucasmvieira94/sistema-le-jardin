@@ -1,11 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Home, Users, Calendar, FileText, FileX, LogOut, User, Clock, Settings } from "lucide-react";
 
 export default function Navbar() {
   const location = useLocation();
   const { user } = useAuthSession();
+  const { isAdmin, role } = useUserRole();
 
   const handleLogout = async () => {
     // Implementar logout se necessário
@@ -15,14 +17,14 @@ export default function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: "/", icon: Home, label: "Registro Ponto", public: true },
-    { path: "/dashboard", icon: FileText, label: "Dashboard", public: false },
-    { path: "/funcionarios", icon: Users, label: "Funcionários", public: false },
-    { path: "/escalas", icon: Calendar, label: "Escalas", public: false },
-    { path: "/apropriacao", icon: Clock, label: "Apropriação", public: false },
-    { path: "/relatorios", icon: FileText, label: "Relatórios", public: false },
-    { path: "/faltas", icon: FileX, label: "Afastamentos", public: false },
-    { path: "/configuracoes", icon: Settings, label: "Configurações", public: false },
+    { path: "/", icon: Home, label: "Registro Ponto", public: true, adminOnly: false },
+    { path: "/dashboard", icon: FileText, label: "Dashboard", public: false, adminOnly: false },
+    { path: "/funcionarios", icon: Users, label: "Funcionários", public: false, adminOnly: true },
+    { path: "/escalas", icon: Calendar, label: "Escalas", public: false, adminOnly: true },
+    { path: "/apropriacao", icon: Clock, label: "Apropriação", public: false, adminOnly: true },
+    { path: "/relatorios", icon: FileText, label: "Relatórios", public: false, adminOnly: true },
+    { path: "/faltas", icon: FileX, label: "Afastamentos", public: false, adminOnly: true },
+    { path: "/configuracoes", icon: Settings, label: "Configurações", public: false, adminOnly: true },
   ];
 
   return (
@@ -35,7 +37,7 @@ export default function Navbar() {
         <div className="flex space-x-4">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const shouldShow = item.public || user;
+            const shouldShow = item.public || (user && (!item.adminOnly || isAdmin));
             
             if (!shouldShow) return null;
             
@@ -61,7 +63,9 @@ export default function Navbar() {
         {user ? (
           <div className="flex items-center space-x-2">
             <User className="w-4 h-4 text-gray-600" />
-            <span className="text-sm text-gray-600">{user.email}</span>
+            <span className="text-sm text-gray-600">
+              {user.email} {role && `(${role})`}
+            </span>
             <Button
               variant="ghost"
               size="sm"

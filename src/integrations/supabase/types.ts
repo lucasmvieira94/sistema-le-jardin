@@ -77,6 +77,42 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          id: string
+          ip_address: unknown | null
+          operacao: string
+          tabela: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          operacao: string
+          tabela: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          operacao?: string
+          tabela?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       configuracoes_empresa: {
         Row: {
           adicional_hora_extra_100: number | null
@@ -166,6 +202,7 @@ export type Database = {
           funcao: string
           id: string
           nome_completo: string
+          user_id: string | null
         }
         Insert: {
           ativo?: boolean
@@ -180,6 +217,7 @@ export type Database = {
           funcao: string
           id?: string
           nome_completo: string
+          user_id?: string | null
         }
         Update: {
           ativo?: boolean
@@ -194,6 +232,7 @@ export type Database = {
           funcao?: string
           id?: string
           nome_completo?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -204,6 +243,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      registro_tentativas: {
+        Row: {
+          bloqueado_ate: string | null
+          codigo_tentativa: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          tentativas: number | null
+          updated_at: string
+        }
+        Insert: {
+          bloqueado_ate?: string | null
+          codigo_tentativa: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          tentativas?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bloqueado_ate?: string | null
+          codigo_tentativa?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          tentativas?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       registros_ponto: {
         Row: {
@@ -291,6 +360,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -347,9 +440,37 @@ export type Database = {
           observacoes: string
         }[]
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          p_tabela: string
+          p_operacao: string
+          p_dados_anteriores?: Json
+          p_dados_novos?: Json
+        }
+        Returns: undefined
+      }
+      registrar_tentativa_codigo: {
+        Args: { p_codigo: string; p_ip_address?: unknown }
+        Returns: undefined
+      }
+      verificar_limite_tentativas: {
+        Args: { p_codigo: string; p_ip_address?: unknown }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -476,6 +597,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "employee"],
+    },
   },
 } as const

@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Edit, UserPlus, UserMinus } from "lucide-react";
+import { Loader2, Edit, UserPlus, UserMinus, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 type Funcionario = {
   id: string;
@@ -21,6 +23,8 @@ export default function Funcionarios() {
   const [loading, setLoading] = useState(true);
   const [desligandoId, setDesligandoId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { logEvent } = useAuditLog();
 
   async function fetchFuncionarios() {
     setLoading(true);
@@ -37,19 +41,61 @@ export default function Funcionarios() {
   }, []);
 
   async function desligarFuncionario(id: string) {
+    if (!isAdmin) {
+      toast({ 
+        variant: "destructive", 
+        title: "Acesso negado",
+        description: "Apenas administradores podem desligar funcionários" 
+      });
+      return;
+    }
+
     setDesligandoId(id);
+    
+    // Get current funcionario data for audit
+    const { data: funcionarioAtual } = await supabase
+      .from("funcionarios")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
     const { error } = await supabase
       .from("funcionarios")
       .update({ ativo: false })
       .eq("id", id);
 
     if (!error) {
+      await logEvent('funcionarios', 'UPDATE', funcionarioAtual, { ativo: false });
       toast({ title: "Funcionário desligado com sucesso." });
       fetchFuncionarios();
     } else {
       toast({ variant: "destructive", title: "Erro ao desligar funcionário" });
     }
     setDesligandoId(null);
+  }
+
+  if (roleLoading) {
+    return (
+      <div className="container mx-auto max-w-4xl py-10">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="animate-spin" /> Verificando permissões...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="container mx-auto max-w-4xl py-10">
+        <div className="text-center space-y-4">
+          <Shield className="w-16 h-16 mx-auto text-muted-foreground" />
+          <h2 className="text-2xl font-bold">Acesso Restrito</h2>
+          <p className="text-muted-foreground">
+            Apenas administradores podem acessar o gerenciamento de funcionários.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -6,6 +6,9 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuditLog } from "@/hooks/useAuditLog";
+import { validateCPF, validateEmail, sanitizeString } from "@/utils/validation";
 import NomeInput from "./cadastro-funcionario/NomeInput";
 import EmailInput from "./cadastro-funcionario/EmailInput";
 import CpfInput from "./cadastro-funcionario/CpfInput";
@@ -40,6 +43,8 @@ export default function CadastroFuncionarioForm() {
   const form = useForm<FormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [escalas, setEscalas] = useState<Escala[]>([]);
+  const { isAdmin } = useUserRole();
+  const { logEvent } = useAuditLog();
 
   useEffect(() => {
     async function fetchEscalas() {
@@ -65,12 +70,42 @@ export default function CadastroFuncionarioForm() {
   }
 
   async function onSubmit(values: FormData) {
+    if (!isAdmin) {
+      toast({ 
+        variant: "destructive", 
+        title: "Acesso negado",
+        description: "Apenas administradores podem cadastrar funcionários" 
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Validate and sanitize inputs
+      if (!validateCPF(values.cpf)) {
+        toast({ variant: "destructive", title: "CPF inválido" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!validateEmail(values.email)) {
+        toast({ variant: "destructive", title: "Email inválido" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Sanitize string inputs
+      const sanitizedValues = {
+        ...values,
+        nome_completo: sanitizeString(values.nome_completo),
+        email: sanitizeString(values.email),
+        funcao: sanitizeString(values.funcao)
+      };
+
       const { data: existeCpf } = await supabase
         .from("funcionarios")
         .select("id")
-        .eq("cpf", values.cpf)
+        .eq("cpf", sanitizedValues.cpf)
         .maybeSingle();
       if (existeCpf) {
         toast({ variant: "destructive", title: "CPF já cadastrado" });
@@ -80,7 +115,7 @@ export default function CadastroFuncionarioForm() {
       const { data: existeEmail } = await supabase
         .from("funcionarios")
         .select("id")
-        .eq("email", values.email)
+        .eq("email", sanitizedValues.email)
         .maybeSingle();
       if (existeEmail) {
         toast({ variant: "destructive", title: "Email já cadastrado" });
@@ -90,16 +125,19 @@ export default function CadastroFuncionarioForm() {
 
       const codigo = await geraCodigoUnico();
 
-      const { error } = await supabase.from("funcionarios").insert([
-        {
-          ...values,
-          escala_id: Number(values.escala_id),
-          codigo_4_digitos: codigo,
-        },
-      ]);
+      const newFuncionario = {
+        ...sanitizedValues,
+        escala_id: Number(sanitizedValues.escala_id),
+        codigo_4_digitos: codigo,
+      };
+
+      const { error } = await supabase.from("funcionarios").insert([newFuncionario]);
       if (error) {
         throw error;
       }
+
+      // Log audit event
+      await logEvent('funcionarios', 'INSERT', null, newFuncionario);
 
       const resp = await fetch(
         "https://kvjgmqicictxxfnvhuwl.functions.supabase.co/enviar-codigo",
@@ -107,8 +145,8 @@ export default function CadastroFuncionarioForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: values.email,
-            nome: values.nome_completo,
+            email: sanitizedValues.email,
+            nome: sanitizedValues.nome_completo,
             codigo,
           }),
         }
