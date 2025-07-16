@@ -1,7 +1,7 @@
 name: Deploy via ftp
 on: [push]
-
-deploy:
+jobs:
+ deploy:
           name: Deploy
           runs-on: ubuntu-latest
           steps:
