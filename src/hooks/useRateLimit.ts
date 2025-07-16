@@ -6,9 +6,16 @@ export function useRateLimit() {
 
   const checkRateLimit = async (codigo: string): Promise<boolean> => {
     try {
-      // Get user's IP (simplified - in production you'd get this from the request)
-      const userAgent = navigator.userAgent;
-      const ipAddress = '127.0.0.1'; // Placeholder - would be actual IP in production
+      // Get user's actual IP address from an external service
+      let ipAddress = '127.0.0.1'; // fallback
+      
+      try {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        ipAddress = ipData.ip;
+      } catch (ipError) {
+        console.warn('Could not get real IP, using fallback:', ipError);
+      }
 
       const { data, error } = await supabase.rpc('verificar_limite_tentativas', {
         p_codigo: codigo,
