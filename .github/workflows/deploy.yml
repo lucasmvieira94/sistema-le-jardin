@@ -1,10 +1,7 @@
 name: Deploy via ftp
-      on:
-        push:
-          branches:
-                  - main
-      
-      deploy:
+on: [push]
+
+deploy:
           name: Deploy
           runs-on: ubuntu-latest
           steps:
