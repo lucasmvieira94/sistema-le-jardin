@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Edit2, Save, X, Plus, Trash2 } from "lucide-react";
+import { Edit2, Save, X, Plus, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,10 +31,12 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [registroEditado, setRegistroEditado] = useState<Partial<RegistroPonto>>({});
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
+  const [escalaFuncionario, setEscalaFuncionario] = useState<{entrada: string, saida: string} | null>(null);
 
   useEffect(() => {
     carregarRegistros();
     carregarNomeFuncionario();
+    carregarEscalaFuncionario();
   }, [funcionarioId, dataInicio, dataFim]);
 
   const carregarNomeFuncionario = async () => {
@@ -45,6 +47,26 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       .single();
     
     if (data) setFuncionarioNome(data.nome_completo);
+  };
+
+  const carregarEscalaFuncionario = async () => {
+    const { data } = await supabase
+      .from("funcionarios")
+      .select(`
+        escalas (
+          entrada,
+          saida
+        )
+      `)
+      .eq("id", funcionarioId)
+      .single();
+    
+    if (data?.escalas) {
+      setEscalaFuncionario({
+        entrada: data.escalas.entrada,
+        saida: data.escalas.saida
+      });
+    }
   };
 
   const carregarRegistros = async () => {
@@ -210,6 +232,112 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
     carregarRegistros();
   };
 
+  const preencherHorariosPadrao = async () => {
+    if (!escalaFuncionario) {
+      toast({
+        variant: "destructive",
+        title: "Escala não encontrada",
+        description: "Não foi possível encontrar a escala do funcionário"
+      });
+      return;
+    }
+
+    const registrosParaAtualizar = registros.filter(registro => {
+      // Preencher apenas registros que não têm entrada ou saída
+      return (!registro.entrada || !registro.saida);
+    });
+
+    if (registrosParaAtualizar.length === 0) {
+      toast({
+        title: "Nenhum registro para preencher",
+        description: "Todos os registros do período já possuem horários completos"
+      });
+      return;
+    }
+
+    const atualizacoes = registrosParaAtualizar.map(registro => {
+      const horaEntrada = registro.entrada || escalaFuncionario.entrada;
+      const horaSaida = registro.saida || escalaFuncionario.saida;
+      
+      // Calcular intervalo automático se não existir
+      let intervaloInicio = registro.intervalo_inicio;
+      let intervaloFim = registro.intervalo_fim;
+      
+      if (!intervaloInicio && !intervaloFim) {
+        const entrada = new Date(`2000-01-01T${horaEntrada}`);
+        const saida = new Date(`2000-01-01T${horaSaida}`);
+        const duracaoJornada = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60); // em horas
+        
+        if (duracaoJornada > 6) {
+          // Jornadas acima de 6h - intervalo de 1h no meio da jornada
+          const meioJornada = new Date(entrada.getTime() + (saida.getTime() - entrada.getTime()) / 2);
+          const inicioIntervalo = new Date(meioJornada.getTime() - 30 * 60 * 1000); // 30min antes
+          const fimIntervalo = new Date(meioJornada.getTime() + 30 * 60 * 1000); // 30min depois
+          
+          intervaloInicio = inicioIntervalo.toTimeString().slice(0, 5);
+          intervaloFim = fimIntervalo.toTimeString().slice(0, 5);
+        } else if (duracaoJornada > 4) {
+          // Jornadas entre 4-6h - intervalo de 15min no meio da jornada
+          const meioJornada = new Date(entrada.getTime() + (saida.getTime() - entrada.getTime()) / 2);
+          const inicioIntervalo = new Date(meioJornada.getTime() - 7.5 * 60 * 1000); // 7.5min antes
+          const fimIntervalo = new Date(meioJornada.getTime() + 7.5 * 60 * 1000); // 7.5min depois
+          
+          intervaloInicio = inicioIntervalo.toTimeString().slice(0, 5);
+          intervaloFim = fimIntervalo.toTimeString().slice(0, 5);
+        }
+      }
+
+      return {
+        funcionario_id: funcionarioId,
+        data: registro.data,
+        entrada: horaEntrada,
+        intervalo_inicio: intervaloInicio,
+        intervalo_fim: intervaloFim,
+        saida: horaSaida,
+        observacoes: registro.observacoes || "Horários preenchidos automaticamente com base na escala"
+      };
+    });
+
+    // Salvar todas as atualizações
+    for (const atualizacao of atualizacoes) {
+      const registro = registros.find(r => r.data === atualizacao.data);
+      if (!registro) continue;
+
+      let error;
+      
+      if (registro.id.startsWith('temp-')) {
+        // Inserir novo registro
+        const { error: insertError } = await supabase
+          .from("registros_ponto")
+          .insert(atualizacao);
+        error = insertError;
+      } else {
+        // Atualizar registro existente
+        const { error: updateError } = await supabase
+          .from("registros_ponto")
+          .update(atualizacao)
+          .eq("id", registro.id);
+        error = updateError;
+      }
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao preencher horários",
+          description: error.message
+        });
+        return;
+      }
+    }
+
+    toast({
+      title: "Horários preenchidos com sucesso!",
+      description: `${registrosParaAtualizar.length} registro(s) atualizado(s) com base na escala`
+    });
+
+    carregarRegistros();
+  };
+
   if (carregando) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-lg">
@@ -220,11 +348,24 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg">
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold">Registros de Ponto</h3>
-        <p className="text-muted-foreground">
-          {funcionarioNome} • {formatarData(dataInicio)} a {formatarData(dataFim)}
-        </p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h3 className="text-xl font-semibold">Registros de Ponto</h3>
+          <p className="text-muted-foreground">
+            {funcionarioNome} • {formatarData(dataInicio)} a {formatarData(dataFim)}
+          </p>
+        </div>
+        
+        {escalaFuncionario && (
+          <Button
+            onClick={preencherHorariosPadrao}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Clock className="h-4 w-4" />
+            Preencher com Escala
+          </Button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
