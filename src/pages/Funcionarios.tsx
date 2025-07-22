@@ -2,11 +2,13 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Edit, UserPlus, UserMinus, Shield } from "lucide-react";
+import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import ImportarFuncionarios from "@/components/ImportarFuncionarios";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 type Funcionario = {
   id: string;
@@ -102,9 +104,22 @@ export default function Funcionarios() {
     <div className="container mx-auto max-w-4xl py-10">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Funcionários</h2>
-        <Link to="/funcionarios/novo">
-          <Button><UserPlus className="w-4 h-4 mr-2" /> Novo Funcionário</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> 
+                Importar Planilha
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <ImportarFuncionarios onImportSuccess={fetchFuncionarios} />
+            </DialogContent>
+          </Dialog>
+          <Link to="/funcionarios/novo">
+            <Button><UserPlus className="w-4 h-4 mr-2" /> Novo Funcionário</Button>
+          </Link>
+        </div>
       </div>
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
