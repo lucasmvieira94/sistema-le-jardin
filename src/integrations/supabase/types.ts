@@ -167,6 +167,8 @@ export type Database = {
           dias_semana: string[]
           entrada: string
           id: number
+          intervalo_fim: string | null
+          intervalo_inicio: string | null
           nome: string
           saida: string
         }
@@ -175,6 +177,8 @@ export type Database = {
           dias_semana: string[]
           entrada: string
           id?: number
+          intervalo_fim?: string | null
+          intervalo_inicio?: string | null
           nome: string
           saida: string
         }
@@ -183,6 +187,8 @@ export type Database = {
           dias_semana?: string[]
           entrada?: string
           id?: number
+          intervalo_fim?: string | null
+          intervalo_inicio?: string | null
           nome?: string
           saida?: string
         }

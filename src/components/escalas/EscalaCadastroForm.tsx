@@ -99,13 +99,14 @@ export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
   });
 
   const onSubmit = async (data: EscalaCadastro) => {
-    // Enviar para o Supabase (corrigido: removido 'tipo_jornada')
+    // Enviar para o Supabase incluindo os campos de intervalo
     const { error } = await supabase.from("escalas").insert({
       nome: data.nomeEscala,
       entrada: data.entrada,
       saida: data.saida,
+      intervalo_inicio: data.intervaloInicio || null,
+      intervalo_fim: data.intervaloFim || null,
       dias_semana: diasSemanaTodos, // por padrão, todos os dias
-      // Se quiser salvar campos extra, adicione no futuro conforme o banco permitir.
     });
 
     if (error) {
