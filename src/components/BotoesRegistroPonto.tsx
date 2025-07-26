@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2 } from 'lucide-react';
@@ -16,6 +15,42 @@ interface BotoesRegistroPontoProps {
 }
 
 type TipoRegistro = 'entrada' | 'intervalo_inicio' | 'intervalo_fim' | 'saida';
+
+// Função utilitária para traduzir mensagens conhecidas do Supabase/Postgres
+function traduzirErro(error: any): string {
+  // Mensagens de erro comuns do Postgres/Supabase
+  if (!error) return "Erro desconhecido ao registrar ponto.";
+
+  if (typeof error === "string") return error;
+
+  // Supabase v2
+  if (error.message) {
+    // Erro de chave duplicada
+    if (error.message.includes("duplicate key value")) {
+      return "Já existe um registro de ponto para este horário.";
+    }
+    // Falha de autenticação/autorização
+    if (error.message.includes("permission denied") || error.message.includes("not authorized")) {
+      return "Você não tem permissão para registrar este ponto.";
+    }
+    // Campos obrigatórios
+    if (error.message.includes("null value in column")) {
+      return "Informações obrigatórias não foram preenchidas.";
+    }
+    // Latitude/Longitude inválidas
+    if (error.message.includes("latitude") || error.message.includes("longitude")) {
+      return "Falha ao registrar a localização. Permita o acesso ao GPS.";
+    }
+    // Outros erros conhecidos podem ser adicionados aqui
+    return error.message;
+  }
+
+  // Objeto de erro genérico
+  if (error.error_description) return error.error_description;
+
+  // Fallback
+  return "Erro ao registrar ponto. Tente novamente.";
+}
 
 export default function BotoesRegistroPonto({ 
   funcionarioId, 
@@ -37,7 +72,7 @@ export default function BotoesRegistroPonto({
 
       // Validate time format
       if (!validateTime(horario)) {
-        throw new Error('Invalid time format');
+        throw new Error('Formato de horário inválido');
       }
 
       // Verificar se já existe registro para hoje
@@ -115,12 +150,13 @@ export default function BotoesRegistroPonto({
       });
 
       onRegistroRealizado();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao registrar ponto:', error);
+
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao registrar ponto. Tente novamente."
+        description: traduzirErro(error)
       });
     } finally {
       setRegistrando(null);
