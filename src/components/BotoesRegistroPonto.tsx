@@ -65,6 +65,8 @@ export default function BotoesRegistroPonto({
   const registrarPonto = async (tipo: TipoRegistro) => {
     setRegistrando(tipo);
     
+    console.log('🎯 Iniciando registro de ponto:', { tipo, funcionarioId, latitude, longitude });
+    
     try {
       const agora = new Date();
       const data = agora.toISOString().split('T')[0];
@@ -76,7 +78,10 @@ export default function BotoesRegistroPonto({
         throw new Error('Formato de horário inválido');
       }
 
+      console.log('📅 Dados temporais:', { data, horario });
+
       // Verificar se já existe registro para hoje
+      console.log('🔍 Verificando registro existente...');
       const { data: registroExistente, error: errorBusca } = await supabase
         .from('registros_ponto')
         .select('*')
@@ -84,7 +89,10 @@ export default function BotoesRegistroPonto({
         .eq('data', data)
         .single();
 
+      console.log('📋 Resultado da busca:', { registroExistente, errorBusca });
+
       if (errorBusca && errorBusca.code !== 'PGRST116') {
+        console.error('❌ Erro na busca:', errorBusca);
         throw errorBusca;
       }
 
@@ -92,6 +100,8 @@ export default function BotoesRegistroPonto({
         latitude: latitude || null,
         longitude: longitude || null,
       };
+
+      console.log('📍 Dados de localização:', updateData);
 
       // Definir o campo a ser atualizado baseado no tipo
       switch (tipo) {
@@ -109,7 +119,10 @@ export default function BotoesRegistroPonto({
           break;
       }
 
+      console.log('⚙️ Dados para atualizar/inserir:', updateData);
+
       if (registroExistente) {
+        console.log('🔄 Atualizando registro existente...');
         // Log audit event for update
         await logEvent('registros_ponto', 'UPDATE', registroExistente, updateData);
         
@@ -119,13 +132,17 @@ export default function BotoesRegistroPonto({
           .update(updateData)
           .eq('id', registroExistente.id);
 
+        console.log('✅ Resultado da atualização:', { error });
         if (error) throw error;
       } else {
+        console.log('🆕 Criando novo registro...');
         const newRecord = {
           funcionario_id: funcionarioId,
           data: data,
           ...updateData,
         };
+        
+        console.log('📝 Dados do novo registro:', newRecord);
         
         // Log audit event for insert
         await logEvent('registros_ponto', 'INSERT', null, newRecord);
@@ -135,6 +152,7 @@ export default function BotoesRegistroPonto({
           .from('registros_ponto')
           .insert(newRecord);
 
+        console.log('✅ Resultado da inserção:', { error });
         if (error) throw error;
       }
 
@@ -152,7 +170,13 @@ export default function BotoesRegistroPonto({
 
       onRegistroRealizado();
     } catch (error: any) {
-      console.error('Erro ao registrar ponto:', error);
+      console.error('❌ Erro completo ao registrar ponto:', {
+        error,
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code
+      });
 
       toast({
         variant: "destructive",
