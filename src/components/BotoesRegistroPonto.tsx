@@ -73,9 +73,16 @@ export default function BotoesRegistroPonto({
       const horarioCompleto = agora.toTimeString().split(' ')[0];
       const horario = horarioCompleto.slice(0, 5); // Extrair apenas HH:MM
 
+      console.log('🕐 Debug horário:', { 
+        agora: agora.toString(), 
+        horarioCompleto, 
+        horario,
+        isValid: validateTime(horario)
+      });
+
       // Validate time format
       if (!validateTime(horario)) {
-        throw new Error('Formato de horário inválido');
+        throw new Error(`Formato de horário inválido: ${horario}`);
       }
 
       console.log('📅 Dados temporais:', { data, horario });
