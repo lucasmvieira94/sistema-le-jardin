@@ -68,7 +68,8 @@ export default function BotoesRegistroPonto({
     try {
       const agora = new Date();
       const data = agora.toISOString().split('T')[0];
-      const horario = agora.toTimeString().split(' ')[0];
+      const horarioCompleto = agora.toTimeString().split(' ')[0];
+      const horario = horarioCompleto.slice(0, 5); // Extrair apenas HH:MM
 
       // Validate time format
       if (!validateTime(horario)) {
@@ -88,8 +89,8 @@ export default function BotoesRegistroPonto({
       }
 
       let updateData: any = {
-        latitude: latitude,
-        longitude: longitude,
+        latitude: latitude || null,
+        longitude: longitude || null,
       };
 
       // Definir o campo a ser atualizado baseado no tipo
