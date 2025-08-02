@@ -4,7 +4,6 @@ import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
-import { validateTime } from '@/utils/validation';
 
 interface BotoesRegistroPontoProps {
   funcionarioId: string;
@@ -16,40 +15,15 @@ interface BotoesRegistroPontoProps {
 
 type TipoRegistro = 'entrada' | 'intervalo_inicio' | 'intervalo_fim' | 'saida';
 
-// Função utilitária para traduzir mensagens conhecidas do Supabase/Postgres
-function traduzirErro(error: any): string {
-  // Mensagens de erro comuns do Postgres/Supabase
-  if (!error) return "Erro desconhecido ao registrar ponto.";
-
-  if (typeof error === "string") return error;
-
-  // Supabase v2
-  if (error.message) {
-    // Erro de chave duplicada
-    if (error.message.includes("duplicate key value")) {
-      return "Já existe um registro de ponto para este horário.";
-    }
-    // Falha de autenticação/autorização
-    if (error.message.includes("permission denied") || error.message.includes("not authorized")) {
-      return "Você não tem permissão para registrar este ponto.";
-    }
-    // Campos obrigatórios
-    if (error.message.includes("null value in column")) {
-      return "Informações obrigatórias não foram preenchidas.";
-    }
-    // Latitude/Longitude inválidas
-    if (error.message.includes("latitude") || error.message.includes("longitude")) {
-      return "Falha ao registrar a localização. Permita o acesso ao GPS.";
-    }
-    // Outros erros conhecidos podem ser adicionados aqui
-    return error.message;
+function formatarHorario(date: Date): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    // fallback para horário fixo se a data for inválida
+    return '08:00:00';
   }
-
-  // Objeto de erro genérico
-  if (error.error_description) return error.error_description;
-
-  // Fallback
-  return "Erro ao registrar ponto. Tente novamente.";
+  const h = date.getHours().toString().padStart(2, '0');
+  const m = date.getMinutes().toString().padStart(2, '0');
+  const s = date.getSeconds().toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
 }
 
 export default function BotoesRegistroPonto({ 
@@ -65,24 +39,20 @@ export default function BotoesRegistroPonto({
   const registrarPonto = async (tipo: TipoRegistro) => {
     setRegistrando(tipo);
     
-    console.log('🎯 Iniciando registro de ponto:', { tipo, funcionarioId, latitude, longitude });
-    console.log('🌐 Environment info:', {
-      hostname: window.location.hostname,
-      protocol: window.location.protocol,
-      timestamp: new Date().toISOString()
-    });
-    
     try {
       const agora = new Date();
+      const horario = formatarHorario(agora);
+
+      console.log('⏰ Horário formatado para envio:', horario);
+
+      // Validação rápida do formato
+      if (!/^\d{2}:\d{2}:\d{2}$/.test(horario)) {
+        throw new Error(`Horário com formato inválido: ${horario}`);
+      }
+
       const data = agora.toISOString().split('T')[0];
-      const horario = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}:${agora.getSeconds().toString().padStart(2, '0')}`;
 
-      
-      console.log('⏰ Horário final enviado:', horario);
-      console.log('📅 Dados temporais:', { data, horario });
-
-      // Verificar se já existe registro para hoje
-      console.log('🔍 Verificando registro existente...');
+      // Verifica se já existe registro para hoje
       const { data: registroExistente, error: errorBusca } = await supabase
         .from('registros_ponto')
         .select('*')
@@ -90,21 +60,14 @@ export default function BotoesRegistroPonto({
         .eq('data', data)
         .single();
 
-      console.log('📋 Resultado da busca:', { registroExistente, errorBusca });
+      if (errorBusca && errorBusca.code !== 'PGRST116') throw errorBusca;
 
-      if (errorBusca && errorBusca.code !== 'PGRST116') {
-        console.error('❌ Erro na busca:', errorBusca);
-        throw errorBusca;
-      }
-
+      // Dados de atualização/inserção
       let updateData: any = {
         latitude: latitude || null,
         longitude: longitude || null,
       };
 
-      console.log('📍 Dados de localização:', updateData);
-
-      // Definir o campo a ser atualizado baseado no tipo
       switch (tipo) {
         case 'entrada':
           updateData.entrada = horario;
@@ -120,40 +83,23 @@ export default function BotoesRegistroPonto({
           break;
       }
 
-      console.log('⚙️ Dados para atualizar/inserir:', updateData);
-
       if (registroExistente) {
-        console.log('🔄 Atualizando registro existente...');
-        // Log audit event for update
         await logEvent('registros_ponto', 'UPDATE', registroExistente, updateData);
-        
-        // Atualizar registro existente
         const { error } = await supabase
           .from('registros_ponto')
           .update(updateData)
           .eq('id', registroExistente.id);
-
-        console.log('✅ Resultado da atualização:', { error });
         if (error) throw error;
       } else {
-        console.log('🆕 Criando novo registro...');
         const newRecord = {
           funcionario_id: funcionarioId,
-          data: data,
+          data,
           ...updateData,
         };
-        
-        console.log('📝 Dados do novo registro:', newRecord);
-        
-        // Log audit event for insert
         await logEvent('registros_ponto', 'INSERT', null, newRecord);
-        
-        // Criar novo registro
         const { error } = await supabase
           .from('registros_ponto')
           .insert(newRecord);
-
-        console.log('✅ Resultado da inserção:', { error });
         if (error) throw error;
       }
 
@@ -171,18 +117,11 @@ export default function BotoesRegistroPonto({
 
       onRegistroRealizado();
     } catch (error: any) {
-      console.error('❌ Erro completo ao registrar ponto:', {
-        error,
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code
-      });
-
+      console.error('❌ Erro ao registrar ponto:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: traduzirErro(error)
+        description: "Erro ao registrar ponto. Tente novamente."
       });
     } finally {
       setRegistrando(null);
