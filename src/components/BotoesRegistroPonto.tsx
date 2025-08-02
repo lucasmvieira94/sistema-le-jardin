@@ -75,8 +75,9 @@ export default function BotoesRegistroPonto({
     try {
       const agora = new Date();
       const data = agora.toISOString().split('T')[0];
-      const horario = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}`;
-
+      const horario = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}:${agora.getSeconds().toString().padStart(2, '0')}`;
+      
+      console.log('⏰ Horário final enviado:', horario);
       console.log('📅 Dados temporais:', { data, horario });
 
       // Verificar se já existe registro para hoje
