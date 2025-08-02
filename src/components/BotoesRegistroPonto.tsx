@@ -58,9 +58,12 @@ export default function BotoesRegistroPonto({
         .select('*')
         .eq('funcionario_id', funcionarioId)
         .eq('data', data)
-        .single();
+        .maybeSingle();
 
-      if (errorBusca && errorBusca.code !== 'PGRST116') throw errorBusca;
+      if (errorBusca) {
+        console.error('❌ Erro ao buscar registro existente:', errorBusca);
+        throw errorBusca;
+      }
 
       // Dados de atualização/inserção
       let updateData: any = {
