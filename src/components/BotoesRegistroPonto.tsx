@@ -66,12 +66,16 @@ export default function BotoesRegistroPonto({
     setRegistrando(tipo);
     
     console.log('🎯 Iniciando registro de ponto:', { tipo, funcionarioId, latitude, longitude });
+    console.log('🌐 Environment info:', {
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
+      timestamp: new Date().toISOString()
+    });
     
     try {
       const agora = new Date();
       const data = agora.toISOString().split('T')[0];
       const horario = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}`;
-
 
       console.log('📅 Dados temporais:', { data, horario });
 

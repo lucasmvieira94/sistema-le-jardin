@@ -20,7 +20,15 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
   const { checkRateLimit, isBlocked } = useRateLimit();
 
   const validarCodigo = async () => {
+    console.log('🔍 Iniciando validação do código:', codigo);
+    console.log('🌐 Environment check:', {
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
+      userAgent: navigator.userAgent.substring(0, 50) + '...'
+    });
+
     if (!validateFuncionarioCode(codigo)) {
+      console.log('❌ Código inválido:', codigo);
       toast({
         variant: "destructive",
         title: "Código inválido",
@@ -30,19 +38,27 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
     }
 
     // Check rate limiting
-    const allowed = await checkRateLimit(codigo);
-    if (!allowed) {
-      toast({
-        variant: "destructive",
-        title: "Muitas tentativas",
-        description: "Você foi temporariamente bloqueado devido a muitas tentativas. Tente novamente em 1 hora."
-      });
-      return;
+    console.log('🛡️ Verificando rate limit...');
+    try {
+      const allowed = await checkRateLimit(codigo);
+      console.log('🛡️ Rate limit resultado:', allowed);
+      if (!allowed) {
+        toast({
+          variant: "destructive",
+          title: "Muitas tentativas",
+          description: "Você foi temporariamente bloqueado devido a muitas tentativas. Tente novamente em 1 hora."
+        });
+        return;
+      }
+    } catch (rateLimitError) {
+      console.error('❌ Erro no rate limit:', rateLimitError);
+      // Continue mesmo com erro no rate limit para não bloquear funcionários válidos
     }
 
     setValidando(true);
 
     try {
+      console.log('🔍 Buscando funcionário no Supabase...');
       const { data: funcionario, error } = await supabase
         .from('funcionarios')
         .select('id, nome_completo, ativo')
@@ -50,7 +66,29 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
         .eq('ativo', true)
         .single();
 
-      if (error || !funcionario) {
+      console.log('📋 Resultado da busca:', { funcionario, error });
+
+      if (error) {
+        console.error('❌ Erro do Supabase:', error);
+        
+        if (error.code === 'PGRST116') {
+          toast({
+            variant: "destructive",
+            title: "Código não encontrado",
+            description: "Verifique o código e tente novamente"
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Erro de conexão",
+            description: `Erro: ${error.message}`
+          });
+        }
+        return;
+      }
+
+      if (!funcionario) {
+        console.log('❌ Funcionário não encontrado');
         toast({
           variant: "destructive",
           title: "Código não encontrado",
@@ -59,12 +97,14 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
         return;
       }
 
+      console.log('✅ Funcionário validado:', funcionario);
       onFuncionarioValidado(funcionario.id, funcionario.nome_completo);
     } catch (err) {
+      console.error('❌ Erro geral na validação:', err);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao validar código"
+        description: `Erro ao validar código: ${err instanceof Error ? err.message : 'Erro desconhecido'}`
       });
     } finally {
       setValidando(false);
