@@ -70,11 +70,8 @@ export default function BotoesRegistroPonto({
     try {
       const agora = new Date();
       const data = agora.toISOString().split('T')[0];
-      const horario = agora.toLocaleTimeString('pt-BR', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      });
+      const horario = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}`;
+
 
       console.log('📅 Dados temporais:', { data, horario });
 
