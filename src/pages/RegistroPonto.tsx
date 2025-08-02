@@ -17,6 +17,7 @@ export default function RegistroPonto() {
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [registrosHoje, setRegistrosHoje] = useState<RegistroHoje[]>([]);
   const [atualizando, setAtualizando] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { latitude, longitude } = useGeolocation();
 
   const carregarRegistrosHoje = async () => {
@@ -57,6 +58,15 @@ export default function RegistroPonto() {
     }
   }, [funcionarioId]);
 
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const handleFuncionarioValidado = (id: string, nome: string) => {
     setFuncionarioId(id);
     setFuncionarioNome(nome);
@@ -80,7 +90,7 @@ export default function RegistroPonto() {
             <h1 className="text-2xl font-bold text-primary">Registro de Ponto</h1>
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <CalendarRange className="w-4 h-4" />
-              <span>{new Date().toLocaleDateString('pt-BR', { 
+              <span>{currentTime.toLocaleDateString('pt-BR', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
@@ -88,7 +98,7 @@ export default function RegistroPonto() {
               })}</span>
             </div>
             <div className="text-lg font-medium">
-              {new Date().toLocaleTimeString('pt-BR').slice(0, 5)}
+              {currentTime.toISOString().slice(11, 16)}
             </div>
           </div>
 
