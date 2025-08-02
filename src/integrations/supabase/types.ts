@@ -283,9 +283,9 @@ export type Database = {
       registros_ponto: {
         Row: {
           created_at: string | null
-          data: string
+          data: string | null
           entrada: string | null
-          funcionario_id: string
+          funcionario_id: string | null
           id: string
           intervalo_fim: string | null
           intervalo_inicio: string | null
@@ -299,9 +299,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          data: string
+          data?: string | null
           entrada?: string | null
-          funcionario_id: string
+          funcionario_id?: string | null
           id?: string
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
@@ -315,9 +315,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          data?: string
+          data?: string | null
           entrada?: string | null
-          funcionario_id?: string
+          funcionario_id?: string | null
           id?: string
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
