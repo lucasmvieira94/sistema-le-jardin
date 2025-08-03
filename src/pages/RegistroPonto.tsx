@@ -6,6 +6,7 @@ import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import BotoesRegistroPonto from "@/components/BotoesRegistroPonto";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface RegistroHoje {
   horario: string;
@@ -25,7 +26,7 @@ export default function RegistroPonto() {
     
     setAtualizando(true);
     try {
-      const hoje = new Date().toISOString().split('T')[0];
+      const hoje = formatInTimeZone(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
       const { data, error } = await supabase
         .from('registros_ponto')
         .select('entrada, intervalo_inicio, intervalo_fim, saida')
@@ -98,7 +99,7 @@ export default function RegistroPonto() {
               })}</span>
             </div>
             <div className="text-lg font-medium">
-              {currentTime.toISOString().slice(11, 16)}
+              {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm')}
             </div>
           </div>
 

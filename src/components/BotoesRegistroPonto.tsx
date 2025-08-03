@@ -5,6 +5,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { validateTime } from '@/utils/validation';
+import { formatInTimeZone } from 'date-fns-tz';
 
 interface BotoesRegistroPontoProps {
   funcionarioId: string;
@@ -74,8 +75,8 @@ export default function BotoesRegistroPonto({
     
     try {
       const agora = new Date();
-      const data = agora.toISOString().split('T')[0];
-      const horario = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}:${agora.getSeconds().toString().padStart(2, '0')}`;
+      const data = formatInTimeZone(agora, 'America/Sao_Paulo', 'yyyy-MM-dd');
+      const horario = formatInTimeZone(agora, 'America/Sao_Paulo', 'HH:mm:ss');
       
       console.log('⏰ Horário final enviado:', horario);
       console.log('📅 Dados temporais:', { data, horario });
