@@ -404,6 +404,15 @@ export type Database = {
         }
         Returns: unknown
       }
+      calcular_horas_trabalhadas_turno_noturno: {
+        Args: {
+          p_entrada: string
+          p_saida: string
+          p_intervalo_inicio?: string
+          p_intervalo_fim?: string
+        }
+        Returns: unknown
+      }
       calcular_totais_folha_ponto: {
         Args: { p_funcionario_id: string; p_mes: number; p_ano: number }
         Returns: {
@@ -457,6 +466,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      inserir_intervalo_automatico: {
+        Args: {
+          p_funcionario_id: string
+          p_data: string
+          p_entrada: string
+          p_saida: string
+        }
+        Returns: {
+          intervalo_inicio: string
+          intervalo_fim: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           p_tabela: string
@@ -465,6 +486,14 @@ export type Database = {
           p_dados_novos?: Json
         }
         Returns: undefined
+      }
+      obter_data_referencia_registro: {
+        Args: {
+          p_data_entrada: string
+          p_hora_entrada: string
+          p_hora_saida: string
+        }
+        Returns: string
       }
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }

@@ -81,16 +81,47 @@ export default function BotoesRegistroPonto({
       console.log('⏰ Horário final enviado:', horario);
       console.log('📅 Dados temporais:', { data, horario });
 
-      // Verificar se já existe registro para hoje
-      console.log('🔍 Verificando registro existente...');
-      const { data: registroExistente, error: errorBusca } = await supabase
-        .from('registros_ponto')
-        .select('*')
-        .eq('funcionario_id', funcionarioId)
-        .eq('data', data)
-        .single();
+      // Para turnos noturnos, a data de referência é sempre o dia da entrada
+      let dataReferencia = data;
+      
+      // Se é registro de entrada, buscar por esta data
+      // Se é outro tipo de registro, buscar o registro mais recente do funcionário
+      let registroExistente = null;
+      let errorBusca = null;
+      
+      if (tipo === 'entrada') {
+        console.log('🔍 Verificando registro existente para entrada...');
+        const { data: registro, error } = await supabase
+          .from('registros_ponto')
+          .select('*')
+          .eq('funcionario_id', funcionarioId)
+          .eq('data', data)
+          .single();
+        
+        registroExistente = registro;
+        errorBusca = error;
+      } else {
+        console.log('🔍 Buscando registro mais recente do funcionário...');
+        const { data: registro, error } = await supabase
+          .from('registros_ponto')
+          .select('*')
+          .eq('funcionario_id', funcionarioId)
+          .or(`data.eq.${data},data.eq.${formatInTimeZone(new Date(Date.now() - 24*60*60*1000), 'America/Sao_Paulo', 'yyyy-MM-dd')}`)
+          .order('data', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        registroExistente = registro;
+        errorBusca = error;
+        
+        // Se encontrou um registro, usar a data dele como referência
+        if (registroExistente) {
+          dataReferencia = registroExistente.data;
+        }
+      }
 
-      console.log('📋 Resultado da busca:', { registroExistente, errorBusca });
+      console.log('📋 Resultado da busca:', { registroExistente, errorBusca, dataReferencia });
 
       if (errorBusca && errorBusca.code !== 'PGRST116') {
         console.error('❌ Erro na busca:', errorBusca);
@@ -117,6 +148,30 @@ export default function BotoesRegistroPonto({
           break;
         case 'saida':
           updateData.saida = horario;
+          // Se está registrando saída e há entrada, inserir intervalo automaticamente
+          if (registroExistente?.entrada && !registroExistente.intervalo_inicio) {
+            try {
+              console.log('🔄 Inserindo intervalo automático...');
+              const { data: intervalos } = await supabase.rpc('inserir_intervalo_automatico', {
+                p_funcionario_id: funcionarioId,
+                p_data: dataReferencia,
+                p_entrada: registroExistente.entrada,
+                p_saida: horario
+              });
+              
+              if (intervalos && intervalos.length > 0) {
+                const intervalo = intervalos[0];
+                if (intervalo.intervalo_inicio && intervalo.intervalo_fim) {
+                  updateData.intervalo_inicio = intervalo.intervalo_inicio;
+                  updateData.intervalo_fim = intervalo.intervalo_fim;
+                  console.log('✅ Intervalo automático inserido:', intervalo);
+                }
+              }
+            } catch (intervalError) {
+              console.warn('⚠️ Erro ao inserir intervalo automático:', intervalError);
+              // Continua sem intervalo automático
+            }
+          }
           break;
       }
 
@@ -139,7 +194,7 @@ export default function BotoesRegistroPonto({
         console.log('🆕 Criando novo registro...');
         const newRecord = {
           funcionario_id: funcionarioId,
-          data: data,
+          data: dataReferencia,
           ...updateData,
         };
         
