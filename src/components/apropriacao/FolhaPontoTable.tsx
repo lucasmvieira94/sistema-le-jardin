@@ -75,12 +75,12 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
     // Gerar todas as datas do período
     const datasPerido = gerarDatasPerido(dataInicio, dataFim);
     
-    // Buscar registros existentes
+    // Buscar registros existentes incluindo turnos noturnos
     const { data: registrosExistentes, error } = await supabase
       .from("registros_ponto")
       .select("*")
       .eq("funcionario_id", funcionarioId)
-      .gte("data", dataInicio)
+      .gte("data", new Date(new Date(dataInicio).getTime() - 24*60*60*1000).toISOString().split('T')[0]) // Incluir dia anterior para turnos noturnos
       .lte("data", dataFim)
       .order("data");
 
@@ -94,9 +94,22 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       return;
     }
 
-    // Criar registros para todas as datas do período
+    // Criar registros para todas as datas do período, considerando turnos noturnos
     const todosRegistros: RegistroPonto[] = datasPerido.map(data => {
-      const registroExistente = registrosExistentes?.find(r => r.data === data);
+      // Buscar registro para esta data ou turno noturno do dia anterior
+      const registroExistente = registrosExistentes?.find(r => {
+        // Registro normal do dia
+        if (r.data === data) return true;
+        
+        // Turno noturno: registro do dia anterior que termina no dia atual
+        const dataAnterior = new Date(new Date(data).getTime() - 24*60*60*1000).toISOString().split('T')[0];
+        if (r.data === dataAnterior && r.entrada && r.saida && r.saida < r.entrada) {
+          return true;
+        }
+        
+        return false;
+      });
+      
       return registroExistente || {
         id: `temp-${data}`,
         data,
