@@ -495,6 +495,21 @@ export type Database = {
         }
         Returns: string
       }
+      preencher_horarios_por_escala: {
+        Args: {
+          p_funcionario_id: string
+          p_data_inicio: string
+          p_data_fim: string
+        }
+        Returns: {
+          data: string
+          entrada: string
+          intervalo_inicio: string
+          intervalo_fim: string
+          saida: string
+          deve_trabalhar: boolean
+        }[]
+      }
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined

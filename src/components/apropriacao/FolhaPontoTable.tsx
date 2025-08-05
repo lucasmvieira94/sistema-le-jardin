@@ -255,100 +255,98 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       return;
     }
 
-    const registrosParaAtualizar = registros.filter(registro => {
-      // Preencher apenas registros que não têm entrada ou saída
-      return (!registro.entrada || !registro.saida);
-    });
-
-    if (registrosParaAtualizar.length === 0) {
-      toast({
-        title: "Nenhum registro para preencher",
-        description: "Todos os registros do período já possuem horários completos"
+    try {
+      // Usar a nova função que considera a vigência e tipos de escala
+      const { data: horariosEscala, error } = await supabase.rpc('preencher_horarios_por_escala', {
+        p_funcionario_id: funcionarioId,
+        p_data_inicio: dataInicio,
+        p_data_fim: dataFim
       });
-      return;
-    }
 
-    const atualizacoes = registrosParaAtualizar.map(registro => {
-      const horaEntrada = registro.entrada || escalaFuncionario.entrada;
-      const horaSaida = registro.saida || escalaFuncionario.saida;
-      
-      // Calcular intervalo automático se não existir
-      let intervaloInicio = registro.intervalo_inicio;
-      let intervaloFim = registro.intervalo_fim;
-      
-      if (!intervaloInicio && !intervaloFim) {
-        const entrada = new Date(`2000-01-01T${horaEntrada}`);
-        const saida = new Date(`2000-01-01T${horaSaida}`);
-        const duracaoJornada = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60); // em horas
-        
-        if (duracaoJornada > 6) {
-          // Jornadas acima de 6h - intervalo de 1h no meio da jornada
-          const meioJornada = new Date(entrada.getTime() + (saida.getTime() - entrada.getTime()) / 2);
-          const inicioIntervalo = new Date(meioJornada.getTime() - 30 * 60 * 1000); // 30min antes
-          const fimIntervalo = new Date(meioJornada.getTime() + 30 * 60 * 1000); // 30min depois
-          
-          intervaloInicio = inicioIntervalo.toTimeString().slice(0, 5);
-          intervaloFim = fimIntervalo.toTimeString().slice(0, 5);
-        } else if (duracaoJornada > 4) {
-          // Jornadas entre 4-6h - intervalo de 15min no meio da jornada
-          const meioJornada = new Date(entrada.getTime() + (saida.getTime() - entrada.getTime()) / 2);
-          const inicioIntervalo = new Date(meioJornada.getTime() - 7.5 * 60 * 1000); // 7.5min antes
-          const fimIntervalo = new Date(meioJornada.getTime() + 7.5 * 60 * 1000); // 7.5min depois
-          
-          intervaloInicio = inicioIntervalo.toTimeString().slice(0, 5);
-          intervaloFim = fimIntervalo.toTimeString().slice(0, 5);
-        }
-      }
+      if (error) throw error;
 
-      return {
-        funcionario_id: funcionarioId,
-        data: registro.data,
-        entrada: horaEntrada,
-        intervalo_inicio: intervaloInicio,
-        intervalo_fim: intervaloFim,
-        saida: horaSaida,
-        observacoes: registro.observacoes || "Horários preenchidos automaticamente com base na escala"
-      };
-    });
-
-    // Salvar todas as atualizações
-    for (const atualizacao of atualizacoes) {
-      const registro = registros.find(r => r.data === atualizacao.data);
-      if (!registro) continue;
-
-      let error;
-      
-      if (registro.id.startsWith('temp-')) {
-        // Inserir novo registro
-        const { error: insertError } = await supabase
-          .from("registros_ponto")
-          .insert(atualizacao);
-        error = insertError;
-      } else {
-        // Atualizar registro existente
-        const { error: updateError } = await supabase
-          .from("registros_ponto")
-          .update(atualizacao)
-          .eq("id", registro.id);
-        error = updateError;
-      }
-
-      if (error) {
+      if (!horariosEscala || horariosEscala.length === 0) {
         toast({
-          variant: "destructive",
-          title: "Erro ao preencher horários",
-          description: error.message
+          title: "Nenhum horário para preencher",
+          description: "Não foi possível gerar horários para este período"
         });
         return;
       }
+
+      // Filtrar apenas os dias que devem ter trabalho
+      const diasTrabalho = horariosEscala.filter((h: any) => h.deve_trabalhar);
+      
+      if (diasTrabalho.length === 0) {
+        toast({
+          title: "Nenhum dia de trabalho encontrado",
+          description: "Baseado na escala e vigência, não há dias de trabalho neste período"
+        });
+        return;
+      }
+
+      // Contar quantos registros serão atualizados
+      let registrosAtualizados = 0;
+
+      // Processar cada dia de trabalho
+      for (const horario of diasTrabalho) {
+        const registro = registros.find(r => r.data === horario.data);
+        if (!registro) continue;
+
+        // Verificar se o registro já tem horários completos
+        if (registro.entrada && registro.saida) continue;
+
+        const dadosParaSalvar = {
+          funcionario_id: funcionarioId,
+          data: horario.data,
+          entrada: horario.entrada,
+          intervalo_inicio: horario.intervalo_inicio,
+          intervalo_fim: horario.intervalo_fim,
+          saida: horario.saida,
+          observacoes: registro.observacoes || "Horários preenchidos automaticamente com base na escala e vigência"
+        };
+
+        let error;
+        
+        if (registro.id.startsWith('temp-')) {
+          // Inserir novo registro
+          const { error: insertError } = await supabase
+            .from("registros_ponto")
+            .insert(dadosParaSalvar);
+          error = insertError;
+        } else {
+          // Atualizar registro existente
+          const { error: updateError } = await supabase
+            .from("registros_ponto")
+            .update(dadosParaSalvar)
+            .eq("id", registro.id);
+          error = updateError;
+        }
+
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro ao preencher horários",
+            description: error.message
+          });
+          return;
+        }
+
+        registrosAtualizados++;
+      }
+
+      toast({
+        title: "Horários preenchidos com sucesso!",
+        description: `${registrosAtualizados} registro(s) atualizado(s) baseado na escala e vigência do funcionário`
+      });
+
+      carregarRegistros();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao preencher horários",
+        description: error.message || "Erro desconhecido"
+      });
     }
-
-    toast({
-      title: "Horários preenchidos com sucesso!",
-      description: `${registrosParaAtualizar.length} registro(s) atualizado(s) com base na escala`
-    });
-
-    carregarRegistros();
   };
 
   if (carregando) {
