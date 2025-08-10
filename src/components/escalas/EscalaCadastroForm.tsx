@@ -86,43 +86,91 @@ function getIntervaloMinutos(i: string | undefined, f: string | undefined) {
 // Omit observacoes do type, pois é opcional
 type EscalaCadastro = z.infer<typeof escalaSchema>;
 
+// Type for the external API
+export type EscalaData = {
+  id?: number;
+  nome: string;
+  entrada: string;
+  saida: string;
+  intervalo_inicio?: string;
+  intervalo_fim?: string;
+  dias_semana: string[];
+}
+
 // Adicione a tipagem das props:
 type Props = {
+  escala?: EscalaData;
   onCreated?: () => void;
   onCancel?: () => void;
 };
 
-export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
+export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Props) {
+  const isEditing = !!escala;
+  
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EscalaCadastro>({
     resolver: zodResolver(escalaSchema),
-    defaultValues: {}
+    defaultValues: {
+      nomeEscala: escala?.nome || "",
+      tipoJornada: escala?.dias_semana ? 
+        (escala.dias_semana.includes("Segunda-feira") && escala.dias_semana.includes("Sexta-feira") && escala.dias_semana.length === 5 ? "Jornada Diurna (8h/dia)" : "Escala personalizada") 
+        : "Jornada Diurna (8h/dia)",
+      entrada: escala?.entrada?.slice(0, 5) || "",
+      saida: escala?.saida?.slice(0, 5) || "",
+      intervaloInicio: escala?.intervalo_inicio?.slice(0, 5) || "",
+      intervaloFim: escala?.intervalo_fim?.slice(0, 5) || "",
+      observacoes: "",
+    }
   });
 
   const onSubmit = async (data: EscalaCadastro) => {
-    // Enviar para o Supabase incluindo os campos de intervalo
-    const { error } = await supabase.from("escalas").insert({
+    const escalaData = {
       nome: data.nomeEscala,
       entrada: data.entrada,
       saida: data.saida,
       intervalo_inicio: data.intervaloInicio || null,
       intervalo_fim: data.intervaloFim || null,
       dias_semana: diasSemanaTodos, // por padrão, todos os dias
-    });
+    };
 
-    if (error) {
+    if (isEditing && escala?.id) {
+      const { error } = await supabase
+        .from("escalas")
+        .update(escalaData)
+        .eq("id", escala.id);
+
+      if (error) {
+        toast({
+          title: "Erro ao atualizar escala",
+          description: "Ocorreu um erro ao atualizar a escala. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Erro ao salvar escala",
-        description: "Ocorreu um erro ao salvar a escala. Tente novamente.",
-        variant: "destructive",
+        title: "Escala atualizada!",
+        description: "Sua escala foi atualizada com sucesso.",
+        duration: 4000,
       });
-      return;
-    }
+    } else {
+      const { error } = await supabase.from("escalas").insert(escalaData);
 
-    toast({
-      title: "Escala cadastrada!",
-      description: "Sua escala foi salva com sucesso.",
-      duration: 4000,
-    });
+      if (error) {
+        toast({
+          title: "Erro ao salvar escala",
+          description: "Ocorreu um erro ao salvar a escala. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Escala cadastrada!",
+        description: "Sua escala foi salva com sucesso.",
+        duration: 4000,
+      });
+    }
+    
     reset();
     if (onCreated) onCreated();
   };
@@ -133,7 +181,9 @@ export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
       className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0 animate-fade-in"
       autoComplete="off"
     >
-      <h2 className="text-2xl font-bold text-green-700 mb-3">Nova Escala de Trabalho</h2>
+      <h2 className="text-2xl font-bold text-green-700 mb-3">
+        {isEditing ? "Editar Escala de Trabalho" : "Nova Escala de Trabalho"}
+      </h2>
       <EscalaNomeField register={register} errors={errors} />
       <TipoJornadaSelect control={control} errors={errors} />
       <HorariosFields register={register} errors={errors} />
@@ -153,7 +203,7 @@ export default function EscalaCadastroForm({ onCreated, onCancel }: Props) {
           className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
           disabled={isSubmitting}
         >
-          Salvar Escala
+          {isEditing ? "Atualizar Escala" : "Salvar Escala"}
         </Button>
       </div>
     </form>
