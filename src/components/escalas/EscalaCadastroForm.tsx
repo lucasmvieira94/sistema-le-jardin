@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import EscalaNomeField from "./EscalaNomeField";
 import TipoJornadaSelect from "./TipoJornadaSelect";
+import JornadaTrabalhoSelect from "./JornadaTrabalhoSelect";
 import HorariosFields from "./HorariosFields";
 import IntervaloFields from "./IntervaloFields";
 import ObservacoesField from "./ObservacoesField";
@@ -41,6 +42,7 @@ const diasSemanaTodos = [
 const escalaSchema = z.object({
   nomeEscala: z.string().min(2, "Nome obrigatório"),
   tipoJornada: z.string(),
+  jornadaTrabalho: z.string().min(1, "Selecione uma jornada de trabalho"),
   entrada: z.string().min(1, "Informe o horário"),
   saida: z.string().min(1, "Informe o horário"),
   intervaloInicio: z.string().optional(),
@@ -114,6 +116,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       tipoJornada: escala?.dias_semana ? 
         (escala.dias_semana.includes("Segunda-feira") && escala.dias_semana.includes("Sexta-feira") && escala.dias_semana.length === 5 ? "Jornada Diurna (8h/dia)" : "Escala personalizada") 
         : "Jornada Diurna (8h/dia)",
+      jornadaTrabalho: "40h_8h_segsex",
       entrada: escala?.entrada?.slice(0, 5) || "",
       saida: escala?.saida?.slice(0, 5) || "",
       intervaloInicio: escala?.intervalo_inicio?.slice(0, 5) || "",
@@ -186,6 +189,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       </h2>
       <EscalaNomeField register={register} errors={errors} />
       <TipoJornadaSelect control={control} errors={errors} />
+      <JornadaTrabalhoSelect control={control} errors={errors} />
       <HorariosFields register={register} errors={errors} />
       <IntervaloFields register={register} errors={errors} />
       <ObservacoesField register={register} />
