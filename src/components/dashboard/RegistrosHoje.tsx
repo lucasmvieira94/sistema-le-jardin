@@ -1,16 +1,53 @@
 import { useState, useEffect } from "react";
-import { Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Clock, CheckCircle, XCircle, AlertCircle, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, differenceInDays, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface RegistroHoje {
   funcionario_nome: string;
   entrada: string | null;
   saida: string | null;
-  status: 'completo' | 'em_andamento' | 'pendente' | 'falta';
+  status: 'completo' | 'em_andamento' | 'pendente' | 'falta' | 'folga';
+}
+
+// Função para verificar se o funcionário está de folga baseado na escala
+function isFuncionarioEmFolga(jornadaTrabalho: string, dataInicioVigencia: string, dataHoje: Date): boolean {
+  const inicioVigencia = new Date(dataInicioVigencia);
+  const diasDecorridos = differenceInDays(dataHoje, inicioVigencia);
+  const diaSemana = getDay(dataHoje); // 0 = domingo, 1 = segunda, etc.
+
+  switch (jornadaTrabalho) {
+    case "12x36":
+      // 12x36: trabalha um dia, folga um dia
+      return diasDecorridos % 2 === 1;
+    
+    case "24x48":
+      // 24x48: trabalha um dia, folga dois dias
+      return diasDecorridos % 3 !== 0;
+    
+    case "6x1":
+      // 6x1: trabalha 6 dias, folga 1 dia por semana
+      return diasDecorridos % 7 === 6;
+    
+    case "5x2":
+    case "40h_8h_segsex":
+      // 5x2 ou 40h: Segunda a sexta (folga sábado e domingo)
+      return diaSemana === 0 || diaSemana === 6; // domingo ou sábado
+    
+    case "44h_8h_segsex_4h_sab":
+      // 44h: Segunda a sexta + sábado meio período (folga só domingo)
+      return diaSemana === 0; // só domingo
+    
+    case "36h_6h_seg_sab":
+      // 36h: Segunda a sábado (folga só domingo)
+      return diaSemana === 0; // só domingo
+    
+    default:
+      return false;
+  }
 }
 
 export default function RegistrosHoje() {
@@ -22,10 +59,15 @@ export default function RegistrosHoje() {
       try {
         const hoje = format(new Date(), 'yyyy-MM-dd');
         
-        // Buscar funcionários ativos
+        // Buscar funcionários ativos com suas escalas
         const { data: funcionarios } = await supabase
           .from('funcionarios')
-          .select('id, nome_completo')
+          .select(`
+            id, 
+            nome_completo, 
+            data_inicio_vigencia,
+            escalas!inner(jornada_trabalho)
+          `)
           .eq('ativo', true);
 
         if (!funcionarios) return;
@@ -39,9 +81,18 @@ export default function RegistrosHoje() {
         const registrosProcessados = funcionarios.map(func => {
           const registro = registrosPonto?.find(r => r.funcionario_id === func.id);
           
-          let status: 'completo' | 'em_andamento' | 'pendente' | 'falta' = 'pendente';
+          // Verificar se o funcionário está de folga baseado na escala
+          const jornadaTrabalho = func.escalas?.jornada_trabalho;
+          const dataInicioVigencia = func.data_inicio_vigencia;
+          const estaEmFolga = jornadaTrabalho && dataInicioVigencia 
+            ? isFuncionarioEmFolga(jornadaTrabalho, dataInicioVigencia, new Date())
+            : false;
           
-          if (registro) {
+          let status: 'completo' | 'em_andamento' | 'pendente' | 'falta' | 'folga' = 'pendente';
+          
+          if (estaEmFolga) {
+            status = 'folga';
+          } else if (registro) {
             if (registro.entrada && registro.saida) {
               status = 'completo';
             } else if (registro.entrada) {
@@ -76,6 +127,8 @@ export default function RegistrosHoje() {
         return <CheckCircle className="h-4 w-4 text-primary" />;
       case 'em_andamento':
         return <Clock className="h-4 w-4 text-accent-foreground" />;
+      case 'folga':
+        return <Calendar className="h-4 w-4 text-muted-foreground" />;
       case 'falta':
         return <XCircle className="h-4 w-4 text-destructive" />;
       default:
@@ -89,6 +142,8 @@ export default function RegistrosHoje() {
         return <Badge variant="default" className="bg-primary text-primary-foreground">Completo</Badge>;
       case 'em_andamento':
         return <Badge variant="secondary">Em andamento</Badge>;
+      case 'folga':
+        return <Badge variant="outline" className="border-muted-foreground text-muted-foreground">Folga</Badge>;
       case 'falta':
         return <Badge variant="destructive">Falta</Badge>;
       default:
