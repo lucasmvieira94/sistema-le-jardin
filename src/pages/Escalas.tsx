@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EscalasList from "@/components/escalas/EscalasList";
 import EscalaCadastroForm from "@/components/escalas/EscalaCadastroForm";
-import GeradorEscala from "@/components/escalas/GeradorEscala";
 
 export interface EscalaData {
   id?: number;
@@ -43,38 +41,25 @@ export default function Escalas() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Gestão de Escalas</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Templates de Escalas</h1>
         <p className="text-muted-foreground">
-          Gerencie as escalas de trabalho personalizadas e crie novas escalas seguindo as normas da CLT.
+          Crie e gerencie templates de escalas reutilizáveis que seguem as normas da CLT.
         </p>
       </div>
 
-      <Tabs defaultValue="gerador" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="gerador">Gerador de Escala</TabsTrigger>
-          <TabsTrigger value="gestao">Gestão de Escalas</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="gerador" className="space-y-6">
-          <GeradorEscala />
-        </TabsContent>
-        
-        <TabsContent value="gestao" className="space-y-6">
-          <EscalasList refreshFlag={refreshFlag} onEdit={handleEditEscala} />
-          
-          {!showForm ? (
-            <Button onClick={() => setShowForm(true)}>
-              Nova Escala
-            </Button>
-          ) : (
-            <EscalaCadastroForm
-              escala={editingEscala}
-              onCreated={handleEscalaCreated}
-              onCancel={handleCancel}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+      <EscalasList refreshFlag={refreshFlag} onEdit={handleEditEscala} />
+      
+      {!showForm ? (
+        <Button onClick={() => setShowForm(true)}>
+          Novo Template de Escala
+        </Button>
+      ) : (
+        <EscalaCadastroForm
+          escala={editingEscala}
+          onCreated={handleEscalaCreated}
+          onCancel={handleCancel}
+        />
+      )}
     </div>
   );
 }
