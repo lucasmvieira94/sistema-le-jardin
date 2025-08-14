@@ -10,23 +10,11 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 import EscalaNomeField from "./EscalaNomeField";
-import TipoJornadaSelect from "./TipoJornadaSelect";
 import JornadaTrabalhoSelect from "./JornadaTrabalhoSelect";
 import HorariosFields from "./HorariosFields";
 import IntervaloFields from "./IntervaloFields";
 import ObservacoesField from "./ObservacoesField";
 
-const tiposJornada = [
-  "Jornada Diurna (8h/dia)",
-  "Jornada Noturna (7h/dia – entre 22h e 5h)",
-  "Jornada 12x36",
-  "Escala 6x1",
-  "Escala 5x2",
-  "Escala 4x2",
-  "Turno Ininterrupto de Revezamento (até 6h/dia)",
-  "Jornada Parcial (até 30h semanais)",
-  "Jornada Intermitente",
-];
 
 const diasSemanaTodos = [
   "Domingo",
@@ -41,7 +29,6 @@ const diasSemanaTodos = [
 // Validações CLT
 const escalaSchema = z.object({
   nomeEscala: z.string().min(2, "Nome obrigatório"),
-  tipoJornada: z.string(),
   jornadaTrabalho: z.string().min(1, "Selecione uma jornada de trabalho"),
   entrada: z.string().min(1, "Informe o horário"),
   saida: z.string().min(1, "Informe o horário"),
@@ -57,12 +44,17 @@ const escalaSchema = z.object({
 .refine((data) => {
   if (
     [
-      "Jornada Diurna (8h/dia)",
-      "Escala 6x1",
-      "Jornada 12x36",
-      "Escala 5x2",
-      "Escala 4x2"
-    ].includes(data.tipoJornada)
+      "40h_8h_segsex",
+      "44h_8h_segsex_4h_sab", 
+      "44h_8h48_segsex",
+      "6x1",
+      "5x1",
+      "5x2",
+      "4x2",
+      "turno_manha",
+      "turno_tarde", 
+      "turno_noite"
+    ].includes(data.jornadaTrabalho)
   ) {
     // Intervalo obrigatório e mínimo de 1h para essas jornadas (maiores que 6h)
     return (
@@ -113,9 +105,6 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
     resolver: zodResolver(escalaSchema),
     defaultValues: {
       nomeEscala: escala?.nome || "",
-      tipoJornada: escala?.dias_semana ? 
-        (escala.dias_semana.includes("Segunda-feira") && escala.dias_semana.includes("Sexta-feira") && escala.dias_semana.length === 5 ? "Jornada Diurna (8h/dia)" : "Escala personalizada") 
-        : "Jornada Diurna (8h/dia)",
       jornadaTrabalho: "40h_8h_segsex",
       entrada: escala?.entrada?.slice(0, 5) || "",
       saida: escala?.saida?.slice(0, 5) || "",
@@ -188,7 +177,6 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
         {isEditing ? "Editar Escala de Trabalho" : "Nova Escala de Trabalho"}
       </h2>
       <EscalaNomeField register={register} errors={errors} />
-      <TipoJornadaSelect control={control} errors={errors} />
       <JornadaTrabalhoSelect control={control} errors={errors} />
       <HorariosFields register={register} errors={errors} />
       <IntervaloFields register={register} errors={errors} />
