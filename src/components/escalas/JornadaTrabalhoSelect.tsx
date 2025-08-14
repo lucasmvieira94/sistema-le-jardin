@@ -1,5 +1,6 @@
-import { Controller, Control, FieldErrors } from "react-hook-form";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Control, FieldErrors } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const jornadasTrabalho = [
   {
@@ -80,24 +81,19 @@ type Props = {
 };
 
 export default function JornadaTrabalhoSelect({ control, errors }: Props) {
-  const message =
-    typeof errors.jornadaTrabalho?.message === "string"
-      ? errors.jornadaTrabalho.message
-      : undefined;
-
   return (
-    <div>
-      <label className="block mb-1 font-semibold text-green-800">
-        Jornada de Trabalho <span className="text-red-600">*</span>
-      </label>
-      <Controller
-        name="jornadaTrabalho"
-        control={control}
-        render={({ field }) => (
-          <Select value={field.value} onValueChange={field.onChange} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a jornada de trabalho" />
-            </SelectTrigger>
+    <FormField
+      control={control}
+      name="jornadaTrabalho"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Jornada de Trabalho</FormLabel>
+          <Select onValueChange={field.onChange} value={field.value}>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a jornada de trabalho" />
+              </SelectTrigger>
+            </FormControl>
             <SelectContent>
               {jornadasTrabalho.map((jornada) => (
                 <SelectItem key={jornada.value} value={jornada.value}>
@@ -106,12 +102,10 @@ export default function JornadaTrabalhoSelect({ control, errors }: Props) {
               ))}
             </SelectContent>
           </Select>
-        )}
-      />
-      {message && (
-        <span className="text-red-600 text-sm">{message}</span>
+          <FormMessage />
+        </FormItem>
       )}
-    </div>
+    />
   );
 }
 
