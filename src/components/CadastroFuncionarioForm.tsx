@@ -229,11 +229,16 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           <DataInput control={form.control} name="data_nascimento" label="Data de Nascimento" />
           <DataInput control={form.control} name="data_admissao" label="Data de Admissão" />
         </div>
-        <div className="flex flex-col md:flex-row gap-4">
-          <DataInput control={form.control} name="data_inicio_vigencia" label="Início da Vigência" />
-          <FuncaoInput control={form.control} />
+        <FuncaoInput control={form.control} />
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
+          <EscalaSelect control={form.control} escalas={escalas} />
+          <DataInput 
+            control={form.control} 
+            name="data_inicio_vigencia" 
+            label="Data de Início da Vigência da Escala"
+          />
         </div>
-        <EscalaSelect control={form.control} escalas={escalas} />
         <Button className="w-full" type="submit" disabled={isSubmitting}>
           {isSubmitting ? (
             <><Loader2 className="animate-spin mr-2 h-4 w-4" /> {isEditing ? 'Atualizando...' : 'Cadastrando...'}</>
