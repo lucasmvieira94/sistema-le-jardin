@@ -26,7 +26,7 @@ const diasSemanaTodos = [
   "Sábado",
 ];
 
-// Validações CLT
+// Schema para escalas como templates reutilizáveis
 const escalaSchema = z.object({
   nomeEscala: z.string().min(2, "Nome obrigatório"),
   jornadaTrabalho: z.string().min(1, "Selecione uma jornada de trabalho"),
@@ -36,27 +36,19 @@ const escalaSchema = z.object({
   intervaloFim: z.string().optional(),
   observacoes: z.string().optional(),
 })
-/** 
- * Não mais impede que entrada < saída.
- * Com essa atualização, se "saida" for menor que "entrada"
- * trata-se de uma escala noturna/virada de dia.
- */
 .refine((data) => {
-  if (
-    [
-      "40h_8h_segsex",
-      "44h_8h_segsex_4h_sab", 
-      "44h_8h48_segsex",
-      "6x1",
-      "5x1",
-      "5x2",
-      "4x2",
-      "turno_manha",
-      "turno_tarde", 
-      "turno_noite"
-    ].includes(data.jornadaTrabalho)
-  ) {
-    // Intervalo obrigatório e mínimo de 1h para essas jornadas (maiores que 6h)
+  // Validação de intervalo para jornadas que exigem intervalo obrigatório
+  const jornadasComIntervaloObrigatorio = [
+    "40h_8h_segsex",
+    "44h_8h_segsex_4h_sab", 
+    "44h_8h48_segsex",
+    "6x1",
+    "5x1", 
+    "5x2",
+    "4x2"
+  ];
+  
+  if (jornadasComIntervaloObrigatorio.includes(data.jornadaTrabalho)) {
     return (
       !!data.intervaloInicio &&
       !!data.intervaloFim &&
@@ -66,7 +58,7 @@ const escalaSchema = z.object({
   }
   return true;
 }, {
-  message: "Obrigatório ao menos 1h de intervalo para jornadas acima de 6h",
+  message: "Obrigatório ao menos 1h de intervalo para esta jornada",
   path: ["intervaloFim"],
 });
 
@@ -80,15 +72,16 @@ function getIntervaloMinutos(i: string | undefined, f: string | undefined) {
 // Omit observacoes do type, pois é opcional
 type EscalaCadastro = z.infer<typeof escalaSchema>;
 
-// Type for the external API
+// Type para escalas como templates
 export type EscalaData = {
   id?: number;
   nome: string;
+  jornada_trabalho: string;
   entrada: string;
   saida: string;
   intervalo_inicio?: string;
   intervalo_fim?: string;
-  dias_semana: string[];
+  observacoes?: string;
 }
 
 // Adicione a tipagem das props:
@@ -105,23 +98,24 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
     resolver: zodResolver(escalaSchema),
     defaultValues: {
       nomeEscala: escala?.nome || "",
-      jornadaTrabalho: "40h_8h_segsex",
+      jornadaTrabalho: escala?.jornada_trabalho || "40h_8h_segsex",
       entrada: escala?.entrada?.slice(0, 5) || "",
       saida: escala?.saida?.slice(0, 5) || "",
       intervaloInicio: escala?.intervalo_inicio?.slice(0, 5) || "",
       intervaloFim: escala?.intervalo_fim?.slice(0, 5) || "",
-      observacoes: "",
+      observacoes: escala?.observacoes || "",
     }
   });
 
   const onSubmit = async (data: EscalaCadastro) => {
     const escalaData = {
       nome: data.nomeEscala,
+      jornada_trabalho: data.jornadaTrabalho,
       entrada: data.entrada,
       saida: data.saida,
       intervalo_inicio: data.intervaloInicio || null,
       intervalo_fim: data.intervaloFim || null,
-      dias_semana: diasSemanaTodos, // por padrão, todos os dias
+      observacoes: data.observacoes || null,
     };
 
     if (isEditing && escala?.id) {
@@ -174,8 +168,12 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       autoComplete="off"
     >
       <h2 className="text-2xl font-bold text-green-700 mb-3">
-        {isEditing ? "Editar Escala de Trabalho" : "Nova Escala de Trabalho"}
+        {isEditing ? "Editar Template de Escala" : "Novo Template de Escala"}
       </h2>
+      <p className="text-muted-foreground mb-4">
+        Crie um template de escala que poderá ser reutilizado por múltiplos funcionários. 
+        A data de início da escala será definida individualmente na ficha de cada funcionário.
+      </p>
       <EscalaNomeField register={register} errors={errors} />
       <JornadaTrabalhoSelect control={control} errors={errors} />
       <HorariosFields register={register} errors={errors} />
