@@ -8,11 +8,12 @@ import GeradorEscala from "@/components/escalas/GeradorEscala";
 export interface EscalaData {
   id?: number;
   nome: string;
+  jornada_trabalho: string;
   entrada: string;
   saida: string;
   intervalo_inicio?: string;
   intervalo_fim?: string;
-  dias_semana: string[];
+  observacoes?: string;
 }
 
 export default function Escalas() {

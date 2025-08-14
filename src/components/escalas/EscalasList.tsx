@@ -10,18 +10,19 @@ import { useToast } from "@/hooks/use-toast";
 export type Escala = {
   id: number;
   nome: string;
+  jornada_trabalho: string;
   entrada: string;
   saida: string;
   intervalo_inicio?: string;
   intervalo_fim?: string;
-  dias_semana: string[];
+  observacoes?: string;
   created_at: string;
 };
 
 async function fetchEscalas(): Promise<Escala[]> {
   const { data, error } = await supabase
     .from("escalas")
-    .select("id, nome, entrada, saida, intervalo_inicio, intervalo_fim, dias_semana, created_at")
+    .select("id, nome, jornada_trabalho, entrada, saida, intervalo_inicio, intervalo_fim, observacoes, created_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -82,6 +83,7 @@ export default function EscalasList({ refreshFlag, onEdit }: EscalasListProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Jornada</TableHead>
                 <TableHead>Entrada</TableHead>
                 <TableHead>Saída</TableHead>
                 <TableHead>Criada em</TableHead>
@@ -92,6 +94,7 @@ export default function EscalasList({ refreshFlag, onEdit }: EscalasListProps) {
               {data.map((escala) => (
                 <TableRow key={escala.id}>
                   <TableCell>{escala.nome}</TableCell>
+                  <TableCell>{escala.jornada_trabalho}</TableCell>
                   <TableCell>{escala.entrada.slice(0,5)}</TableCell>
                   <TableCell>{escala.saida.slice(0,5)}</TableCell>
                   <TableCell>

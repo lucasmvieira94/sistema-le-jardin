@@ -19,9 +19,12 @@ import EscalaSelect from "./cadastro-funcionario/EscalaSelect";
 type Escala = {
   id: number;
   nome: string;
+  jornada_trabalho: string;
   entrada: string;
   saida: string;
-  dias_semana: string[];
+  intervalo_inicio?: string;
+  intervalo_fim?: string;
+  observacoes?: string;
 };
 
 type FormData = {

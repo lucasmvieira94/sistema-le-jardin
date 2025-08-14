@@ -164,32 +164,35 @@ export type Database = {
       escalas: {
         Row: {
           created_at: string
-          dias_semana: string[]
           entrada: string
           id: number
           intervalo_fim: string | null
           intervalo_inicio: string | null
+          jornada_trabalho: string
           nome: string
+          observacoes: string | null
           saida: string
         }
         Insert: {
           created_at?: string
-          dias_semana: string[]
           entrada: string
           id?: number
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          jornada_trabalho?: string
           nome: string
+          observacoes?: string | null
           saida: string
         }
         Update: {
           created_at?: string
-          dias_semana?: string[]
           entrada?: string
           id?: number
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          jornada_trabalho?: string
           nome?: string
+          observacoes?: string | null
           saida?: string
         }
         Relationships: []
