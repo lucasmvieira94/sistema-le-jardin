@@ -2,18 +2,25 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale/pt-BR";
+import { CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarDays, Clock, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import JornadaTrabalhoSelect from "./JornadaTrabalhoSelect";
 
 const formSchema = z.object({
   jornadaTrabalho: z.string().min(1, "Selecione uma jornada de trabalho"),
-  dataInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato YYYY-MM-DD"),
+  dataInicio: z.date({
+    required_error: "Selecione uma data de início",
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -35,17 +42,20 @@ export default function GeradorEscala() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       jornadaTrabalho: "",
-      dataInicio: "",
+      dataInicio: undefined,
     },
   });
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
+      // Converter a data para o formato YYYY-MM-DD para o backend
+      const dataInicioFormatted = format(data.dataInicio, 'yyyy-MM-dd');
+      
       const { data: escalaData, error } = await supabase.functions.invoke('gerar-escala', {
         body: {
           jornadaValue: data.jornadaTrabalho,
-          dataInicio: data.dataInicio
+          dataInicio: dataInicioFormatted
         }
       });
 
@@ -74,7 +84,7 @@ export default function GeradorEscala() {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+    return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR });
   };
 
   const getTotalHours = () => {
@@ -110,15 +120,40 @@ export default function GeradorEscala() {
                   control={form.control}
                   name="dataInicio"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Data de Início</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          className="w-full"
-                        />
-                      </FormControl>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date("1900-01-01") || date > new Date("2100-12-31")
+                            }
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
