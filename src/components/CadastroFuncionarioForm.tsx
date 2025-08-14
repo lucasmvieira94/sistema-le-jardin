@@ -35,12 +35,29 @@ type FormData = {
   escala_id: string;
 };
 
+interface Props {
+  funcionarioData?: any;
+  onSuccess?: (data: any) => void;
+  isEditing?: boolean;
+}
+
 function gerarCodigoAleatorio() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-export default function CadastroFuncionarioForm() {
-  const form = useForm<FormData>();
+export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, isEditing = false }: Props) {
+  const form = useForm<FormData>({
+    defaultValues: funcionarioData ? {
+      nome_completo: funcionarioData.nome_completo || '',
+      email: funcionarioData.email || '',
+      cpf: funcionarioData.cpf || '',
+      data_nascimento: funcionarioData.data_nascimento || '',
+      data_admissao: funcionarioData.data_admissao || '',
+      data_inicio_vigencia: funcionarioData.data_inicio_vigencia || '',
+      funcao: funcionarioData.funcao || '',
+      escala_id: funcionarioData.escala_id?.toString() || '',
+    } : undefined
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const { isAdmin } = useUserRole();
@@ -74,7 +91,7 @@ export default function CadastroFuncionarioForm() {
       toast({ 
         variant: "destructive", 
         title: "Acesso negado",
-        description: "Apenas administradores podem cadastrar funcionários" 
+        description: `Apenas administradores podem ${isEditing ? 'editar' : 'cadastrar'} funcionários` 
       });
       return;
     }
@@ -102,63 +119,97 @@ export default function CadastroFuncionarioForm() {
         funcao: sanitizeString(values.funcao)
       };
 
-      const { data: existeCpf } = await supabase
-        .from("funcionarios")
-        .select("id")
-        .eq("cpf", sanitizedValues.cpf)
-        .maybeSingle();
-      if (existeCpf) {
-        toast({ variant: "destructive", title: "CPF já cadastrado" });
-        setIsSubmitting(false);
-        return;
-      }
-      const { data: existeEmail } = await supabase
-        .from("funcionarios")
-        .select("id")
-        .eq("email", sanitizedValues.email)
-        .maybeSingle();
-      if (existeEmail) {
-        toast({ variant: "destructive", title: "Email já cadastrado" });
-        setIsSubmitting(false);
-        return;
-      }
-
-      const codigo = await geraCodigoUnico();
-
-      const newFuncionario = {
-        ...sanitizedValues,
-        escala_id: Number(sanitizedValues.escala_id),
-        codigo_4_digitos: codigo,
-      };
-
-      const { error } = await supabase.from("funcionarios").insert([newFuncionario]);
-      if (error) {
-        throw error;
-      }
-
-      // Log audit event
-      await logEvent('funcionarios', 'INSERT', null, newFuncionario);
-
-      const resp = await fetch(
-        "https://kvjgmqicictxxfnvhuwl.functions.supabase.co/enviar-codigo",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: sanitizedValues.email,
-            nome: sanitizedValues.nome_completo,
-            codigo,
-          }),
+      // Check for duplicates only if not editing or if values changed
+      if (!isEditing || (funcionarioData && sanitizedValues.cpf !== funcionarioData.cpf)) {
+        const { data: existeCpf } = await supabase
+          .from("funcionarios")
+          .select("id")
+          .eq("cpf", sanitizedValues.cpf)
+          .maybeSingle();
+        if (existeCpf) {
+          toast({ variant: "destructive", title: "CPF já cadastrado" });
+          setIsSubmitting(false);
+          return;
         }
-      );
-      if (resp.ok) {
-        toast({ title: "Funcionário cadastrado!", description: "O código de acesso foi enviado por email." });
-        form.reset();
+      }
+
+      if (!isEditing || (funcionarioData && sanitizedValues.email !== funcionarioData.email)) {
+        const { data: existeEmail } = await supabase
+          .from("funcionarios")
+          .select("id")
+          .eq("email", sanitizedValues.email)
+          .maybeSingle();
+        if (existeEmail) {
+          toast({ variant: "destructive", title: "Email já cadastrado" });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      if (isEditing && funcionarioData) {
+        // Update existing funcionario
+        const updateData = {
+          ...sanitizedValues,
+          escala_id: Number(sanitizedValues.escala_id),
+        };
+
+        const { error } = await supabase
+          .from("funcionarios")
+          .update(updateData)
+          .eq("id", funcionarioData.id);
+
+        if (error) {
+          throw error;
+        }
+
+        if (onSuccess) {
+          onSuccess(updateData);
+        } else {
+          toast({ title: "Funcionário atualizado com sucesso!" });
+        }
       } else {
-        toast({ variant: "destructive", title: "Funcionário cadastrado mas falha ao enviar email." });
+        // Create new funcionario
+        const codigo = await geraCodigoUnico();
+
+        const newFuncionario = {
+          ...sanitizedValues,
+          escala_id: Number(sanitizedValues.escala_id),
+          codigo_4_digitos: codigo,
+        };
+
+        const { error } = await supabase.from("funcionarios").insert([newFuncionario]);
+        if (error) {
+          throw error;
+        }
+
+        // Log audit event
+        await logEvent('funcionarios', 'INSERT', null, newFuncionario);
+
+        const resp = await fetch(
+          "https://kvjgmqicictxxfnvhuwl.functions.supabase.co/enviar-codigo",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: sanitizedValues.email,
+              nome: sanitizedValues.nome_completo,
+              codigo,
+            }),
+          }
+        );
+        if (resp.ok) {
+          toast({ title: "Funcionário cadastrado!", description: "O código de acesso foi enviado por email." });
+          form.reset();
+        } else {
+          toast({ variant: "destructive", title: "Funcionário cadastrado mas falha ao enviar email." });
+        }
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Erro ao cadastrar", description: err?.message });
+      toast({ 
+        variant: "destructive", 
+        title: `Erro ao ${isEditing ? 'atualizar' : 'cadastrar'}`, 
+        description: err?.message 
+      });
     }
     setIsSubmitting(false);
   }
@@ -181,7 +232,11 @@ export default function CadastroFuncionarioForm() {
         </div>
         <EscalaSelect control={form.control} escalas={escalas} />
         <Button className="w-full" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : "Cadastrar Funcionário"}
+          {isSubmitting ? (
+            <><Loader2 className="animate-spin mr-2 h-4 w-4" /> {isEditing ? 'Atualizando...' : 'Cadastrando...'}</>
+          ) : (
+            isEditing ? 'Atualizar Funcionário' : 'Cadastrar Funcionário'
+          )}
         </Button>
       </form>
     </Form>

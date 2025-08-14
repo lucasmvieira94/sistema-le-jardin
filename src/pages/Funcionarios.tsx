@@ -156,7 +156,6 @@ export default function Funcionarios() {
                   </td>
                   <td className="py-2 px-3 flex gap-2 justify-center">
                     <Button
-                      asChild
                       size="icon"
                       variant="outline"
                       className="w-8 h-8"
@@ -164,9 +163,7 @@ export default function Funcionarios() {
                       onClick={() => navigate(`/funcionarios/${func.id}/editar`)}
                       disabled={!func.ativo}
                     >
-                      <span>
-                        <Edit className="w-4 h-4" />
-                      </span>
+                      <Edit className="w-4 h-4" />
                     </Button>
                     {func.ativo ? (
                       <Button

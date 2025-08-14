@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
+import EditarFuncionario from "./pages/EditarFuncionario";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 
@@ -66,6 +67,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <NovoFuncionario />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/funcionarios/:id/editar"
+              element={
+                <ProtectedRoute>
+                  <EditarFuncionario />
                 </ProtectedRoute>
               }
             />
