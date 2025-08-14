@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -398,61 +398,61 @@ export type Database = {
       calcular_horas_trabalhadas: {
         Args: {
           p_entrada: string
-          p_saida: string
-          p_intervalo_inicio?: string
           p_intervalo_fim?: string
+          p_intervalo_inicio?: string
+          p_saida: string
         }
         Returns: unknown
       }
       calcular_horas_trabalhadas_turno_noturno: {
         Args: {
           p_entrada: string
-          p_saida: string
-          p_intervalo_inicio?: string
           p_intervalo_fim?: string
+          p_intervalo_inicio?: string
+          p_saida: string
         }
         Returns: unknown
       }
       calcular_totais_folha_ponto: {
-        Args: { p_funcionario_id: string; p_mes: number; p_ano: number }
+        Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
-          total_horas_trabalhadas: unknown
+          dias_trabalhados: number
+          total_abonos: number
+          total_faltas: number
           total_horas_extras_diurnas: unknown
           total_horas_extras_noturnas: unknown
-          total_faltas: number
-          total_abonos: number
-          dias_trabalhados: number
+          total_horas_trabalhadas: unknown
         }[]
       }
       eh_horario_noturno: {
         Args: {
+          p_fim_noturno?: string
           p_horario: string
           p_inicio_noturno?: string
-          p_fim_noturno?: string
         }
         Returns: boolean
       }
       gerar_folha_ponto_mensal: {
-        Args: { p_funcionario_id: string; p_mes: number; p_ano: number }
+        Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
-          funcionario_nome: string
-          funcionario_cpf: string
-          funcionario_funcao: string
-          funcionario_escala_nome: string
-          funcionario_escala_entrada: string
-          funcionario_escala_saida: string
-          dia: number
+          abonos: boolean
           data: string
+          dia: number
           entrada: string
-          intervalo_inicio: string
-          intervalo_fim: string
-          saida: string
-          horas_trabalhadas: unknown
+          faltas: boolean
+          funcionario_cpf: string
+          funcionario_escala_entrada: string
+          funcionario_escala_nome: string
+          funcionario_escala_saida: string
+          funcionario_funcao: string
+          funcionario_nome: string
           horas_extras_diurnas: unknown
           horas_extras_noturnas: unknown
-          faltas: boolean
-          abonos: boolean
+          horas_trabalhadas: unknown
+          intervalo_fim: string
+          intervalo_inicio: string
           observacoes: string
+          saida: string
         }[]
       }
       get_current_user_role: {
@@ -461,29 +461,29 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       inserir_intervalo_automatico: {
         Args: {
-          p_funcionario_id: string
           p_data: string
           p_entrada: string
+          p_funcionario_id: string
           p_saida: string
         }
         Returns: {
-          intervalo_inicio: string
           intervalo_fim: string
+          intervalo_inicio: string
         }[]
       }
       log_audit_event: {
         Args: {
-          p_tabela: string
-          p_operacao: string
           p_dados_anteriores?: Json
           p_dados_novos?: Json
+          p_operacao: string
+          p_tabela: string
         }
         Returns: undefined
       }
@@ -497,17 +497,17 @@ export type Database = {
       }
       preencher_horarios_por_escala: {
         Args: {
-          p_funcionario_id: string
-          p_data_inicio: string
           p_data_fim: string
+          p_data_inicio: string
+          p_funcionario_id: string
         }
         Returns: {
           data: string
-          entrada: string
-          intervalo_inicio: string
-          intervalo_fim: string
-          saida: string
           deve_trabalhar: boolean
+          entrada: string
+          intervalo_fim: string
+          intervalo_inicio: string
+          saida: string
         }[]
       }
       registrar_tentativa_codigo: {
