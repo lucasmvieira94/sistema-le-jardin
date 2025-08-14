@@ -1,1 +1,4 @@
 project_id = "kvjgmqicictxxfnvhuwl"
+
+[functions.exportar-funcionarios]
+verify_jwt = false

@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import ImportarFuncionarios from "@/components/ImportarFuncionarios";
+import ExportarFuncionarios from "@/components/ExportarFuncionarios";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 type Funcionario = {
@@ -105,6 +106,7 @@ export default function Funcionarios() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Funcionários</h2>
         <div className="flex gap-2">
+          <ExportarFuncionarios />
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
