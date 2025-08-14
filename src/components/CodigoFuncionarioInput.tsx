@@ -58,37 +58,24 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
     setValidando(true);
 
     try {
-      console.log('🔍 Buscando funcionário no Supabase...');
-      const { data: funcionario, error } = await supabase
-        .from('funcionarios')
-        .select('id, nome_completo, ativo')
-        .eq('codigo_4_digitos', codigo)
-        .eq('ativo', true)
-        .single();
+      console.log('🔍 Validando funcionário usando função segura...');
+      const { data: validacao, error } = await supabase
+        .rpc("validar_codigo_funcionario", { p_codigo: codigo });
 
-      console.log('📋 Resultado da busca:', { funcionario, error });
+      console.log('📋 Resultado da validação:', { validacao, error });
 
       if (error) {
         console.error('❌ Erro do Supabase:', error);
-        
-        if (error.code === 'PGRST116') {
-          toast({
-            variant: "destructive",
-            title: "Código não encontrado",
-            description: "Verifique o código e tente novamente"
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erro de conexão",
-            description: `Erro: ${error.message}`
-          });
-        }
+        toast({
+          variant: "destructive",
+          title: "Erro de conexão",
+          description: `Erro: ${error.message}`
+        });
         return;
       }
 
-      if (!funcionario) {
-        console.log('❌ Funcionário não encontrado');
+      if (!validacao || validacao.length === 0 || !validacao[0].valid) {
+        console.log('❌ Código não encontrado ou funcionário inativo');
         toast({
           variant: "destructive",
           title: "Código não encontrado",
@@ -97,8 +84,9 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
         return;
       }
 
+      const funcionario = validacao[0];
       console.log('✅ Funcionário validado:', funcionario);
-      onFuncionarioValidado(funcionario.id, funcionario.nome_completo);
+      onFuncionarioValidado(funcionario.funcionario_id, funcionario.nome_completo);
     } catch (err) {
       console.error('❌ Erro geral na validação:', err);
       toast({

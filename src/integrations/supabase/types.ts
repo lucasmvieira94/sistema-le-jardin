@@ -514,6 +514,14 @@ export type Database = {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
       }
+      validar_codigo_funcionario: {
+        Args: { p_codigo: string }
+        Returns: {
+          funcionario_id: string
+          nome_completo: string
+          valid: boolean
+        }[]
+      }
       verificar_limite_tentativas: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: boolean
