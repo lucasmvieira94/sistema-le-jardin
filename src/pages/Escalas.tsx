@@ -1,8 +1,19 @@
-import { CalendarRange, Plus } from "lucide-react";
-import EscalaCadastroForm, { type EscalaData } from "@/components/escalas/EscalaCadastroForm";
-import EscalasList, { type Escala } from "@/components/escalas/EscalasList";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EscalasList from "@/components/escalas/EscalasList";
+import EscalaCadastroForm from "@/components/escalas/EscalaCadastroForm";
+import GeradorEscala from "@/components/escalas/GeradorEscala";
+
+export interface EscalaData {
+  id?: number;
+  nome: string;
+  entrada: string;
+  saida: string;
+  intervalo_inicio?: string;
+  intervalo_fim?: string;
+  dias_semana: string[];
+}
 
 export default function Escalas() {
   const [showForm, setShowForm] = useState(false);
@@ -17,18 +28,8 @@ export default function Escalas() {
     setRefreshFlag(flag => flag + 1);
   };
 
-  // Função para abrir formulário de edição
-  const handleEditEscala = (escala: Escala) => {
-    const escalaData: EscalaData = {
-      id: escala.id,
-      nome: escala.nome,
-      entrada: escala.entrada,
-      saida: escala.saida,
-      intervalo_inicio: escala.intervalo_inicio,
-      intervalo_fim: escala.intervalo_fim,
-      dias_semana: escala.dias_semana,
-    };
-    setEditingEscala(escalaData);
+  const handleEditEscala = (escala: EscalaData) => {
+    setEditingEscala(escala);
     setShowForm(true);
   };
 
@@ -39,32 +40,40 @@ export default function Escalas() {
   };
 
   return (
-    <div className="container mx-auto max-w-2xl pt-12 font-heebo">
-      <h2 className="text-3xl font-bold mb-3 text-primary flex items-center gap-2">
-        <CalendarRange className="w-8 h-8" /> Gestão de Escalas
-      </h2>
-      <p className="mb-5 text-muted-foreground">
-        Visualize, crie, edite ou exclua escalas de trabalho personalizadas dos colaboradores conforme a CLT.
-      </p>
-      
-      {/* Lista de Escalas */}
-      <EscalasList refreshFlag={refreshFlag} onEdit={handleEditEscala} />
+    <div className="container mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Gestão de Escalas</h1>
+        <p className="text-muted-foreground">
+          Gerencie as escalas de trabalho personalizadas e crie novas escalas seguindo as normas da CLT.
+        </p>
+      </div>
 
-      {/* Botão Nova Escala e Form */}
-      {!showForm ? (
-        <Button
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition"
-          onClick={() => setShowForm(true)}
-        >
-          <Plus /> Nova Escala
-        </Button>
-      ) : (
-        <EscalaCadastroForm 
-          escala={editingEscala || undefined} 
-          onCreated={handleEscalaCreated} 
-          onCancel={handleCancel} 
-        />
-      )}
+      <Tabs defaultValue="gerador" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="gerador">Gerador de Escala</TabsTrigger>
+          <TabsTrigger value="gestao">Gestão de Escalas</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="gerador" className="space-y-6">
+          <GeradorEscala />
+        </TabsContent>
+        
+        <TabsContent value="gestao" className="space-y-6">
+          <EscalasList refreshFlag={refreshFlag} onEdit={handleEditEscala} />
+          
+          {!showForm ? (
+            <Button onClick={() => setShowForm(true)}>
+              Nova Escala
+            </Button>
+          ) : (
+            <EscalaCadastroForm
+              escala={editingEscala}
+              onCreated={handleEscalaCreated}
+              onCancel={handleCancel}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

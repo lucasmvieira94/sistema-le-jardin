@@ -2,3 +2,6 @@ project_id = "kvjgmqicictxxfnvhuwl"
 
 [functions.exportar-funcionarios]
 verify_jwt = false
+
+[functions.gerar-escala]
+verify_jwt = false
