@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,7 +95,7 @@ type Props = {
 export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Props) {
   const isEditing = !!escala;
   
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EscalaCadastro>({
+  const form = useForm<EscalaCadastro>({
     resolver: zodResolver(escalaSchema),
     defaultValues: {
       nomeEscala: escala?.nome || "",
@@ -157,16 +158,17 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       });
     }
     
-    reset();
+    form.reset();
     if (onCreated) onCreated();
   };
 
   return (
-    <form 
-      onSubmit={handleSubmit(onSubmit)}
-      className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0 animate-fade-in"
-      autoComplete="off"
-    >
+    <Form {...form}>
+      <form 
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="bg-white rounded-xl p-6 shadow-lg flex flex-col gap-5 mt-4 md:mt-0 animate-fade-in"
+        autoComplete="off"
+      >
       <h2 className="text-2xl font-bold text-green-700 mb-3">
         {isEditing ? "Editar Template de Escala" : "Novo Template de Escala"}
       </h2>
@@ -174,11 +176,11 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
         Crie um template de escala que poderá ser reutilizado por múltiplos funcionários. 
         A data de início da escala será definida individualmente na ficha de cada funcionário.
       </p>
-      <EscalaNomeField register={register} errors={errors} />
-      <JornadaTrabalhoSelect control={control} errors={errors} />
-      <HorariosFields register={register} errors={errors} />
-      <IntervaloFields register={register} errors={errors} />
-      <ObservacoesField register={register} />
+      <EscalaNomeField register={form.register} errors={form.formState.errors} />
+      <JornadaTrabalhoSelect control={form.control} errors={form.formState.errors} />
+      <HorariosFields register={form.register} errors={form.formState.errors} />
+      <IntervaloFields register={form.register} errors={form.formState.errors} />
+      <ObservacoesField register={form.register} />
       <div className="pt-2 flex justify-end gap-2">
         <Button
           type="button"
@@ -191,11 +193,12 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
         <Button
           type="submit"
           className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
-          disabled={isSubmitting}
+          disabled={form.formState.isSubmitting}
         >
           {isEditing ? "Atualizar Escala" : "Salvar Escala"}
         </Button>
       </div>
-    </form>
+      </form>
+    </Form>
   );
 }
