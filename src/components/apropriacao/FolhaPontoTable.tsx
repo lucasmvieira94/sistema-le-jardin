@@ -106,22 +106,13 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
 
       // Criar mapa de registros existentes para evitar duplicatas
       const registrosMap = new Map();
-      const diasOcupadosPorTurnoNoturno = new Set();
       
       registrosExistentes?.forEach(r => {
-        // Para turnos noturnos (saída < entrada), mostrar apenas no dia de início
-        if (r.entrada && r.saida && r.saida < r.entrada) {
-          registrosMap.set(r.data, r);
-          
-          // Marcar o dia seguinte como ocupado pelo turno noturno
-          const proximoDia = new Date(new Date(r.data).getTime() + 24*60*60*1000).toISOString().split('T')[0];
-          diasOcupadosPorTurnoNoturno.add(proximoDia);
-        } 
-        // Apenas registros com horários preenchidos são considerados "existentes"
-        else if (r.entrada || r.saida) {
-          registrosMap.set(r.data, r);
-        }
-        // Registros vazios são ignorados - serão recriados como editáveis
+        // Adicionar o registro no dia em que foi criado
+        registrosMap.set(r.data, r);
+        
+        // Para turnos noturnos, NÃO adicionar no dia seguinte
+        // O dia seguinte deve aparecer como folga se não tiver registro próprio
       });
 
       // Criar registros para todas as datas do período - INCLUINDO DIAS DE FOLGA
@@ -130,12 +121,12 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       datasPerido.forEach(data => {
         const registroExistente = registrosMap.get(data);
         
-        // Se há registro existente com horários, usar ele
-        if (registroExistente) {
+        // Se há registro existente, verificar se tem horários preenchidos
+        if (registroExistente && (registroExistente.entrada || registroExistente.saida)) {
+          // Registro com horários - usar ele
           todosRegistros.push(registroExistente);
-        } 
-        // Se o dia NÃO está ocupado por um turno noturno, criar registro editável para dia de folga
-        else if (!diasOcupadosPorTurnoNoturno.has(data)) {
+        } else {
+          // Não há registro com horários para este dia - criar registro editável para folga
           todosRegistros.push({
             id: `temp-${data}-${funcionarioId}`,
             data,
@@ -153,7 +144,7 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
         totalDatas: datasPerido.length,
         registrosExistentes: registrosExistentes?.length,
         registrosFinais: todosRegistros.length,
-        diasDeTrabalho: todosRegistros.filter(r => r.entrada || r.saida).length,
+        diasComHorarios: todosRegistros.filter(r => r.entrada || r.saida).length,
         diasDeFolga: todosRegistros.filter(r => !r.entrada && !r.saida).length
       });
 
