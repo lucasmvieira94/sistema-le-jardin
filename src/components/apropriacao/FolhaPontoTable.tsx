@@ -96,15 +96,21 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
 
     // Criar mapa de registros existentes para evitar duplicatas
     const registrosMap = new Map();
+    const registrosNoturnos = new Set(); // Para rastrear registros noturnos já processados
+    
     registrosExistentes?.forEach(r => {
-      registrosMap.set(r.data, r);
-      
-      // Para turnos noturnos, adicionar também no dia seguinte
+      // Para turnos noturnos (saída < entrada), mostrar apenas no dia de início
       if (r.entrada && r.saida && r.saida < r.entrada) {
+        // Este é um turno noturno - adicionar apenas no dia da data do registro
+        registrosMap.set(r.data, r);
+        registrosNoturnos.add(r.data);
+        
+        // Não adicionar no dia seguinte para evitar duplicação
         const proximoDia = new Date(new Date(r.data).getTime() + 24*60*60*1000).toISOString().split('T')[0];
-        if (!registrosMap.has(proximoDia)) {
-          registrosMap.set(proximoDia, r);
-        }
+        registrosNoturnos.add(proximoDia); // Marcar como ocupado pelo turno noturno
+      } else {
+        // Turno normal - adicionar normalmente
+        registrosMap.set(r.data, r);
       }
     });
 
@@ -112,17 +118,23 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
     const todosRegistros: RegistroPonto[] = datasPerido.map(data => {
       const registroExistente = registrosMap.get(data);
       
-      return registroExistente || {
-        id: `temp-${data}-${funcionarioId}`, // Chave única incluindo funcionário
-        data,
-        entrada: null,
-        intervalo_inicio: null,
-        intervalo_fim: null,
-        saida: null,
-        observacoes: null,
-        funcionario_id: funcionarioId
-      };
-    });
+      // Se não há registro existente e o dia não está ocupado por turno noturno
+      if (!registroExistente && !registrosNoturnos.has(data)) {
+        return {
+          id: `temp-${data}-${funcionarioId}`,
+          data,
+          entrada: null,
+          intervalo_inicio: null,
+          intervalo_fim: null,
+          saida: null,
+          observacoes: null,
+          funcionario_id: funcionarioId
+        };
+      }
+      
+      // Retornar o registro existente ou null se o dia está ocupado por turno noturno
+      return registroExistente || null;
+    }).filter(Boolean); // Remover nulls
 
     setRegistros(todosRegistros);
     setCarregando(false);
