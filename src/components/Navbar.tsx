@@ -2,7 +2,27 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
-import { Home, Users, Calendar, FileText, FileX, LogOut, User, Clock, Settings } from "lucide-react";
+import { 
+  Home, 
+  Users, 
+  Calendar, 
+  FileText, 
+  FileX, 
+  LogOut, 
+  User, 
+  Clock, 
+  Settings,
+  FileHeart,
+  ChevronDown
+} from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navbar() {
   const location = useLocation();
@@ -16,15 +36,22 @@ export default function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navItems = [
+  const mainNavItems = [
     { path: "/", icon: Home, label: "Registro Ponto", public: true, adminOnly: false },
     { path: "/dashboard", icon: FileText, label: "Dashboard", public: false, adminOnly: false },
-    { path: "/funcionarios", icon: Users, label: "Funcionários", public: false, adminOnly: true },
-    { path: "/escalas", icon: Calendar, label: "Escalas", public: false, adminOnly: true },
-    { path: "/apropriacao", icon: Clock, label: "Apropriação", public: false, adminOnly: true },
-    { path: "/relatorios", icon: FileText, label: "Relatórios", public: false, adminOnly: true },
-    { path: "/faltas", icon: FileX, label: "Afastamentos", public: false, adminOnly: true },
-    { path: "/configuracoes", icon: Settings, label: "Configurações", public: false, adminOnly: true },
+    { path: "/prontuario", icon: FileHeart, label: "Prontuário", public: true, adminOnly: false },
+  ];
+
+  const pontoMenuItems = [
+    { path: "/funcionarios", icon: Users, label: "Funcionários", adminOnly: true },
+    { path: "/escalas", icon: Calendar, label: "Escalas", adminOnly: true },
+    { path: "/apropriacao", icon: Clock, label: "Apropriação", adminOnly: true },
+    { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
+    { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
+  ];
+
+  const sistemaMenuItems = [
+    { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 
   return (
@@ -34,8 +61,9 @@ export default function Navbar() {
           SenexCare
         </Link>
         
-        <div className="flex space-x-4">
-          {navItems.map((item) => {
+        <div className="flex space-x-1">
+          {/* Itens principais da navegação */}
+          {mainNavItems.map((item) => {
             const Icon = item.icon;
             const shouldShow = item.public || (user && (!item.adminOnly || isAdmin));
             
@@ -56,6 +84,82 @@ export default function Navbar() {
               </Link>
             );
           })}
+
+          {/* Menu Controle de Ponto */}
+          {user && isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-100"
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>Controle de Ponto</span>
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg">
+                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                  Gestão de Ponto
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {pontoMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link
+                        to={item.path}
+                        className={`flex items-center space-x-2 px-2 py-2 text-sm cursor-pointer ${
+                          isActive(item.path) ? "bg-primary/10 text-primary" : ""
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Menu Sistema */}
+          {user && isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-100"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Sistema</span>
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg">
+                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                  Configurações
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {sistemaMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link
+                        to={item.path}
+                        className={`flex items-center space-x-2 px-2 py-2 text-sm cursor-pointer ${
+                          isActive(item.path) ? "bg-primary/10 text-primary" : ""
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 

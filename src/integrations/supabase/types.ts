@@ -77,6 +77,36 @@ export type Database = {
           },
         ]
       }
+      atividades_templates: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          descricao: string
+          id: string
+          nome: string
+          periodicidade: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          descricao: string
+          id?: string
+          nome: string
+          periodicidade?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          nome?: string
+          periodicidade?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           created_at: string
@@ -253,6 +283,63 @@ export type Database = {
           },
         ]
       }
+      prontuario_registros: {
+        Row: {
+          created_at: string
+          data_registro: string
+          descricao: string
+          funcionario_id: string
+          horario_registro: string
+          id: string
+          observacoes: string | null
+          residente_id: string
+          tipo_registro: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_registro?: string
+          descricao: string
+          funcionario_id: string
+          horario_registro?: string
+          id?: string
+          observacoes?: string | null
+          residente_id: string
+          tipo_registro: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_registro?: string
+          descricao?: string
+          funcionario_id?: string
+          horario_registro?: string
+          id?: string
+          observacoes?: string | null
+          residente_id?: string
+          tipo_registro?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prontuario_registros_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prontuario_registros_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registro_tentativas: {
         Row: {
           bloqueado_ate: string | null
@@ -341,6 +428,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      residentes: {
+        Row: {
+          ativo: boolean
+          condicoes_medicas: string | null
+          cpf: string | null
+          created_at: string
+          data_nascimento: string
+          id: string
+          nome_completo: string
+          numero_prontuario: string
+          observacoes_gerais: string | null
+          quarto: string | null
+          responsavel_email: string | null
+          responsavel_nome: string | null
+          responsavel_telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          condicoes_medicas?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento: string
+          id?: string
+          nome_completo: string
+          numero_prontuario: string
+          observacoes_gerais?: string | null
+          quarto?: string | null
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          condicoes_medicas?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string
+          id?: string
+          nome_completo?: string
+          numero_prontuario?: string
+          observacoes_gerais?: string | null
+          quarto?: string | null
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       tipos_afastamento: {
         Row: {

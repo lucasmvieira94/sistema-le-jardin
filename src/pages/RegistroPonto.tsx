@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { CalendarRange, RefreshCw } from "lucide-react";
+import { CalendarRange, RefreshCw, FileHeart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import BotoesRegistroPonto from "@/components/BotoesRegistroPonto";
@@ -149,13 +150,25 @@ export default function RegistroPonto() {
                 </div>
               )}
 
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                className="w-full"
-              >
-                Usar outro código
-              </Button>
+              <div className="space-y-3">
+                <Link 
+                  to={`/prontuario?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`}
+                  className="w-full"
+                >
+                  <Button variant="default" className="w-full flex items-center gap-2">
+                    <FileHeart className="w-4 h-4" />
+                    Acessar Prontuário Eletrônico
+                  </Button>
+                </Link>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="w-full"
+                >
+                  Usar outro código
+                </Button>
+              </div>
             </>
           )}
         </div>

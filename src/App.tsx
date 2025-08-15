@@ -11,6 +11,7 @@ import Relatorios from "./pages/Relatorios";
 import Faltas from "./pages/Faltas";
 import ApropriacaoHoras from "./pages/ApropriacaoHoras";
 import Configuracoes from "./pages/Configuracoes";
+import Prontuario from "./pages/Prontuario";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Funcionarios from "./pages/Funcionarios";
@@ -44,6 +45,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             {/* Página inicial: Registro de Ponto (sem proteção) */}
             <Route path="/" element={<RegistroPonto />} />
+            {/* Prontuário eletrônico (sem proteção - usa código de 4 dígitos) */}
+            <Route path="/prontuario" element={<Prontuario />} />
             {/* Dashboard protegido */}
             <Route
               path="/dashboard"
