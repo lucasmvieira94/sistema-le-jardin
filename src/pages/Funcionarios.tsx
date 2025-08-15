@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet } from "lucide-react";
+import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet, Filter, ArrowUpDown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -10,6 +10,9 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import ImportarFuncionarios from "@/components/ImportarFuncionarios";
 import ExportarFuncionarios from "@/components/ExportarFuncionarios";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 type Funcionario = {
   id: string;
@@ -19,12 +22,21 @@ type Funcionario = {
   funcao: string;
   escala_id: number;
   ativo: boolean;
+  escalas?: {
+    nome: string;
+  };
 };
 
 export default function Funcionarios() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [funcionariosFiltrados, setFuncionariosFiltrados] = useState<Funcionario[]>([]);
   const [loading, setLoading] = useState(true);
   const [desligandoId, setDesligandoId] = useState<string | null>(null);
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroFuncao, setFiltroFuncao] = useState<string>("todas");
+  const [filtroEscala, setFiltroEscala] = useState<string>("todas");
+  const [filtroNome, setFiltroNome] = useState<string>("");
+  const [ordenacao, setOrdenacao] = useState<string>("nome");
   const navigate = useNavigate();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const { logEvent } = useAuditLog();
@@ -33,7 +45,16 @@ export default function Funcionarios() {
     setLoading(true);
     const { data, error } = await supabase
       .from("funcionarios")
-      .select("id, nome_completo, email, cpf, funcao, escala_id, ativo")
+      .select(`
+        id, 
+        nome_completo, 
+        email, 
+        cpf, 
+        funcao, 
+        escala_id, 
+        ativo,
+        escalas(nome)
+      `)
       .order("nome_completo");
     if (!error) setFuncionarios(data || []);
     setLoading(false);
@@ -42,6 +63,56 @@ export default function Funcionarios() {
   useEffect(() => {
     fetchFuncionarios();
   }, []);
+
+  // Aplicar filtros e ordenação
+  useEffect(() => {
+    let filtrados = [...funcionarios];
+
+    // Filtro por nome
+    if (filtroNome) {
+      filtrados = filtrados.filter(func => 
+        func.nome_completo.toLowerCase().includes(filtroNome.toLowerCase())
+      );
+    }
+
+    // Filtro por status
+    if (filtroStatus !== "todos") {
+      const statusAtivo = filtroStatus === "ativo";
+      filtrados = filtrados.filter(func => func.ativo === statusAtivo);
+    }
+
+    // Filtro por função
+    if (filtroFuncao !== "todas") {
+      filtrados = filtrados.filter(func => func.funcao === filtroFuncao);
+    }
+
+    // Filtro por escala
+    if (filtroEscala !== "todas") {
+      filtrados = filtrados.filter(func => func.escalas?.nome === filtroEscala);
+    }
+
+    // Ordenação
+    filtrados.sort((a, b) => {
+      switch (ordenacao) {
+        case "nome":
+          return a.nome_completo.localeCompare(b.nome_completo);
+        case "funcao":
+          return a.funcao.localeCompare(b.funcao);
+        case "status":
+          return Number(b.ativo) - Number(a.ativo);
+        case "escala":
+          return (a.escalas?.nome || "").localeCompare(b.escalas?.nome || "");
+        default:
+          return 0;
+      }
+    });
+
+    setFuncionariosFiltrados(filtrados);
+  }, [funcionarios, filtroNome, filtroStatus, filtroFuncao, filtroEscala, ordenacao]);
+
+  // Obter listas únicas para os filtros
+  const funcoesUnicas = [...new Set(funcionarios.map(f => f.funcao))].sort();
+  const escalasUnicas = [...new Set(funcionarios.map(f => f.escalas?.nome).filter(Boolean))].sort();
 
   async function desligarFuncionario(id: string) {
     if (!isAdmin) {
@@ -123,6 +194,97 @@ export default function Funcionarios() {
           </Link>
         </div>
       </div>
+
+      {/* Filtros e Ordenação */}
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Filter className="w-4 h-4" />
+          <span>Filtros e Ordenação</span>
+          <Badge variant="outline">{funcionariosFiltrados.length} de {funcionarios.length}</Badge>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          {/* Busca por nome */}
+          <div className="lg:col-span-2">
+            <Input
+              placeholder="Buscar por nome..."
+              value={filtroNome}
+              onChange={(e) => setFiltroNome(e.target.value)}
+            />
+          </div>
+
+          {/* Filtro por status */}
+          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos Status</SelectItem>
+              <SelectItem value="ativo">Ativos</SelectItem>
+              <SelectItem value="inativo">Desligados</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Filtro por função */}
+          <Select value={filtroFuncao} onValueChange={setFiltroFuncao}>
+            <SelectTrigger>
+              <SelectValue placeholder="Função" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas Funções</SelectItem>
+              {funcoesUnicas.map(funcao => (
+                <SelectItem key={funcao} value={funcao}>{funcao}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Filtro por escala */}
+          <Select value={filtroEscala} onValueChange={setFiltroEscala}>
+            <SelectTrigger>
+              <SelectValue placeholder="Escala" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas Escalas</SelectItem>
+              {escalasUnicas.map(escala => (
+                <SelectItem key={escala} value={escala}>{escala}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Ordenação */}
+          <Select value={ordenacao} onValueChange={setOrdenacao}>
+            <SelectTrigger>
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nome">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4" />
+                  Nome
+                </div>
+              </SelectItem>
+              <SelectItem value="funcao">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4" />
+                  Função
+                </div>
+              </SelectItem>
+              <SelectItem value="status">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4" />
+                  Status
+                </div>
+              </SelectItem>
+              <SelectItem value="escala">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4" />
+                  Escala
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="animate-spin" /> Carregando...
@@ -135,23 +297,25 @@ export default function Funcionarios() {
                 <th className="py-2 px-3 text-left">Nome</th>
                 <th className="py-2 px-3 text-left hidden md:table-cell">Email</th>
                 <th className="py-2 px-3 text-left hidden md:table-cell">Função</th>
+                <th className="py-2 px-3 text-left hidden lg:table-cell">Escala</th>
                 <th className="py-2 px-3 text-left hidden md:table-cell">CPF</th>
                 <th className="py-2 px-3 text-left">Status</th>
                 <th className="py-2 px-3 text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {funcionarios.map((func) => (
+              {funcionariosFiltrados.map((func) => (
                 <tr key={func.id} className="border-b last:border-b-0">
                   <td className="py-2 px-3">{func.nome_completo}</td>
                   <td className="py-2 px-3 hidden md:table-cell">{func.email}</td>
                   <td className="py-2 px-3 hidden md:table-cell">{func.funcao}</td>
+                  <td className="py-2 px-3 hidden lg:table-cell">{func.escalas?.nome || '-'}</td>
                   <td className="py-2 px-3 hidden md:table-cell">{func.cpf}</td>
                   <td className="py-2 px-3 font-semibold">
                     {func.ativo ? (
-                      <span className="text-green-600">Ativo</span>
+                      <Badge variant="outline" className="border-green-500 text-green-600">Ativo</Badge>
                     ) : (
-                      <span className="text-red-500">Desligado</span>
+                      <Badge variant="outline" className="border-red-500 text-red-500">Desligado</Badge>
                     )}
                   </td>
                   <td className="py-2 px-3 flex gap-2 justify-center">
@@ -188,9 +352,16 @@ export default function Funcionarios() {
                   </td>
                 </tr>
               ))}
+              {funcionariosFiltrados.length === 0 && funcionarios.length > 0 && (
+                <tr>
+                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={7}>
+                    Nenhum funcionário encontrado com os filtros aplicados.
+                  </td>
+                </tr>
+              )}
               {funcionarios.length === 0 && (
                 <tr>
-                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={6}>
+                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={7}>
                     Nenhum funcionário cadastrado ainda.
                   </td>
                 </tr>
