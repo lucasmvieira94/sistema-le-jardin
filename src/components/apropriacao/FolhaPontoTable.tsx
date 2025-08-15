@@ -130,11 +130,20 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
 
   const gerarDatasPerido = (inicio: string, fim: string): string[] => {
     const datas: string[] = [];
-    const dataAtual = new Date(inicio);
-    const dataFinal = new Date(fim);
+    const dataInicial = new Date(inicio + 'T00:00:00');
+    const dataFinal = new Date(fim + 'T00:00:00');
 
+    const dataAtual = new Date(dataInicial);
+    
     while (dataAtual <= dataFinal) {
-      datas.push(dataAtual.toISOString().split('T')[0]);
+      // Usar UTC para evitar problemas de fuso horário
+      const ano = dataAtual.getFullYear();
+      const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+      const dia = String(dataAtual.getDate()).padStart(2, '0');
+      
+      datas.push(`${ano}-${mes}-${dia}`);
+      
+      // Incrementar 1 dia de forma segura
       dataAtual.setDate(dataAtual.getDate() + 1);
     }
 
