@@ -458,9 +458,9 @@ export type Database = {
           funcionario_escala_saida: string
           funcionario_funcao: string
           funcionario_nome: string
-          horas_extras_diurnas: unknown
-          horas_extras_noturnas: unknown
-          horas_trabalhadas: unknown
+          horas_extras_diurnas: string
+          horas_extras_noturnas: string
+          horas_trabalhadas: string
           intervalo_fim: string
           intervalo_inicio: string
           observacoes: string
