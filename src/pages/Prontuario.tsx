@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ResidentesList from "@/components/prontuario/ResidentesList";
 import RegistrosProntuario from "@/components/prontuario/RegistrosProntuario";
+import ProntuarioCiclos from "@/components/prontuario/ProntuarioCiclos";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 
 export default function Prontuario() {
@@ -83,11 +84,16 @@ export default function Prontuario() {
         </div>
       </div>
 
-      <Tabs defaultValue="registros" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="ciclos" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="ciclos">Prontuários por Ciclo</TabsTrigger>
           <TabsTrigger value="registros">Registros do Dia</TabsTrigger>
           <TabsTrigger value="residentes">Gerenciar Residentes</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="ciclos" className="space-y-4">
+          <ProntuarioCiclos funcionarioId={funcionarioId} />
+        </TabsContent>
         
         <TabsContent value="registros" className="space-y-4">
           <RegistrosProntuario 

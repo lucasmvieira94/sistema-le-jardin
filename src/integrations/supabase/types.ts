@@ -283,8 +283,53 @@ export type Database = {
           },
         ]
       }
+      prontuario_ciclos: {
+        Row: {
+          created_at: string
+          data_ciclo: string
+          data_criacao: string
+          data_encerramento: string | null
+          funcionario_encerrou: string | null
+          id: string
+          residente_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_ciclo: string
+          data_criacao?: string
+          data_encerramento?: string | null
+          funcionario_encerrou?: string | null
+          id?: string
+          residente_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_ciclo?: string
+          data_criacao?: string
+          data_encerramento?: string | null
+          funcionario_encerrou?: string | null
+          id?: string
+          residente_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prontuario_ciclos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prontuario_registros: {
         Row: {
+          ciclo_id: string | null
           created_at: string
           data_registro: string
           descricao: string
@@ -298,6 +343,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ciclo_id?: string | null
           created_at?: string
           data_registro?: string
           descricao: string
@@ -311,6 +357,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ciclo_id?: string | null
           created_at?: string
           data_registro?: string
           descricao?: string
@@ -324,6 +371,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "prontuario_registros_ciclo_id_fkey"
+            columns: ["ciclo_id"]
+            isOneToOne: false
+            referencedRelation: "prontuario_ciclos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prontuario_registros_funcionario_id_fkey"
             columns: ["funcionario_id"]
@@ -339,6 +393,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prontuario_templates_obrigatorios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao_padrao: string | null
+          id: string
+          ordem: number
+          tipo_registro: string
+          titulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao_padrao?: string | null
+          id?: string
+          ordem?: number
+          tipo_registro: string
+          titulo: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao_padrao?: string | null
+          id?: string
+          ordem?: number
+          tipo_registro?: string
+          titulo?: string
+        }
+        Relationships: []
       }
       registro_tentativas: {
         Row: {
@@ -574,12 +658,20 @@ export type Database = {
           total_horas_trabalhadas: unknown
         }[]
       }
+      criar_ciclo_prontuario_diario: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       eh_horario_noturno: {
         Args: {
           p_fim_noturno?: string
           p_horario: string
           p_inicio_noturno?: string
         }
+        Returns: boolean
+      }
+      encerrar_ciclo_prontuario: {
+        Args: { p_ciclo_id: string; p_funcionario_id: string }
         Returns: boolean
       }
       gerar_folha_ponto_mensal: {
@@ -671,6 +763,10 @@ export type Database = {
           nome_completo: string
           valid: boolean
         }[]
+      }
+      verificar_ciclo_completo: {
+        Args: { p_ciclo_id: string }
+        Returns: boolean
       }
       verificar_limite_tentativas: {
         Args: { p_codigo: string; p_ip_address?: unknown }
