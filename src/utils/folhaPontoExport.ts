@@ -20,25 +20,25 @@ export function exportToPDF(
   mes: number,
   ano: number
 ) {
-  const doc = new jsPDF('landscape');
+  const doc = new jsPDF('portrait');
   
   if (dados.length === 0) return;
   
   const funcionario = dados[0];
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  // Cabeçalho
-  doc.setFontSize(16);
-  doc.text('FOLHA DE PONTO MENSAL', 20, 20);
+  // Cabeçalho compacto
+  doc.setFontSize(14);
+  doc.text('FOLHA DE PONTO MENSAL', 105, 15, { align: 'center' });
   
-  doc.setFontSize(12);
-  doc.text(`Funcionário: ${funcionario.funcionario_nome}`, 20, 35);
-  doc.text(`CPF: ${funcionario.funcionario_cpf}`, 20, 45);
-  doc.text(`Função: ${funcionario.funcionario_funcao}`, 20, 55);
-  doc.text(`Escala: ${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, 20, 65);
-  doc.text(`Período: ${mesNome}`, 20, 75);
+  doc.setFontSize(9);
+  doc.text(`Funcionário: ${funcionario.funcionario_nome}`, 10, 25);
+  doc.text(`CPF: ${funcionario.funcionario_cpf}`, 10, 32);
+  doc.text(`Função: ${funcionario.funcionario_funcao}`, 10, 39);
+  doc.text(`Escala: ${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, 10, 46);
+  doc.text(`Período: ${mesNome}`, 10, 53);
 
-  // Tabela de registros (sem observações)
+  // Tabela de registros otimizada para retrato
   const tableData = dados.map(row => [
     row.dia.toString().padStart(2, '0'),
     new Date(row.data).toLocaleDateString('pt-BR', { weekday: 'short' }),
@@ -53,12 +53,31 @@ export function exportToPDF(
   ]);
 
   autoTable(doc, {
-    startY: 85,
-    head: [['Dia', 'Sem', 'Entrada', 'Int. Ini', 'Int. Fim', 'Saída', 'H. Trab.', 'H. Extra', 'Falta', 'Abono']],
+    startY: 60,
+    head: [['Dia', 'Sem', 'Ent', 'I.Ini', 'I.Fim', 'Saí', 'H.Trab', 'H.Ext', 'Falta', 'Abono']],
     body: tableData,
     theme: 'grid',
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [41, 128, 185] }
+    styles: { 
+      fontSize: 7,
+      cellPadding: 2
+    },
+    headStyles: { 
+      fillColor: [41, 128, 185],
+      fontSize: 7,
+      fontStyle: 'bold'
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 15 }, // Dia
+      1: { halign: 'center', cellWidth: 20 }, // Sem
+      2: { halign: 'center', cellWidth: 18 }, // Entrada
+      3: { halign: 'center', cellWidth: 18 }, // Int Ini
+      4: { halign: 'center', cellWidth: 18 }, // Int Fim
+      5: { halign: 'center', cellWidth: 18 }, // Saída
+      6: { halign: 'center', cellWidth: 20 }, // H Trab
+      7: { halign: 'center', cellWidth: 18 }, // H Extra
+      8: { halign: 'center', cellWidth: 15 }, // Falta
+      9: { halign: 'center', cellWidth: 15 }  // Abono
+    }
   });
 
   // Totais
