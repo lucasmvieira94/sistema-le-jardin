@@ -112,9 +112,14 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
         const proximoDia = new Date(new Date(r.data).getTime() + 24*60*60*1000).toISOString().split('T')[0];
         diasOcupadosPorTurnoNoturno.add(proximoDia);
         console.log('Dia seguinte marcado como ocupado:', proximoDia);
-      } else {
-        console.log('Turno normal para:', r.data);
+      } 
+      // Apenas registros com horários preenchidos são considerados "existentes"
+      else if (r.entrada || r.saida) {
+        console.log('Turno normal com horários para:', r.data);
         registrosMap.set(r.data, r);
+      } else {
+        console.log('Registro vazio ignorado para:', r.data, '(será tratado como dia de folga)');
+        // Não adicionar registros vazios ao mapa - eles serão recriados como editáveis
       }
     });
 
@@ -133,12 +138,12 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
         ocupadoPorTurnoNoturno: diasOcupadosPorTurnoNoturno.has(data)
       });
       
-      // Se há registro existente, usar ele
+      // Se há registro existente com horários, usar ele
       if (registroExistente) {
         todosRegistros.push(registroExistente);
         console.log('Adicionado registro existente para:', data);
       } 
-      // Se o dia NÃO está ocupado por um turno noturno, criar registro vazio
+      // Se o dia NÃO está ocupado por um turno noturno, criar registro editável
       else if (!diasOcupadosPorTurnoNoturno.has(data)) {
         const registroVazio = {
           id: `temp-${data}-${funcionarioId}`,
@@ -151,7 +156,7 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
           funcionario_id: funcionarioId
         };
         todosRegistros.push(registroVazio);
-        console.log('Adicionado registro vazio para dia de folga:', data);
+        console.log('Adicionado registro editável para dia de folga:', data);
       } else {
         console.log('Dia omitido por ser ocupado por turno noturno:', data);
       }
