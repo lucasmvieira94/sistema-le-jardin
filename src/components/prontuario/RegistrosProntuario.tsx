@@ -174,12 +174,12 @@ export default function RegistrosProntuario({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Select value={selectedResidente || ""} onValueChange={(value) => onSelectResidente(value || null)}>
+          <Select value={selectedResidente || "todos"} onValueChange={(value) => onSelectResidente(value === "todos" ? null : value)}>
             <SelectTrigger className="w-80">
               <SelectValue placeholder="Selecione um residente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os residentes</SelectItem>
+              <SelectItem value="todos">Todos os residentes</SelectItem>
               {residentes.map((residente) => (
                 <SelectItem key={residente.id} value={residente.id}>
                   {residente.nome_completo} - {residente.numero_prontuario}
