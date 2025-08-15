@@ -94,24 +94,26 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       return;
     }
 
-    // Criar registros para todas as datas do período, considerando turnos noturnos
-    const todosRegistros: RegistroPonto[] = datasPerido.map(data => {
-      // Buscar registro para esta data ou turno noturno do dia anterior
-      const registroExistente = registrosExistentes?.find(r => {
-        // Registro normal do dia
-        if (r.data === data) return true;
-        
-        // Turno noturno: registro do dia anterior que termina no dia atual
-        const dataAnterior = new Date(new Date(data).getTime() - 24*60*60*1000).toISOString().split('T')[0];
-        if (r.data === dataAnterior && r.entrada && r.saida && r.saida < r.entrada) {
-          return true;
+    // Criar mapa de registros existentes para evitar duplicatas
+    const registrosMap = new Map();
+    registrosExistentes?.forEach(r => {
+      registrosMap.set(r.data, r);
+      
+      // Para turnos noturnos, adicionar também no dia seguinte
+      if (r.entrada && r.saida && r.saida < r.entrada) {
+        const proximoDia = new Date(new Date(r.data).getTime() + 24*60*60*1000).toISOString().split('T')[0];
+        if (!registrosMap.has(proximoDia)) {
+          registrosMap.set(proximoDia, r);
         }
-        
-        return false;
-      });
+      }
+    });
+
+    // Criar registros para todas as datas do período
+    const todosRegistros: RegistroPonto[] = datasPerido.map(data => {
+      const registroExistente = registrosMap.get(data);
       
       return registroExistente || {
-        id: `temp-${data}`,
+        id: `temp-${data}-${funcionarioId}`, // Chave única incluindo funcionário
         data,
         entrada: null,
         intervalo_inicio: null,
@@ -393,8 +395,8 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {registros.map((registro) => (
-              <TableRow key={registro.id}>
+            {registros.map((registro, index) => (
+              <TableRow key={`${registro.data}-${index}`}>
                 <TableCell className="font-medium">
                   {formatarData(registro.data)}
                 </TableCell>
