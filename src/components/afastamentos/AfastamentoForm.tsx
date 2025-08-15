@@ -118,6 +118,7 @@ export default function AfastamentoForm() {
       });
 
       form.reset();
+      setTipoPeriodo("dias");
     } catch (err: any) {
       toast({
         variant: "destructive",
