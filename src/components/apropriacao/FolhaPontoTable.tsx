@@ -133,33 +133,24 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
     const dataInicial = new Date(inicio + 'T00:00:00');
     const dataFinal = new Date(fim + 'T00:00:00');
 
-    const dataAtual = new Date(dataInicial);
+    // Usar milissegundos para garantir precisão na iteração
+    const tempoInicial = dataInicial.getTime();
+    const tempoFinal = dataFinal.getTime();
     
-    console.log('Gerando datas do período:', inicio, 'até', fim);
-    
-    while (dataAtual <= dataFinal) {
-      // Usar UTC para evitar problemas de fuso horário
-      const ano = dataAtual.getFullYear();
-      const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-      const dia = String(dataAtual.getDate()).padStart(2, '0');
+    for (let tempo = tempoInicial; tempo <= tempoFinal; tempo += 24 * 60 * 60 * 1000) {
+      const data = new Date(tempo);
+      const ano = data.getFullYear();
+      const mes = String(data.getMonth() + 1).padStart(2, '0');
+      const dia = String(data.getDate()).padStart(2, '0');
       
-      const dataFormatada = `${ano}-${mes}-${dia}`;
-      datas.push(dataFormatada);
-      console.log('Data adicionada:', dataFormatada, 'Dia:', dia);
-      
-      // Incrementar 1 dia de forma segura
-      dataAtual.setDate(dataAtual.getDate() + 1);
+      datas.push(`${ano}-${mes}-${dia}`);
     }
 
-    console.log('Datas geradas:', datas);
-    console.log('Total de datas:', datas.length);
     return datas;
   };
 
   const formatarData = (data: string) => {
     const dataObj = new Date(data + 'T00:00:00');
-    const dia = dataObj.getDate();
-    console.log('Formatando data:', data, 'Dia extraído:', dia);
     
     return dataObj.toLocaleDateString('pt-BR', {
       weekday: 'short',
@@ -414,8 +405,8 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {registros.map((registro, index) => (
-              <TableRow key={`${registro.data}-${index}`}>
+            {registros.map((registro) => (
+              <TableRow key={registro.data}>
                 <TableCell className="font-medium">
                   {formatarData(registro.data)}
                 </TableCell>
