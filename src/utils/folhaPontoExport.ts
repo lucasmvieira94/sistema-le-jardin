@@ -38,7 +38,7 @@ export function exportToPDF(
   doc.text(`Escala: ${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, 20, 65);
   doc.text(`Período: ${mesNome}`, 20, 75);
 
-  // Tabela de registros
+  // Tabela de registros (sem observações)
   const tableData = dados.map(row => [
     row.dia.toString().padStart(2, '0'),
     new Date(row.data).toLocaleDateString('pt-BR', { weekday: 'short' }),
@@ -49,13 +49,12 @@ export function exportToPDF(
     formatInterval(row.horas_trabalhadas),
     formatInterval(row.horas_extras_diurnas),
     row.faltas ? 'F' : '',
-    row.abonos ? 'A' : '',
-    row.observacoes || ''
+    row.abonos ? 'A' : ''
   ]);
 
   autoTable(doc, {
     startY: 85,
-    head: [['Dia', 'Sem', 'Entrada', 'Int. Ini', 'Int. Fim', 'Saída', 'H. Trab.', 'H. Extra', 'Falta', 'Abono', 'Obs']],
+    head: [['Dia', 'Sem', 'Entrada', 'Int. Ini', 'Int. Fim', 'Saída', 'H. Trab.', 'H. Extra', 'Falta', 'Abono']],
     body: tableData,
     theme: 'grid',
     styles: { fontSize: 8 },
@@ -97,7 +96,7 @@ export function exportToExcel(
     [`Escala: ${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`],
     [`Período: ${mesNome}`],
     [],
-    ['Dia', 'Semana', 'Entrada', 'Int. Início', 'Int. Fim', 'Saída', 'H. Trabalhadas', 'H. Extras', 'Falta', 'Abono', 'Observações'],
+    ['Dia', 'Semana', 'Entrada', 'Int. Início', 'Int. Fim', 'Saída', 'H. Trabalhadas', 'H. Extras', 'Falta', 'Abono'],
     ...dados.map(row => [
       row.dia.toString().padStart(2, '0'),
       new Date(row.data).toLocaleDateString('pt-BR', { weekday: 'short' }),
@@ -108,8 +107,7 @@ export function exportToExcel(
       formatInterval(row.horas_trabalhadas),
       formatInterval(row.horas_extras_diurnas),
       row.faltas ? 'F' : '',
-      row.abonos ? 'A' : '',
-      row.observacoes || ''
+      row.abonos ? 'A' : ''
     ]),
     [],
     ['RESUMO MENSAL:'],
