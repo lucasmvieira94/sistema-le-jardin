@@ -130,21 +130,27 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
     // Criar registros para todas as datas do período - INCLUINDO DIAS DE FOLGA
     const todosRegistros: RegistroPonto[] = [];
     
-    datasPerido.forEach(data => {
-      const registroExistente = registrosMap.get(data);
+    console.log('Iniciando processamento das datas do período...');
+    
+    datasPerido.forEach((data, index) => {
+      console.log(`[${index + 1}/${datasPerido.length}] Processando data: ${data}`);
       
-      console.log(`Processando data ${data}:`, {
-        temRegistro: !!registroExistente,
-        ocupadoPorTurnoNoturno: diasOcupadosPorTurnoNoturno.has(data)
+      const registroExistente = registrosMap.get(data);
+      const estaOcupadoPorTurnoNoturno = diasOcupadosPorTurnoNoturno.has(data);
+      
+      console.log(`Data ${data}:`, {
+        temRegistroExistente: !!registroExistente,
+        ocupadoPorTurnoNoturno: estaOcupadoPorTurnoNoturno,
+        registroExistente: registroExistente ? { entrada: registroExistente.entrada, saida: registroExistente.saida } : null
       });
       
       // Se há registro existente com horários, usar ele
       if (registroExistente) {
         todosRegistros.push(registroExistente);
-        console.log('Adicionado registro existente para:', data);
+        console.log('✅ Adicionado registro existente para:', data);
       } 
       // Se o dia NÃO está ocupado por um turno noturno, criar registro editável
-      else if (!diasOcupadosPorTurnoNoturno.has(data)) {
+      else if (!estaOcupadoPorTurnoNoturno) {
         const registroVazio = {
           id: `temp-${data}-${funcionarioId}`,
           data,
@@ -156,14 +162,21 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
           funcionario_id: funcionarioId
         };
         todosRegistros.push(registroVazio);
-        console.log('Adicionado registro editável para dia de folga:', data);
+        console.log('✅ Adicionado registro editável para dia de folga:', data, registroVazio);
       } else {
-        console.log('Dia omitido por ser ocupado por turno noturno:', data);
+        console.log('❌ Dia omitido por ser ocupado por turno noturno:', data);
       }
     });
 
+    console.log('Processamento concluído!');
     console.log('Total de registros finais:', todosRegistros.length);
-    console.log('Registros finais:', todosRegistros.map(r => ({ data: r.data, entrada: r.entrada, saida: r.saida })));
+    console.log('Registros finais (resumo):', todosRegistros.map(r => ({ 
+      id: r.id, 
+      data: r.data, 
+      entrada: r.entrada, 
+      saida: r.saida,
+      isTemp: r.id.startsWith('temp-')
+    })));
 
     setRegistros(todosRegistros);
     setCarregando(false);
