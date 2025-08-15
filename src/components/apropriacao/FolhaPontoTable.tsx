@@ -135,23 +135,33 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
 
     const dataAtual = new Date(dataInicial);
     
+    console.log('Gerando datas do período:', inicio, 'até', fim);
+    
     while (dataAtual <= dataFinal) {
       // Usar UTC para evitar problemas de fuso horário
       const ano = dataAtual.getFullYear();
       const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
       const dia = String(dataAtual.getDate()).padStart(2, '0');
       
-      datas.push(`${ano}-${mes}-${dia}`);
+      const dataFormatada = `${ano}-${mes}-${dia}`;
+      datas.push(dataFormatada);
+      console.log('Data adicionada:', dataFormatada, 'Dia:', dia);
       
       // Incrementar 1 dia de forma segura
       dataAtual.setDate(dataAtual.getDate() + 1);
     }
 
+    console.log('Datas geradas:', datas);
+    console.log('Total de datas:', datas.length);
     return datas;
   };
 
   const formatarData = (data: string) => {
-    return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', {
+    const dataObj = new Date(data + 'T00:00:00');
+    const dia = dataObj.getDate();
+    console.log('Formatando data:', data, 'Dia extraído:', dia);
+    
+    return dataObj.toLocaleDateString('pt-BR', {
       weekday: 'short',
       day: '2-digit',
       month: '2-digit'
