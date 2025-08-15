@@ -70,29 +70,39 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
   };
 
   const carregarRegistros = async () => {
-    setCarregando(true);
-    
-    // Gerar todas as datas do período
-    const datasPerido = gerarDatasPerido(dataInicio, dataFim);
-    
-    // Buscar registros existentes incluindo turnos noturnos
-    const { data: registrosExistentes, error } = await supabase
-      .from("registros_ponto")
-      .select("*")
-      .eq("funcionario_id", funcionarioId)
-      .gte("data", new Date(new Date(dataInicio).getTime() - 24*60*60*1000).toISOString().split('T')[0]) // Incluir dia anterior para turnos noturnos
-      .lte("data", dataFim)
-      .order("data");
+    try {
+      setCarregando(true);
+      
+      console.log('🚀 Iniciando carregarRegistros...');
+      
+      // Gerar todas as datas do período
+      const datasPerido = gerarDatasPerido(dataInicio, dataFim);
+      
+      console.log('📊 Total de datas no período:', datasPerido.length);
+      
+      // Buscar registros existentes incluindo turnos noturnos
+      console.log('🔍 Buscando registros no banco...');
+      
+      const { data: registrosExistentes, error } = await supabase
+        .from("registros_ponto")
+        .select("*")
+        .eq("funcionario_id", funcionarioId)
+        .gte("data", new Date(new Date(dataInicio).getTime() - 24*60*60*1000).toISOString().split('T')[0]) // Incluir dia anterior para turnos noturnos
+        .lte("data", dataFim)
+        .order("data");
 
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar registros",
-        description: error.message
-      });
-      setCarregando(false);
-      return;
-    }
+      console.log('📦 Resultado da consulta:', { registrosExistentes: registrosExistentes?.length, error });
+
+      if (error) {
+        console.error('❌ Erro na consulta:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar registros",
+          description: error.message
+        });
+        setCarregando(false);
+        return;
+      }
 
     // Criar mapa de registros existentes para evitar duplicatas
     const registrosMap = new Map();
@@ -178,8 +188,12 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       isTemp: r.id.startsWith('temp-')
     })));
 
-    setRegistros(todosRegistros);
-    setCarregando(false);
+      setRegistros(todosRegistros);
+      setCarregando(false);
+    } catch (error) {
+      console.error('💥 Erro inesperado:', error);
+      setCarregando(false);
+    }
   };
 
   const gerarDatasPerido = (inicio: string, fim: string): string[] => {
