@@ -27,18 +27,34 @@ export function exportToPDF(
   const funcionario = dados[0];
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-  // Cabeçalho compacto
+  // Título
   doc.setFontSize(14);
   doc.text('FOLHA DE PONTO MENSAL', 105, 15, { align: 'center' });
-  
-  doc.setFontSize(9);
-  doc.text(`Funcionário: ${funcionario.funcionario_nome}`, 10, 25);
-  doc.text(`CPF: ${funcionario.funcionario_cpf}`, 10, 32);
-  doc.text(`Função: ${funcionario.funcionario_funcao}`, 10, 39);
-  doc.text(`Escala: ${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, 10, 46);
-  doc.text(`Período: ${mesNome}`, 10, 53);
 
-  // Tabela de registros otimizada para retrato
+  // Cabeçalho em formato de tabela
+  const headerData = [
+    ['Funcionário', funcionario.funcionario_nome, 'CPF', funcionario.funcionario_cpf],
+    ['Função', funcionario.funcionario_funcao, 'Período', mesNome],
+    ['Escala', `${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, '', '']
+  ];
+
+  autoTable(doc, {
+    startY: 22,
+    body: headerData,
+    theme: 'plain',
+    styles: { 
+      fontSize: 8,
+      cellPadding: 1
+    },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 25 },
+      1: { cellWidth: 65 },
+      2: { fontStyle: 'bold', cellWidth: 20 },
+      3: { cellWidth: 80 }
+    }
+  });
+
+  // Tabela de registros otimizada
   const tableData = dados.map(row => [
     row.dia.toString().padStart(2, '0'),
     new Date(row.data).toLocaleDateString('pt-BR', { weekday: 'short' }),
@@ -53,18 +69,20 @@ export function exportToPDF(
   ]);
 
   autoTable(doc, {
-    startY: 60,
+    startY: 50,
     head: [['Dia', 'Sem', 'Ent', 'I.Ini', 'I.Fim', 'Saí', 'H.Trab', 'H.Ext', 'Falta', 'Abono']],
     body: tableData,
     theme: 'grid',
     styles: { 
       fontSize: 7,
-      cellPadding: 2
+      cellPadding: 1,
+      lineWidth: 0.1
     },
     headStyles: { 
       fillColor: [41, 128, 185],
       fontSize: 7,
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      cellPadding: 1
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 15 }, // Dia
@@ -81,14 +99,15 @@ export function exportToPDF(
   });
 
   // Totais
-  const finalY = (doc as any).lastAutoTable.finalY + 20;
-  doc.setFontSize(12);
-  doc.text('RESUMO MENSAL:', 20, finalY);
-  doc.text(`Total de Horas Trabalhadas: ${formatInterval(totais.total_horas_trabalhadas)}`, 20, finalY + 10);
-  doc.text(`Total de Horas Extras Diurnas: ${formatInterval(totais.total_horas_extras_diurnas)}`, 20, finalY + 20);
-  doc.text(`Total de Faltas: ${totais.total_faltas}`, 20, finalY + 30);
-  doc.text(`Total de Abonos: ${totais.total_abonos}`, 20, finalY + 40);
-  doc.text(`Dias Trabalhados: ${totais.dias_trabalhados}`, 20, finalY + 50);
+  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  doc.setFontSize(10);
+  doc.text('RESUMO MENSAL:', 10, finalY);
+  doc.setFontSize(8);
+  doc.text(`Horas Trabalhadas: ${formatInterval(totais.total_horas_trabalhadas)}`, 10, finalY + 8);
+  doc.text(`Horas Extras: ${formatInterval(totais.total_horas_extras_diurnas)}`, 10, finalY + 15);
+  doc.text(`Faltas: ${totais.total_faltas}`, 10, finalY + 22);
+  doc.text(`Abonos: ${totais.total_abonos}`, 10, finalY + 29);
+  doc.text(`Dias Trabalhados: ${totais.dias_trabalhados}`, 10, finalY + 36);
 
   // Download
   doc.save(`folha-ponto-${funcionario.funcionario_nome.replace(/\s+/g, '-')}-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
