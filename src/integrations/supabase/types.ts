@@ -398,6 +398,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_horas_noturnas: {
+        Args: {
+          p_entrada: string
+          p_intervalo_fim?: string
+          p_intervalo_inicio?: string
+          p_saida: string
+        }
+        Returns: unknown
+      }
       calcular_horas_trabalhadas: {
         Args: {
           p_entrada: string
