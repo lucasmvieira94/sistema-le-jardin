@@ -197,19 +197,13 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
   };
 
   const gerarDatasPerido = (inicio: string, fim: string): string[] => {
-    console.log('🔄 Iniciando geração de datas:', { inicio, fim });
-    
     const datas: string[] = [];
-    const dataInicial = new Date(inicio + 'T00:00:00');
-    const dataFinal = new Date(fim + 'T00:00:00');
-
-    console.log('📅 Datas base:', { dataInicial, dataFinal });
+    const dataInicial = new Date(inicio + 'T12:00:00'); // Usar meio-dia para evitar problemas de fuso
+    const dataFinal = new Date(fim + 'T12:00:00');
 
     // Usar milissegundos para garantir precisão na iteração
     const tempoInicial = dataInicial.getTime();
     const tempoFinal = dataFinal.getTime();
-    
-    console.log('⏰ Tempos em milissegundos:', { tempoInicial, tempoFinal });
     
     for (let tempo = tempoInicial; tempo <= tempoFinal; tempo += 24 * 60 * 60 * 1000) {
       const data = new Date(tempo);
@@ -217,13 +211,9 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       const mes = String(data.getMonth() + 1).padStart(2, '0');
       const dia = String(data.getDate()).padStart(2, '0');
       
-      const dataFormatada = `${ano}-${mes}-${dia}`;
-      datas.push(dataFormatada);
-      console.log('📆 Data adicionada:', dataFormatada);
+      datas.push(`${ano}-${mes}-${dia}`);
     }
 
-    console.log('✅ Datas geradas:', datas.length, 'datas');
-    console.log('📋 Lista completa:', datas);
     return datas;
   };
 
