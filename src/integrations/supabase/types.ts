@@ -674,6 +674,10 @@ export type Database = {
         Args: { p_ciclo_id: string; p_funcionario_id: string }
         Returns: boolean
       }
+      executar_criacao_prontuarios_manual: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       gerar_folha_ponto_mensal: {
         Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
