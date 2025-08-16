@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText } from "lucide-react";
+import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users } from "lucide-react";
 
 interface FormularioData {
   // Identificação do Idoso
@@ -62,14 +63,22 @@ interface FormularioData {
 interface NovoFormularioProntuarioProps {
   funcionarioId: string;
   residenteId: string;
+  onChangeResidente?: (residenteId: string) => void;
+  onVoltar?: () => void;
 }
 
-export default function NovoFormularioProntuario({ funcionarioId, residenteId }: NovoFormularioProntuarioProps) {
+export default function NovoFormularioProntuario({ 
+  funcionarioId, 
+  residenteId, 
+  onChangeResidente, 
+  onVoltar 
+}: NovoFormularioProntuarioProps) {
   const { toast } = useToast();
   const [isFinalizando, setIsFinalizando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [registroId, setRegistroId] = useState<string | null>(null);
   const [residenteData, setResidenteData] = useState<any>(null);
+  const [residentes, setResidentes] = useState<any[]>([]);
   
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<FormularioData>({
     defaultValues: {
@@ -102,6 +111,25 @@ export default function NovoFormularioProntuario({ funcionarioId, residenteId }:
 
     fetchResidenteData();
   }, [residenteId]);
+
+  // Buscar lista de residentes para o dropdown
+  useEffect(() => {
+    const fetchResidentes = async () => {
+      const { data, error } = await supabase
+        .from('residentes')
+        .select('*')
+        .eq('ativo', true)
+        .order('nome_completo');
+      
+      if (error) {
+        console.error('Erro ao buscar residentes:', error);
+      } else {
+        setResidentes(data || []);
+      }
+    };
+
+    fetchResidentes();
+  }, []);
 
   // Auto-save functionality
   useEffect(() => {
@@ -192,13 +220,66 @@ export default function NovoFormularioProntuario({ funcionarioId, residenteId }:
 
   return (
     <div className="space-y-6 pb-20">
-      {/* Header com status de salvamento */}
+      {/* Header com navegação e status de salvamento */}
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-4 z-10">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Prontuário Diário</h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {isSaving && <span>Salvando...</span>}
-            {!isSaving && registroId && <span>✓ Salvo</span>}
+          <div className="flex items-center gap-4">
+            {onVoltar && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onVoltar}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </Button>
+            )}
+            <div>
+              <h2 className="text-xl font-semibold">Prontuário Diário</h2>
+              <p className="text-sm text-muted-foreground">
+                {residenteData?.nome_completo || 'Carregando...'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Dropdown para trocar de residente */}
+            <div className="min-w-[200px]">
+              <Select 
+                value={residenteId} 
+                onValueChange={(value) => onChangeResidente?.(value)}
+              >
+                <SelectTrigger className="h-9 bg-white border-2 border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    <SelectValue placeholder="Trocar residente..." />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-white border shadow-lg z-50">
+                  {residentes.map((residente) => (
+                    <SelectItem 
+                      key={residente.id} 
+                      value={residente.id}
+                      className="hover:bg-gray-100"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{residente.nome_completo}</span>
+                        <span className="text-xs text-gray-500">
+                          Quarto: {residente.quarto || 'N/A'} • Prontuário: {residente.numero_prontuario}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Status de salvamento */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {isSaving && <span>Salvando...</span>}
+              {!isSaving && registroId && <span>✓ Salvo</span>}
+            </div>
           </div>
         </div>
       </div>

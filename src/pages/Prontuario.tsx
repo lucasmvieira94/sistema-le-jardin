@@ -181,6 +181,8 @@ export default function Prontuario() {
           <NovoFormularioProntuario 
             funcionarioId={funcionarioId} 
             residenteId={selectedResidente}
+            onChangeResidente={setSelectedResidente}
+            onVoltar={() => setSelectedResidente(null)}
           />
         )}
       </div>
