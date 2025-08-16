@@ -48,8 +48,8 @@ export default function ControleProntuarios() {
   const [filtros, setFiltros] = useState({
     dataInicio: "",
     dataFim: "",
-    residente: "",
-    funcionario: "",
+    residente: "todos_residentes",
+    funcionario: "todos_funcionarios",
     status: "todos"
   });
   const [residentes, setResidentes] = useState<any[]>([]);
@@ -115,10 +115,10 @@ export default function ControleProntuarios() {
       if (filtros.dataFim) {
         query = query.lte('data_registro', filtros.dataFim);
       }
-      if (filtros.residente) {
+      if (filtros.residente && filtros.residente !== "todos_residentes") {
         query = query.eq('residente_id', filtros.residente);
       }
-      if (filtros.funcionario) {
+      if (filtros.funcionario && filtros.funcionario !== "todos_funcionarios") {
         query = query.eq('funcionario_id', filtros.funcionario);
       }
 
@@ -321,7 +321,7 @@ export default function ControleProntuarios() {
                     <SelectValue placeholder="Todos os residentes" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="">Todos os residentes</SelectItem>
+                    <SelectItem value="todos_residentes">Todos os residentes</SelectItem>
                     {residentes.map((residente) => (
                       <SelectItem key={residente.id} value={residente.id}>
                         {residente.nome_completo}
@@ -337,7 +337,7 @@ export default function ControleProntuarios() {
                     <SelectValue placeholder="Todos os funcionários" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="">Todos os funcionários</SelectItem>
+                    <SelectItem value="todos_funcionarios">Todos os funcionários</SelectItem>
                     {funcionarios.map((funcionario) => (
                       <SelectItem key={funcionario.id} value={funcionario.id}>
                         {funcionario.nome_completo}
