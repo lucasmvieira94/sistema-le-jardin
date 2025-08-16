@@ -19,6 +19,7 @@ import NovoFuncionario from "./pages/NovoFuncionario";
 import EditarFuncionario from "./pages/EditarFuncionario";
 import Residentes from "./pages/Residentes";
 import ControleProntuarios from "./pages/ControleProntuarios";
+import ConfiguracaoFormulario from "./pages/ConfiguracaoFormulario";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 
@@ -136,6 +137,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ControleProntuarios />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracao-formulario"
+              element={
+                <ProtectedRoute>
+                  <ConfiguracaoFormulario />
                 </ProtectedRoute>
               }
             />
