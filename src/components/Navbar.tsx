@@ -124,7 +124,7 @@ export default function Navbar() {
             </DropdownMenu>
           )}
 
-          {/* Menu Sistema */}
+          {/* Menu Gestão */}
           {user && isAdmin && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -133,13 +133,13 @@ export default function Navbar() {
                   className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-100"
                 >
                   <Settings className="w-4 h-4" />
-                  <span>Sistema</span>
+                  <span>Gestão</span>
                   <ChevronDown className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg">
                 <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-                  Configurações
+                  Gestão do Sistema
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {sistemaMenuItems.map((item) => {
