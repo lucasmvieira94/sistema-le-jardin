@@ -212,8 +212,14 @@ export default function ControleProntuarios() {
 
   const parseDescricao = (descricao: string) => {
     try {
-      return JSON.parse(descricao);
+      if (!descricao || descricao.trim() === "") {
+        return {};
+      }
+      const parsed = JSON.parse(descricao);
+      console.log('Dados parseados do prontuário:', parsed); // Debug
+      return parsed;
     } catch {
+      console.log('Erro ao parsear JSON, retornando como texto simples:', descricao); // Debug
       return { observacoes_gerais: descricao };
     }
   };
@@ -573,28 +579,111 @@ export default function ControleProntuarios() {
                   <div className="mt-2 p-4 bg-white border rounded-lg">
                     {(() => {
                       const dados = parseDescricao(selectedProntuario.descricao);
+                      console.log('Exibindo dados:', dados); // Debug
+                      
+                      if (!dados || Object.keys(dados).length === 0) {
+                        return <p className="text-gray-500 text-sm">Nenhum conteúdo registrado.</p>;
+                      }
                       
                       return (
                         <div className="space-y-4">
-                          {Object.entries(dados).map(([key, value]) => {
-                            if (!value || value === "" || (Array.isArray(value) && value.length === 0)) return null;
-                            
-                            return (
-                              <div key={key}>
-                                <h4 className="font-medium text-sm mb-2">
-                                  {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                </h4>
-                                <p className="text-sm text-gray-700">
-                                  {Array.isArray(value) ? value.join(', ') : String(value)}
-                                </p>
-                              </div>
-                            );
-                          })}
-                          
-                          {selectedProntuario.observacoes && (
+                          {/* Rotina Diária */}
+                          {(dados.qualidade_sono || dados.alimentacao || dados.hidratacao || dados.atividades_realizadas) && (
                             <div>
-                              <h4 className="font-medium text-sm mb-2">Observações Adicionais</h4>
-                              <p className="text-sm text-gray-700">{selectedProntuario.observacoes}</p>
+                              <h4 className="font-medium text-sm mb-2 text-blue-700">Rotina Diária</h4>
+                              <div className="space-y-2 pl-4">
+                                {dados.qualidade_sono && (
+                                  <p className="text-sm"><strong>Qualidade do sono:</strong> {dados.qualidade_sono}</p>
+                                )}
+                                {dados.alimentacao && (
+                                  <p className="text-sm"><strong>Alimentação:</strong> {dados.alimentacao}</p>
+                                )}
+                                {dados.hidratacao && (
+                                  <p className="text-sm"><strong>Hidratação:</strong> {dados.hidratacao}</p>
+                                )}
+                                {dados.atividades_realizadas && Array.isArray(dados.atividades_realizadas) && dados.atividades_realizadas.length > 0 && (
+                                  <p className="text-sm"><strong>Atividades:</strong> {dados.atividades_realizadas.join(', ')}</p>
+                                )}
+                                {dados.observacoes_rotina && (
+                                  <p className="text-sm"><strong>Observações da rotina:</strong> {dados.observacoes_rotina}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Aspectos Clínicos */}
+                          {(dados.pressao_arterial || dados.frequencia_cardiaca || dados.temperatura || dados.glicemia) && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2 text-green-700">Aspectos Clínicos</h4>
+                              <div className="space-y-2 pl-4">
+                                {dados.pressao_arterial && (
+                                  <p className="text-sm"><strong>Pressão arterial:</strong> {dados.pressao_arterial}</p>
+                                )}
+                                {dados.frequencia_cardiaca && (
+                                  <p className="text-sm"><strong>Frequência cardíaca:</strong> {dados.frequencia_cardiaca}</p>
+                                )}
+                                {dados.temperatura && (
+                                  <p className="text-sm"><strong>Temperatura:</strong> {dados.temperatura}</p>
+                                )}
+                                {dados.glicemia && (
+                                  <p className="text-sm"><strong>Glicemia:</strong> {dados.glicemia}</p>
+                                )}
+                                {dados.observacoes_clinicas && (
+                                  <p className="text-sm"><strong>Observações clínicas:</strong> {dados.observacoes_clinicas}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Bem-Estar */}
+                          {(dados.humor || dados.dor || dados.apetite || dados.interacao_social) && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2 text-purple-700">Avaliação de Bem-Estar</h4>
+                              <div className="space-y-2 pl-4">
+                                {dados.humor && (
+                                  <p className="text-sm"><strong>Humor:</strong> {dados.humor}</p>
+                                )}
+                                {dados.dor && (
+                                  <p className="text-sm"><strong>Nível de dor:</strong> {Array.isArray(dados.dor) ? dados.dor[0] : dados.dor}/10</p>
+                                )}
+                                {dados.apetite && (
+                                  <p className="text-sm"><strong>Apetite:</strong> {dados.apetite}</p>
+                                )}
+                                {dados.interacao_social && (
+                                  <p className="text-sm"><strong>Interação social:</strong> {dados.interacao_social}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Ocorrências */}
+                          {(dados.ocorrencias || dados.detalhes_ocorrencia) && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2 text-red-700">Registro de Ocorrências</h4>
+                              <div className="space-y-2 pl-4">
+                                {dados.ocorrencias && Array.isArray(dados.ocorrencias) && dados.ocorrencias.length > 0 && (
+                                  <p className="text-sm"><strong>Ocorrências:</strong> {dados.ocorrencias.join(', ')}</p>
+                                )}
+                                {dados.detalhes_ocorrencia && (
+                                  <p className="text-sm"><strong>Detalhes:</strong> {dados.detalhes_ocorrencia}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Observações Gerais */}
+                          {dados.observacoes_gerais && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2 text-gray-700">Observações Gerais</h4>
+                              <p className="text-sm text-gray-700 pl-4">{dados.observacoes_gerais}</p>
+                            </div>
+                          )}
+                          
+                          {/* Observações adicionais do campo observacoes */}
+                          {selectedProntuario.observacoes && selectedProntuario.observacoes !== dados.observacoes_gerais && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2 text-gray-700">Observações Adicionais</h4>
+                              <p className="text-sm text-gray-700 pl-4">{selectedProntuario.observacoes}</p>
                             </div>
                           )}
                         </div>
