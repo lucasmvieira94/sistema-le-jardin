@@ -109,26 +109,71 @@ export default function Prontuario() {
               </p>
             </div>
             
-            <div className="max-w-md mx-auto">
-              <Select onValueChange={setSelectedResidente}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecione um residente..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {residentes.map((residente) => (
-                    <SelectItem key={residente.id} value={residente.id}>
-                      {residente.nome_completo} - Quarto {residente.quarto || 'N/A'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {residentes.length === 0 && (
+            {residentes.length === 0 ? (
               <div className="text-center mt-8">
                 <Button variant="outline" onClick={() => window.location.reload()}>
                   Recarregar residentes
                 </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                {residentes.map((residente) => (
+                  <div
+                    key={residente.id}
+                    onClick={() => setSelectedResidente(residente.id)}
+                    className="p-6 bg-white rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-gray-900 group-hover:text-primary transition-colors">
+                          {residente.nome_completo}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Prontuário: {residente.numero_prontuario}
+                        </p>
+                      </div>
+                      <UserPlus className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Quarto:</span>
+                        <span className="font-medium">{residente.quarto || 'N/A'}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Idade:</span>
+                        <span className="font-medium">
+                          {new Date().getFullYear() - new Date(residente.data_nascimento).getFullYear()} anos
+                        </span>
+                      </div>
+                      
+                      {residente.responsavel_nome && (
+                        <div className="pt-2 border-t border-gray-100">
+                          <p className="text-xs text-gray-500">Responsável:</p>
+                          <p className="text-sm font-medium text-gray-700">{residente.responsavel_nome}</p>
+                          {residente.responsavel_telefone && (
+                            <p className="text-xs text-gray-500">{residente.responsavel_telefone}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full group-hover:bg-primary group-hover:text-white transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedResidente(residente.id);
+                        }}
+                      >
+                        Iniciar Prontuário
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
