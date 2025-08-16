@@ -9,9 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users } from "lucide-react";
+import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, Lock, CheckCircle } from "lucide-react";
+import CodigoFinalizacaoProntuario from "@/components/prontuario/CodigoFinalizacaoProntuario";
 
 interface FormularioData {
   // Identificação do Idoso
@@ -79,6 +81,11 @@ export default function NovoFormularioProntuario({
   const [registroId, setRegistroId] = useState<string | null>(null);
   const [residenteData, setResidenteData] = useState<any>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
+  const [cicloId, setCicloId] = useState<string | null>(null);
+  const [cicloStatus, setCicloStatus] = useState<string>('');
+  const [prontuarioJaFinalizado, setProntuarioJaFinalizado] = useState(false);
+  const [showFinalizarDialog, setShowFinalizarDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<FormularioData>({
     defaultValues: {
@@ -93,24 +100,118 @@ export default function NovoFormularioProntuario({
 
   const watchedValues = watch();
 
-  // Buscar dados do residente
+  // Verificar ciclo diário e inicializar prontuário
   useEffect(() => {
-    const fetchResidenteData = async () => {
-      const { data, error } = await supabase
-        .from('residentes')
-        .select('*')
-        .eq('id', residenteId)
-        .single();
-      
-      if (error) {
-        console.error('Erro ao buscar residente:', error);
-      } else {
-        setResidenteData(data);
+    const inicializarProntuario = async () => {
+      setLoading(true);
+      try {
+        // Buscar dados do residente
+        const { data: residenteData, error: residenteError } = await supabase
+          .from('residentes')
+          .select('*')
+          .eq('id', residenteId)
+          .single();
+        
+        if (residenteError) {
+          console.error('Erro ao buscar residente:', residenteError);
+          return;
+        } else {
+          setResidenteData(residenteData);
+        }
+
+        // Verificar se já existe prontuário para hoje
+        const { data: verificacao, error: verificacaoError } = await supabase
+          .rpc('verificar_prontuario_diario_existente', { 
+            p_residente_id: residenteId 
+          });
+
+        if (verificacaoError) {
+          console.error('Erro ao verificar prontuário:', verificacaoError);
+          return;
+        }
+
+        const cicloExistente = verificacao?.[0];
+        
+        if (cicloExistente?.ja_iniciado) {
+          setCicloId(cicloExistente.ciclo_id);
+          setCicloStatus(cicloExistente.status);
+          
+          if (cicloExistente.status === 'encerrado') {
+            setProntuarioJaFinalizado(true);
+            toast({
+              title: "Prontuário já finalizado",
+              description: "Este prontuário já foi finalizado hoje.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Prontuário em andamento",
+              description: "Continuando o prontuário de hoje...",
+            });
+          }
+
+          // Carregar dados existentes do prontuário
+          const { data: registroExistente } = await supabase
+            .from('prontuario_registros')
+            .select('*')
+            .eq('ciclo_id', cicloExistente.ciclo_id)
+            .eq('tipo_registro', 'prontuario_completo')
+            .single();
+
+          if (registroExistente) {
+            setRegistroId(registroExistente.id);
+            try {
+              const dadosExistentes = JSON.parse(registroExistente.descricao);
+              Object.keys(dadosExistentes).forEach(key => {
+                setValue(key as keyof FormularioData, dadosExistentes[key]);
+              });
+            } catch (e) {
+              console.error('Erro ao carregar dados do prontuário:', e);
+            }
+          }
+        } else {
+          // Iniciar novo prontuário
+          const { data: novoCiclo, error: cicloError } = await supabase
+            .rpc('iniciar_prontuario_diario', {
+              p_residente_id: residenteId,
+              p_funcionario_id: funcionarioId
+            });
+
+          if (cicloError) {
+            console.error('Erro ao iniciar prontuário:', cicloError);
+            toast({
+              title: "Erro ao iniciar prontuário",
+              description: "Não foi possível iniciar o prontuário diário.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const resultado = novoCiclo?.[0];
+          if (resultado?.success) {
+            setCicloId(resultado.ciclo_id);
+            setCicloStatus('em_andamento');
+            toast({
+              title: "Prontuário iniciado",
+              description: resultado.message,
+            });
+          }
+        }
+
+      } catch (error) {
+        console.error('Erro ao inicializar prontuário:', error);
+        toast({
+          title: "Erro inesperado",
+          description: "Não foi possível inicializar o prontuário.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchResidenteData();
-  }, [residenteId]);
+    inicializarProntuario();
+  }, [residenteId, funcionarioId]);
 
   // Buscar lista de residentes para o dropdown
   useEffect(() => {
@@ -143,11 +244,14 @@ export default function NovoFormularioProntuario({
   }, [watchedValues]);
 
   const saveFormData = async () => {
+    if (!cicloId || prontuarioJaFinalizado) return;
+    
     setIsSaving(true);
     try {
       const formData = {
         residente_id: residenteId,
         funcionario_id: funcionarioId,
+        ciclo_id: cicloId,
         data_registro: new Date().toISOString().split('T')[0],
         horario_registro: new Date().toTimeString().split(' ')[0],
         tipo_registro: 'prontuario_completo',
@@ -180,18 +284,54 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  const finalizarFormulario = async () => {
+  const handleFinalizarClick = () => {
+    if (prontuarioJaFinalizado) {
+      toast({
+        title: "Prontuário já finalizado",
+        description: "Este prontuário já foi finalizado hoje.",
+        variant: "default",
+      });
+      return;
+    }
+    setShowFinalizarDialog(true);
+  };
+
+  const handleFinalizarComCodigo = async (codigoValidado: string, funcionarioValidado: string) => {
     setIsFinalizando(true);
     try {
+      // Salvar dados antes de finalizar
       await saveFormData();
-      toast({
-        title: "Prontuário finalizado",
-        description: "O prontuário foi salvo e finalizado com sucesso.",
-      });
-    } catch (error) {
+
+      // Finalizar o ciclo com validação de código
+      const { data: resultado, error } = await supabase
+        .rpc('finalizar_prontuario_diario', {
+          p_ciclo_id: cicloId,
+          p_funcionario_id: funcionarioId,
+          p_codigo_validacao: codigoValidado
+        });
+
+      if (error) {
+        console.error('Erro ao finalizar:', error);
+        throw new Error('Erro na comunicação com o servidor');
+      }
+
+      const finalizacao = resultado?.[0];
+      if (finalizacao?.success) {
+        setCicloStatus('encerrado');
+        setProntuarioJaFinalizado(true);
+        setShowFinalizarDialog(false);
+        
+        toast({
+          title: "Prontuário finalizado com sucesso!",
+          description: finalizacao.message,
+        });
+      } else {
+        throw new Error(finalizacao?.message || 'Erro ao finalizar prontuário');
+      }
+    } catch (error: any) {
       toast({
         title: "Erro ao finalizar",
-        description: "Ocorreu um erro ao finalizar o prontuário.",
+        description: error.message || "Ocorreu um erro ao finalizar o prontuário.",
         variant: "destructive",
       });
     } finally {
@@ -635,14 +775,54 @@ export default function NovoFormularioProntuario({
       {/* Botão de finalizar fixo na parte inferior */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4">
         <Button 
-          onClick={finalizarFormulario}
-          disabled={isFinalizando}
-          className="w-full h-12 text-lg font-semibold"
+          onClick={handleFinalizarClick}
+          disabled={isFinalizando || loading}
+          className={`w-full h-12 text-lg font-semibold ${
+            prontuarioJaFinalizado ? 'bg-green-600 hover:bg-green-700' : ''
+          }`}
           size="lg"
         >
-          {isFinalizando ? "Finalizando..." : "Finalizar Prontuário"}
+          {loading ? (
+            "Carregando..."
+          ) : isFinalizando ? (
+            "Finalizando..."
+          ) : prontuarioJaFinalizado ? (
+            <>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Prontuário Finalizado
+            </>
+          ) : (
+            <>
+              <Lock className="w-5 h-5 mr-2" />
+              Finalizar Prontuário
+            </>
+          )}
         </Button>
       </div>
+
+      {/* Modal de finalização com validação de código */}
+      <Dialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Finalizar Prontuário
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Para finalizar o prontuário, digite seu código de 4 dígitos para confirmação:
+            </p>
+            
+            <CodigoFinalizacaoProntuario 
+              onCodigoValidado={handleFinalizarComCodigo}
+              onCancel={() => setShowFinalizarDialog(false)}
+              disabled={isFinalizando}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

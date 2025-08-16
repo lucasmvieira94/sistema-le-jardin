@@ -678,6 +678,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      finalizar_prontuario_diario: {
+        Args: {
+          p_ciclo_id: string
+          p_codigo_validacao: string
+          p_funcionario_id: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       gerar_folha_ponto_mensal: {
         Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
@@ -711,6 +722,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      iniciar_prontuario_diario: {
+        Args: { p_funcionario_id: string; p_residente_id: string }
+        Returns: {
+          ciclo_id: string
+          message: string
+          success: boolean
+        }[]
       }
       inserir_intervalo_automatico: {
         Args: {
@@ -775,6 +794,14 @@ export type Database = {
       verificar_limite_tentativas: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: boolean
+      }
+      verificar_prontuario_diario_existente: {
+        Args: { p_data?: string; p_residente_id: string }
+        Returns: {
+          ciclo_id: string
+          ja_iniciado: boolean
+          status: string
+        }[]
       }
     }
     Enums: {
