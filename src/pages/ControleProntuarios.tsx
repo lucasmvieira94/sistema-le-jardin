@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
-import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut } from "lucide-react";
+import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -56,6 +58,13 @@ export default function ControleProntuarios() {
   const [funcionarios, setFuncionarios] = useState<any[]>([]);
   const [selectedProntuario, setSelectedProntuario] = useState<ProntuarioRegistro | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProntuario, setEditingProntuario] = useState<ProntuarioRegistro | null>(null);
+  const [editForm, setEditForm] = useState({
+    observacoes_gerais: "",
+    justificativa_edicao: ""
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -212,6 +221,89 @@ export default function ControleProntuarios() {
   const viewProntuario = (prontuario: ProntuarioRegistro) => {
     setSelectedProntuario(prontuario);
     setDialogOpen(true);
+  };
+
+  const editProntuario = (prontuario: ProntuarioRegistro) => {
+    const dados = parseDescricao(prontuario.descricao);
+    setEditingProntuario(prontuario);
+    setEditForm({
+      observacoes_gerais: dados.observacoes_gerais || prontuario.observacoes || "",
+      justificativa_edicao: ""
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingProntuario) return;
+    
+    if (!editForm.justificativa_edicao.trim()) {
+      toast({
+        title: "Justificativa obrigatória",
+        description: "É necessário informar o motivo da edição.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Atualizar dados do prontuário
+      const dadosAtuais = parseDescricao(editingProntuario.descricao);
+      const dadosAtualizados = {
+        ...dadosAtuais,
+        observacoes_gerais: editForm.observacoes_gerais
+      };
+
+      const { error: updateError } = await supabase
+        .from('prontuario_registros')
+        .update({
+          descricao: JSON.stringify(dadosAtualizados),
+          observacoes: editForm.observacoes_gerais,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingProntuario.id);
+
+      if (updateError) throw updateError;
+
+      // Registrar log de auditoria
+      const { error: auditError } = await supabase.rpc('log_audit_event', {
+        p_tabela: 'prontuario_registros',
+        p_operacao: 'UPDATE',
+        p_dados_anteriores: {
+          id: editingProntuario.id,
+          observacoes_originais: editingProntuario.observacoes,
+          descricao_original: editingProntuario.descricao
+        },
+        p_dados_novos: {
+          id: editingProntuario.id,
+          observacoes_novas: editForm.observacoes_gerais,
+          justificativa_edicao: editForm.justificativa_edicao,
+          editado_em: new Date().toISOString()
+        }
+      });
+
+      if (auditError) {
+        console.error('Erro ao registrar auditoria:', auditError);
+      }
+
+      toast({
+        title: "Prontuário atualizado",
+        description: "As alterações foram salvas com sucesso.",
+      });
+
+      setEditDialogOpen(false);
+      setEditingProntuario(null);
+      setEditForm({ observacoes_gerais: "", justificativa_edicao: "" });
+      fetchProntuarios(); // Recarregar a lista
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filteredProntuarios = prontuarios.filter(prontuario => {
@@ -412,8 +504,17 @@ export default function ControleProntuarios() {
                             variant="ghost"
                             size="sm"
                             onClick={() => viewProntuario(prontuario)}
+                            title="Visualizar prontuário"
                           >
                             <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editProntuario(prontuario)}
+                            title="Editar prontuário"
+                          >
+                            <Edit className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -500,6 +601,98 @@ export default function ControleProntuarios() {
                       );
                     })()}
                   </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para editar prontuário */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Prontuário</DialogTitle>
+            </DialogHeader>
+            
+            {editingProntuario && (
+              <div className="space-y-6">
+                {/* Informações do cabeçalho */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <Label className="text-sm font-medium">Residente</Label>
+                    <p className="text-sm">{editingProntuario.residentes?.nome_completo}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Data/Hora</Label>
+                    <p className="text-sm">
+                      {format(new Date(editingProntuario.data_registro), 'dd/MM/yyyy', { locale: ptBR })} às {editingProntuario.horario_registro.substring(0, 5)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Alerta sobre edição */}
+                <Alert>
+                  <AlertDescription>
+                    <strong>Atenção:</strong> Esta edição será registrada no sistema de auditoria. 
+                    Certifique-se de fornecer uma justificativa clara para as alterações.
+                  </AlertDescription>
+                </Alert>
+
+                {/* Formulário de edição */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="observacoes_gerais">Observações Gerais</Label>
+                    <Textarea
+                      id="observacoes_gerais"
+                      value={editForm.observacoes_gerais}
+                      onChange={(e) => setEditForm({...editForm, observacoes_gerais: e.target.value})}
+                      placeholder="Atualize as observações do prontuário..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="justificativa_edicao">
+                      Justificativa da Edição <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      id="justificativa_edicao"
+                      value={editForm.justificativa_edicao}
+                      onChange={(e) => setEditForm({...editForm, justificativa_edicao: e.target.value})}
+                      placeholder="Explique o motivo desta edição (obrigatório)..."
+                      className="min-h-[80px]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Botões de ação */}
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditDialogOpen(false);
+                      setEditingProntuario(null);
+                      setEditForm({ observacoes_gerais: "", justificativa_edicao: "" });
+                    }}
+                    disabled={isSaving}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSaveEdit}
+                    disabled={isSaving || !editForm.justificativa_edicao.trim()}
+                  >
+                    {isSaving ? (
+                      <>Salvando...</>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar Alterações
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             )}
