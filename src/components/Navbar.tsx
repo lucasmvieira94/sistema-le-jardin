@@ -52,6 +52,7 @@ export default function Navbar() {
 
   const sistemaMenuItems = [
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
+    { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 

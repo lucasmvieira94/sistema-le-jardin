@@ -18,6 +18,7 @@ import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
 import EditarFuncionario from "./pages/EditarFuncionario";
 import Residentes from "./pages/Residentes";
+import ControleProntuarios from "./pages/ControleProntuarios";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 
@@ -127,6 +128,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Residentes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/controle-prontuarios"
+              element={
+                <ProtectedRoute>
+                  <ControleProntuarios />
                 </ProtectedRoute>
               }
             />
