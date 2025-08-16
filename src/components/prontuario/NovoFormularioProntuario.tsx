@@ -69,6 +69,7 @@ export default function NovoFormularioProntuario({ funcionarioId, residenteId }:
   const [isFinalizando, setIsFinalizando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [registroId, setRegistroId] = useState<string | null>(null);
+  const [residenteData, setResidenteData] = useState<any>(null);
   
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<FormularioData>({
     defaultValues: {
@@ -82,6 +83,25 @@ export default function NovoFormularioProntuario({ funcionarioId, residenteId }:
   });
 
   const watchedValues = watch();
+
+  // Buscar dados do residente
+  useEffect(() => {
+    const fetchResidenteData = async () => {
+      const { data, error } = await supabase
+        .from('residentes')
+        .select('*')
+        .eq('id', residenteId)
+        .single();
+      
+      if (error) {
+        console.error('Erro ao buscar residente:', error);
+      } else {
+        setResidenteData(data);
+      }
+    };
+
+    fetchResidenteData();
+  }, [residenteId]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -193,29 +213,26 @@ export default function NovoFormularioProntuario({ funcionarioId, residenteId }:
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="nome_completo">Nome completo</Label>
-            <Input 
-              id="nome_completo"
-              {...register("nome_completo")}
-              className="mt-1"
-            />
+            <Label>Nome completo</Label>
+            <div className="mt-1 p-3 bg-muted rounded-md text-sm">
+              {residenteData?.nome_completo || 'Carregando...'}
+            </div>
           </div>
           <div>
-            <Label htmlFor="data_nascimento">Data de nascimento</Label>
-            <Input 
-              id="data_nascimento"
-              type="date"
-              {...register("data_nascimento")}
-              className="mt-1"
-            />
+            <Label>Data de nascimento</Label>
+            <div className="mt-1 p-3 bg-muted rounded-md text-sm">
+              {residenteData?.data_nascimento ? 
+                new Date(residenteData.data_nascimento).toLocaleDateString('pt-BR') : 
+                'Carregando...'}
+            </div>
           </div>
           <div>
-            <Label htmlFor="contato_emergencia">Contato de emergência</Label>
-            <Input 
-              id="contato_emergencia"
-              {...register("contato_emergencia")}
-              className="mt-1"
-            />
+            <Label>Contato de emergência</Label>
+            <div className="mt-1 p-3 bg-muted rounded-md text-sm">
+              {residenteData?.responsavel_nome && residenteData?.responsavel_telefone ? 
+                `${residenteData.responsavel_nome} - ${residenteData.responsavel_telefone}` :
+                'Não informado'}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -230,57 +247,16 @@ export default function NovoFormularioProntuario({ funcionarioId, residenteId }:
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label className="text-base font-medium">Doenças crônicas</Label>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              {doencasCronicas.map((doenca) => (
-                <div key={doenca} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={doenca}
-                    checked={watchedValues.doencas_cronicas?.includes(doenca) || false}
-                    onCheckedChange={(checked) => {
-                      const current = watchedValues.doencas_cronicas || [];
-                      if (checked) {
-                        setValue("doencas_cronicas", [...current, doenca]);
-                      } else {
-                        setValue("doencas_cronicas", current.filter(d => d !== doenca));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={doenca} className="text-sm">{doenca}</Label>
-                </div>
-              ))}
+            <Label className="text-base font-medium">Condições médicas</Label>
+            <div className="mt-3 p-3 bg-muted rounded-md text-sm">
+              {residenteData?.condicoes_medicas || 'Nenhuma condição médica cadastrada'}
             </div>
           </div>
           
           <div>
-            <Label htmlFor="outras_condicoes">Outras condições médicas</Label>
-            <Textarea 
-              id="outras_condicoes"
-              {...register("outras_condicoes")}
-              className="mt-1 min-h-[80px]"
-            />
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">Deficiências</Label>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              {deficienciasList.map((deficiencia) => (
-                <div key={deficiencia} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={deficiencia}
-                    checked={watchedValues.deficiencias?.includes(deficiencia) || false}
-                    onCheckedChange={(checked) => {
-                      const current = watchedValues.deficiencias || [];
-                      if (checked) {
-                        setValue("deficiencias", [...current, deficiencia]);
-                      } else {
-                        setValue("deficiencias", current.filter(d => d !== deficiencia));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={deficiencia} className="text-sm">{deficiencia}</Label>
-                </div>
-              ))}
+            <Label className="text-base font-medium">Observações gerais do histórico</Label>
+            <div className="mt-3 p-3 bg-muted rounded-md text-sm">
+              {residenteData?.observacoes_gerais || 'Nenhuma observação cadastrada'}
             </div>
           </div>
         </CardContent>
