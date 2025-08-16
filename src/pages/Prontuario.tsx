@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { FileHeart, UserPlus, Calendar } from "lucide-react";
+import { FileHeart, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioProntuario";
 import ResidentesList from "@/components/prontuario/ResidentesList";
-import RegistrosProntuario from "@/components/prontuario/RegistrosProntuario";
-import ProntuarioCiclos from "@/components/prontuario/ProntuarioCiclos";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 
 export default function Prontuario() {
@@ -16,7 +15,7 @@ export default function Prontuario() {
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
   const [selectedResidente, setSelectedResidente] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [residentes, setResidentes] = useState<any[]>([]);
 
   // Verificar se já tem dados do funcionário na URL (vindos do registro de ponto)
   useState(() => {
@@ -30,45 +29,26 @@ export default function Prontuario() {
     }
   });
 
-  const handleFuncionarioValidado = (id: string, nome: string) => {
+  const handleFuncionarioValidado = async (id: string, nome: string) => {
     setFuncionarioId(id);
     setFuncionarioNome(nome);
+    
+    // Carregar residentes
+    const { data } = await supabase
+      .from('residentes')
+      .select('*')
+      .eq('ativo', true);
+    
+    if (data) {
+      setResidentes(data);
+    }
   };
 
   const handleLogout = () => {
     setFuncionarioId(null);
     setFuncionarioNome("");
     setSelectedResidente(null);
-  };
-
-  const handleGerarProntuarios = async () => {
-    setIsGenerating(true);
-    try {
-      const { error } = await supabase.rpc('executar_criacao_prontuarios_manual');
-      
-      if (error) {
-        toast({
-          title: "Erro ao gerar prontuários",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Prontuários gerados com sucesso",
-          description: "Os prontuários diários foram criados para todos os residentes ativos.",
-        });
-        // Refresh the page to show new records
-        window.location.reload();
-      }
-    } catch (error) {
-      toast({
-        title: "Erro ao gerar prontuários",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    setResidentes([]);
   };
 
   if (!funcionarioId) {
@@ -92,64 +72,73 @@ export default function Prontuario() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <FileHeart className="w-8 h-8 text-primary" />
-            Prontuário Eletrônico
-          </h1>
-          <p className="text-muted-foreground">
-            Registros de atividades e observações dos residentes
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Logado como: <span className="font-medium">{funcionarioNome}</span>
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGerarProntuarios}
-            disabled={isGenerating}
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            {isGenerating ? "Gerando..." : "Gerar Prontuários"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-          >
-            Usar outro código
-          </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-50">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold flex items-center gap-2">
+                <FileHeart className="w-6 h-6 text-primary" />
+                Prontuário Eletrônico
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {funcionarioNome}
+              </p>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+            >
+              Trocar usuário
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Tabs defaultValue="ciclos" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="ciclos">Prontuários por Ciclo</TabsTrigger>
-          <TabsTrigger value="registros">Registros do Dia</TabsTrigger>
-          <TabsTrigger value="residentes">Gerenciar Residentes</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="ciclos" className="space-y-4">
-          <ProntuarioCiclos funcionarioId={funcionarioId} />
-        </TabsContent>
-        
-        <TabsContent value="registros" className="space-y-4">
-          <RegistrosProntuario 
-            funcionarioId={funcionarioId}
-            selectedResidente={selectedResidente}
-            onSelectResidente={setSelectedResidente}
+      <div className="container mx-auto px-4 py-6">
+        {!selectedResidente ? (
+          <div className="space-y-6">
+            <div className="text-center">
+              <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold mb-2">Selecione um residente</h2>
+              <p className="text-muted-foreground">
+                Escolha o residente para preencher o prontuário diário
+              </p>
+            </div>
+            
+            <div className="max-w-md mx-auto">
+              <Select onValueChange={setSelectedResidente}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Selecione um residente..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {residentes.map((residente) => (
+                    <SelectItem key={residente.id} value={residente.id}>
+                      {residente.nome_completo} - Quarto {residente.quarto || 'N/A'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {residentes.length === 0 && (
+              <div className="text-center mt-8">
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  Recarregar residentes
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <NovoFormularioProntuario 
+            funcionarioId={funcionarioId} 
+            residenteId={selectedResidente}
           />
-        </TabsContent>
-        
-        <TabsContent value="residentes" className="space-y-4">
-          <ResidentesList />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 }
