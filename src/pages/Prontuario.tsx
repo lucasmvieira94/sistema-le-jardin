@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { FileHeart, UserPlus } from "lucide-react";
+import { FileHeart, UserPlus, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import ResidentesList from "@/components/prontuario/ResidentesList";
 import RegistrosProntuario from "@/components/prontuario/RegistrosProntuario";
 import ProntuarioCiclos from "@/components/prontuario/ProntuarioCiclos";
@@ -10,9 +12,11 @@ import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 
 export default function Prontuario() {
   const location = useLocation();
+  const { toast } = useToast();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
   const [selectedResidente, setSelectedResidente] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Verificar se já tem dados do funcionário na URL (vindos do registro de ponto)
   useState(() => {
@@ -35,6 +39,36 @@ export default function Prontuario() {
     setFuncionarioId(null);
     setFuncionarioNome("");
     setSelectedResidente(null);
+  };
+
+  const handleGerarProntuarios = async () => {
+    setIsGenerating(true);
+    try {
+      const { error } = await supabase.rpc('executar_criacao_prontuarios_manual');
+      
+      if (error) {
+        toast({
+          title: "Erro ao gerar prontuários",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Prontuários gerados com sucesso",
+          description: "Os prontuários diários foram criados para todos os residentes ativos.",
+        });
+        // Refresh the page to show new records
+        window.location.reload();
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao gerar prontuários",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (!funcionarioId) {
@@ -74,6 +108,15 @@ export default function Prontuario() {
         </div>
         
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGerarProntuarios}
+            disabled={isGenerating}
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            {isGenerating ? "Gerando..." : "Gerar Prontuários"}
+          </Button>
           <Button
             variant="outline"
             size="sm"
