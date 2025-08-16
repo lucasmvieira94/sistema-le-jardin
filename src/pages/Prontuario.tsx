@@ -3,11 +3,9 @@ import { useLocation } from "react-router-dom";
 import { FileHeart, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioProntuario";
-import GerenciamentoResidentes from "@/components/prontuario/GerenciamentoResidentes";
 import ResidentesList from "@/components/prontuario/ResidentesList";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 
@@ -101,58 +99,45 @@ export default function Prontuario() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="prontuario" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="prontuario">Prontuário Diário</TabsTrigger>
-            <TabsTrigger value="residentes">Gerenciar Residentes</TabsTrigger>
-          </TabsList>
+        {!selectedResidente ? (
+          <div className="space-y-6">
+            <div className="text-center">
+              <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-2xl font-semibold mb-2">Selecione um residente</h2>
+              <p className="text-muted-foreground">
+                Escolha o residente para preencher o prontuário diário
+              </p>
+            </div>
+            
+            <div className="max-w-md mx-auto">
+              <Select onValueChange={setSelectedResidente}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Selecione um residente..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {residentes.map((residente) => (
+                    <SelectItem key={residente.id} value={residente.id}>
+                      {residente.nome_completo} - Quarto {residente.quarto || 'N/A'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <TabsContent value="prontuario" className="space-y-6">
-            {!selectedResidente ? (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h2 className="text-2xl font-semibold mb-2">Selecione um residente</h2>
-                  <p className="text-muted-foreground">
-                    Escolha o residente para preencher o prontuário diário
-                  </p>
-                </div>
-                
-                <div className="max-w-md mx-auto">
-                  <Select onValueChange={setSelectedResidente}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Selecione um residente..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {residentes.map((residente) => (
-                        <SelectItem key={residente.id} value={residente.id}>
-                          {residente.nome_completo} - Quarto {residente.quarto || 'N/A'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {residentes.length === 0 && (
-                  <div className="text-center mt-8">
-                    <Button variant="outline" onClick={() => window.location.reload()}>
-                      Recarregar residentes
-                    </Button>
-                  </div>
-                )}
+            {residentes.length === 0 && (
+              <div className="text-center mt-8">
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  Recarregar residentes
+                </Button>
               </div>
-            ) : (
-              <NovoFormularioProntuario 
-                funcionarioId={funcionarioId} 
-                residenteId={selectedResidente}
-              />
             )}
-          </TabsContent>
-
-          <TabsContent value="residentes">
-            <GerenciamentoResidentes />
-          </TabsContent>
-        </Tabs>
+          </div>
+        ) : (
+          <NovoFormularioProntuario 
+            funcionarioId={funcionarioId} 
+            residenteId={selectedResidente}
+          />
+        )}
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ import Navbar from "./components/Navbar";
 import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
 import EditarFuncionario from "./pages/EditarFuncionario";
+import Residentes from "./pages/Residentes";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 
@@ -118,6 +119,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Configuracoes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/residentes"
+              element={
+                <ProtectedRoute>
+                  <Residentes />
                 </ProtectedRoute>
               }
             />
