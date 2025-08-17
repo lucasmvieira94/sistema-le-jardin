@@ -9,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Eye, Trash2 } from "lucide-react";
+import { Users, Plus, Edit, Eye, Trash2, Upload, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import * as XLSX from 'xlsx';
 
 interface Residente {
   id: string;
@@ -34,6 +35,8 @@ export default function GerenciamentoResidentes() {
   const [residentes, setResidentes] = useState<Residente[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [editingResident, setEditingResident] = useState<Residente | null>(null);
   const [formData, setFormData] = useState({
     nome_completo: "",
@@ -187,6 +190,177 @@ export default function GerenciamentoResidentes() {
     }
   };
 
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        'Nome Completo': 'João da Silva',
+        'CPF': '123.456.789-00',
+        'Data de Nascimento': '1980-01-15',
+        'Quarto/Acomodação': '101A',
+        'Nome do Responsável': 'Maria da Silva',
+        'Telefone do Responsável': '(11) 99999-9999',
+        'Email do Responsável': 'maria@email.com',
+        'Condições Médicas': 'Diabetes, Hipertensão',
+        'Observações Gerais': 'Prefere janelas abertas'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Residentes');
+    
+    // Definir larguras das colunas
+    const columnWidths = [
+      { wch: 20 }, // Nome Completo
+      { wch: 15 }, // CPF
+      { wch: 18 }, // Data de Nascimento
+      { wch: 15 }, // Quarto
+      { wch: 20 }, // Nome do Responsável
+      { wch: 18 }, // Telefone
+      { wch: 25 }, // Email
+      { wch: 30 }, // Condições Médicas
+      { wch: 30 }, // Observações
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    XLSX.writeFile(workbook, 'template_residentes.xlsx');
+    
+    toast({
+      title: "Template baixado",
+      description: "O template foi baixado com sucesso. Preencha os dados e faça o upload.",
+    });
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          const processedData = [];
+          const errors = [];
+
+          for (let i = 0; i < jsonData.length; i++) {
+            const row = jsonData[i] as any;
+            const linha = i + 2; // +2 porque a linha 1 é cabeçalho e arrays começam em 0
+
+            // Validar campos obrigatórios
+            if (!row['Nome Completo']) {
+              errors.push(`Linha ${linha}: Nome completo é obrigatório`);
+              continue;
+            }
+
+            if (!row['Data de Nascimento']) {
+              errors.push(`Linha ${linha}: Data de nascimento é obrigatória`);
+              continue;
+            }
+
+            // Gerar número do prontuário
+            const numeroProntuario = await gerarNumeroProntuario();
+            
+            // Processar data de nascimento
+            let dataNascimento = '';
+            try {
+              if (typeof row['Data de Nascimento'] === 'number') {
+                // Excel date serial number
+                const excelDate = new Date((row['Data de Nascimento'] - 25569) * 86400 * 1000);
+                dataNascimento = excelDate.toISOString().split('T')[0];
+              } else if (typeof row['Data de Nascimento'] === 'string') {
+                // String date
+                const parsedDate = new Date(row['Data de Nascimento']);
+                if (isNaN(parsedDate.getTime())) {
+                  errors.push(`Linha ${linha}: Data de nascimento inválida`);
+                  continue;
+                }
+                dataNascimento = parsedDate.toISOString().split('T')[0];
+              }
+            } catch (error) {
+              errors.push(`Linha ${linha}: Erro ao processar data de nascimento`);
+              continue;
+            }
+
+            processedData.push({
+              nome_completo: row['Nome Completo']?.toString().trim(),
+              cpf: row['CPF']?.toString().trim() || null,
+              data_nascimento: dataNascimento,
+              numero_prontuario: numeroProntuario,
+              quarto: row['Quarto/Acomodação']?.toString().trim() || null,
+              responsavel_nome: row['Nome do Responsável']?.toString().trim() || null,
+              responsavel_telefone: row['Telefone do Responsável']?.toString().trim() || null,
+              responsavel_email: row['Email do Responsável']?.toString().trim() || null,
+              condicoes_medicas: row['Condições Médicas']?.toString().trim() || null,
+              observacoes_gerais: row['Observações Gerais']?.toString().trim() || null,
+              ativo: true
+            });
+          }
+
+          if (errors.length > 0) {
+            toast({
+              title: "Erros encontrados na planilha",
+              description: errors.slice(0, 3).join('; ') + (errors.length > 3 ? '...' : ''),
+              variant: "destructive",
+            });
+            setImporting(false);
+            return;
+          }
+
+          if (processedData.length === 0) {
+            toast({
+              title: "Nenhum dado válido encontrado",
+              description: "Verifique se a planilha está preenchida corretamente.",
+              variant: "destructive",
+            });
+            setImporting(false);
+            return;
+          }
+
+          // Inserir dados no banco
+          const { error } = await supabase
+            .from('residentes')
+            .insert(processedData);
+
+          if (error) throw error;
+
+          toast({
+            title: "Importação concluída",
+            description: `${processedData.length} residente(s) importado(s) com sucesso.`,
+          });
+
+          setImportDialogOpen(false);
+          fetchResidentes();
+          
+        } catch (error) {
+          console.error('Erro ao processar arquivo:', error);
+          toast({
+            title: "Erro ao processar arquivo",
+            description: "Verifique se o arquivo está no formato correto.",
+            variant: "destructive",
+          });
+        } finally {
+          setImporting(false);
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      toast({
+        title: "Erro ao ler arquivo",
+        description: "Não foi possível ler o arquivo selecionado.",
+        variant: "destructive",
+      });
+      setImporting(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       nome_completo: "",
@@ -232,12 +406,75 @@ export default function GerenciamentoResidentes() {
             <Users className="w-5 h-5" />
             Gerenciamento de Residentes
           </CardTitle>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openNewDialog} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Novo Residente
-              </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={downloadTemplate}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Baixar Template
+            </Button>
+            
+            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Importar Excel
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Importar Residentes</DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    <p>1. Baixe o template clicando em "Baixar Template"</p>
+                    <p>2. Preencha a planilha com os dados dos residentes</p>
+                    <p>3. Selecione o arquivo preenchido abaixo</p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="file-upload">Selecionar arquivo Excel (.xlsx)</Label>
+                    <Input
+                      id="file-upload"
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={handleFileUpload}
+                      disabled={importing}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  {importing && (
+                    <div className="text-center text-sm text-muted-foreground">
+                      Processando arquivo... Aguarde.
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setImportDialogOpen(false)}
+                      disabled={importing}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openNewDialog} className="flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Novo Residente
+                </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -372,6 +609,7 @@ export default function GerenciamentoResidentes() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </CardHeader>
 
