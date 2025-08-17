@@ -72,6 +72,31 @@ export default function GerenciamentoResidentes() {
     }
   };
 
+  const gerarNumeroProntuario = async () => {
+    try {
+      // Buscar o último número de prontuário
+      const { data, error } = await supabase
+        .from('residentes')
+        .select('numero_prontuario')
+        .order('numero_prontuario', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      let proximoNumero = 1;
+      if (data && data.length > 0) {
+        const ultimoNumero = parseInt(data[0].numero_prontuario.replace(/\D/g, '')) || 0;
+        proximoNumero = ultimoNumero + 1;
+      }
+
+      // Formatar como P0001, P0002, etc.
+      return `P${proximoNumero.toString().padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Erro ao gerar número do prontuário:', error);
+      return `P${Date.now().toString().slice(-4)}`; // Fallback usando timestamp
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -89,15 +114,22 @@ export default function GerenciamentoResidentes() {
           description: "Os dados do residente foram atualizados com sucesso.",
         });
       } else {
+        // Gerar número do prontuário automaticamente para novos residentes
+        const numeroProntuario = await gerarNumeroProntuario();
+        const dadosInsercao = {
+          ...formData,
+          numero_prontuario: numeroProntuario
+        };
+        
         const { error } = await supabase
           .from('residentes')
-          .insert(formData);
+          .insert(dadosInsercao);
         
         if (error) throw error;
         
         toast({
           title: "Residente cadastrado",
-          description: "O residente foi cadastrado com sucesso.",
+          description: `O residente foi cadastrado com sucesso. Prontuário: ${numeroProntuario}`,
         });
       }
       
@@ -170,9 +202,15 @@ export default function GerenciamentoResidentes() {
     });
   };
 
-  const openNewDialog = () => {
+  const openNewDialog = async () => {
     setEditingResident(null);
     resetForm();
+    // Gerar número do prontuário automaticamente para exibição
+    const numeroProntuario = await gerarNumeroProntuario();
+    setFormData(prev => ({
+      ...prev,
+      numero_prontuario: numeroProntuario
+    }));
     setDialogOpen(true);
   };
 
@@ -248,6 +286,8 @@ export default function GerenciamentoResidentes() {
                       value={formData.numero_prontuario}
                       onChange={(e) => setFormData({...formData, numero_prontuario: e.target.value})}
                       required
+                      disabled={!editingResident}
+                      placeholder="Será gerado automaticamente"
                     />
                   </div>
                 </div>
