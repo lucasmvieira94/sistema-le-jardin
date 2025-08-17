@@ -227,6 +227,51 @@ export type Database = {
         }
         Relationships: []
       }
+      formulario_campos_config: {
+        Row: {
+          ativo: boolean
+          configuracoes: Json | null
+          created_at: string
+          id: string
+          label: string
+          obrigatorio: boolean
+          opcoes: string[] | null
+          ordem: number
+          placeholder: string | null
+          secao: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          configuracoes?: Json | null
+          created_at?: string
+          id?: string
+          label: string
+          obrigatorio?: boolean
+          opcoes?: string[] | null
+          ordem?: number
+          placeholder?: string | null
+          secao: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          configuracoes?: Json | null
+          created_at?: string
+          id?: string
+          label?: string
+          obrigatorio?: boolean
+          opcoes?: string[] | null
+          ordem?: number
+          placeholder?: string | null
+          secao?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       funcionarios: {
         Row: {
           ativo: boolean
