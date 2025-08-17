@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Eye, Trash2, Upload, Download } from "lucide-react";
+import { Users, Plus, Edit, Eye, Trash2, Upload, Download, UserX, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
@@ -647,13 +647,23 @@ export default function GerenciamentoResidentes() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(residente)}
+                        title="Editar residente"
                       >
                         <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleStatus(residente)}
+                        title={residente.ativo ? "Desativar residente" : "Ativar residente"}
+                        className={residente.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
+                      >
+                        {residente.ativo ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                       </Button>
                     </div>
                   </TableCell>
