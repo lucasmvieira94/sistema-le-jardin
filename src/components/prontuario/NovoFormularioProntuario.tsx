@@ -86,6 +86,7 @@ export default function NovoFormularioProntuario({
   const [prontuarioJaFinalizado, setProntuarioJaFinalizado] = useState(false);
   const [showFinalizarDialog, setShowFinalizarDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [camposConfigurados, setCamposConfigurados] = useState<any[]>([]);
   
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<FormularioData>({
     defaultValues: {
@@ -230,7 +231,35 @@ export default function NovoFormularioProntuario({
     };
 
     fetchResidentes();
+    loadCamposConfigurados();
   }, []);
+
+  // Carregar campos configurados do banco de dados
+  const loadCamposConfigurados = async () => {
+    try {
+      console.log('🔧 Carregando campos configurados...');
+      const { data, error } = await supabase
+        .from('formulario_campos_config')
+        .select('*')
+        .eq('ativo', true)
+        .order('secao, ordem');
+
+      if (error) {
+        console.error('❌ Erro ao carregar campos configurados:', error);
+        throw error;
+      }
+
+      console.log('✅ Campos configurados carregados:', data);
+      setCamposConfigurados(data || []);
+    } catch (error) {
+      console.error('❌ Erro ao carregar configuração de campos:', error);
+      toast({
+        title: "Erro ao carregar configuração",
+        description: "Usando campos padrão. Verifique a configuração do formulário.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Auto-save functionality
   useEffect(() => {
@@ -358,6 +387,197 @@ export default function NovoFormularioProntuario({
     "Agitação", "Recusa alimentar", "Confusão mental"
   ];
 
+  // Função para renderizar campo dinamicamente baseado na configuração
+  const renderCampoConfigurado = (campo: any, valor: any, onChange: (valor: any) => void) => {
+    console.log('🎯 Renderizando campo:', campo.label, 'Tipo:', campo.tipo);
+    
+    switch (campo.tipo) {
+      case 'text':
+        return (
+          <div key={campo.id}>
+            <Label htmlFor={campo.id} className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
+              id={campo.id}
+              placeholder={campo.placeholder || ''}
+              value={valor || ''}
+              onChange={(e) => onChange(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div key={campo.id}>
+            <Label htmlFor={campo.id} className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Textarea
+              id={campo.id}
+              placeholder={campo.placeholder || ''}
+              value={valor || ''}
+              onChange={(e) => onChange(e.target.value)}
+              className="mt-1 min-h-[80px]"
+              rows={campo.configuracoes?.rows || 3}
+            />
+          </div>
+        );
+
+      case 'radio':
+        return (
+          <div key={campo.id}>
+            <Label className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <RadioGroup
+              value={valor || ""}
+              onValueChange={onChange}
+              className="mt-2"
+            >
+              {(campo.opcoes || []).map((opcao: string) => (
+                <div key={opcao} className="flex items-center space-x-2">
+                  <RadioGroupItem value={opcao} id={`${campo.id}_${opcao}`} />
+                  <Label htmlFor={`${campo.id}_${opcao}`}>{opcao}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div key={campo.id}>
+            <Label className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              {(campo.opcoes || []).map((opcao: string) => (
+                <div key={opcao} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${campo.id}_${opcao}`}
+                    checked={Array.isArray(valor) ? valor.includes(opcao) : false}
+                    onCheckedChange={(checked) => {
+                      const current = Array.isArray(valor) ? valor : [];
+                      if (checked) {
+                        onChange([...current, opcao]);
+                      } else {
+                        onChange(current.filter((item: string) => item !== opcao));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`${campo.id}_${opcao}`} className="text-sm">{opcao}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div key={campo.id}>
+            <Label htmlFor={campo.id} className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Select value={valor || ""} onValueChange={onChange}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={campo.placeholder || "Selecione uma opção"} />
+              </SelectTrigger>
+              <SelectContent className="bg-white border shadow-lg z-50">
+                {(campo.opcoes || []).map((opcao: string) => (
+                  <SelectItem key={opcao} value={opcao}>
+                    {opcao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case 'slider':
+        const configuracoes = campo.configuracoes || {};
+        const min = configuracoes.min || 0;
+        const max = configuracoes.max || 10;
+        const step = configuracoes.step || 1;
+        const currentValue = Array.isArray(valor) ? valor[0] : (valor || min);
+        
+        return (
+          <div key={campo.id}>
+            <Label className="text-base font-medium">
+              {campo.label}: {currentValue}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Slider
+              value={[currentValue]}
+              onValueChange={(newValue) => onChange(newValue)}
+              min={min}
+              max={max}
+              step={step}
+              className="mt-3"
+            />
+          </div>
+        );
+
+      case 'number':
+        const numConfig = campo.configuracoes || {};
+        return (
+          <div key={campo.id}>
+            <Label htmlFor={campo.id} className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
+              id={campo.id}
+              type="number"
+              placeholder={campo.placeholder || ''}
+              value={valor || ''}
+              onChange={(e) => onChange(e.target.value)}
+              min={numConfig.min}
+              max={numConfig.max}
+              step={numConfig.step}
+              className="mt-1"
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Agrupar campos por seção
+  const camposPorSecao = camposConfigurados.reduce((acc: any, campo: any) => {
+    if (!acc[campo.secao]) {
+      acc[campo.secao] = [];
+    }
+    acc[campo.secao].push(campo);
+    return acc;
+  }, {});
+
+  // Mapeamento de ícones por seção
+  const iconesSecao: { [key: string]: any } = {
+    rotina_diaria: Clock,
+    aspectos_clinicos: Stethoscope,
+    bem_estar: Smile,
+    ocorrencias: AlertTriangle,
+    observacoes: FileText
+  };
+
+  // Títulos das seções
+  const titulosSecao: { [key: string]: string } = {
+    rotina_diaria: 'Rotina Diária',
+    aspectos_clinicos: 'Aspectos Clínicos',
+    bem_estar: 'Avaliação de Bem-Estar',
+    ocorrencias: 'Registro de Ocorrências',
+    observacoes: 'Observações Gerais'
+  };
+
   return (
     <div className="space-y-6 pb-20">
       {/* Header com navegação e status de salvamento */}
@@ -483,294 +703,51 @@ export default function NovoFormularioProntuario({
         </CardContent>
       </Card>
 
-      {/* Rotina Diária */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Clock className="w-5 h-5" />
-            Rotina Diária
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <Label className="text-base font-medium">Qualidade do sono</Label>
-            <RadioGroup 
-              value={watchedValues.qualidade_sono || ""}
-              onValueChange={(value) => setValue("qualidade_sono", value)}
-              className="mt-2"
-            >
-              {["Boa", "Regular", "Ruim"].map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`sono_${option}`} />
-                  <Label htmlFor={`sono_${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">Alimentação</Label>
-            <RadioGroup 
-              value={watchedValues.alimentacao || ""}
-              onValueChange={(value) => setValue("alimentacao", value)}
-              className="mt-2"
-            >
-              {["Se alimenta sozinho", "Precisa de ajuda", "Dieta especial"].map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`alim_${option}`} />
-                  <Label htmlFor={`alim_${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">Hidratação</Label>
-            <RadioGroup 
-              value={watchedValues.hidratacao || ""}
-              onValueChange={(value) => setValue("hidratacao", value)}
-              className="mt-2"
-            >
-              {["Adequada", "Baixa", "Precisa de incentivo"].map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`hidrat_${option}`} />
-                  <Label htmlFor={`hidrat_${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">Atividades realizadas</Label>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              {atividadesList.map((atividade) => (
-                <div key={atividade} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={atividade}
-                    checked={watchedValues.atividades_realizadas?.includes(atividade) || false}
-                    onCheckedChange={(checked) => {
-                      const current = watchedValues.atividades_realizadas || [];
-                      if (checked) {
-                        setValue("atividades_realizadas", [...current, atividade]);
-                      } else {
-                        setValue("atividades_realizadas", current.filter(a => a !== atividade));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={atividade} className="text-sm">{atividade}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="observacoes_rotina">Observações sobre a rotina</Label>
-            <Textarea 
-              id="observacoes_rotina"
-              {...register("observacoes_rotina")}
-              className="mt-1 min-h-[80px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Aspectos Clínicos */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Stethoscope className="w-5 h-5" />
-            Aspectos Clínicos
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="pressao_arterial">Pressão arterial</Label>
-              <Input 
-                id="pressao_arterial"
-                placeholder="Ex: 120/80"
-                {...register("pressao_arterial")}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="frequencia_cardiaca">Freq. cardíaca</Label>
-              <Input 
-                id="frequencia_cardiaca"
-                placeholder="Ex: 72 bpm"
-                {...register("frequencia_cardiaca")}
-                className="mt-1"
-              />
-            </div>
-          </div>
+      {/* Renderizar seções dinamicamente baseadas na configuração */}
+      {Object.keys(camposPorSecao).length > 0 ? (
+        Object.entries(camposPorSecao).map(([secao, campos]: [string, any]) => {
+          const Icone = iconesSecao[secao] || FileText;
+          const titulo = titulosSecao[secao] || secao;
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="temperatura">Temperatura</Label>
-              <Input 
-                id="temperatura"
-                placeholder="Ex: 36.5°C"
-                {...register("temperatura")}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="glicemia">Glicemia</Label>
-              <Input 
-                id="glicemia"
-                placeholder="Ex: 95 mg/dL"
-                {...register("glicemia")}
-                className="mt-1"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="observacoes_clinicas">Observações clínicas</Label>
-            <Textarea 
-              id="observacoes_clinicas"
-              {...register("observacoes_clinicas")}
-              className="mt-1 min-h-[80px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Avaliação de Bem-Estar */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Smile className="w-5 h-5" />
-            Avaliação de Bem-Estar
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <Label className="text-base font-medium">Humor</Label>
-            <RadioGroup 
-              value={watchedValues.humor || ""}
-              onValueChange={(value) => setValue("humor", value)}
-              className="mt-2"
-            >
-              {["Feliz", "Ansioso", "Acentuado", "Irritado", "Outro"].map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`humor_${option}`} />
-                  <Label htmlFor={`humor_${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">
-              Nível de dor (0 - sem dor, 10 - dor intensa): {watchedValues.dor?.[0] || 0}
-            </Label>
-            <Slider
-              value={watchedValues.dor || [0]}
-              onValueChange={(value) => setValue("dor", value)}
-              max={10}
-              step={1}
-              className="mt-3"
-            />
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">Apetite</Label>
-            <RadioGroup 
-              value={watchedValues.apetite || ""}
-              onValueChange={(value) => setValue("apetite", value)}
-              className="mt-2"
-            >
-              {["Bom", "Regular", "Ruim"].map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`apetite_${option}`} />
-                  <Label htmlFor={`apetite_${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div>
-            <Label className="text-base font-medium">Interação social</Label>
-            <RadioGroup 
-              value={watchedValues.interacao_social || ""}
-              onValueChange={(value) => setValue("interacao_social", value)}
-              className="mt-2"
-            >
-              {["Boa", "Média", "Isolado"].map((option) => (
-                <div key={option} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`social_${option}`} />
-                  <Label htmlFor={`social_${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Registro de Ocorrências */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <AlertTriangle className="w-5 h-5" />
-            Registro de Ocorrências
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-base font-medium">Ocorrências</Label>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              {ocorrenciasList.map((ocorrencia) => (
-                <div key={ocorrencia} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={ocorrencia}
-                    checked={watchedValues.ocorrencias?.includes(ocorrencia) || false}
-                    onCheckedChange={(checked) => {
-                      const current = watchedValues.ocorrencias || [];
-                      if (checked) {
-                        setValue("ocorrencias", [...current, ocorrencia]);
-                      } else {
-                        setValue("ocorrencias", current.filter(o => o !== ocorrencia));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={ocorrencia} className="text-sm">{ocorrencia}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="detalhes_ocorrencia">Detalhes da ocorrência</Label>
-            <Textarea 
-              id="detalhes_ocorrencia"
-              {...register("detalhes_ocorrencia")}
-              className="mt-1 min-h-[80px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Observações Gerais */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <FileText className="w-5 h-5" />
-            Observações Gerais
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div>
-            <Label htmlFor="observacoes_gerais">Anotações gerais</Label>
-            <Textarea 
-              id="observacoes_gerais"
-              {...register("observacoes_gerais")}
-              className="mt-1 min-h-[120px]"
-              placeholder="Digite aqui suas observações gerais sobre o idoso hoje..."
-            />
-          </div>
-        </CardContent>
-      </Card>
+          console.log(`🔄 Renderizando seção: ${titulo} com ${campos.length} campos`);
+          
+          return (
+            <Card key={secao}>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Icone className="w-5 h-5" />
+                  {titulo}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {campos
+                  .sort((a: any, b: any) => a.ordem - b.ordem)
+                  .map((campo: any) => {
+                    const chaveFormulario = `campo_${campo.id}`;
+                    const valorAtual = (watchedValues as any)[chaveFormulario];
+                    
+                    return renderCampoConfigurado(
+                      campo,
+                      valorAtual,
+                      (novoValor) => setValue(chaveFormulario as any, novoValor)
+                    );
+                  })}
+              </CardContent>
+            </Card>
+          );
+        })
+      ) : (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">Configuração não encontrada</h3>
+            <p className="text-muted-foreground">
+              Nenhum campo foi configurado para o formulário. 
+              Acesse a configuração do formulário para adicionar campos.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Botão de finalizar fixo na parte inferior */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4">
