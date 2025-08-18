@@ -47,6 +47,8 @@ interface CampoFormulario {
     step?: number;
     rows?: number;
   };
+  created_at?: string;
+  updated_at?: string;
 }
 
 const SECOES_DISPONIVEIS = [
@@ -148,52 +150,36 @@ export default function ConfiguracaoFormulario() {
 
   const loadCamposConfigurados = async () => {
     try {
-      // Por enquanto, vou criar campos exemplo. Depois você pode implementar storage no banco
-      const camposExemplo: CampoFormulario[] = [
-        {
-          id: '1',
-          secao: 'rotina_diaria',
-          tipo: 'radio',
-          label: 'Qualidade do sono',
-          opcoes: ['Boa', 'Regular', 'Ruim'],
-          obrigatorio: true,
-          ativo: true,
-          ordem: 1
-        },
-        {
-          id: '2',
-          secao: 'rotina_diaria',
-          tipo: 'radio',
-          label: 'Alimentação',
-          opcoes: ['Se alimenta sozinho', 'Precisa de ajuda', 'Dieta especial'],
-          obrigatorio: true,
-          ativo: true,
-          ordem: 2
-        },
-        {
-          id: '3',
-          secao: 'aspectos_clinicos',
-          tipo: 'text',
-          label: 'Pressão arterial',
-          placeholder: 'Ex: 120/80',
-          obrigatorio: false,
-          ativo: true,
-          ordem: 1
-        },
-        {
-          id: '4',
-          secao: 'bem_estar',
-          tipo: 'slider',
-          label: 'Nível de dor (0-10)',
-          obrigatorio: false,
-          ativo: true,
-          ordem: 1,
-          configuracoes: { min: 0, max: 10, step: 1 }
-        }
-      ];
-      
-      setCampos(camposExemplo);
+      const { data, error } = await supabase
+        .from('formulario_campos_config')
+        .select('*')
+        .order('secao, ordem');
+
+      if (error) {
+        console.error('Erro ao carregar campos:', error);
+        throw error;
+      }
+
+      const camposFormatados = data?.map(campo => ({
+        id: campo.id,
+        secao: campo.secao,
+        tipo: campo.tipo as CampoFormulario['tipo'],
+        label: campo.label,
+        placeholder: campo.placeholder || undefined,
+        opcoes: campo.opcoes || undefined,
+        obrigatorio: campo.obrigatorio,
+        ativo: campo.ativo,
+        ordem: campo.ordem,
+        configuracoes: (campo.configuracoes && typeof campo.configuracoes === 'object' && !Array.isArray(campo.configuracoes)) 
+          ? campo.configuracoes as { min?: number; max?: number; step?: number; rows?: number; }
+          : undefined,
+        created_at: campo.created_at,
+        updated_at: campo.updated_at
+      })) || [];
+
+      setCampos(camposFormatados);
     } catch (error) {
+      console.error('Erro detalhado:', error);
       toast({
         title: "Erro ao carregar configuração",
         description: "Não foi possível carregar os campos configurados.",
@@ -275,38 +261,51 @@ export default function ConfiguracaoFormulario() {
 
     setIsSaving(true);
     try {
-      const novoCampo: CampoFormulario = {
-        id: editingCampo?.id || Date.now().toString(),
+      const dadosCampo = {
         secao: formData.secao,
         tipo: formData.tipo,
-        label: formData.label,
-        placeholder: formData.placeholder || undefined,
-        opcoes: formData.opcoes ? formData.opcoes.split('\n').filter(op => op.trim()) : undefined,
+        label: formData.label.trim(),
+        placeholder: formData.placeholder.trim() || null,
+        opcoes: formData.opcoes ? formData.opcoes.split('\n').filter(op => op.trim()).map(op => op.trim()) : null,
         obrigatorio: formData.obrigatorio,
         ativo: formData.ativo,
-        ordem: editingCampo?.ordem || campos.filter(c => c.secao === formData.secao).length + 1,
-        configuracoes: ['slider', 'number'].includes(formData.tipo) ? formData.configuracoes : undefined
+        ordem: editingCampo?.ordem || Math.max(...campos.filter(c => c.secao === formData.secao).map(c => c.ordem), 0) + 1,
+        configuracoes: ['slider', 'number'].includes(formData.tipo) ? formData.configuracoes : null
       };
 
+      let result;
       if (editingCampo) {
-        setCampos(campos.map(c => c.id === editingCampo.id ? novoCampo : c));
-        toast({
-          title: "Campo atualizado",
-          description: "As alterações foram salvas com sucesso.",
-        });
+        result = await supabase
+          .from('formulario_campos_config')
+          .update(dadosCampo)
+          .eq('id', editingCampo.id)
+          .select()
+          .single();
       } else {
-        setCampos([...campos, novoCampo]);
-        toast({
-          title: "Campo adicionado",
-          description: "O novo campo foi criado com sucesso.",
-        });
+        result = await supabase
+          .from('formulario_campos_config')
+          .insert(dadosCampo)
+          .select()
+          .single();
       }
 
+      if (result.error) {
+        console.error('Erro ao salvar:', result.error);
+        throw result.error;
+      }
+
+      toast({
+        title: editingCampo ? "Campo atualizado" : "Campo adicionado",
+        description: editingCampo ? "As alterações foram salvas com sucesso." : "O novo campo foi criado com sucesso.",
+      });
+
       setDialogOpen(false);
+      loadCamposConfigurados(); // Recarregar dados do banco
     } catch (error) {
+      console.error('Erro ao salvar campo:', error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar o campo.",
+        description: "Não foi possível salvar o campo. Verifique suas permissões.",
         variant: "destructive",
       });
     } finally {
@@ -314,41 +313,91 @@ export default function ConfiguracaoFormulario() {
     }
   };
 
-  const deleteCampo = (id: string) => {
-    setCampos(campos.filter(c => c.id !== id));
-    toast({
-      title: "Campo removido",
-      description: "O campo foi excluído com sucesso.",
-    });
+  const deleteCampo = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('formulario_campos_config')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Campo removido",
+        description: "O campo foi excluído com sucesso.",
+      });
+      
+      loadCamposConfigurados(); // Recarregar dados do banco
+    } catch (error) {
+      console.error('Erro ao deletar campo:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o campo.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleCampoAtivo = (id: string) => {
-    setCampos(campos.map(c => 
-      c.id === id ? { ...c, ativo: !c.ativo } : c
-    ));
+  const toggleCampoAtivo = async (id: string) => {
+    try {
+      const campo = campos.find(c => c.id === id);
+      if (!campo) return;
+
+      const { error } = await supabase
+        .from('formulario_campos_config')
+        .update({ ativo: !campo.ativo })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: campo.ativo ? "Campo desativado" : "Campo ativado",
+        description: `O campo "${campo.label}" foi ${campo.ativo ? 'desativado' : 'ativado'}.`,
+      });
+      
+      loadCamposConfigurados(); // Recarregar dados do banco
+    } catch (error) {
+      console.error('Erro ao alterar status do campo:', error);
+      toast({
+        title: "Erro ao alterar status",
+        description: "Não foi possível alterar o status do campo.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const moveCampo = (id: string, direction: 'up' | 'down') => {
-    const campo = campos.find(c => c.id === id);
-    if (!campo) return;
+  const moveCampo = async (id: string, direction: 'up' | 'down') => {
+    try {
+      const campo = campos.find(c => c.id === id);
+      if (!campo) return;
 
-    const camposSecao = campos.filter(c => c.secao === campo.secao).sort((a, b) => a.ordem - b.ordem);
-    const currentIndex = camposSecao.findIndex(c => c.id === id);
-    
-    if (direction === 'up' && currentIndex > 0) {
-      const targetCampo = camposSecao[currentIndex - 1];
-      setCampos(campos.map(c => {
-        if (c.id === id) return { ...c, ordem: targetCampo.ordem };
-        if (c.id === targetCampo.id) return { ...c, ordem: campo.ordem };
-        return c;
-      }));
-    } else if (direction === 'down' && currentIndex < camposSecao.length - 1) {
-      const targetCampo = camposSecao[currentIndex + 1];
-      setCampos(campos.map(c => {
-        if (c.id === id) return { ...c, ordem: targetCampo.ordem };
-        if (c.id === targetCampo.id) return { ...c, ordem: campo.ordem };
-        return c;
-      }));
+      const camposSecao = campos.filter(c => c.secao === campo.secao).sort((a, b) => a.ordem - b.ordem);
+      const currentIndex = camposSecao.findIndex(c => c.id === id);
+      
+      if (direction === 'up' && currentIndex > 0) {
+        const targetCampo = camposSecao[currentIndex - 1];
+        
+        // Trocar ordens no banco
+        await supabase.from('formulario_campos_config').update({ ordem: targetCampo.ordem }).eq('id', id);
+        await supabase.from('formulario_campos_config').update({ ordem: campo.ordem }).eq('id', targetCampo.id);
+        
+        loadCamposConfigurados();
+      } else if (direction === 'down' && currentIndex < camposSecao.length - 1) {
+        const targetCampo = camposSecao[currentIndex + 1];
+        
+        // Trocar ordens no banco
+        await supabase.from('formulario_campos_config').update({ ordem: targetCampo.ordem }).eq('id', id);
+        await supabase.from('formulario_campos_config').update({ ordem: campo.ordem }).eq('id', targetCampo.id);
+        
+        loadCamposConfigurados();
+      }
+    } catch (error) {
+      console.error('Erro ao mover campo:', error);
+      toast({
+        title: "Erro ao reordenar",
+        description: "Não foi possível alterar a ordem do campo.",
+        variant: "destructive",
+      });
     }
   };
 
