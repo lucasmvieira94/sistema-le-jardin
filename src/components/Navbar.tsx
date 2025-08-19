@@ -13,7 +13,8 @@ import {
   Clock, 
   Settings,
   FileHeart,
-  ChevronDown
+  ChevronDown,
+  Pill
 } from "lucide-react";
 import { 
   DropdownMenu,
@@ -53,6 +54,7 @@ export default function Navbar() {
   const sistemaMenuItems = [
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
+    { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
     { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];

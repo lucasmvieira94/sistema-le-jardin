@@ -20,6 +20,7 @@ import EditarFuncionario from "./pages/EditarFuncionario";
 import Residentes from "./pages/Residentes";
 import ControleProntuarios from "./pages/ControleProntuarios";
 import ConfiguracaoFormulario from "./pages/ConfiguracaoFormulario";
+import ControleMedicamentos from "./pages/ControleMedicamentos";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 
@@ -145,6 +146,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ConfiguracaoFormulario />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/controle-medicamentos"
+              element={
+                <ProtectedRoute>
+                  <ControleMedicamentos />
                 </ProtectedRoute>
               }
             />
