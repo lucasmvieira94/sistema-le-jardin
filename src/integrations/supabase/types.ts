@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      administracao_medicamentos: {
+        Row: {
+          created_at: string | null
+          data_administracao: string
+          dosagem_administrada: string
+          estoque_medicamento_id: string | null
+          funcionario_id: string
+          horario_administracao: string
+          id: string
+          medicamento_id: string
+          observacoes: string | null
+          quantidade_utilizada: number
+          residente_id: string
+          status: string | null
+          via_administracao: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_administracao?: string
+          dosagem_administrada: string
+          estoque_medicamento_id?: string | null
+          funcionario_id: string
+          horario_administracao?: string
+          id?: string
+          medicamento_id: string
+          observacoes?: string | null
+          quantidade_utilizada: number
+          residente_id: string
+          status?: string | null
+          via_administracao?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_administracao?: string
+          dosagem_administrada?: string
+          estoque_medicamento_id?: string | null
+          funcionario_id?: string
+          horario_administracao?: string
+          id?: string
+          medicamento_id?: string
+          observacoes?: string | null
+          quantidade_utilizada?: number
+          residente_id?: string
+          status?: string | null
+          via_administracao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "administracao_medicamentos_estoque_medicamento_id_fkey"
+            columns: ["estoque_medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "administracao_medicamentos_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "administracao_medicamentos_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "administracao_medicamentos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       afastamentos: {
         Row: {
           created_at: string
@@ -191,6 +268,73 @@ export type Database = {
         }
         Relationships: []
       }
+      entrada_medicamentos: {
+        Row: {
+          created_at: string | null
+          data_compra: string | null
+          estoque_medicamento_id: string
+          fornecedor: string | null
+          funcionario_responsavel: string | null
+          id: string
+          medicamento_id: string
+          numero_nota_fiscal: string | null
+          observacoes: string | null
+          preco_total: number | null
+          preco_unitario: number | null
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string | null
+          data_compra?: string | null
+          estoque_medicamento_id: string
+          fornecedor?: string | null
+          funcionario_responsavel?: string | null
+          id?: string
+          medicamento_id: string
+          numero_nota_fiscal?: string | null
+          observacoes?: string | null
+          preco_total?: number | null
+          preco_unitario?: number | null
+          quantidade: number
+        }
+        Update: {
+          created_at?: string | null
+          data_compra?: string | null
+          estoque_medicamento_id?: string
+          fornecedor?: string | null
+          funcionario_responsavel?: string | null
+          id?: string
+          medicamento_id?: string
+          numero_nota_fiscal?: string | null
+          observacoes?: string | null
+          preco_total?: number | null
+          preco_unitario?: number | null
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrada_medicamentos_estoque_medicamento_id_fkey"
+            columns: ["estoque_medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrada_medicamentos_funcionario_responsavel_fkey"
+            columns: ["funcionario_responsavel"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrada_medicamentos_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escalas: {
         Row: {
           created_at: string
@@ -226,6 +370,65 @@ export type Database = {
           saida?: string
         }
         Relationships: []
+      }
+      estoque_medicamentos: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          data_entrada: string | null
+          data_validade: string | null
+          fornecedor: string | null
+          id: string
+          lote: string | null
+          medicamento_id: string
+          observacoes: string | null
+          preco_unitario: number | null
+          quantidade_atual: number
+          quantidade_maxima: number | null
+          quantidade_minima: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          data_entrada?: string | null
+          data_validade?: string | null
+          fornecedor?: string | null
+          id?: string
+          lote?: string | null
+          medicamento_id: string
+          observacoes?: string | null
+          preco_unitario?: number | null
+          quantidade_atual?: number
+          quantidade_maxima?: number | null
+          quantidade_minima?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          data_entrada?: string | null
+          data_validade?: string | null
+          fornecedor?: string | null
+          id?: string
+          lote?: string | null
+          medicamento_id?: string
+          observacoes?: string | null
+          preco_unitario?: number | null
+          quantidade_atual?: number
+          quantidade_maxima?: number | null
+          quantidade_minima?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_medicamentos_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       formulario_campos_config: {
         Row: {
@@ -327,6 +530,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      medicamentos: {
+        Row: {
+          ativo: boolean | null
+          codigo_barras: string | null
+          concentracao: string | null
+          controlado: boolean | null
+          created_at: string | null
+          dosagem: string | null
+          fabricante: string | null
+          forma_farmaceutica: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          prescricao_obrigatoria: boolean | null
+          principio_ativo: string | null
+          unidade_medida: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo_barras?: string | null
+          concentracao?: string | null
+          controlado?: boolean | null
+          created_at?: string | null
+          dosagem?: string | null
+          fabricante?: string | null
+          forma_farmaceutica?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          prescricao_obrigatoria?: boolean | null
+          principio_ativo?: string | null
+          unidade_medida?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo_barras?: string | null
+          concentracao?: string | null
+          controlado?: boolean | null
+          created_at?: string | null
+          dosagem?: string | null
+          fabricante?: string | null
+          forma_farmaceutica?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          prescricao_obrigatoria?: boolean | null
+          principio_ativo?: string | null
+          unidade_medida?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       prontuario_ciclos: {
         Row: {
@@ -609,6 +866,72 @@ export type Database = {
         }
         Relationships: []
       }
+      residentes_medicamentos: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string
+          dosagem_prescrita: string
+          frequencia: string
+          horarios: Json | null
+          id: string
+          medicamento_id: string
+          observacoes: string | null
+          prescrito_por: string | null
+          residente_id: string
+          updated_at: string | null
+          via_administracao: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          dosagem_prescrita: string
+          frequencia: string
+          horarios?: Json | null
+          id?: string
+          medicamento_id: string
+          observacoes?: string | null
+          prescrito_por?: string | null
+          residente_id: string
+          updated_at?: string | null
+          via_administracao?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          dosagem_prescrita?: string
+          frequencia?: string
+          horarios?: Json | null
+          id?: string
+          medicamento_id?: string
+          observacoes?: string | null
+          prescrito_por?: string | null
+          residente_id?: string
+          updated_at?: string | null
+          via_administracao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "residentes_medicamentos_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "residentes_medicamentos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tipos_afastamento: {
         Row: {
           categoria: string
@@ -804,6 +1127,29 @@ export type Database = {
           p_hora_saida: string
         }
         Returns: string
+      }
+      obter_horarios_medicamentos_residente: {
+        Args: { p_data?: string; p_residente_id: string }
+        Returns: {
+          dosagem_prescrita: string
+          horarios: Json
+          medicamento_nome: string
+          observacoes: string
+          prescricao_id: string
+          quantidade_estoque: number
+          via_administracao: string
+        }[]
+      }
+      obter_medicamentos_estoque_baixo: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          data_validade: string
+          dias_restantes: number
+          lote: string
+          medicamento_nome: string
+          quantidade_atual: number
+          quantidade_minima: number
+        }[]
       }
       preencher_horarios_por_escala: {
         Args: {
