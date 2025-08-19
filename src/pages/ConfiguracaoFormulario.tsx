@@ -9,9 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
@@ -769,6 +771,149 @@ export default function ConfiguracaoFormulario() {
                   )}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Preview Dialog */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Visualização do Formulário</DialogTitle>
+              <DialogDescription>
+                Esta é uma prévia de como o formulário será exibido aos usuários
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {SECOES_DISPONIVEIS.map(secao => {
+                const camposSecao = getCamposPorSecao(secao.value).filter(campo => campo.ativo);
+                
+                if (camposSecao.length === 0) return null;
+                
+                return (
+                  <div key={secao.value} className="space-y-4">
+                    <div className="border-b pb-2">
+                      <h3 className="text-lg font-semibold text-primary">
+                        {secao.label}
+                      </h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {camposSecao.map(campo => (
+                        <div key={campo.id} className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            {campo.label}
+                            {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+                          </Label>
+                          
+                          {campo.tipo === 'text' && (
+                            <Input 
+                              placeholder={campo.placeholder || `Digite ${campo.label.toLowerCase()}`}
+                              disabled
+                            />
+                          )}
+                          
+                          {campo.tipo === 'textarea' && (
+                            <Textarea 
+                              placeholder={campo.placeholder || `Digite ${campo.label.toLowerCase()}`}
+                              rows={campo.configuracoes?.rows || 3}
+                              disabled
+                            />
+                          )}
+                          
+                          {campo.tipo === 'number' && (
+                            <Input 
+                              type="number"
+                              placeholder={campo.placeholder || "0"}
+                              disabled
+                            />
+                          )}
+                          
+                          {campo.tipo === 'select' && (
+                            <Select disabled>
+                              <SelectTrigger>
+                                <SelectValue placeholder={`Selecione ${campo.label.toLowerCase()}`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {campo.opcoes?.map((opcao, index) => (
+                                  <SelectItem key={index} value={opcao}>
+                                    {opcao}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          
+                          {campo.tipo === 'radio' && (
+                            <div className="space-y-2">
+                              {campo.opcoes?.map((opcao, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <input 
+                                    type="radio" 
+                                    id={`${campo.id}-${index}`}
+                                    name={campo.id}
+                                    disabled
+                                    className="h-4 w-4"
+                                  />
+                                  <Label htmlFor={`${campo.id}-${index}`} className="text-sm">
+                                    {opcao}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {campo.tipo === 'checkbox' && (
+                            <div className="space-y-2">
+                              {campo.opcoes?.map((opcao, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    id={`${campo.id}-${index}`}
+                                    disabled
+                                  />
+                                  <Label htmlFor={`${campo.id}-${index}`} className="text-sm">
+                                    {opcao}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {campo.tipo === 'slider' && (
+                            <div className="space-y-2">
+                              <Slider 
+                                value={[campo.configuracoes?.min || 0]}
+                                min={campo.configuracoes?.min || 0}
+                                max={campo.configuracoes?.max || 10}
+                                step={campo.configuracoes?.step || 1}
+                                disabled
+                              />
+                              <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>{campo.configuracoes?.min || 0}</span>
+                                <span>{campo.configuracoes?.max || 10}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {campos.filter(campo => campo.ativo).length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhum campo ativo configurado para exibição</p>
+                  <p className="text-sm mt-2">Adicione campos na configuração para visualizá-los aqui</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button onClick={() => setPreviewOpen(false)}>
+                Fechar
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
