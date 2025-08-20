@@ -353,10 +353,10 @@ export default function GerenciamentoResidentes() {
               continue;
             }
             
-            const quarto = row['Quarto/Acomodação']?.toString().trim() || null;
-            if (quarto && quarto.length > 20) {
+            const quarto = row['Quarto/Acomodação']?.toString().trim()?.substring(0, 10) || null;
+            if (quarto && quarto.length > 10) {
               console.log(`Linha ${linha}: Quarto muito longo (${quarto.length} caracteres)`);
-              errors.push(`Linha ${linha}: Quarto/Acomodação muito longo (máximo 20 caracteres)`);
+              errors.push(`Linha ${linha}: Quarto/Acomodação muito longo (máximo 10 caracteres)`);
               continue;
             }
             
