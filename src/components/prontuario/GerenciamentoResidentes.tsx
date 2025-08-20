@@ -314,15 +314,42 @@ export default function GerenciamentoResidentes() {
               continue;
             }
 
+            // Processar e validar tamanhos dos campos
+            const cpfLimpo = row['CPF']?.toString().replace(/\D/g, '').trim() || null;
+            const telefone = row['Telefone do Responsável']?.toString().trim() || null;
+            
+            // Validar tamanhos dos campos para evitar erros de banco
+            const nomeCompleto = row['Nome Completo']?.toString().trim();
+            if (nomeCompleto && nomeCompleto.length > 255) {
+              errors.push(`Linha ${linha}: Nome muito longo (máximo 255 caracteres)`);
+              continue;
+            }
+            
+            if (cpfLimpo && cpfLimpo.length > 11) {
+              errors.push(`Linha ${linha}: CPF inválido (deve conter apenas números)`);
+              continue;
+            }
+            
+            const quarto = row['Quarto/Acomodação']?.toString().trim() || null;
+            if (quarto && quarto.length > 20) {
+              errors.push(`Linha ${linha}: Quarto/Acomodação muito longo (máximo 20 caracteres)`);
+              continue;
+            }
+            
+            if (telefone && telefone.length > 20) {
+              errors.push(`Linha ${linha}: Telefone do responsável muito longo (máximo 20 caracteres)`);
+              continue;
+            }
+
             processedData.push({
-              nome_completo: row['Nome Completo']?.toString().trim(),
-              cpf: row['CPF']?.toString().trim() || null,
+              nome_completo: nomeCompleto,
+              cpf: cpfLimpo,
               data_nascimento: dataNascimento,
               numero_prontuario: numeroProntuario,
-              quarto: row['Quarto/Acomodação']?.toString().trim() || null,
-              responsavel_nome: row['Nome do Responsável']?.toString().trim() || null,
-              responsavel_telefone: row['Telefone do Responsável']?.toString().trim() || null,
-              responsavel_email: row['Email do Responsável']?.toString().trim() || null,
+              quarto: quarto,
+              responsavel_nome: row['Nome do Responsável']?.toString().trim()?.substring(0, 255) || null,
+              responsavel_telefone: telefone,
+              responsavel_email: row['Email do Responsável']?.toString().trim()?.substring(0, 255) || null,
               condicoes_medicas: row['Condições Médicas']?.toString().trim() || null,
               observacoes_gerais: row['Observações Gerais']?.toString().trim() || null,
               ativo: true
@@ -354,7 +381,14 @@ export default function GerenciamentoResidentes() {
             .from('residentes')
             .insert(processedData);
 
-          if (error) throw error;
+          if (error) {
+            console.error('Erro ao inserir no banco:', error);
+            throw new Error(
+              error.code === '22001' 
+                ? 'Alguns dados excedem o tamanho permitido. Verifique os tamanhos dos campos na planilha.'
+                : `Erro no banco de dados: ${error.message || 'Erro desconhecido'}`
+            );
+          }
 
           toast({
             title: "Importação concluída",
