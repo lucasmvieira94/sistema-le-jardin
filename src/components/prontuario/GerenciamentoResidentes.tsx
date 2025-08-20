@@ -235,6 +235,17 @@ export default function GerenciamentoResidentes() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Verificar tipo de arquivo
+    const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+      toast({
+        title: "Arquivo inválido",
+        description: "Por favor, selecione um arquivo Excel (.xlsx, .xls) ou CSV.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setImporting(true);
     
     try {
@@ -243,8 +254,23 @@ export default function GerenciamentoResidentes() {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
+          
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            throw new Error('Planilha vazia ou inválida');
+          }
+          
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          if (jsonData.length === 0) {
+            toast({
+              title: "Planilha vazia",
+              description: "A planilha não contém dados válidos para importação.",
+              variant: "destructive",
+            });
+            setImporting(false);
+            return;
+          }
 
           const processedData = [];
           const errors = [];
