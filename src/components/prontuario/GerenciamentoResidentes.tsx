@@ -235,9 +235,12 @@ export default function GerenciamentoResidentes() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('Arquivo selecionado:', file.name, 'Tipo:', file.type, 'Tamanho:', file.size);
+
     // Verificar tipo de arquivo
     const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
     if (!allowedTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+      console.log('Tipo de arquivo rejeitado:', file.type);
       toast({
         title: "Arquivo inválido",
         description: "Por favor, selecione um arquivo Excel (.xlsx, .xls) ou CSV.",
@@ -249,11 +252,15 @@ export default function GerenciamentoResidentes() {
     setImporting(true);
     
     try {
+      console.log('Iniciando leitura do arquivo...');
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
+          console.log('Arquivo lido, processando dados...');
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
+          
+          console.log('Workbook criado, sheets:', workbook.SheetNames);
           
           if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
             throw new Error('Planilha vazia ou inválida');
@@ -261,6 +268,9 @@ export default function GerenciamentoResidentes() {
           
           const worksheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          console.log('Dados extraídos da planilha:', jsonData.length, 'linhas');
+          console.log('Primeira linha de dados:', jsonData[0]);
 
           if (jsonData.length === 0) {
             toast({
@@ -275,27 +285,36 @@ export default function GerenciamentoResidentes() {
           const processedData = [];
           const errors = [];
 
+          console.log('Iniciando processamento de', jsonData.length, 'linhas...');
+
           for (let i = 0; i < jsonData.length; i++) {
             const row = jsonData[i] as any;
             const linha = i + 2; // +2 porque a linha 1 é cabeçalho e arrays começam em 0
 
+            console.log(`Processando linha ${linha}:`, row);
+
             // Validar campos obrigatórios
             if (!row['Nome Completo']) {
+              console.log(`Linha ${linha}: Nome completo está vazio`);
               errors.push(`Linha ${linha}: Nome completo é obrigatório`);
               continue;
             }
 
             if (!row['Data de Nascimento']) {
+              console.log(`Linha ${linha}: Data de nascimento está vazia`);
               errors.push(`Linha ${linha}: Data de nascimento é obrigatória`);
               continue;
             }
 
             // Gerar número do prontuário
+            console.log(`Gerando número do prontuário para linha ${linha}...`);
             const numeroProntuario = await gerarNumeroProntuario();
+            console.log(`Número gerado: ${numeroProntuario}`);
             
             // Processar data de nascimento
             let dataNascimento = '';
             try {
+              console.log(`Processando data de nascimento para linha ${linha}:`, row['Data de Nascimento']);
               if (typeof row['Data de Nascimento'] === 'number') {
                 // Excel date serial number
                 const excelDate = new Date((row['Data de Nascimento'] - 25569) * 86400 * 1000);
@@ -309,7 +328,9 @@ export default function GerenciamentoResidentes() {
                 }
                 dataNascimento = parsedDate.toISOString().split('T')[0];
               }
+              console.log(`Data processada: ${dataNascimento}`);
             } catch (error) {
+              console.error(`Erro ao processar data na linha ${linha}:`, error);
               errors.push(`Linha ${linha}: Erro ao processar data de nascimento`);
               continue;
             }
@@ -321,27 +342,31 @@ export default function GerenciamentoResidentes() {
             // Validar tamanhos dos campos para evitar erros de banco
             const nomeCompleto = row['Nome Completo']?.toString().trim();
             if (nomeCompleto && nomeCompleto.length > 255) {
+              console.log(`Linha ${linha}: Nome muito longo (${nomeCompleto.length} caracteres)`);
               errors.push(`Linha ${linha}: Nome muito longo (máximo 255 caracteres)`);
               continue;
             }
             
             if (cpfLimpo && cpfLimpo.length > 11) {
+              console.log(`Linha ${linha}: CPF inválido (${cpfLimpo.length} caracteres)`);
               errors.push(`Linha ${linha}: CPF inválido (deve conter apenas números)`);
               continue;
             }
             
             const quarto = row['Quarto/Acomodação']?.toString().trim() || null;
             if (quarto && quarto.length > 20) {
+              console.log(`Linha ${linha}: Quarto muito longo (${quarto.length} caracteres)`);
               errors.push(`Linha ${linha}: Quarto/Acomodação muito longo (máximo 20 caracteres)`);
               continue;
             }
             
             if (telefone && telefone.length > 20) {
+              console.log(`Linha ${linha}: Telefone muito longo (${telefone.length} caracteres)`);
               errors.push(`Linha ${linha}: Telefone do responsável muito longo (máximo 20 caracteres)`);
               continue;
             }
 
-            processedData.push({
+            const dadosProcessados = {
               nome_completo: nomeCompleto,
               cpf: cpfLimpo,
               data_nascimento: dataNascimento,
@@ -353,10 +378,17 @@ export default function GerenciamentoResidentes() {
               condicoes_medicas: row['Condições Médicas']?.toString().trim() || null,
               observacoes_gerais: row['Observações Gerais']?.toString().trim() || null,
               ativo: true
-            });
+            };
+
+            console.log(`Dados processados para linha ${linha}:`, dadosProcessados);
+            processedData.push(dadosProcessados);
           }
 
+          console.log('Validação concluída. Erros encontrados:', errors.length);
+          console.log('Dados processados:', processedData.length);
+
           if (errors.length > 0) {
+            console.log('Lista de erros:', errors);
             toast({
               title: "Erros encontrados na planilha",
               description: errors.slice(0, 3).join('; ') + (errors.length > 3 ? '...' : ''),
@@ -367,6 +399,7 @@ export default function GerenciamentoResidentes() {
           }
 
           if (processedData.length === 0) {
+            console.log('Nenhum dado válido processado');
             toast({
               title: "Nenhum dado válido encontrado",
               description: "Verifique se a planilha está preenchida corretamente.",
@@ -377,6 +410,7 @@ export default function GerenciamentoResidentes() {
           }
 
           // Inserir dados no banco
+          console.log('Inserindo dados no banco...', processedData);
           const { error } = await supabase
             .from('residentes')
             .insert(processedData);
@@ -390,6 +424,7 @@ export default function GerenciamentoResidentes() {
             );
           }
 
+          console.log('Inserção concluída com sucesso');
           toast({
             title: "Importação concluída",
             description: `${processedData.length} residente(s) importado(s) com sucesso.`,
@@ -399,10 +434,11 @@ export default function GerenciamentoResidentes() {
           fetchResidentes();
           
         } catch (error) {
-          console.error('Erro ao processar arquivo:', error);
+          console.error('Erro detalhado ao processar arquivo:', error);
+          console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
           toast({
             title: "Erro ao processar arquivo",
-            description: "Verifique se o arquivo está no formato correto.",
+            description: error instanceof Error ? error.message : "Verifique se o arquivo está no formato correto.",
             variant: "destructive",
           });
         } finally {
@@ -410,8 +446,19 @@ export default function GerenciamentoResidentes() {
         }
       };
       
+      reader.onerror = (error) => {
+        console.error('Erro ao ler arquivo:', error);
+        toast({
+          title: "Erro ao ler arquivo",
+          description: "Não foi possível ler o arquivo selecionado.",
+          variant: "destructive",
+        });
+        setImporting(false);
+      };
+      
       reader.readAsArrayBuffer(file);
     } catch (error) {
+      console.error('Erro no try/catch principal:', error);
       toast({
         title: "Erro ao ler arquivo",
         description: "Não foi possível ler o arquivo selecionado.",
