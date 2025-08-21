@@ -282,6 +282,32 @@ export default function GerenciamentoResidentes() {
             return;
           }
 
+          // Validação de duplicatas - buscar residentes existentes
+          console.log('Verificando residentes existentes...');
+          const { data: residentesExistentes, error: errorBusca } = await supabase
+            .from('residentes')
+            .select('id, numero_prontuario, cpf, nome_completo')
+            .eq('ativo', true);
+
+          if (errorBusca) {
+            console.error('Erro ao buscar residentes existentes:', errorBusca);
+            toast({
+              title: "Erro ao validar dados existentes",
+              description: "Não foi possível verificar duplicatas.",
+              variant: "destructive",
+            });
+            setImporting(false);
+            return;
+          }
+
+          const cpfsExistentes = new Set(
+            residentesExistentes?.map(r => r.cpf?.replace(/\D/g, '')).filter(Boolean) || []
+          );
+          
+          const prontuariosExistentes = new Set(
+            residentesExistentes?.map(r => r.numero_prontuario).filter(Boolean) || []
+          );
+
           const processedData = [];
           const errors = [];
 
@@ -306,9 +332,41 @@ export default function GerenciamentoResidentes() {
               continue;
             }
 
-            // Gerar número do prontuário
+            // Processar e validar tamanhos dos campos primeiro
+            const cpfLimpo = row['CPF']?.toString().replace(/\D/g, '').trim() || null;
+            const telefone = row['Telefone do Responsável']?.toString().trim() || null;
+            
+            // Validar CPF duplicado
+            if (cpfLimpo) {
+              if (cpfsExistentes.has(cpfLimpo)) {
+                console.log(`Linha ${linha}: CPF ${cpfLimpo} já existe no banco`);
+                errors.push(`Linha ${linha}: CPF ${cpfLimpo} já está cadastrado`);
+                continue;
+              }
+              // Adicionar à lista de verificação para evitar duplicatas na própria planilha
+              cpfsExistentes.add(cpfLimpo);
+            }
+
+            // Gerar número do prontuário único
             console.log(`Gerando número do prontuário para linha ${linha}...`);
-            const numeroProntuario = await gerarNumeroProntuario();
+            let numeroProntuario = await gerarNumeroProntuario();
+            let tentativas = 0;
+            
+            // Garantir que o número não existe nem no banco nem na planilha atual
+            while (prontuariosExistentes.has(numeroProntuario) && tentativas < 50) {
+              console.log(`Número ${numeroProntuario} já existe, gerando novo...`);
+              numeroProntuario = await gerarNumeroProntuario();
+              tentativas++;
+            }
+            
+            if (tentativas >= 50) {
+              console.log(`Linha ${linha}: Não foi possível gerar número único após 50 tentativas`);
+              errors.push(`Linha ${linha}: Erro ao gerar número de prontuário único`);
+              continue;
+            }
+            
+            // Adicionar à lista para evitar duplicatas na planilha
+            prontuariosExistentes.add(numeroProntuario);
             console.log(`Número gerado: ${numeroProntuario}`);
             
             // Processar data de nascimento
@@ -335,10 +393,6 @@ export default function GerenciamentoResidentes() {
               continue;
             }
 
-            // Processar e validar tamanhos dos campos
-            const cpfLimpo = row['CPF']?.toString().replace(/\D/g, '').trim() || null;
-            const telefone = row['Telefone do Responsável']?.toString().trim() || null;
-            
             // Validar tamanhos dos campos para evitar erros de banco
             const nomeCompleto = row['Nome Completo']?.toString().trim();
             if (nomeCompleto && nomeCompleto.length > 255) {
