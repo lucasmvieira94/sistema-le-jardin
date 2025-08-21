@@ -353,11 +353,12 @@ export default function GerenciamentoResidentes() {
               continue;
             }
             
-            const quarto = row['Quarto/Acomodação']?.toString().trim()?.substring(0, 10) || null;
+            const quartoOriginal = row['Quarto/Acomodação']?.toString().trim() || null;
+            let quarto = quartoOriginal;
+            
             if (quarto && quarto.length > 10) {
-              console.log(`Linha ${linha}: Quarto muito longo (${quarto.length} caracteres)`);
-              errors.push(`Linha ${linha}: Quarto/Acomodação muito longo (máximo 10 caracteres)`);
-              continue;
+              console.log(`Linha ${linha}: Quarto muito longo (${quarto.length} caracteres), truncando para 10 caracteres`);
+              quarto = quarto.substring(0, 10);
             }
             
             if (telefone && telefone.length > 20) {
