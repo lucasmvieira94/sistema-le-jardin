@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { FileHeart, UserPlus } from "lucide-react";
+import { FileHeart, UserPlus, CheckCircle, Clock, FileX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ export default function Prontuario() {
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
   const [selectedResidente, setSelectedResidente] = useState<string | null>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
+  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null}>>({});
 
   // Verificar se já tem dados do funcionário na URL (vindos do registro de ponto)
   useState(() => {
@@ -29,6 +31,40 @@ export default function Prontuario() {
     }
   });
 
+  const verificarStatusProntuarios = async (residentesData: any[]) => {
+    const statusMap: Record<string, {status: string, cicloId: string | null}> = {};
+    
+    for (const residente of residentesData) {
+      try {
+        const { data: verificacao, error } = await supabase
+          .rpc('verificar_prontuario_diario_existente', { 
+            p_residente_id: residente.id 
+          });
+
+        if (!error && verificacao?.[0]?.ja_iniciado) {
+          const cicloInfo = verificacao[0];
+          statusMap[residente.id] = {
+            status: cicloInfo.status,
+            cicloId: cicloInfo.ciclo_id
+          };
+        } else {
+          statusMap[residente.id] = {
+            status: 'nao_iniciado',
+            cicloId: null
+          };
+        }
+      } catch (err) {
+        console.error('Erro ao verificar status do prontuário:', err);
+        statusMap[residente.id] = {
+          status: 'nao_iniciado',
+          cicloId: null
+        };
+      }
+    }
+    
+    setProntuariosStatus(statusMap);
+  };
+
   const handleFuncionarioValidado = async (id: string, nome: string) => {
     setFuncionarioId(id);
     setFuncionarioNome(nome);
@@ -41,6 +77,8 @@ export default function Prontuario() {
     
     if (data) {
       setResidentes(data);
+      // Verificar status dos prontuários de cada residente
+      await verificarStatusProntuarios(data);
     }
   };
 
@@ -49,6 +87,56 @@ export default function Prontuario() {
     setFuncionarioNome("");
     setSelectedResidente(null);
     setResidentes([]);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'nao_iniciado':
+        return (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <FileX className="w-3 h-3" />
+            Não Iniciado
+          </Badge>
+        );
+      case 'em_andamento':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            Em Andamento
+          </Badge>
+        );
+      case 'encerrado':
+        return (
+          <Badge variant="default" className="flex items-center gap-1 bg-green-600 text-white">
+            <CheckCircle className="w-3 h-3" />
+            Concluído
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <FileX className="w-3 h-3" />
+            Não Iniciado
+          </Badge>
+        );
+    }
+  };
+
+  const getButtonText = (status: string) => {
+    switch (status) {
+      case 'nao_iniciado':
+        return 'Iniciar Prontuário';
+      case 'em_andamento':
+        return 'Continuar Prontuário';
+      case 'encerrado':
+        return 'Ver Prontuário';
+      default:
+        return 'Iniciar Prontuário';
+    }
+  };
+
+  const isButtonDisabled = (status: string) => {
+    return status === 'encerrado';
   };
 
   if (!funcionarioId) {
@@ -117,63 +205,87 @@ export default function Prontuario() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-                {residentes.map((residente) => (
-                  <div
-                    key={residente.id}
-                    onClick={() => setSelectedResidente(residente.id)}
-                    className="p-6 bg-white rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-gray-900 group-hover:text-primary transition-colors">
-                          {residente.nome_completo}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Prontuário: {residente.numero_prontuario}
-                        </p>
-                      </div>
-                      <UserPlus className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Quarto:</span>
-                        <span className="font-medium">{residente.quarto || 'N/A'}</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Idade:</span>
-                        <span className="font-medium">
-                          {new Date().getFullYear() - new Date(residente.data_nascimento).getFullYear()} anos
-                        </span>
-                      </div>
-                      
-                      {residente.responsavel_nome && (
-                        <div className="pt-2 border-t border-gray-100">
-                          <p className="text-xs text-gray-500">Responsável:</p>
-                          <p className="text-sm font-medium text-gray-700">{residente.responsavel_nome}</p>
-                          {residente.responsavel_telefone && (
-                            <p className="text-xs text-gray-500">{residente.responsavel_telefone}</p>
-                          )}
+                {residentes.map((residente) => {
+                  const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null };
+                  const isDisabled = isButtonDisabled(statusInfo.status);
+                  
+                  return (
+                    <div
+                      key={residente.id}
+                      onClick={() => !isDisabled && setSelectedResidente(residente.id)}
+                      className={`p-6 bg-white rounded-lg border border-gray-200 transition-all ${
+                        isDisabled 
+                          ? 'cursor-not-allowed opacity-70' 
+                          : 'hover:border-primary hover:shadow-md cursor-pointer'
+                      } group`}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className={`font-semibold text-lg text-gray-900 transition-colors ${
+                            !isDisabled && 'group-hover:text-primary'
+                          }`}>
+                            {residente.nome_completo}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Prontuário: {residente.numero_prontuario}
+                          </p>
                         </div>
-                      )}
+                        <UserPlus className={`w-5 h-5 text-gray-400 transition-colors ${
+                          !isDisabled && 'group-hover:text-primary'
+                        }`} />
+                      </div>
+                      
+                      {/* Status do Prontuário */}
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Status do Prontuário de Hoje:</p>
+                        {getStatusBadge(statusInfo.status)}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Quarto:</span>
+                          <span className="font-medium">{residente.quarto || 'N/A'}</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Idade:</span>
+                          <span className="font-medium">
+                            {new Date().getFullYear() - new Date(residente.data_nascimento).getFullYear()} anos
+                          </span>
+                        </div>
+                        
+                        {residente.responsavel_nome && (
+                          <div className="pt-2 border-t border-gray-100">
+                            <p className="text-xs text-gray-500">Responsável:</p>
+                            <p className="text-sm font-medium text-gray-700">{residente.responsavel_nome}</p>
+                            {residente.responsavel_telefone && (
+                              <p className="text-xs text-gray-500">{residente.responsavel_telefone}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t border-gray-100">
+                        <Button 
+                          variant={isDisabled ? "secondary" : "outline"}
+                          size="sm" 
+                          disabled={isDisabled}
+                          className={`w-full transition-colors ${
+                            !isDisabled && 'group-hover:bg-primary group-hover:text-white'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isDisabled) {
+                              setSelectedResidente(residente.id);
+                            }
+                          }}
+                        >
+                          {getButtonText(statusInfo.status)}
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="mt-4 pt-3 border-t border-gray-100">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full group-hover:bg-primary group-hover:text-white transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedResidente(residente.id);
-                        }}
-                      >
-                        Iniciar Prontuário
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -181,6 +293,7 @@ export default function Prontuario() {
           <NovoFormularioProntuario 
             funcionarioId={funcionarioId} 
             residenteId={selectedResidente}
+            cicloStatus={prontuariosStatus[selectedResidente]?.status || 'nao_iniciado'}
             onChangeResidente={setSelectedResidente}
             onVoltar={() => setSelectedResidente(null)}
           />

@@ -65,6 +65,7 @@ interface FormularioData {
 interface NovoFormularioProntuarioProps {
   funcionarioId: string;
   residenteId: string;
+  cicloStatus?: string;
   onChangeResidente?: (residenteId: string) => void;
   onVoltar?: () => void;
 }
@@ -72,6 +73,7 @@ interface NovoFormularioProntuarioProps {
 export default function NovoFormularioProntuario({ 
   funcionarioId, 
   residenteId, 
+  cicloStatus: cicloStatusProp,
   onChangeResidente, 
   onVoltar 
 }: NovoFormularioProntuarioProps) {
@@ -120,24 +122,11 @@ export default function NovoFormularioProntuario({
           setResidenteData(residenteData);
         }
 
-        // Verificar se já existe prontuário para hoje
-        const { data: verificacao, error: verificacaoError } = await supabase
-          .rpc('verificar_prontuario_diario_existente', { 
-            p_residente_id: residenteId 
-          });
-
-        if (verificacaoError) {
-          console.error('Erro ao verificar prontuário:', verificacaoError);
-          return;
-        }
-
-        const cicloExistente = verificacao?.[0];
-        
-        if (cicloExistente?.ja_iniciado) {
-          setCicloId(cicloExistente.ciclo_id);
-          setCicloStatus(cicloExistente.status);
+        // Se já temos o status do ciclo passado pela prop, usá-lo
+        if (cicloStatusProp && cicloStatusProp !== 'nao_iniciado') {
+          setCicloStatus(cicloStatusProp);
           
-          if (cicloExistente.status === 'encerrado') {
+          if (cicloStatusProp === 'encerrado') {
             setProntuarioJaFinalizado(true);
             toast({
               title: "Prontuário já finalizado",
@@ -151,51 +140,114 @@ export default function NovoFormularioProntuario({
             });
           }
 
-          // Carregar dados existentes do prontuário
-          const { data: registroExistente } = await supabase
-            .from('prontuario_registros')
-            .select('*')
-            .eq('ciclo_id', cicloExistente.ciclo_id)
-            .eq('tipo_registro', 'prontuario_completo')
-            .single();
+          // Buscar ciclo existente
+          const { data: verificacao, error: verificacaoError } = await supabase
+            .rpc('verificar_prontuario_diario_existente', { 
+              p_residente_id: residenteId 
+            });
 
-          if (registroExistente) {
-            setRegistroId(registroExistente.id);
-            try {
-              const dadosExistentes = JSON.parse(registroExistente.descricao);
-              Object.keys(dadosExistentes).forEach(key => {
-                setValue(key as keyof FormularioData, dadosExistentes[key]);
-              });
-            } catch (e) {
-              console.error('Erro ao carregar dados do prontuário:', e);
+          if (!verificacaoError && verificacao?.[0]?.ja_iniciado) {
+            const cicloExistente = verificacao[0];
+            setCicloId(cicloExistente.ciclo_id);
+
+            // Carregar dados existentes do prontuário
+            const { data: registroExistente } = await supabase
+              .from('prontuario_registros')
+              .select('*')
+              .eq('ciclo_id', cicloExistente.ciclo_id)
+              .eq('tipo_registro', 'prontuario_completo')
+              .single();
+
+            if (registroExistente) {
+              setRegistroId(registroExistente.id);
+              try {
+                const dadosExistentes = JSON.parse(registroExistente.descricao);
+                Object.keys(dadosExistentes).forEach(key => {
+                  setValue(key as keyof FormularioData, dadosExistentes[key]);
+                });
+              } catch (e) {
+                console.error('Erro ao carregar dados do prontuário:', e);
+              }
             }
           }
         } else {
-          // Iniciar novo prontuário
-          const { data: novoCiclo, error: cicloError } = await supabase
-            .rpc('iniciar_prontuario_diario', {
-              p_residente_id: residenteId,
-              p_funcionario_id: funcionarioId
+          // Verificar se já existe prontuário para hoje
+          const { data: verificacao, error: verificacaoError } = await supabase
+            .rpc('verificar_prontuario_diario_existente', { 
+              p_residente_id: residenteId 
             });
 
-          if (cicloError) {
-            console.error('Erro ao iniciar prontuário:', cicloError);
-            toast({
-              title: "Erro ao iniciar prontuário",
-              description: "Não foi possível iniciar o prontuário diário.",
-              variant: "destructive",
-            });
+          if (verificacaoError) {
+            console.error('Erro ao verificar prontuário:', verificacaoError);
             return;
           }
 
-          const resultado = novoCiclo?.[0];
-          if (resultado?.success) {
-            setCicloId(resultado.ciclo_id);
-            setCicloStatus('em_andamento');
-            toast({
-              title: "Prontuário iniciado",
-              description: resultado.message,
-            });
+          const cicloExistente = verificacao?.[0];
+          
+          if (cicloExistente?.ja_iniciado) {
+            setCicloId(cicloExistente.ciclo_id);
+            setCicloStatus(cicloExistente.status);
+            
+            if (cicloExistente.status === 'encerrado') {
+              setProntuarioJaFinalizado(true);
+              toast({
+                title: "Prontuário já finalizado",
+                description: "Este prontuário já foi finalizado hoje.",
+                variant: "default",
+              });
+            } else {
+              toast({
+                title: "Prontuário em andamento",
+                description: "Continuando o prontuário de hoje...",
+              });
+            }
+
+            // Carregar dados existentes do prontuário
+            const { data: registroExistente } = await supabase
+              .from('prontuario_registros')
+              .select('*')
+              .eq('ciclo_id', cicloExistente.ciclo_id)
+              .eq('tipo_registro', 'prontuario_completo')
+              .single();
+
+            if (registroExistente) {
+              setRegistroId(registroExistente.id);
+              try {
+                const dadosExistentes = JSON.parse(registroExistente.descricao);
+                Object.keys(dadosExistentes).forEach(key => {
+                  setValue(key as keyof FormularioData, dadosExistentes[key]);
+                });
+              } catch (e) {
+                console.error('Erro ao carregar dados do prontuário:', e);
+              }
+            }
+          } else {
+            // Iniciar novo prontuário
+            const { data: novoCiclo, error: cicloError } = await supabase
+              .rpc('iniciar_prontuario_diario', {
+                p_residente_id: residenteId,
+                p_funcionario_id: funcionarioId
+              });
+
+            if (cicloError) {
+              console.error('Erro ao iniciar prontuário:', cicloError);
+              toast({
+                title: "Erro ao iniciar prontuário",
+                description: "Não foi possível iniciar o prontuário diário.",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            const resultado = novoCiclo?.[0];
+            if (resultado?.success) {
+              setCicloId(resultado.ciclo_id);
+              setCicloStatus('em_andamento');
+              toast({
+                title: "Prontuário iniciado",
+                description: resultado.message,
+              });
+            }
           }
         }
 
@@ -212,7 +264,7 @@ export default function NovoFormularioProntuario({
     };
 
     inicializarProntuario();
-  }, [residenteId, funcionarioId]);
+  }, [residenteId, funcionarioId, cicloStatusProp]);
 
   // Buscar lista de residentes para o dropdown
   useEffect(() => {
