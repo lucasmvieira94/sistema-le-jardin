@@ -77,19 +77,27 @@ export default function GerenciamentoResidentes() {
 
   const gerarNumeroProntuario = async () => {
     try {
-      // Buscar o último número de prontuário
+      // Buscar todos os números de prontuário existentes
       const { data, error } = await supabase
         .from('residentes')
         .select('numero_prontuario')
-        .order('numero_prontuario', { ascending: false })
-        .limit(1);
+        .eq('ativo', true);
 
       if (error) throw error;
 
+      // Extrair todos os números existentes e encontrar o maior
+      const numerosExistentes = (data || [])
+        .map(item => {
+          const match = item.numero_prontuario?.match(/P(\d+)/);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(num => num > 0);
+
+      // Encontrar o próximo número disponível
       let proximoNumero = 1;
-      if (data && data.length > 0) {
-        const ultimoNumero = parseInt(data[0].numero_prontuario.replace(/\D/g, '')) || 0;
-        proximoNumero = ultimoNumero + 1;
+      if (numerosExistentes.length > 0) {
+        const maiorNumero = Math.max(...numerosExistentes);
+        proximoNumero = maiorNumero + 1;
       }
 
       // Formatar como P0001, P0002, etc.
