@@ -319,7 +319,35 @@ export default function GerenciamentoResidentes() {
           const processedData = [];
           const errors = [];
 
+          // Determinar o próximo número de prontuário base uma única vez
+          let proximoNumero = 1;
+          try {
+            const { data: dadosProntuario, error: erroProntuario } = await supabase
+              .from('residentes')
+              .select('numero_prontuario')
+              .eq('ativo', true);
+
+            if (erroProntuario) throw erroProntuario;
+
+            // Extrair todos os números existentes e encontrar o maior
+            const numerosExistentes = (dadosProntuario || [])
+              .map(item => {
+                const match = item.numero_prontuario?.match(/P(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+              })
+              .filter(num => num > 0);
+
+            if (numerosExistentes.length > 0) {
+              const maiorNumero = Math.max(...numerosExistentes);
+              proximoNumero = maiorNumero + 1;
+            }
+          } catch (error) {
+            console.error('Erro ao determinar próximo número de prontuário:', error);
+            proximoNumero = 1;
+          }
+
           console.log('Iniciando processamento de', jsonData.length, 'linhas...');
+          console.log('Próximo número de prontuário base:', proximoNumero);
 
           for (let i = 0; i < jsonData.length; i++) {
             const row = jsonData[i] as any;
@@ -355,27 +383,15 @@ export default function GerenciamentoResidentes() {
               cpfsExistentes.add(cpfLimpo);
             }
 
-            // Gerar número do prontuário único
-            console.log(`Gerando número do prontuário para linha ${linha}...`);
-            let numeroProntuario = await gerarNumeroProntuario();
-            let tentativas = 0;
+            // Gerar número do prontuário sequencial
+            const numeroProntuario = `P${proximoNumero.toString().padStart(4, '0')}`;
+            console.log(`Número do prontuário gerado: ${numeroProntuario}`);
             
-            // Garantir que o número não existe nem no banco nem na planilha atual
-            while (prontuariosExistentes.has(numeroProntuario) && tentativas < 50) {
-              console.log(`Número ${numeroProntuario} já existe, gerando novo...`);
-              numeroProntuario = await gerarNumeroProntuario();
-              tentativas++;
-            }
+            // Incrementar para o próximo residente
+            proximoNumero++;
             
-            if (tentativas >= 50) {
-              console.log(`Linha ${linha}: Não foi possível gerar número único após 50 tentativas`);
-              errors.push(`Linha ${linha}: Erro ao gerar número de prontuário único`);
-              continue;
-            }
-            
-            // Adicionar à lista para evitar duplicatas na planilha
+            // Adicionar à lista para controle
             prontuariosExistentes.add(numeroProntuario);
-            console.log(`Número gerado: ${numeroProntuario}`);
             
             // Processar data de nascimento
             let dataNascimento = '';
