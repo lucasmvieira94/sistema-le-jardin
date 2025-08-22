@@ -296,6 +296,12 @@ export default function Prontuario() {
             cicloStatus={prontuariosStatus[selectedResidente]?.status || 'nao_iniciado'}
             onChangeResidente={setSelectedResidente}
             onVoltar={() => setSelectedResidente(null)}
+            onStatusChange={(residenteId, status, cicloId) => {
+              setProntuariosStatus(prev => ({
+                ...prev,
+                [residenteId]: { status, cicloId }
+              }));
+            }}
           />
         )}
       </div>
