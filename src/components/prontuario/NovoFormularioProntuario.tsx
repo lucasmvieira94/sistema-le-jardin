@@ -68,7 +68,6 @@ interface NovoFormularioProntuarioProps {
   cicloStatus?: string;
   onChangeResidente?: (residenteId: string) => void;
   onVoltar?: () => void;
-  onStatusChange?: (residenteId: string, status: string, cicloId: string) => void;
 }
 
 export default function NovoFormularioProntuario({ 
@@ -76,8 +75,7 @@ export default function NovoFormularioProntuario({
   residenteId, 
   cicloStatus: cicloStatusProp,
   onChangeResidente, 
-  onVoltar,
-  onStatusChange 
+  onVoltar 
 }: NovoFormularioProntuarioProps) {
   const { toast } = useToast();
   const [isFinalizando, setIsFinalizando] = useState(false);
@@ -245,8 +243,6 @@ export default function NovoFormularioProntuario({
             if (resultado?.success) {
               setCicloId(resultado.ciclo_id);
               setCicloStatus('em_andamento');
-              // Notificar o componente pai sobre a mudança de status
-              onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
               toast({
                 title: "Prontuário iniciado",
                 description: resultado.message,
