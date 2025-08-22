@@ -41,10 +41,10 @@ export default function Prontuario() {
             p_residente_id: residente.id 
           });
 
-        if (!error && verificacao?.[0]) {
+        if (!error && verificacao?.[0]?.ja_iniciado) {
           const cicloInfo = verificacao[0];
           statusMap[residente.id] = {
-            status: cicloInfo.status || 'nao_iniciado',
+            status: cicloInfo.status,
             cicloId: cicloInfo.ciclo_id
           };
         } else {

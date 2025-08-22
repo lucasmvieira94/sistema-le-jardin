@@ -1166,10 +1166,6 @@ export type Database = {
           saida: string
         }[]
       }
-      redefinir_status_prontuarios_diarios: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
@@ -1191,9 +1187,7 @@ export type Database = {
         Returns: boolean
       }
       verificar_prontuario_diario_existente: {
-        Args:
-          | { p_data?: string; p_residente_id: string }
-          | { p_residente_id: string }
+        Args: { p_data?: string; p_residente_id: string }
         Returns: {
           ciclo_id: string
           ja_iniciado: boolean
