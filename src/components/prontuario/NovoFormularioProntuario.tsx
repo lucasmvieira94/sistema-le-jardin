@@ -630,6 +630,9 @@ export default function NovoFormularioProntuario({
     observacoes: 'Observações Gerais'
   };
 
+  // Definir ordem das seções
+  const ordemSecoes = ['rotina_diaria', 'aspectos_clinicos', 'bem_estar', 'ocorrencias', 'observacoes'];
+
   return (
     <div className="space-y-6 pb-20">
       {/* Header com navegação e status de salvamento */}
@@ -755,39 +758,42 @@ export default function NovoFormularioProntuario({
         </CardContent>
       </Card>
 
-      {/* Renderizar seções dinamicamente baseadas na configuração */}
+      {/* Renderizar seções dinamicamente baseadas na configuração com ordem específica */}
       {Object.keys(camposPorSecao).length > 0 ? (
-        Object.entries(camposPorSecao).map(([secao, campos]: [string, any]) => {
-          const Icone = iconesSecao[secao] || FileText;
-          const titulo = titulosSecao[secao] || secao;
-          
-          console.log(`🔄 Renderizando seção: ${titulo} com ${campos.length} campos`);
-          
-          return (
-            <Card key={secao}>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Icone className="w-5 h-5" />
-                  {titulo}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {campos
-                  .sort((a: any, b: any) => a.ordem - b.ordem)
-                  .map((campo: any) => {
-                    const chaveFormulario = `campo_${campo.id}`;
-                    const valorAtual = (watchedValues as any)[chaveFormulario];
-                    
-                    return renderCampoConfigurado(
-                      campo,
-                      valorAtual,
-                      (novoValor) => setValue(chaveFormulario as any, novoValor)
-                    );
-                  })}
-              </CardContent>
-            </Card>
-          );
-        })
+        ordemSecoes
+          .filter(secao => camposPorSecao[secao]) // Apenas seções que existem
+          .map((secao) => {
+            const campos = camposPorSecao[secao];
+            const Icone = iconesSecao[secao] || FileText;
+            const titulo = titulosSecao[secao] || secao;
+            
+            console.log(`🔄 Renderizando seção: ${titulo} com ${campos.length} campos`);
+            
+            return (
+              <Card key={secao}>
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Icone className="w-5 h-5" />
+                    {titulo}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {campos
+                    .sort((a: any, b: any) => a.ordem - b.ordem)
+                    .map((campo: any) => {
+                      const chaveFormulario = `campo_${campo.id}`;
+                      const valorAtual = (watchedValues as any)[chaveFormulario];
+                      
+                      return renderCampoConfigurado(
+                        campo,
+                        valorAtual,
+                        (novoValor) => setValue(chaveFormulario as any, novoValor)
+                      );
+                    })}
+                </CardContent>
+              </Card>
+            );
+          })
       ) : (
         <Card>
           <CardContent className="p-8 text-center">
