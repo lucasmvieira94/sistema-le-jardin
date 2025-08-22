@@ -406,6 +406,9 @@ export default function NovoFormularioProntuario({
         setProntuarioJaFinalizado(true);
         setShowFinalizarDialog(false);
         
+        // Notificar o componente pai sobre a mudança de status
+        onStatusChange?.(residenteId, 'encerrado', cicloId);
+        
         toast({
           title: "Prontuário finalizado com sucesso!",
           description: finalizacao.message,
