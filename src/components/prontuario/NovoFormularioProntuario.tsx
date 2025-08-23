@@ -384,6 +384,27 @@ export default function NovoFormularioProntuario({
   const handleFinalizarComCodigo = async (codigoValidado: string, funcionarioValidado: string) => {
     setIsFinalizando(true);
     try {
+      // Verificar se o ciclo existe
+      if (!cicloId) {
+        throw new Error('Ciclo de prontuário não encontrado. Inicie o prontuário primeiro.');
+      }
+
+      // Verificar se o ciclo ainda existe no banco
+      const { data: cicloExiste, error: cicloError } = await supabase
+        .from('prontuario_ciclos')
+        .select('id, status')
+        .eq('id', cicloId)
+        .single();
+
+      if (cicloError || !cicloExiste) {
+        throw new Error('Ciclo de prontuário não encontrado no sistema.');
+      }
+
+      if (cicloExiste.status === 'encerrado') {
+        setProntuarioJaFinalizado(true);
+        throw new Error('Este prontuário já foi finalizado.');
+      }
+
       // Salvar dados antes de finalizar
       await saveFormData();
 
