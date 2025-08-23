@@ -988,6 +988,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buscar_proximo_prontuario: {
+        Args: { p_residente_atual: string }
+        Returns: {
+          nome_completo: string
+          residente_id: string
+          status: string
+        }[]
+      }
       calcular_horas_noturnas: {
         Args: {
           p_entrada: string
@@ -1166,6 +1174,10 @@ export type Database = {
           saida: string
         }[]
       }
+      redefinir_prontuarios_automatico: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       redefinir_status_prontuarios_diarios: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1173,6 +1185,13 @@ export type Database = {
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
+      }
+      salvar_prontuario_simples: {
+        Args: { p_ciclo_id: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
       }
       validar_codigo_funcionario: {
         Args: { p_codigo: string }
