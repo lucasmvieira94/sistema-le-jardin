@@ -93,28 +93,28 @@ export default function Prontuario() {
     switch (status) {
       case 'nao_iniciado':
         return (
-          <Badge variant="outline" className="flex items-center gap-1">
+          <Badge className="flex items-center gap-1 bg-red-500 text-white">
             <FileX className="w-3 h-3" />
             Não Iniciado
           </Badge>
         );
       case 'em_andamento':
         return (
-          <Badge variant="secondary" className="flex items-center gap-1">
+          <Badge className="flex items-center gap-1 bg-yellow-500 text-white">
             <Clock className="w-3 h-3" />
             Em Andamento
           </Badge>
         );
       case 'encerrado':
         return (
-          <Badge variant="default" className="flex items-center gap-1 bg-green-600 text-white">
+          <Badge className="flex items-center gap-1 bg-green-600 text-white">
             <CheckCircle className="w-3 h-3" />
             Concluído
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="flex items-center gap-1">
+          <Badge className="flex items-center gap-1 bg-red-500 text-white">
             <FileX className="w-3 h-3" />
             Não Iniciado
           </Badge>
@@ -204,7 +204,7 @@ export default function Prontuario() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
                 {residentes.map((residente) => {
                   const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null };
                   const isDisabled = isButtonDisabled(statusInfo.status);
@@ -213,59 +213,26 @@ export default function Prontuario() {
                     <div
                       key={residente.id}
                       onClick={() => !isDisabled && setSelectedResidente(residente.id)}
-                      className={`p-6 bg-white rounded-lg border border-gray-200 transition-all ${
+                      className={`p-4 bg-white rounded-lg border border-gray-200 transition-all ${
                         isDisabled 
                           ? 'cursor-not-allowed opacity-70' 
                           : 'hover:border-primary hover:shadow-md cursor-pointer'
                       } group`}
                     >
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <h3 className={`font-semibold text-lg text-gray-900 transition-colors ${
                             !isDisabled && 'group-hover:text-primary'
                           }`}>
                             {residente.nome_completo}
                           </h3>
-                          <p className="text-sm text-gray-500">
-                            Prontuário: {residente.numero_prontuario}
-                          </p>
                         </div>
-                        <UserPlus className={`w-5 h-5 text-gray-400 transition-colors ${
-                          !isDisabled && 'group-hover:text-primary'
-                        }`} />
+                        <div className="ml-3">
+                          {getStatusBadge(statusInfo.status)}
+                        </div>
                       </div>
                       
-                      {/* Status do Prontuário */}
-                      <div className="mb-3">
-                        <p className="text-xs text-gray-500 mb-1">Status do Prontuário de Hoje:</p>
-                        {getStatusBadge(statusInfo.status)}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Quarto:</span>
-                          <span className="font-medium">{residente.quarto || 'N/A'}</span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Idade:</span>
-                          <span className="font-medium">
-                            {new Date().getFullYear() - new Date(residente.data_nascimento).getFullYear()} anos
-                          </span>
-                        </div>
-                        
-                        {residente.responsavel_nome && (
-                          <div className="pt-2 border-t border-gray-100">
-                            <p className="text-xs text-gray-500">Responsável:</p>
-                            <p className="text-sm font-medium text-gray-700">{residente.responsavel_nome}</p>
-                            {residente.responsavel_telefone && (
-                              <p className="text-xs text-gray-500">{residente.responsavel_telefone}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="mt-4 pt-3 border-t border-gray-100">
+                      <div className="mt-3">
                         <Button 
                           variant={isDisabled ? "secondary" : "outline"}
                           size="sm" 

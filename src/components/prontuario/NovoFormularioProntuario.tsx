@@ -711,37 +711,6 @@ export default function NovoFormularioProntuario({
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Dropdown para trocar de residente */}
-            <div className="min-w-[200px]">
-              <Select 
-                value={residenteId} 
-                onValueChange={(value) => onChangeResidente?.(value)}
-              >
-                <SelectTrigger className="h-9 bg-white border-2 border-primary/20">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <SelectValue placeholder="Trocar residente..." />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="bg-white border shadow-lg z-50">
-                  {residentes.map((residente) => (
-                    <SelectItem 
-                      key={residente.id} 
-                      value={residente.id}
-                      className="hover:bg-gray-100"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium">{residente.nome_completo}</span>
-                        <span className="text-xs text-gray-500">
-                          Quarto: {residente.quarto || 'N/A'} • Prontuário: {residente.numero_prontuario}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
             {/* Status de salvamento */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {isSaving && <span>Salvando...</span>}
