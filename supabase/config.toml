@@ -33,3 +33,6 @@ verify_jwt = false
 
 [functions.gerar-prontuario-diario]
 verify_jwt = false
+
+[functions.cronometro-prontuarios]
+verify_jwt = false
