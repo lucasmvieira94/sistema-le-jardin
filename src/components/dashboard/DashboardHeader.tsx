@@ -1,4 +1,5 @@
 import { Calendar, Users, AlertTriangle, Clock } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function DashboardHeader() {
   const hoje = new Date().toLocaleDateString('pt-BR', { 
@@ -15,7 +16,10 @@ export default function DashboardHeader() {
           <h1 className="text-2xl font-bold text-foreground">Centro de Controle</h1>
           <p className="text-muted-foreground capitalize">{hoje}</p>
         </div>
-        <Calendar className="h-8 w-8 text-primary" />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Calendar className="h-8 w-8 text-primary" />
+        </div>
       </div>
       
       <div className="grid grid-cols-3 gap-4">
