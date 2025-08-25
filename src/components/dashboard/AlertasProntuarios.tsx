@@ -21,15 +21,15 @@ interface ProntuarioAtrasado {
 }
 
 export default function AlertasProntuarios() {
-  const [prontuariosAtrasados, setProntuariosAtrasados] = useState<ProntuarioAtrasado[]>([]);
+  const [prontuarios, setProntuarios] = useState<ProntuarioAtrasado[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchProntuariosAtrasados = async () => {
+  const fetchProntuarios = async () => {
     try {
       setLoading(true);
       
-      // Buscar ciclos em andamento de dias anteriores
+      // Buscar ciclos em andamento de hoje e dias anteriores
       const hoje = format(new Date(), 'yyyy-MM-dd');
       
       const { data: ciclos, error } = await supabase
@@ -43,8 +43,7 @@ export default function AlertasProntuarios() {
           )
         `)
         .eq('status', 'em_andamento')
-        .lt('data_ciclo', hoje)
-        .order('data_ciclo', { ascending: true });
+        .order('data_ciclo', { ascending: false });
 
       if (error) throw error;
 
@@ -76,25 +75,25 @@ export default function AlertasProntuarios() {
         })
       );
 
-      setProntuariosAtrasados(prontuariosComContadores.filter(Boolean) as ProntuarioAtrasado[]);
+      setProntuarios(prontuariosComContadores.filter(Boolean) as ProntuarioAtrasado[]);
     } catch (error) {
-      console.error('Erro ao carregar prontuários atrasados:', error);
+      console.error('Erro ao carregar prontuários:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProntuariosAtrasados();
+    fetchProntuarios();
     
     // Atualizar a cada 5 minutos
-    const interval = setInterval(fetchProntuariosAtrasados, 5 * 60 * 1000);
+    const interval = setInterval(fetchProntuarios, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
 
-  const handleAcessarProntuario = () => {
-    navigate('/prontuario');
+  const handleVisualizarProntuario = (residenteId: string) => {
+    navigate(`/prontuario?residente=${residenteId}`);
   };
 
   if (loading) {
@@ -103,7 +102,7 @@ export default function AlertasProntuarios() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <FileHeart className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">Prontuários em Atraso</CardTitle>
+            <CardTitle className="text-lg">Prontuários em Andamento</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -115,19 +114,19 @@ export default function AlertasProntuarios() {
     );
   }
 
-  if (prontuariosAtrasados.length === 0) {
+  if (prontuarios.length === 0) {
     return (
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <FileHeart className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">Prontuários em Atraso</CardTitle>
+            <CardTitle className="text-lg">Prontuários em Andamento</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
             <p className="text-sm text-muted-foreground">
-              Nenhum prontuário em atraso
+              Nenhum prontuário em andamento
             </p>
           </div>
         </CardContent>
@@ -135,90 +134,79 @@ export default function AlertasProntuarios() {
     );
   }
 
+  const hoje = format(new Date(), 'yyyy-MM-dd');
+
   return (
-    <Card className="border-red-200">
+    <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600" />
-            <CardTitle className="text-lg text-red-700">
-              Prontuários em Atraso ({prontuariosAtrasados.length})
-            </CardTitle>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAcessarProntuario}
-            className="border-red-300 hover:bg-red-50"
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Acessar Prontuários
-          </Button>
+        <div className="flex items-center gap-2">
+          <FileHeart className="w-5 h-5 text-primary" />
+          <CardTitle className="text-lg">
+            Prontuários em Andamento ({prontuarios.length})
+          </CardTitle>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-3">
-        {prontuariosAtrasados.slice(0, 5).map((prontuario) => {
-          const diasAtraso = Math.ceil(
-            (new Date().getTime() - new Date(prontuario.data_ciclo).getTime()) / (1000 * 60 * 60 * 24)
-          );
+      <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+        {prontuarios.slice(0, 6).map((prontuario) => {
+          const isAtrasado = prontuario.data_ciclo < hoje;
           const progresso = prontuario.registros_totais > 0 ? 
             Math.round((prontuario.registros_preenchidos / prontuario.registros_totais) * 100) : 0;
 
           return (
             <div
               key={prontuario.id}
-              className="bg-red-50 border border-red-200 rounded-lg p-3"
+              className={`border rounded-lg p-3 ${
+                isAtrasado ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border'
+              }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-sm text-red-900">
+                  <h4 className="font-medium text-sm">
                     {prontuario.residente.nome_completo}
                   </h4>
-                  <Badge variant="destructive" className="text-xs">
-                    {diasAtraso} dia{diasAtraso > 1 ? 's' : ''} atraso
-                  </Badge>
+                  {isAtrasado && (
+                    <Badge variant="destructive" className="text-xs">
+                      Atrasado
+                    </Badge>
+                  )}
                 </div>
-                <span className="text-xs text-red-700">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleVisualizarProntuario(prontuario.residente.nome_completo)}
+                  className="h-7 px-2 text-xs"
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  Ver
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <span>
                   {format(new Date(prontuario.data_ciclo), "dd/MM", { locale: ptBR })}
                 </span>
-              </div>
-              
-              <div className="flex items-center gap-2 text-xs text-red-700">
+                <span>•</span>
                 <span>
-                  Prontuário: {prontuario.residente.numero_prontuario}
-                  {prontuario.residente.quarto && ` • Quarto: ${prontuario.residente.quarto}`}
+                  Quarto: {prontuario.residente.quarto || 'N/A'}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-red-700">
-                  Progresso: {prontuario.registros_preenchidos}/{prontuario.registros_totais}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {prontuario.registros_preenchidos}/{prontuario.registros_totais}
                 </span>
-                <div className="flex-1 bg-red-200 rounded-full h-1.5">
+                <div className="flex-1 bg-muted rounded-full h-1.5">
                   <div 
-                    className="bg-red-600 h-1.5 rounded-full" 
+                    className="bg-primary h-1.5 rounded-full" 
                     style={{ width: `${progresso}%` }}
                   ></div>
                 </div>
-                <span className="text-xs font-medium text-red-700">{progresso}%</span>
+                <span className="text-xs font-medium">{progresso}%</span>
               </div>
             </div>
           );
         })}
-        
-        {prontuariosAtrasados.length > 5 && (
-          <div className="text-center pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleAcessarProntuario}
-              className="text-red-700 hover:bg-red-50"
-            >
-              Ver todos ({prontuariosAtrasados.length - 5} restantes)
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
