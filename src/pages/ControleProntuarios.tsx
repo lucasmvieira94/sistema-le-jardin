@@ -121,8 +121,7 @@ export default function ControleProntuarios() {
             nome_completo,
             numero_prontuario,
             quarto
-          ),
-          funcionario_encerrou:funcionarios(nome_completo)
+          )
         `)
         .order('data_ciclo', { ascending: false });
 
