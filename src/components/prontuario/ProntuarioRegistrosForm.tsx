@@ -40,6 +40,10 @@ interface Registro {
   observacoes?: string;
   funcionario_id?: string;
   horario_registro: string;
+  jsonData?: any;
+  funcionarios?: {
+    nome_completo: string;
+  };
 }
 
 interface ProntuarioRegistrosFormProps {
@@ -68,12 +72,35 @@ export default function ProntuarioRegistrosForm({
       
       const { data, error } = await supabase
         .from('prontuario_registros')
-        .select('*')
+        .select(`
+          *,
+          funcionarios (
+            nome_completo
+          )
+        `)
         .eq('ciclo_id', ciclo.id)
         .order('tipo_registro, titulo');
 
       if (error) throw error;
-      setRegistros(data || []);
+      
+      // Processar registros, incluindo dados JSON para prontuários encerrados
+      const processedRegistros = (data || []).map(registro => {
+        if (registro.tipo_registro === 'prontuario_completo' && registro.descricao) {
+          try {
+            const jsonData = JSON.parse(registro.descricao);
+            return {
+              ...registro,
+              jsonData
+            };
+          } catch {
+            // Se não for JSON válido, mantém como string
+            return registro;
+          }
+        }
+        return registro;
+      });
+      
+      setRegistros(processedRegistros);
     } catch (error) {
       console.error('Erro ao carregar registros:', error);
       toast({
@@ -306,6 +333,89 @@ function RegistroCard({ registro, onSave, isReadOnly, saving }: RegistroCardProp
 
   const isPreenchido = registro.funcionario_id && registro.descricao.trim() !== '';
 
+  // Renderizar dados JSON para prontuários encerrados
+  const renderJsonData = (jsonData: any) => {
+    return (
+      <div className="space-y-4">
+        {jsonData.medicacoes && jsonData.medicacoes.length > 0 && (
+          <div className="bg-red-50 p-3 rounded-md">
+            <h4 className="font-medium text-red-800 mb-2">Medicações</h4>
+            {jsonData.medicacoes.map((med: any, index: number) => (
+              <div key={index} className="text-sm text-red-700">
+                {med.nome && (
+                  <p><strong>Nome:</strong> {med.nome}</p>
+                )}
+                {med.dosagem && (
+                  <p><strong>Dosagem:</strong> {med.dosagem}</p>
+                )}
+                {med.horarios && med.horarios.length > 0 && (
+                  <p><strong>Horários:</strong> {med.horarios.join(', ')}</p>
+                )}
+                {med.observacoes && (
+                  <p><strong>Observações:</strong> {med.observacoes}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {jsonData.dor && jsonData.dor.length > 0 && (
+          <div className="bg-orange-50 p-3 rounded-md">
+            <h4 className="font-medium text-orange-800 mb-2">Nível de Dor</h4>
+            <p className="text-sm text-orange-700">Escala: {jsonData.dor.join(', ')}</p>
+          </div>
+        )}
+        
+        {jsonData.atividades_realizadas && jsonData.atividades_realizadas.length > 0 && (
+          <div className="bg-green-50 p-3 rounded-md">
+            <h4 className="font-medium text-green-800 mb-2">Atividades Realizadas</h4>
+            <ul className="text-sm text-green-700 list-disc list-inside">
+              {jsonData.atividades_realizadas.map((ativ: string, index: number) => (
+                <li key={index}>{ativ}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {jsonData.doencas_cronicas && jsonData.doencas_cronicas.length > 0 && (
+          <div className="bg-yellow-50 p-3 rounded-md">
+            <h4 className="font-medium text-yellow-800 mb-2">Doenças Crônicas</h4>
+            <ul className="text-sm text-yellow-700 list-disc list-inside">
+              {jsonData.doencas_cronicas.map((doenca: string, index: number) => (
+                <li key={index}>{doenca}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {jsonData.ocorrencias && jsonData.ocorrencias.length > 0 && (
+          <div className="bg-red-50 p-3 rounded-md">
+            <h4 className="font-medium text-red-800 mb-2">Ocorrências</h4>
+            <ul className="text-sm text-red-700 list-disc list-inside">
+              {jsonData.ocorrencias.map((ocor: string, index: number) => (
+                <li key={index}>{ocor}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {/* Campos dinâmicos */}
+        {Object.entries(jsonData).map(([key, value]) => {
+          if (key.startsWith('campo_') && value) {
+            const fieldName = key.replace('campo_', '').replace(/-/g, ' ');
+            return (
+              <div key={key} className="bg-blue-50 p-3 rounded-md">
+                <h4 className="font-medium text-blue-800 mb-1 capitalize">{fieldName}</h4>
+                <p className="text-sm text-blue-700">{String(value)}</p>
+              </div>
+            );
+          }
+          return null;
+        })}
+      </div>
+    );
+  };
+
   return (
     <Card className={isPreenchido ? 'border-green-200 bg-green-50' : ''}>
       <CardHeader className="pb-3">
@@ -314,7 +424,7 @@ function RegistroCard({ registro, onSave, isReadOnly, saving }: RegistroCardProp
           <div className="flex items-center gap-2">
             {isPreenchido && (
               <Badge variant="outline" className="text-green-700 border-green-300">
-                Preenchido
+                Finalizado
               </Badge>
             )}
             <span className="text-sm text-muted-foreground">
@@ -322,36 +432,48 @@ function RegistroCard({ registro, onSave, isReadOnly, saving }: RegistroCardProp
             </span>
           </div>
         </div>
+        {registro.funcionarios?.nome_completo && (
+          <p className="text-sm text-muted-foreground">
+            Registrado por: {registro.funcionarios.nome_completo}
+          </p>
+        )}
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <div>
-          <label className="text-sm font-medium mb-2 block">
-            Descrição do Atendimento *
-          </label>
-          <Textarea
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            placeholder="Descreva o atendimento realizado..."
-            disabled={isReadOnly}
-            rows={3}
-          />
-        </div>
+        {/* Mostrar dados JSON se existirem (prontuários finalizados) */}
+        {registro.jsonData ? (
+          renderJsonData(registro.jsonData)
+        ) : (
+          <>
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Descrição do Atendimento *
+              </label>
+              <Textarea
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                placeholder="Descreva o atendimento realizado..."
+                disabled={isReadOnly}
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Observações Adicionais
+              </label>
+              <Textarea
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Observações complementares (opcional)..."
+                disabled={isReadOnly}
+                rows={2}
+              />
+            </div>
+          </>
+        )}
         
-        <div>
-          <label className="text-sm font-medium mb-2 block">
-            Observações Adicionais
-          </label>
-          <Textarea
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-            placeholder="Observações complementares (opcional)..."
-            disabled={isReadOnly}
-            rows={2}
-          />
-        </div>
-        
-        {!isReadOnly && (
+        {!isReadOnly && !registro.jsonData && (
           <div className="flex justify-end">
             <Button
               onClick={handleSave}

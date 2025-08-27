@@ -64,7 +64,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
         (data || []).map(async (ciclo) => {
           const { data: registros, error: registrosError } = await supabase
             .from('prontuario_registros')
-            .select('id, funcionario_id, descricao')
+            .select('id, funcionario_id, descricao, tipo_registro')
             .eq('ciclo_id', ciclo.id);
 
           if (registrosError) {
@@ -77,9 +77,22 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
           }
 
           const total = registros?.length || 0;
-          const preenchidos = registros?.filter(r => 
-            r.funcionario_id && r.descricao && r.descricao.trim() !== ''
-          ).length || 0;
+          let preenchidos = 0;
+          
+          // Para prontuários encerrados, verificar se existe registro completo
+          if (ciclo.status === 'encerrado') {
+            preenchidos = registros?.filter(r => 
+              r.tipo_registro === 'prontuario_completo' && 
+              r.funcionario_id && 
+              r.descricao && 
+              r.descricao.trim() !== ''
+            ).length || 0;
+          } else {
+            // Para outros status, contar registros preenchidos normalmente
+            preenchidos = registros?.filter(r => 
+              r.funcionario_id && r.descricao && r.descricao.trim() !== ''
+            ).length || 0;
+          }
 
           return {
             ...ciclo,
@@ -282,10 +295,9 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedCiclo(ciclo)}
-                          disabled={ciclo.status === 'encerrado'}
                         >
                           <Eye className="w-4 h-4 mr-2" />
-                          {ciclo.status === 'encerrado' ? 'Visualizar' : 'Preencher'}
+                          Visualizar
                         </Button>
                       </div>
                     </div>
@@ -366,7 +378,6 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedCiclo(ciclo)}
-                          disabled={ciclo.status === 'encerrado'}
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           {ciclo.status === 'encerrado' ? 'Visualizar' : 'Preencher'}
