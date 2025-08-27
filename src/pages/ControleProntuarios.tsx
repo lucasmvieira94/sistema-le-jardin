@@ -21,7 +21,7 @@ import { ptBR } from "date-fns/locale";
 interface ProntuarioRegistro {
   id: string;
   residente_id: string;
-  funcionario_id: string;
+  funcionario_id: string | null;
   data_registro: string;
   horario_registro: string;
   tipo_registro: string;
@@ -30,14 +30,18 @@ interface ProntuarioRegistro {
   observacoes: string;
   created_at: string;
   updated_at: string;
+  ciclo_id?: string;
+  status_ciclo?: string;
+  data_encerramento?: string;
   residentes: {
+    id: string;
     nome_completo: string;
     numero_prontuario: string;
     quarto: string;
   };
   funcionarios: {
     nome_completo: string;
-  };
+  } | null;
 }
 
 export default function ControleProntuarios() {
@@ -107,35 +111,110 @@ export default function ControleProntuarios() {
 
   const fetchProntuarios = async () => {
     try {
+      // Buscar ciclos ao invés de registros individuais
       let query = supabase
-        .from('prontuario_registros')
+        .from('prontuario_ciclos')
         .select(`
           *,
-          residentes (nome_completo, numero_prontuario, quarto),
-          funcionarios (nome_completo)
+          residente:residentes!inner (
+            id,
+            nome_completo,
+            numero_prontuario,
+            quarto
+          ),
+          funcionario_encerrou:funcionarios(nome_completo)
         `)
-        .order('data_registro', { ascending: false })
-        .order('horario_registro', { ascending: false });
+        .order('data_ciclo', { ascending: false });
 
       // Aplicar filtros
       if (filtros.dataInicio) {
-        query = query.gte('data_registro', filtros.dataInicio);
+        query = query.gte('data_ciclo', filtros.dataInicio);
       }
       if (filtros.dataFim) {
-        query = query.lte('data_registro', filtros.dataFim);
+        query = query.lte('data_ciclo', filtros.dataFim);
       }
       if (filtros.residente && filtros.residente !== "todos_residentes") {
         query = query.eq('residente_id', filtros.residente);
       }
-      if (filtros.funcionario && filtros.funcionario !== "todos_funcionarios") {
-        query = query.eq('funcionario_id', filtros.funcionario);
-      }
 
-      const { data, error } = await query;
+      const { data: ciclos, error } = await query;
 
       if (error) throw error;
-      setProntuarios(data || []);
+
+      // Para cada ciclo, buscar os registros completos
+      const prontuariosCompletos = await Promise.all(
+        (ciclos || []).map(async (ciclo) => {
+          const { data: registros, error: registrosError } = await supabase
+            .from('prontuario_registros')
+            .select(`
+              *,
+              funcionarios (nome_completo)
+            `)
+            .eq('ciclo_id', ciclo.id)
+            .eq('tipo_registro', 'prontuario_completo');
+
+          if (registrosError) {
+            console.error('Erro ao buscar registros:', registrosError);
+            return null;
+          }
+
+          // Se há registro completo, usar esses dados
+          if (registros && registros.length > 0) {
+            const registro = registros[0];
+            return {
+              id: registro.id,
+              residente_id: ciclo.residente_id,
+              funcionario_id: registro.funcionario_id,
+              data_registro: ciclo.data_ciclo,
+              horario_registro: registro.horario_registro,
+              tipo_registro: registro.tipo_registro,
+              titulo: registro.titulo,
+              descricao: registro.descricao,
+              observacoes: registro.observacoes,
+              created_at: registro.created_at,
+              updated_at: registro.updated_at,
+              ciclo_id: ciclo.id,
+              status_ciclo: ciclo.status,
+              data_encerramento: ciclo.data_encerramento,
+              residentes: ciclo.residente,
+              funcionarios: registro.funcionarios
+            };
+          }
+
+          // Se não há registro completo, criar um placeholder para ciclos em andamento
+          return {
+            id: ciclo.id,
+            residente_id: ciclo.residente_id,
+            funcionario_id: null,
+            data_registro: ciclo.data_ciclo,
+            horario_registro: '00:00:00',
+            tipo_registro: 'prontuario_completo',
+            titulo: 'Prontuários Diários',
+            descricao: '',
+            observacoes: '',
+            created_at: ciclo.created_at,
+            updated_at: ciclo.updated_at,
+            ciclo_id: ciclo.id,
+            status_ciclo: ciclo.status,
+            data_encerramento: ciclo.data_encerramento,
+            residentes: ciclo.residente,
+            funcionarios: null
+          };
+        })
+      );
+
+      // Filtrar e aplicar filtro de funcionário se necessário
+      let prontuariosFiltrados = prontuariosCompletos.filter(p => p !== null);
+      
+      if (filtros.funcionario && filtros.funcionario !== "todos_funcionarios") {
+        prontuariosFiltrados = prontuariosFiltrados.filter(p => 
+          p.funcionario_id === filtros.funcionario
+        );
+      }
+
+      setProntuarios(prontuariosFiltrados);
     } catch (error) {
+      console.error('Erro ao carregar prontuários:', error);
       toast({
         title: "Erro ao carregar prontuários",
         description: "Não foi possível carregar os prontuários.",
@@ -196,17 +275,12 @@ export default function ControleProntuarios() {
   };
 
   const getStatusBadge = (prontuario: ProntuarioRegistro) => {
-    const hoje = new Date().toISOString().split('T')[0];
-    const dataRegistro = prontuario.data_registro;
-    const isHoje = dataRegistro === hoje;
-    const hasDescricao = prontuario.descricao && prontuario.descricao.trim() !== "";
-
-    if (isHoje && hasDescricao) {
-      return <Badge variant="default">Concluído</Badge>;
-    } else if (isHoje && !hasDescricao) {
-      return <Badge variant="secondary">Em Andamento</Badge>;
+    if (prontuario.status_ciclo === 'encerrado') {
+      return <Badge variant="outline" className="bg-gray-100 text-gray-800">Encerrado</Badge>;
+    } else if (prontuario.status_ciclo === 'completo') {
+      return <Badge variant="default" className="bg-green-100 text-green-800">Completo</Badge>;
     } else {
-      return <Badge variant="outline">Finalizado</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Em Andamento</Badge>;
     }
   };
 
@@ -315,17 +389,13 @@ export default function ControleProntuarios() {
   const filteredProntuarios = prontuarios.filter(prontuario => {
     if (filtros.status === "todos") return true;
     
-    const hoje = new Date().toISOString().split('T')[0];
-    const isHoje = prontuario.data_registro === hoje;
-    const hasDescricao = prontuario.descricao && prontuario.descricao.trim() !== "";
-
     switch (filtros.status) {
       case "andamento":
-        return isHoje && !hasDescricao;
+        return prontuario.status_ciclo === 'em_andamento';
       case "concluidos":
-        return isHoje && hasDescricao;
+        return prontuario.status_ciclo === 'completo';
       case "finalizados":
-        return !isHoje;
+        return prontuario.status_ciclo === 'encerrado';
       default:
         return true;
     }
