@@ -18,17 +18,17 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    console.log('🕐 Executando cronômetro automático de prontuários às 08:00 AM')
+    console.log('🕐 Executando cronômetro automático de prontuários com horário configurado')
 
-    // Executar função para redefinir prontuários automaticamente
-    const { error } = await supabase.rpc('redefinir_prontuarios_automatico')
+    // Executar nova função que considera horário configurado
+    const { error } = await supabase.rpc('redefinir_prontuarios_com_horario')
 
     if (error) {
       console.error('❌ Erro ao redefinir prontuários:', error)
       throw error
     }
 
-    console.log('✅ Prontuários redefinidos com sucesso')
+    console.log('✅ Prontuários processados com sucesso')
 
     return new Response(
       JSON.stringify({ 

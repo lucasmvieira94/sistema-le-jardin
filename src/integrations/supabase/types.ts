@@ -268,6 +268,33 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_prontuario: {
+        Row: {
+          created_at: string
+          horario_inicio_ciclo: string
+          id: string
+          notificar_atraso: boolean
+          tempo_limite_horas: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          horario_inicio_ciclo?: string
+          id?: string
+          notificar_atraso?: boolean
+          tempo_limite_horas?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          horario_inicio_ciclo?: string
+          id?: string
+          notificar_atraso?: boolean
+          tempo_limite_horas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       entrada_medicamentos: {
         Row: {
           created_at: string | null
@@ -591,6 +618,7 @@ export type Database = {
           data_ciclo: string
           data_criacao: string
           data_encerramento: string | null
+          data_inicio_efetivo: string | null
           funcionario_encerrou: string | null
           id: string
           residente_id: string
@@ -602,6 +630,7 @@ export type Database = {
           data_ciclo: string
           data_criacao?: string
           data_encerramento?: string | null
+          data_inicio_efetivo?: string | null
           funcionario_encerrou?: string | null
           id?: string
           residente_id: string
@@ -613,6 +642,7 @@ export type Database = {
           data_ciclo?: string
           data_criacao?: string
           data_encerramento?: string | null
+          data_inicio_efetivo?: string | null
           funcionario_encerrou?: string | null
           id?: string
           residente_id?: string
@@ -1178,6 +1208,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      redefinir_prontuarios_com_horario: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       redefinir_status_prontuarios_diarios: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1216,6 +1250,10 @@ export type Database = {
           ja_iniciado: boolean
           status: string
         }[]
+      }
+      verificar_prontuario_em_atraso: {
+        Args: { p_ciclo_id: string }
+        Returns: boolean
       }
     }
     Enums: {

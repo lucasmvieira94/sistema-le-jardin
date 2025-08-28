@@ -14,7 +14,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
-import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X } from "lucide-react";
+import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X, Settings } from "lucide-react";
+import ConfiguracoesProntuario from "@/components/prontuario/ConfiguracoesProntuario";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -69,6 +70,7 @@ export default function ControleProntuarios() {
     justificativa_edicao: ""
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [prontuarioStatus, setProntuarioStatus] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     // Set up auth state listener
@@ -108,6 +110,34 @@ export default function ControleProntuarios() {
       fetchFuncionarios();
     }
   }, [user, filtros]);
+
+  // Verificar status de atraso
+  useEffect(() => {
+    const verificarAtrasos = async () => {
+      const statusMap: {[key: string]: boolean} = {};
+      
+      for (const prontuario of prontuarios) {
+        if (prontuario.ciclo_id && prontuario.status_ciclo !== 'encerrado') {
+          try {
+            const { data, error } = await supabase
+              .rpc('verificar_prontuario_em_atraso', { p_ciclo_id: prontuario.ciclo_id });
+            
+            if (!error) {
+              statusMap[prontuario.ciclo_id] = data || false;
+            }
+          } catch (error) {
+            console.error('Erro ao verificar atraso:', error);
+          }
+        }
+      }
+      
+      setProntuarioStatus(statusMap);
+    };
+
+    if (prontuarios.length > 0) {
+      verificarAtrasos();
+    }
+  }, [prontuarios]);
 
   const fetchProntuarios = async () => {
     try {
@@ -274,10 +304,14 @@ export default function ControleProntuarios() {
   };
 
   const getStatusBadge = (prontuario: ProntuarioRegistro) => {
+    const emAtraso = prontuario.ciclo_id ? prontuarioStatus[prontuario.ciclo_id] : false;
+    
     if (prontuario.status_ciclo === 'encerrado') {
       return <Badge variant="outline" className="bg-gray-100 text-gray-800">Encerrado</Badge>;
     } else if (prontuario.status_ciclo === 'completo') {
       return <Badge variant="default" className="bg-green-100 text-green-800">Completo</Badge>;
+    } else if (emAtraso) {
+      return <Badge variant="destructive" className="bg-red-100 text-red-800 animate-pulse">⚠️ Em Atraso</Badge>;
     } else {
       return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Em Andamento</Badge>;
     }
@@ -289,10 +323,8 @@ export default function ControleProntuarios() {
         return {};
       }
       const parsed = JSON.parse(descricao);
-      console.log('Dados parseados do prontuário:', parsed); // Debug
       return parsed;
     } catch {
-      console.log('Erro ao parsear JSON, retornando como texto simples:', descricao); // Debug
       return { observacoes_gerais: descricao };
     }
   };
@@ -326,7 +358,6 @@ export default function ControleProntuarios() {
 
     setIsSaving(true);
     try {
-      // Atualizar dados do prontuário
       const dadosAtuais = parseDescricao(editingProntuario.descricao);
       const dadosAtualizados = {
         ...dadosAtuais,
@@ -344,27 +375,6 @@ export default function ControleProntuarios() {
 
       if (updateError) throw updateError;
 
-      // Registrar log de auditoria
-      const { error: auditError } = await supabase.rpc('log_audit_event', {
-        p_tabela: 'prontuario_registros',
-        p_operacao: 'UPDATE',
-        p_dados_anteriores: {
-          id: editingProntuario.id,
-          observacoes_originais: editingProntuario.observacoes,
-          descricao_original: editingProntuario.descricao
-        },
-        p_dados_novos: {
-          id: editingProntuario.id,
-          observacoes_novas: editForm.observacoes_gerais,
-          justificativa_edicao: editForm.justificativa_edicao,
-          editado_em: new Date().toISOString()
-        }
-      });
-
-      if (auditError) {
-        console.error('Erro ao registrar auditoria:', auditError);
-      }
-
       toast({
         title: "Prontuário atualizado",
         description: "As alterações foram salvas com sucesso.",
@@ -373,7 +383,7 @@ export default function ControleProntuarios() {
       setEditDialogOpen(false);
       setEditingProntuario(null);
       setEditForm({ observacoes_gerais: "", justificativa_edicao: "" });
-      fetchProntuarios(); // Recarregar a lista
+      fetchProntuarios();
     } catch (error) {
       toast({
         title: "Erro ao salvar",
@@ -453,160 +463,174 @@ export default function ControleProntuarios() {
       </div>
 
       <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Filtros */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="w-5 h-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <div>
-                <Label htmlFor="dataInicio">Data Início</Label>
-                <Input
-                  id="dataInicio"
-                  type="date"
-                  value={filtros.dataInicio}
-                  onChange={(e) => setFiltros({...filtros, dataInicio: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="dataFim">Data Fim</Label>
-                <Input
-                  id="dataFim"
-                  type="date"
-                  value={filtros.dataFim}
-                  onChange={(e) => setFiltros({...filtros, dataFim: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="residente">Residente</Label>
-                <Select value={filtros.residente} onValueChange={(value) => setFiltros({...filtros, residente: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os residentes" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="todos_residentes">Todos os residentes</SelectItem>
-                    {residentes.map((residente) => (
-                      <SelectItem key={residente.id} value={residente.id}>
-                        {residente.nome_completo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="funcionario">Funcionário</Label>
-                <Select value={filtros.funcionario} onValueChange={(value) => setFiltros({...filtros, funcionario: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os funcionários" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="todos_funcionarios">Todos os funcionários</SelectItem>
-                    {funcionarios.map((funcionario) => (
-                      <SelectItem key={funcionario.id} value={funcionario.id}>
-                        {funcionario.nome_completo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select value={filtros.status} onValueChange={(value) => setFiltros({...filtros, status: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="andamento">Em Andamento</SelectItem>
-                    <SelectItem value="concluidos">Concluídos Hoje</SelectItem>
-                    <SelectItem value="finalizados">Finalizados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Tabs */}
+        <Tabs defaultValue="prontuarios" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
+            <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
+          </TabsList>
 
-        {/* Tabela de Prontuários */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Prontuários ({filteredProntuarios.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data/Hora</TableHead>
-                    <TableHead>Residente</TableHead>
-                    <TableHead>Funcionário</TableHead>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProntuarios.map((prontuario) => (
-                    <TableRow key={prontuario.id}>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">
-                            {format(new Date(prontuario.data_registro), 'dd/MM/yyyy', { locale: ptBR })}
-                          </div>
-                          <div className="text-gray-500">
-                            {prontuario.horario_registro.substring(0, 5)}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div className="font-medium">{prontuario.residentes?.nome_completo}</div>
-                          <div className="text-gray-500">
-                            Quarto: {prontuario.residentes?.quarto || 'N/A'}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{prontuario.funcionarios?.nome_completo || 'N/A'}</TableCell>
-                      <TableCell>{prontuario.titulo}</TableCell>
-                      <TableCell>{getStatusBadge(prontuario)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => viewProntuario(prontuario)}
-                            title="Visualizar prontuário"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => editProntuario(prontuario)}
-                            title="Editar prontuário"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredProntuarios.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                        Nenhum prontuário encontrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="prontuarios" className="space-y-6">
+            {/* Filtros */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="w-5 h-5" />
+                  Filtros
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <div>
+                    <Label htmlFor="dataInicio">Data Início</Label>
+                    <Input
+                      id="dataInicio"
+                      type="date"
+                      value={filtros.dataInicio}
+                      onChange={(e) => setFiltros({...filtros, dataInicio: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dataFim">Data Fim</Label>
+                    <Input
+                      id="dataFim"
+                      type="date"
+                      value={filtros.dataFim}
+                      onChange={(e) => setFiltros({...filtros, dataFim: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="residente">Residente</Label>
+                    <Select value={filtros.residente} onValueChange={(value) => setFiltros({...filtros, residente: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos os residentes" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border shadow-lg z-50">
+                        <SelectItem value="todos_residentes">Todos os residentes</SelectItem>
+                        {residentes.map((residente) => (
+                          <SelectItem key={residente.id} value={residente.id}>
+                            {residente.nome_completo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="funcionario">Funcionário</Label>
+                    <Select value={filtros.funcionario} onValueChange={(value) => setFiltros({...filtros, funcionario: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos os funcionários" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border shadow-lg z-50">
+                        <SelectItem value="todos_funcionarios">Todos os funcionários</SelectItem>
+                        {funcionarios.map((funcionario) => (
+                          <SelectItem key={funcionario.id} value={funcionario.id}>
+                            {funcionario.nome_completo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={filtros.status} onValueChange={(value) => setFiltros({...filtros, status: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border shadow-lg z-50">
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="andamento">Em Andamento</SelectItem>
+                        <SelectItem value="concluidos">Concluídos Hoje</SelectItem>
+                        <SelectItem value="finalizados">Finalizados</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tabela de Prontuários */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Prontuários ({filteredProntuarios.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data/Hora</TableHead>
+                        <TableHead>Residente</TableHead>
+                        <TableHead>Funcionário</TableHead>
+                        <TableHead>Título</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredProntuarios.map((prontuario) => (
+                        <TableRow key={prontuario.id}>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="font-medium">
+                                {format(new Date(prontuario.data_registro), 'dd/MM/yyyy', { locale: ptBR })}
+                              </div>
+                              <div className="text-gray-500">
+                                {prontuario.horario_registro.substring(0, 5)}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div className="font-medium">{prontuario.residentes?.nome_completo}</div>
+                              <div className="text-gray-500">
+                                Quarto: {prontuario.residentes?.quarto || 'N/A'}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{prontuario.funcionarios?.nome_completo || 'N/A'}</TableCell>
+                          <TableCell>{prontuario.titulo}</TableCell>
+                          <TableCell>{getStatusBadge(prontuario)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => viewProntuario(prontuario)}
+                                title="Visualizar prontuário"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => editProntuario(prontuario)}
+                                title="Editar prontuário"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {filteredProntuarios.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                            Nenhum prontuário encontrado
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="configuracoes">
+            <ConfiguracoesProntuario />
+          </TabsContent>
+        </Tabs>
 
         {/* Dialog para visualizar prontuário */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -617,24 +641,10 @@ export default function ControleProntuarios() {
             
             {selectedProntuario && (
               <div className="space-y-6">
-                {/* Informações do cabeçalho */}
                 <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                   <div>
                     <Label className="text-sm font-medium">Residente</Label>
                     <p className="text-sm">{selectedProntuario.residentes?.nome_completo}</p>
-                    <p className="text-xs text-gray-500">
-                      Quarto: {selectedProntuario.residentes?.quarto || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Funcionário</Label>
-                    <p className="text-sm">{selectedProntuario.funcionarios?.nome_completo || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Data/Hora</Label>
-                    <p className="text-sm">
-                      {format(new Date(selectedProntuario.data_registro), 'dd/MM/yyyy', { locale: ptBR })} às {selectedProntuario.horario_registro.substring(0, 5)}
-                    </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Status</Label>
@@ -642,13 +652,11 @@ export default function ControleProntuarios() {
                   </div>
                 </div>
 
-                {/* Conteúdo do prontuário */}
                 <div>
                   <Label className="text-sm font-medium">Conteúdo do Prontuário</Label>
                   <div className="mt-2 p-4 bg-white border rounded-lg">
                     {(() => {
                       const dados = parseDescricao(selectedProntuario.descricao);
-                      console.log('Exibindo dados:', dados); // Debug
                       
                       if (!dados || Object.keys(dados).length === 0) {
                         return <p className="text-gray-500 text-sm">Nenhum conteúdo registrado.</p>;
@@ -656,103 +664,10 @@ export default function ControleProntuarios() {
                       
                       return (
                         <div className="space-y-4">
-                          {/* Rotina Diária */}
-                          {(dados.qualidade_sono || dados.alimentacao || dados.hidratacao || dados.atividades_realizadas) && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-blue-700">Rotina Diária</h4>
-                              <div className="space-y-2 pl-4">
-                                {dados.qualidade_sono && (
-                                  <p className="text-sm"><strong>Qualidade do sono:</strong> {dados.qualidade_sono}</p>
-                                )}
-                                {dados.alimentacao && (
-                                  <p className="text-sm"><strong>Alimentação:</strong> {dados.alimentacao}</p>
-                                )}
-                                {dados.hidratacao && (
-                                  <p className="text-sm"><strong>Hidratação:</strong> {dados.hidratacao}</p>
-                                )}
-                                {dados.atividades_realizadas && Array.isArray(dados.atividades_realizadas) && dados.atividades_realizadas.length > 0 && (
-                                  <p className="text-sm"><strong>Atividades:</strong> {dados.atividades_realizadas.join(', ')}</p>
-                                )}
-                                {dados.observacoes_rotina && (
-                                  <p className="text-sm"><strong>Observações da rotina:</strong> {dados.observacoes_rotina}</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Aspectos Clínicos */}
-                          {(dados.pressao_arterial || dados.frequencia_cardiaca || dados.temperatura || dados.glicemia) && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-green-700">Aspectos Clínicos</h4>
-                              <div className="space-y-2 pl-4">
-                                {dados.pressao_arterial && (
-                                  <p className="text-sm"><strong>Pressão arterial:</strong> {dados.pressao_arterial}</p>
-                                )}
-                                {dados.frequencia_cardiaca && (
-                                  <p className="text-sm"><strong>Frequência cardíaca:</strong> {dados.frequencia_cardiaca}</p>
-                                )}
-                                {dados.temperatura && (
-                                  <p className="text-sm"><strong>Temperatura:</strong> {dados.temperatura}</p>
-                                )}
-                                {dados.glicemia && (
-                                  <p className="text-sm"><strong>Glicemia:</strong> {dados.glicemia}</p>
-                                )}
-                                {dados.observacoes_clinicas && (
-                                  <p className="text-sm"><strong>Observações clínicas:</strong> {dados.observacoes_clinicas}</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Bem-Estar */}
-                          {(dados.humor || dados.dor || dados.apetite || dados.interacao_social) && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-purple-700">Avaliação de Bem-Estar</h4>
-                              <div className="space-y-2 pl-4">
-                                {dados.humor && (
-                                  <p className="text-sm"><strong>Humor:</strong> {dados.humor}</p>
-                                )}
-                                {dados.dor && (
-                                  <p className="text-sm"><strong>Nível de dor:</strong> {Array.isArray(dados.dor) ? dados.dor[0] : dados.dor}/10</p>
-                                )}
-                                {dados.apetite && (
-                                  <p className="text-sm"><strong>Apetite:</strong> {dados.apetite}</p>
-                                )}
-                                {dados.interacao_social && (
-                                  <p className="text-sm"><strong>Interação social:</strong> {dados.interacao_social}</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Ocorrências */}
-                          {(dados.ocorrencias || dados.detalhes_ocorrencia) && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-red-700">Registro de Ocorrências</h4>
-                              <div className="space-y-2 pl-4">
-                                {dados.ocorrencias && Array.isArray(dados.ocorrencias) && dados.ocorrencias.length > 0 && (
-                                  <p className="text-sm"><strong>Ocorrências:</strong> {dados.ocorrencias.join(', ')}</p>
-                                )}
-                                {dados.detalhes_ocorrencia && (
-                                  <p className="text-sm"><strong>Detalhes:</strong> {dados.detalhes_ocorrencia}</p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Observações Gerais */}
                           {dados.observacoes_gerais && (
                             <div>
                               <h4 className="font-medium text-sm mb-2 text-gray-700">Observações Gerais</h4>
                               <p className="text-sm text-gray-700 pl-4">{dados.observacoes_gerais}</p>
-                            </div>
-                          )}
-                          
-                          {/* Observações adicionais do campo observacoes */}
-                          {selectedProntuario.observacoes && selectedProntuario.observacoes !== dados.observacoes_gerais && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-gray-700">Observações Adicionais</h4>
-                              <p className="text-sm text-gray-700 pl-4">{selectedProntuario.observacoes}</p>
                             </div>
                           )}
                         </div>
@@ -774,29 +689,12 @@ export default function ControleProntuarios() {
             
             {editingProntuario && (
               <div className="space-y-6">
-                {/* Informações do cabeçalho */}
-                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <Label className="text-sm font-medium">Residente</Label>
-                    <p className="text-sm">{editingProntuario.residentes?.nome_completo}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Data/Hora</Label>
-                    <p className="text-sm">
-                      {format(new Date(editingProntuario.data_registro), 'dd/MM/yyyy', { locale: ptBR })} às {editingProntuario.horario_registro.substring(0, 5)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Alerta sobre edição */}
                 <Alert>
                   <AlertDescription>
-                    <strong>Atenção:</strong> Esta edição será registrada no sistema de auditoria. 
-                    Certifique-se de fornecer uma justificativa clara para as alterações.
+                    <strong>Atenção:</strong> Esta edição será registrada no sistema de auditoria.
                   </AlertDescription>
                 </Alert>
 
-                {/* Formulário de edição */}
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="observacoes_gerais">Observações Gerais</Label>
@@ -824,7 +722,6 @@ export default function ControleProntuarios() {
                   </div>
                 </div>
 
-                {/* Botões de ação */}
                 <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button
                     variant="outline"

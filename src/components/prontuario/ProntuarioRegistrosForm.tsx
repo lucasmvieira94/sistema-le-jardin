@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, Lock, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeft, Save, Lock, AlertTriangle, Shield } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +27,7 @@ interface CicloForm {
   id: string;
   data_ciclo: string;
   status: string;
+  data_inicio_efetivo?: string;
   residente: {
     nome_completo: string;
     numero_prontuario: string;
@@ -64,6 +67,8 @@ export default function ProntuarioRegistrosForm({
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showFinalizarDialog, setShowFinalizarDialog] = useState(false);
+  const [finalizando, setFinalizando] = useState(false);
   const { toast } = useToast();
 
   const fetchRegistros = async () => {
@@ -117,10 +122,78 @@ export default function ProntuarioRegistrosForm({
     fetchRegistros();
   }, [ciclo.id]);
 
+  const handleFinalizarProntuario = async (codigo: string, funcionarioNome: string) => {
+    setFinalizando(true);
+    try {
+      // Marcar início efetivo se ainda não foi marcado
+      if (ciclo.status === 'nao_iniciado') {
+        await supabase
+          .from('prontuario_ciclos')
+          .update({
+            status: 'em_andamento',
+            data_inicio_efetivo: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', ciclo.id);
+      }
+
+      // Chamar função para finalizar o prontuário
+      const { data, error } = await supabase
+        .rpc('finalizar_prontuario_diario', {
+          p_ciclo_id: ciclo.id,
+          p_funcionario_id: funcionarioId,
+          p_codigo_validacao: codigo
+        });
+
+      if (error) throw error;
+
+      const result = data?.[0];
+      
+      if (result?.success) {
+        toast({
+          title: "Prontuário finalizado",
+          description: `Prontuário finalizado com sucesso por ${funcionarioNome}`,
+        });
+        setShowFinalizarDialog(false);
+        onUpdate();
+        onBack(); // Voltar à lista após finalizar
+      } else {
+        toast({
+          title: "Erro ao finalizar",
+          description: result?.message || "Erro desconhecido",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao finalizar prontuário:', error);
+      toast({
+        title: "Erro ao finalizar",
+        description: "Não foi possível finalizar o prontuário.",
+        variant: "destructive",
+      });
+    } finally {
+      setFinalizando(false);
+    }
+  };
+
   const handleSaveRegistro = async (registroId: string, descricao: string, observacoes?: string) => {
     try {
       setSaving(true);
       
+      // Marcar início efetivo do ciclo se ainda não foi marcado
+      if (!ciclo.data_inicio_efetivo && ciclo.status === 'nao_iniciado') {
+        await supabase
+          .from('prontuario_ciclos')
+          .update({
+            status: 'em_andamento',
+            data_inicio_efetivo: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', ciclo.id);
+        
+        onUpdate(); // Atualizar o estado do ciclo
+      }
+
       const { error } = await supabase
         .from('prontuario_registros')
         .update({
@@ -223,6 +296,18 @@ export default function ProntuarioRegistrosForm({
         </div>
         
         <div className="flex gap-2">
+          {ciclo.status !== 'encerrado' && (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => setShowFinalizarDialog(true)}
+              disabled={finalizando}
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              {finalizando ? 'Finalizando...' : 'Finalizar Prontuário'}
+            </Button>
+          )}
+          
           {ciclo.status === 'completo' && !isReadOnly && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -305,6 +390,20 @@ export default function ProntuarioRegistrosForm({
           </TabsContent>
         ))}
       </Tabs>
+      
+      {/* Dialog para finalização com código */}
+      <Dialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Finalizar Prontuário</DialogTitle>
+          </DialogHeader>
+          <CodigoFinalizacaoProntuario
+            onCodigoValidado={handleFinalizarProntuario}
+            onCancel={() => setShowFinalizarDialog(false)}
+            disabled={finalizando}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
