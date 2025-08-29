@@ -216,6 +216,17 @@ export default function NovoFormularioProntuario({
               if (resultado?.success) {
                 setCicloId(resultado.ciclo_id);
                 setCicloStatus('em_andamento');
+                
+                // Marcar início efetivo no banco
+                await supabase
+                  .from('prontuario_ciclos')
+                  .update({
+                    status: 'em_andamento',
+                    data_inicio_efetivo: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', resultado.ciclo_id);
+                
                 onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
                 toast({
                   title: "Prontuário iniciado",
@@ -272,6 +283,17 @@ export default function NovoFormularioProntuario({
             if (resultado?.success) {
               setCicloId(resultado.ciclo_id);
               setCicloStatus('em_andamento');
+              
+              // Marcar início efetivo no banco
+              await supabase
+                .from('prontuario_ciclos')
+                .update({
+                  status: 'em_andamento',
+                  data_inicio_efetivo: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', resultado.ciclo_id);
+              
               onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
               toast({
                 title: "Prontuário iniciado",
