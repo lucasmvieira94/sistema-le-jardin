@@ -82,6 +82,12 @@ export default function Prontuario() {
     }
   };
 
+  const recarregarStatusProntuarios = async () => {
+    if (residentes.length > 0) {
+      await verificarStatusProntuarios(residentes);
+    }
+  };
+
   const handleLogout = () => {
     setFuncionarioId(null);
     setFuncionarioNome("");
@@ -262,7 +268,11 @@ export default function Prontuario() {
             residenteId={selectedResidente}
             cicloStatus={prontuariosStatus[selectedResidente]?.status || 'nao_iniciado'}
             onChangeResidente={setSelectedResidente}
-            onVoltar={() => setSelectedResidente(null)}
+            onVoltar={() => {
+              setSelectedResidente(null);
+              // Recarregar status quando voltar
+              recarregarStatusProntuarios();
+            }}
             onStatusChange={(residenteId, status, cicloId) => {
               setProntuariosStatus(prev => ({
                 ...prev,

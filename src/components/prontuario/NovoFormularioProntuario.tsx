@@ -227,7 +227,9 @@ export default function NovoFormularioProntuario({
                   })
                   .eq('id', resultado.ciclo_id);
                 
+                // Atualizar o status imediatamente
                 onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
+                
                 toast({
                   title: "Prontuário iniciado",
                   description: resultado.message,
@@ -294,7 +296,9 @@ export default function NovoFormularioProntuario({
                 })
                 .eq('id', resultado.ciclo_id);
               
+              // Atualizar o status imediatamente
               onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
+              
               toast({
                 title: "Prontuário iniciado",
                 description: resultado.message,
