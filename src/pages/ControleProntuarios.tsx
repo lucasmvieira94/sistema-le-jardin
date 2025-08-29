@@ -53,7 +53,7 @@ export default function ControleProntuarios() {
   const [loading, setLoading] = useState(true);
   const [prontuarios, setProntuarios] = useState<ProntuarioRegistro[]>([]);
   const [filtros, setFiltros] = useState({
-    dataInicio: "",
+    dataInicio: new Date().toISOString().split('T')[0], // Data de hoje por padrão
     dataFim: "",
     residente: "todos_residentes",
     funcionario: "todos_funcionarios",
@@ -242,6 +242,8 @@ export default function ControleProntuarios() {
       }
 
       setProntuarios(prontuariosFiltrados);
+      console.log('📋 Prontuários carregados:', prontuariosFiltrados.length);
+      console.log('📋 Filtros aplicados:', filtros);
     } catch (error) {
       console.error('Erro ao carregar prontuários:', error);
       toast({
@@ -409,6 +411,10 @@ export default function ControleProntuarios() {
         return true;
     }
   });
+
+  console.log('📊 Total prontuários brutos:', prontuarios.length);
+  console.log('📊 Prontuários após filtro:', filteredProntuarios.length);
+  console.log('📊 Status filter:', filtros.status);
 
   if (loading) {
     return (
