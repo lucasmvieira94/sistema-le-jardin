@@ -9,9 +9,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle } from "lucide-react";
+import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle, Shield, Lock } from "lucide-react";
+import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
 
 interface FormularioData {
   // Identificação do Idoso
@@ -88,6 +101,8 @@ export default function NovoFormularioProntuario({
   const [prontuarioJaFinalizado, setProntuarioJaFinalizado] = useState(false);
   const [loading, setLoading] = useState(true);
   const [camposConfigurados, setCamposConfigurados] = useState<any[]>([]);
+  const [showFinalizarDialog, setShowFinalizarDialog] = useState(false);
+  const [showCodigoDialog, setShowCodigoDialog] = useState(false);
   
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<FormularioData>({
     defaultValues: {
@@ -369,8 +384,10 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  // Auto-save functionality
+  // Auto-save functionality (não salvar se finalizado)
   useEffect(() => {
+    if (prontuarioJaFinalizado) return; // Não salvar se finalizado
+    
     const timer = setTimeout(() => {
       if (registroId || Object.keys(watchedValues).some(key => watchedValues[key as keyof FormularioData])) {
         saveFormData();
@@ -378,7 +395,7 @@ export default function NovoFormularioProntuario({
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [watchedValues]);
+  }, [watchedValues, prontuarioJaFinalizado]);
 
   const saveFormData = async () => {
     if (!cicloId || prontuarioJaFinalizado) return;
@@ -421,7 +438,7 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  const handleSalvarClick = async () => {
+  const handleFinalizarClick = () => {
     if (prontuarioJaFinalizado) {
       toast({
         title: "Prontuário já finalizado",
@@ -431,27 +448,52 @@ export default function NovoFormularioProntuario({
       return;
     }
     
+    setShowFinalizarDialog(true);
+  };
+
+  const handleConfirmFinalizar = async () => {
+    setShowFinalizarDialog(false);
+    
+    // Salvar dados atuais antes de abrir o diálogo de código
+    setIsSaving(true);
+    try {
+      await saveFormData();
+      setShowCodigoDialog(true);
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Erro ao salvar dados antes da finalização.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleFinalizarProntuario = async (codigo: string, funcionarioNome: string) => {
     setIsFinalizando(true);
     try {
-      // Salvar dados atuais
-      await saveFormData();
+      // Chamar função para finalizar o prontuário
+      const { data, error } = await supabase
+        .rpc('finalizar_prontuario_diario', {
+          p_ciclo_id: cicloId,
+          p_funcionario_id: funcionarioId,
+          p_codigo_validacao: codigo
+        });
+
+      if (error) throw error;
+
+      const result = data?.[0];
       
-      // Salvar sem validação de código
-      const { data: resultado, error } = await supabase
-        .rpc('salvar_prontuario_simples', {
-          p_ciclo_id: cicloId
-        });
-
-      if (error) {
-        throw new Error('Erro na comunicação com o servidor');
-      }
-
-      const salvamento = resultado?.[0];
-      if (salvamento?.success) {
+      if (result?.success) {
         toast({
-          title: "Prontuário salvo!",
-          description: salvamento.message,
+          title: "Prontuário finalizado",
+          description: `Prontuário finalizado com sucesso por ${funcionarioNome}`,
         });
+        
+        setShowCodigoDialog(false);
+        setProntuarioJaFinalizado(true);
+        setCicloStatus('encerrado');
         
         // Buscar próximo prontuário disponível
         const { data: proximoData, error: proximoError } = await supabase
@@ -484,12 +526,17 @@ export default function NovoFormularioProntuario({
           }, 2000);
         }
       } else {
-        throw new Error(salvamento?.message || 'Erro ao salvar prontuário');
+        toast({
+          title: "Erro ao finalizar",
+          description: result?.message || "Erro desconhecido",
+          variant: "destructive",
+        });
       }
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Erro ao finalizar prontuário:', error);
       toast({
-        title: "Erro ao salvar",
-        description: error.message || "Ocorreu um erro ao salvar o prontuário.",
+        title: "Erro ao finalizar",
+        description: "Não foi possível finalizar o prontuário.",
         variant: "destructive",
       });
     } finally {
@@ -521,6 +568,9 @@ export default function NovoFormularioProntuario({
   const renderCampoConfigurado = (campo: any, valor: any, onChange: (valor: any) => void) => {
     console.log('🎯 Renderizando campo:', campo.label, 'Tipo:', campo.tipo);
     
+    // Desabilitar campos se prontuário finalizado
+    const isDisabled = prontuarioJaFinalizado;
+    
     switch (campo.tipo) {
       case 'text':
         return (
@@ -531,10 +581,11 @@ export default function NovoFormularioProntuario({
             </Label>
             <Input
               id={campo.id}
-              placeholder={campo.placeholder || ''}
+              placeholder={isDisabled ? "Campo bloqueado - prontuário finalizado" : (campo.placeholder || '')}
               value={valor || ''}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => !isDisabled && onChange(e.target.value)}
               className="mt-1"
+              disabled={isDisabled}
             />
           </div>
         );
@@ -548,11 +599,12 @@ export default function NovoFormularioProntuario({
             </Label>
             <Textarea
               id={campo.id}
-              placeholder={campo.placeholder || ''}
+              placeholder={isDisabled ? "Campo bloqueado - prontuário finalizado" : (campo.placeholder || '')}
               value={valor || ''}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => !isDisabled && onChange(e.target.value)}
               className="mt-1 min-h-[80px]"
               rows={campo.configuracoes?.rows || 3}
+              disabled={isDisabled}
             />
           </div>
         );
@@ -566,13 +618,23 @@ export default function NovoFormularioProntuario({
             </Label>
             <RadioGroup
               value={valor || ""}
-              onValueChange={onChange}
+              onValueChange={(value) => !isDisabled && onChange(value)}
               className="mt-2"
+              disabled={isDisabled}
             >
               {(campo.opcoes || []).map((opcao: string) => (
                 <div key={opcao} className="flex items-center space-x-2">
-                  <RadioGroupItem value={opcao} id={`${campo.id}_${opcao}`} />
-                  <Label htmlFor={`${campo.id}_${opcao}`}>{opcao}</Label>
+                  <RadioGroupItem 
+                    value={opcao} 
+                    id={`${campo.id}_${opcao}`} 
+                    disabled={isDisabled}
+                  />
+                  <Label 
+                    htmlFor={`${campo.id}_${opcao}`}
+                    className={isDisabled ? "text-muted-foreground" : ""}
+                  >
+                    {opcao}
+                  </Label>
                 </div>
               ))}
             </RadioGroup>
@@ -593,6 +655,7 @@ export default function NovoFormularioProntuario({
                     id={`${campo.id}_${opcao}`}
                     checked={Array.isArray(valor) ? valor.includes(opcao) : false}
                     onCheckedChange={(checked) => {
+                      if (isDisabled) return;
                       const current = Array.isArray(valor) ? valor : [];
                       if (checked) {
                         onChange([...current, opcao]);
@@ -600,8 +663,14 @@ export default function NovoFormularioProntuario({
                         onChange(current.filter((item: string) => item !== opcao));
                       }
                     }}
+                    disabled={isDisabled}
                   />
-                  <Label htmlFor={`${campo.id}_${opcao}`} className="text-sm">{opcao}</Label>
+                  <Label 
+                    htmlFor={`${campo.id}_${opcao}`} 
+                    className={`text-sm ${isDisabled ? "text-muted-foreground" : ""}`}
+                  >
+                    {opcao}
+                  </Label>
                 </div>
               ))}
             </div>
@@ -615,9 +684,16 @@ export default function NovoFormularioProntuario({
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
-            <Select value={valor || ""} onValueChange={onChange}>
+            <Select 
+              value={valor || ""} 
+              onValueChange={(value) => !isDisabled && onChange(value)}
+              disabled={isDisabled}
+            >
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder={campo.placeholder || "Selecione uma opção"} />
+                <SelectValue placeholder={
+                  isDisabled ? "Campo bloqueado - prontuário finalizado" : 
+                  (campo.placeholder || "Selecione uma opção")
+                } />
               </SelectTrigger>
               <SelectContent className="bg-white border shadow-lg z-50">
                 {(campo.opcoes || []).map((opcao: string) => (
@@ -645,12 +721,18 @@ export default function NovoFormularioProntuario({
             </Label>
             <Slider
               value={[currentValue]}
-              onValueChange={(newValue) => onChange(newValue)}
+              onValueChange={(newValue) => !isDisabled && onChange(newValue)}
               min={min}
               max={max}
               step={step}
               className="mt-3"
+              disabled={isDisabled}
             />
+            {isDisabled && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Campo bloqueado - prontuário finalizado
+              </p>
+            )}
           </div>
         );
 
@@ -665,13 +747,14 @@ export default function NovoFormularioProntuario({
             <Input
               id={campo.id}
               type="number"
-              placeholder={campo.placeholder || ''}
+              placeholder={isDisabled ? "Campo bloqueado - prontuário finalizado" : (campo.placeholder || '')}
               value={valor || ''}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => !isDisabled && onChange(e.target.value)}
               min={numConfig.min}
               max={numConfig.max}
               step={numConfig.step}
               className="mt-1"
+              disabled={isDisabled}
             />
           </div>
         );
@@ -854,33 +937,91 @@ export default function NovoFormularioProntuario({
         </Card>
       )}
 
-      {/* Botão de salvar fixo na parte inferior */}
+      {/* Aviso de prontuário finalizado */}
+      {prontuarioJaFinalizado && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2">
+            <Lock className="w-5 h-5 text-green-600" />
+            <p className="text-sm text-green-800 font-medium">
+              Este prontuário foi finalizado e não pode mais ser editado. 
+              A edição será liberada no próximo ciclo diário.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Botão de finalizar fixo na parte inferior */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4">
-        <Button 
-          onClick={handleSalvarClick}
-          disabled={isFinalizando || loading}
-          className={`w-full h-12 text-lg font-semibold ${
-            prontuarioJaFinalizado ? 'bg-green-600 hover:bg-green-700' : ''
-          }`}
-          size="lg"
-        >
-          {loading ? (
-            "Carregando..."
-          ) : isFinalizando ? (
-            "Salvando..."
-          ) : prontuarioJaFinalizado ? (
-            <>
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Prontuário Finalizado
-            </>
-          ) : (
-            <>
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Salvar Prontuário
-            </>
-          )}
-        </Button>
+        <AlertDialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
+          <AlertDialogTrigger asChild>
+            <Button 
+              onClick={handleFinalizarClick}
+              disabled={isFinalizando || loading || prontuarioJaFinalizado}
+              className={`w-full h-12 text-lg font-semibold ${
+                prontuarioJaFinalizado ? 'bg-green-600 hover:bg-green-700' : ''
+              }`}
+              size="lg"
+              variant={prontuarioJaFinalizado ? "secondary" : "default"}
+            >
+              {loading ? (
+                "Carregando..."
+              ) : isFinalizando ? (
+                "Finalizando..."
+              ) : prontuarioJaFinalizado ? (
+                <>
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Prontuário Finalizado
+                </>
+              ) : (
+                <>
+                  <Shield className="w-5 h-5 mr-2" />
+                  Finalizar Prontuário
+                </>
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                Finalizar Prontuário
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-base">
+                <strong>Atenção:</strong> Uma vez finalizado, este prontuário não poderá mais ser acessado ou editado hoje. 
+                <br /><br />
+                • O prontuário será marcado como <strong>FINALIZADO</strong>
+                <br />
+                • Não será possível fazer alterações até o próximo ciclo diário
+                <br />
+                • Esta ação requer confirmação com código de funcionário
+                <br /><br />
+                Deseja realmente finalizar este prontuário?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmFinalizar}>
+                Continuar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
+
+      {/* Dialog para validação com código */}
+      <Dialog open={showCodigoDialog} onOpenChange={setShowCodigoDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Finalizar Prontuário</DialogTitle>
+          </DialogHeader>
+          <CodigoFinalizacaoProntuario
+            onCodigoValidado={handleFinalizarProntuario}
+            onCancel={() => setShowCodigoDialog(false)}
+            disabled={isFinalizando}
+          />
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
