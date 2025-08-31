@@ -14,10 +14,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
-import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X, Settings } from "lucide-react";
+import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X, Settings, Download } from "lucide-react";
 import ConfiguracoesProntuario from "@/components/prontuario/ConfiguracoesProntuario";
+import ProntuarioDetalhado from "@/components/prontuario/ProntuarioDetalhado";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface ProntuarioRegistro {
   id: string;
@@ -397,6 +400,138 @@ export default function ControleProntuarios() {
     }
   };
 
+  const exportarProntuarioPDF = async (prontuario: ProntuarioRegistro) => {
+    try {
+      const dados = parseDescricao(prontuario.descricao);
+      
+      // Criar novo documento PDF
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.width;
+      const margin = 20;
+      let currentY = 20;
+
+      // Título
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('PRONTUÁRIO ELETRÔNICO', pageWidth / 2, currentY, { align: 'center' });
+      currentY += 20;
+
+      // Informações do cabeçalho
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      
+      const headerInfo = [
+        ['Residente', prontuario.residentes?.nome_completo || 'N/A'],
+        ['Data', new Date(prontuario.data_registro).toLocaleDateString('pt-BR')],
+        ['Horário', prontuario.horario_registro?.substring(0, 5) || 'N/A'],
+        ['Funcionário', prontuario.funcionarios?.nome_completo || 'N/A'],
+        ['Quarto', prontuario.residentes?.quarto || 'N/A']
+      ];
+
+      headerInfo.forEach(([label, value]) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${label}:`, margin, currentY);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(value, margin + 40, currentY);
+        currentY += 8;
+      });
+
+      currentY += 10;
+
+      // Função para adicionar seção
+      const addSection = (title: string, content: any) => {
+        // Verificar se precisa de nova página
+        if (currentY + 30 > pdf.internal.pageSize.height - 20) {
+          pdf.addPage();
+          currentY = 20;
+        }
+
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(title, margin, currentY);
+        currentY += 10;
+
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+
+        if (typeof content === 'object' && content !== null) {
+          Object.entries(content).forEach(([key, value]) => {
+            if (currentY + 8 > pdf.internal.pageSize.height - 20) {
+              pdf.addPage();
+              currentY = 20;
+            }
+
+            const label = key.replace(/_/g, ' ').replace(/campo_[^-]+-[^-]+-[^-]+-[^-]+-[^-]+/, '').trim();
+            const formattedValue = Array.isArray(value) ? value.join(', ') : String(value);
+            
+            pdf.text(`• ${label}: ${formattedValue}`, margin + 5, currentY);
+            currentY += 6;
+          });
+        } else {
+          pdf.text(String(content), margin + 5, currentY);
+          currentY += 6;
+        }
+
+        currentY += 5;
+      };
+
+      // Adicionar medicações se existirem
+      if (dados.medicacoes && dados.medicacoes.length > 0) {
+        addSection('MEDICAÇÕES', dados.medicacoes.map((med: any, index: number) => 
+          `${index + 1}. ${med.nome || 'N/A'} - ${med.dosagem || 'N/A'} - Horários: ${med.horarios?.join(', ') || 'N/A'}`
+        ).join('\n'));
+      }
+
+      // Adicionar campos dinâmicos organizados
+      const secoes = {
+        'Aspectos Clínicos': ['campo_1d790b13', 'campo_c79bfd92', 'campo_419f71ca'],
+        'Rotina Diária': ['campo_49a563f2', 'campo_0c918f30', 'campo_43674c2a', 'campo_cbed61fa'],
+        'Bem-estar': ['campo_d911585d', 'campo_712a9708', 'campo_edafe2df'],
+      };
+
+      Object.entries(secoes).forEach(([secaoNome, campoPrefixos]) => {
+        const camposSecao: any = {};
+        
+        Object.keys(dados).forEach(campo => {
+          if (campoPrefixos.some(prefixo => campo.includes(prefixo))) {
+            const valor = dados[campo];
+            if (valor !== null && valor !== undefined && valor !== '') {
+              camposSecao[campo] = valor;
+            }
+          }
+        });
+
+        if (Object.keys(camposSecao).length > 0) {
+          addSection(secaoNome.toUpperCase(), camposSecao);
+        }
+      });
+
+      // Observações gerais
+      if (dados.observacoes_gerais) {
+        addSection('OBSERVAÇÕES GERAIS', dados.observacoes_gerais);
+      }
+
+      // Nome do arquivo
+      const nomeArquivo = `prontuario_${prontuario.residentes?.nome_completo?.replace(/\s+/g, '_')}_${new Date(prontuario.data_registro).toISOString().split('T')[0]}.pdf`;
+      
+      // Salvar PDF
+      pdf.save(nomeArquivo);
+
+      toast({
+        title: "PDF exportado com sucesso",
+        description: `Arquivo ${nomeArquivo} foi baixado.`,
+      });
+
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast({
+        title: "Erro ao exportar PDF",
+        description: "Não foi possível gerar o arquivo PDF.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredProntuarios = prontuarios.filter(prontuario => {
     if (filtros.status === "todos") return true;
     
@@ -659,26 +794,19 @@ export default function ControleProntuarios() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Conteúdo do Prontuário</Label>
+                  <Label className="text-sm font-medium flex items-center justify-between">
+                    Conteúdo do Prontuário
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportarProntuarioPDF(selectedProntuario)}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Exportar PDF
+                    </Button>
+                  </Label>
                   <div className="mt-2 p-4 bg-white border rounded-lg">
-                    {(() => {
-                      const dados = parseDescricao(selectedProntuario.descricao);
-                      
-                      if (!dados || Object.keys(dados).length === 0) {
-                        return <p className="text-gray-500 text-sm">Nenhum conteúdo registrado.</p>;
-                      }
-                      
-                      return (
-                        <div className="space-y-4">
-                          {dados.observacoes_gerais && (
-                            <div>
-                              <h4 className="font-medium text-sm mb-2 text-gray-700">Observações Gerais</h4>
-                              <p className="text-sm text-gray-700 pl-4">{dados.observacoes_gerais}</p>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                    <ProntuarioDetalhado dados={parseDescricao(selectedProntuario.descricao)} prontuario={selectedProntuario} />
                   </div>
                 </div>
               </div>
