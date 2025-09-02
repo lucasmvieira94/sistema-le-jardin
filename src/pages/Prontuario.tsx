@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { FileHeart, UserPlus, CheckCircle, Clock, FileX } from "lucide-react";
+import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +18,7 @@ export default function Prontuario() {
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
   const [selectedResidente, setSelectedResidente] = useState<string | null>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
-  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null}>>({});
+  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, progresso?: number}>>({});
 
   // Verificar se já tem dados do funcionário na URL (vindos do registro de ponto)
   useState(() => {
@@ -32,7 +33,7 @@ export default function Prontuario() {
   });
 
   const verificarStatusProntuarios = async (residentesData: any[]) => {
-    const statusMap: Record<string, {status: string, cicloId: string | null}> = {};
+    const statusMap: Record<string, {status: string, cicloId: string | null, progresso?: number}> = {};
     
     for (const residente of residentesData) {
       try {
@@ -43,21 +44,41 @@ export default function Prontuario() {
 
         if (!error && verificacao?.[0]) {
           const cicloInfo = verificacao[0];
+          
+          // Progresso básico baseado no status
+          let progresso = 0;
+          switch (cicloInfo.status) {
+            case 'nao_iniciado':
+              progresso = 0;
+              break;
+            case 'em_andamento':
+              progresso = 45; // 45% quando está em andamento
+              break;
+            case 'encerrado':
+              progresso = 100;
+              break;
+            default:
+              progresso = 0;
+          }
+          
           statusMap[residente.id] = {
             status: cicloInfo.status || 'nao_iniciado',
-            cicloId: cicloInfo.ciclo_id
+            cicloId: cicloInfo.ciclo_id,
+            progresso
           };
         } else {
           statusMap[residente.id] = {
             status: 'nao_iniciado',
-            cicloId: null
+            cicloId: null,
+            progresso: 0
           };
         }
       } catch (err) {
         console.error('Erro ao verificar status do prontuário:', err);
         statusMap[residente.id] = {
           status: 'nao_iniciado',
-          cicloId: null
+          cicloId: null,
+          progresso: 0
         };
       }
     }
@@ -212,8 +233,14 @@ export default function Prontuario() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
                 {residentes.map((residente) => {
-                  const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null };
+                  const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null, progresso: 0 };
                   const isDisabled = isButtonDisabled(statusInfo.status);
+                  const hoje = new Date().toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  });
                   
                   return (
                     <div
@@ -225,7 +252,13 @@ export default function Prontuario() {
                           : 'hover:border-primary hover:shadow-md cursor-pointer'
                       } group`}
                     >
-                      <div className="flex items-center justify-between">
+                      {/* Data do dia */}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 pb-2 border-b border-gray-100">
+                        <Calendar className="w-3 h-3" />
+                        <span className="capitalize">{hoje}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex-1">
                           <h3 className={`font-semibold text-lg text-gray-900 transition-colors ${
                             !isDisabled && 'group-hover:text-primary'
@@ -237,6 +270,17 @@ export default function Prontuario() {
                           {getStatusBadge(statusInfo.status)}
                         </div>
                       </div>
+                      
+                      {/* Barra de progresso */}
+                      {statusInfo.status !== 'nao_iniciado' && (
+                        <div className="mb-3">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span>Progresso do preenchimento</span>
+                            <span>{statusInfo.progresso || 0}%</span>
+                          </div>
+                          <Progress value={statusInfo.progresso || 0} className="h-2" />
+                        </div>
+                      )}
                       
                       <div className="mt-3">
                         <Button 
@@ -276,7 +320,7 @@ export default function Prontuario() {
             onStatusChange={(residenteId, status, cicloId) => {
               setProntuariosStatus(prev => ({
                 ...prev,
-                [residenteId]: { status, cicloId }
+                [residenteId]: { status, cicloId, progresso: prev[residenteId]?.progresso || 0 }
               }));
             }}
           />
