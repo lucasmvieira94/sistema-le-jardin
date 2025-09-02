@@ -160,10 +160,9 @@ export default function NovoFormularioProntuario({
               p_residente_id: residenteId 
             });
 
-          if (!verificacaoError && verificacao?.[0]) {
+          if (!verificacaoError && verificacao?.[0]?.ja_iniciado) {
             const cicloExistente = verificacao[0];
             setCicloId(cicloExistente.ciclo_id);
-            setCicloStatus(cicloExistente.status);
 
             // Carregar dados existentes do prontuário
             const { data: registroExistente } = await supabase
@@ -199,7 +198,7 @@ export default function NovoFormularioProntuario({
 
           const cicloExistente = verificacao?.[0];
           
-          if (cicloExistente && cicloExistente.status !== 'nao_iniciado') {
+          if (cicloExistente?.ja_iniciado) {
             setCicloId(cicloExistente.ciclo_id);
             setCicloStatus(cicloExistente.status);
             
@@ -229,33 +228,27 @@ export default function NovoFormularioProntuario({
               }
 
               const resultado = novoCiclo?.[0];
-              if (typeof resultado === 'string' && resultado.includes('success')) {
-                // Parse the ciclo_id from the response
-                const cicloIdMatch = resultado.match(/ciclo_id['":\s]+([a-f0-9-]+)/);
-                const cicloId = cicloIdMatch?.[1];
+              if (resultado?.success) {
+                setCicloId(resultado.ciclo_id);
+                setCicloStatus('em_andamento');
                 
-                if (cicloId) {
-                  setCicloId(cicloId);
-                  setCicloStatus('em_andamento');
-                  
-                  // Marcar início efetivo no banco
-                  await supabase
-                    .from('prontuario_ciclos')
-                    .update({
-                      status: 'em_andamento',
-                      data_inicio_efetivo: new Date().toISOString(),
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('id', cicloId);
-                  
-                  // Atualizar o status imediatamente
-                  onStatusChange?.(residenteId, 'em_andamento', cicloId);
-                  
-                  toast({
-                    title: "Prontuário iniciado",
-                    description: "Prontuário criado com sucesso",
-                  });
-                }
+                // Marcar início efetivo no banco
+                await supabase
+                  .from('prontuario_ciclos')
+                  .update({
+                    status: 'em_andamento',
+                    data_inicio_efetivo: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', resultado.ciclo_id);
+                
+                // Atualizar o status imediatamente
+                onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
+                
+                toast({
+                  title: "Prontuário iniciado",
+                  description: resultado.message,
+                });
               }
             } else {
               toast({
@@ -304,33 +297,27 @@ export default function NovoFormularioProntuario({
             }
 
             const resultado = novoCiclo?.[0];
-            if (typeof resultado === 'string' && resultado.includes('success')) {
-              // Parse the ciclo_id from the response
-              const cicloIdMatch = resultado.match(/ciclo_id['":\s]+([a-f0-9-]+)/);
-              const cicloId = cicloIdMatch?.[1];
+            if (resultado?.success) {
+              setCicloId(resultado.ciclo_id);
+              setCicloStatus('em_andamento');
               
-              if (cicloId) {
-                setCicloId(cicloId);
-                setCicloStatus('em_andamento');
-                
-                // Marcar início efetivo no banco
-                await supabase
-                  .from('prontuario_ciclos')
-                  .update({
-                    status: 'em_andamento',
-                    data_inicio_efetivo: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', cicloId);
-                
-                // Atualizar o status imediatamente
-                onStatusChange?.(residenteId, 'em_andamento', cicloId);
-                
-                toast({
-                  title: "Prontuário iniciado",
-                  description: "Prontuário criado com sucesso",
-                });
-              }
+              // Marcar início efetivo no banco
+              await supabase
+                .from('prontuario_ciclos')
+                .update({
+                  status: 'em_andamento',
+                  data_inicio_efetivo: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', resultado.ciclo_id);
+              
+              // Atualizar o status imediatamente
+              onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
+              
+              toast({
+                title: "Prontuário iniciado",
+                description: resultado.message,
+              });
             }
           }
         }
