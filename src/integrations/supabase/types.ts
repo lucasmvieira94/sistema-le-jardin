@@ -1018,6 +1018,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buscar_prontuarios_em_atraso: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          ciclo_id: string
+          data_ciclo: string
+          data_inicio_efetivo: string
+          funcionario_iniciou: string
+          horas_atraso: number
+          residente_id: string
+          residente_nome: string
+        }[]
+      }
       buscar_proximo_prontuario: {
         Args: { p_residente_atual: string }
         Returns: {
@@ -1083,6 +1095,17 @@ export type Database = {
       executar_criacao_prontuarios_manual: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      finalizar_prontuario_atraso_gestor: {
+        Args: {
+          p_ciclo_id: string
+          p_gestor_id: string
+          p_justificativa: string
+        }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
       }
       finalizar_prontuario_diario: {
         Args: {
