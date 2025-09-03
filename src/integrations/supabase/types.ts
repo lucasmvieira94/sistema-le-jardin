@@ -1240,12 +1240,10 @@ export type Database = {
         Returns: boolean
       }
       verificar_prontuario_diario_existente: {
-        Args:
-          | { p_data?: string; p_residente_id: string }
-          | { p_residente_id: string }
+        Args: { p_data?: string; p_residente_id: string }
         Returns: {
           ciclo_id: string
-          data_ciclo: string
+          ja_iniciado: boolean
           status: string
         }[]
       }
