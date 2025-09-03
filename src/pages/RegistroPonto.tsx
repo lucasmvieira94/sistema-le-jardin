@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { CalendarRange, RefreshCw, FileHeart, Heart } from "lucide-react";
+import { CalendarRange, RefreshCw, FileHeart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
@@ -89,10 +89,7 @@ export default function RegistroPonto() {
       <div className="container mx-auto max-w-md">
         <div className="bg-white rounded-2xl p-6 shadow-xl space-y-6">
           <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <Heart className="w-8 h-8 text-green-600 fill-green-600" />
-              <h1 className="text-2xl font-bold text-primary">SenexCare</h1>
-            </div>
+            <h1 className="text-2xl font-bold text-primary">Registro de Ponto</h1>
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
               <CalendarRange className="w-4 h-4" />
               <span>{currentTime.toLocaleDateString('pt-BR', { 

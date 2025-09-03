@@ -160,29 +160,27 @@ export default function NovoFormularioProntuario({
               p_residente_id: residenteId 
             });
 
-          if (!verificacaoError && verificacao && verificacao.length > 0) {
+          if (!verificacaoError && verificacao?.[0]?.ja_iniciado) {
             const cicloExistente = verificacao[0];
-            if (cicloExistente && typeof cicloExistente === 'object' && cicloExistente.ciclo_id) {
-              setCicloId(cicloExistente.ciclo_id);
+            setCicloId(cicloExistente.ciclo_id);
 
-              // Carregar dados existentes do prontuário
-              const { data: registroExistente } = await supabase
-                .from('prontuario_registros')
-                .select('*')
-                .eq('ciclo_id', cicloExistente.ciclo_id)
-                .eq('tipo_registro', 'prontuario_completo')
-                .single();
+            // Carregar dados existentes do prontuário
+            const { data: registroExistente } = await supabase
+              .from('prontuario_registros')
+              .select('*')
+              .eq('ciclo_id', cicloExistente.ciclo_id)
+              .eq('tipo_registro', 'prontuario_completo')
+              .single();
 
-              if (registroExistente) {
-                setRegistroId(registroExistente.id);
-                try {
-                  const dadosExistentes = JSON.parse(registroExistente.descricao);
-                  Object.keys(dadosExistentes).forEach(key => {
-                    setValue(key as keyof FormularioData, dadosExistentes[key]);
-                  });
-                } catch (e) {
-                  console.error('Erro ao carregar dados do prontuário:', e);
-                }
+            if (registroExistente) {
+              setRegistroId(registroExistente.id);
+              try {
+                const dadosExistentes = JSON.parse(registroExistente.descricao);
+                Object.keys(dadosExistentes).forEach(key => {
+                  setValue(key as keyof FormularioData, dadosExistentes[key]);
+                });
+              } catch (e) {
+                console.error('Erro ao carregar dados do prontuário:', e);
               }
             }
           }
@@ -200,7 +198,7 @@ export default function NovoFormularioProntuario({
 
           const cicloExistente = verificacao?.[0];
           
-          if (cicloExistente && typeof cicloExistente === 'object' && cicloExistente.ciclo_id) {
+          if (cicloExistente?.ja_iniciado) {
             setCicloId(cicloExistente.ciclo_id);
             setCicloStatus(cicloExistente.status);
             
@@ -229,8 +227,8 @@ export default function NovoFormularioProntuario({
                 return;
               }
 
-              const resultado = typeof novoCiclo?.[0] === 'string' ? { success: true, ciclo_id: novoCiclo[0], message: 'Ciclo criado' } : novoCiclo?.[0];
-              if (resultado?.success && resultado.ciclo_id) {
+              const resultado = novoCiclo?.[0];
+              if (resultado?.success) {
                 setCicloId(resultado.ciclo_id);
                 setCicloStatus('em_andamento');
                 
@@ -249,7 +247,7 @@ export default function NovoFormularioProntuario({
                 
                 toast({
                   title: "Prontuário iniciado",
-                  description: resultado.message || "Prontuário iniciado com sucesso",
+                  description: resultado.message,
                 });
               }
             } else {
@@ -298,8 +296,8 @@ export default function NovoFormularioProntuario({
               return;
             }
 
-            const resultado = typeof novoCiclo?.[0] === 'string' ? { success: true, ciclo_id: novoCiclo[0], message: 'Ciclo criado' } : novoCiclo?.[0];
-            if (resultado?.success && resultado.ciclo_id) {
+            const resultado = novoCiclo?.[0];
+            if (resultado?.success) {
               setCicloId(resultado.ciclo_id);
               setCicloStatus('em_andamento');
               
@@ -318,7 +316,7 @@ export default function NovoFormularioProntuario({
               
               toast({
                 title: "Prontuário iniciado",
-                description: resultado.message || "Prontuário iniciado com sucesso",
+                description: resultado.message,
               });
             }
           }
