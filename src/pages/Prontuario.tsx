@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export default function Prontuario() {
   const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, progresso?: number}>>({});
 
   // Verificar se já tem dados do funcionário na URL (vindos do registro de ponto)
-  useState(() => {
+  useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const funcId = searchParams.get('funcionario_id');
     const funcNome = searchParams.get('funcionario_nome');
@@ -30,7 +30,7 @@ export default function Prontuario() {
       setFuncionarioId(funcId);
       setFuncionarioNome(decodeURIComponent(funcNome));
     }
-  });
+  }, [location]);
 
   const verificarStatusProntuarios = async (residentesData: any[]) => {
     const statusMap: Record<string, {status: string, cicloId: string | null, progresso?: number}> = {};

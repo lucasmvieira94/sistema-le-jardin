@@ -28,7 +28,7 @@ import {
 export default function Navbar() {
   const location = useLocation();
   const { user } = useAuthSession();
-  const { isAdmin, role } = useUserRole();
+  const { isAdmin } = useUserRole();
 
   const handleLogout = async () => {
     // Implementar logout se necessário
@@ -173,7 +173,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-2">
             <User className="w-4 h-4 text-gray-600" />
             <span className="text-sm text-gray-600">
-              {user.email} {role && `(${role})`}
+              {user.email} {isAdmin && '(Admin)'}
             </span>
             <Button
               variant="ghost"

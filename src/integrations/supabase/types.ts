@@ -1154,7 +1154,11 @@ export type Database = {
       }
       iniciar_prontuario_diario: {
         Args: { p_funcionario_id: string; p_residente_id: string }
-        Returns: string
+        Returns: {
+          ciclo_id: string
+          message: string
+          success: boolean
+        }[]
       }
       inserir_intervalo_automatico: {
         Args: {
