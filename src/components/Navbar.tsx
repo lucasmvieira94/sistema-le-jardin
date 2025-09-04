@@ -30,9 +30,6 @@ export default function Navbar() {
   const { user } = useAuthSession();
   const { isAdmin, loading } = useUserRole();
 
-  // Force component refresh to clear any cached references
-  console.log('Navbar rendering with isAdmin:', isAdmin);
-
   const handleLogout = async () => {
     // Implementar logout se necessário
     window.location.href = "/auth";

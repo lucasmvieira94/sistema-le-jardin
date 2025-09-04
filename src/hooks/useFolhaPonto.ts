@@ -36,6 +36,8 @@ export function useFolhaPonto(funcionarioId: string, mes: number, ano: number, e
   return useQuery({
     queryKey: ['folha-ponto', funcionarioId, mes, ano],
     queryFn: async () => {
+      console.log('useFolhaPonto - chamando RPCs com:', { funcionarioId, mes, ano });
+      
       const { data: folhaData, error: folhaError } = await supabase.rpc(
         'gerar_folha_ponto_mensal',
         {
@@ -44,6 +46,9 @@ export function useFolhaPonto(funcionarioId: string, mes: number, ano: number, e
           p_ano: ano
         }
       );
+
+      console.log('useFolhaPonto - folhaData:', folhaData);
+      console.log('useFolhaPonto - folhaError:', folhaError);
 
       if (folhaError) throw folhaError;
 
@@ -56,12 +61,19 @@ export function useFolhaPonto(funcionarioId: string, mes: number, ano: number, e
         }
       );
 
+      console.log('useFolhaPonto - totaisData:', totaisData);
+      console.log('useFolhaPonto - totaisError:', totaisError);
+
       if (totaisError) throw totaisError;
 
-      return {
+      const result = {
         dados: folhaData as FolhaPontoData[],
         totais: totaisData[0] as TotaisFolhaPonto
       };
+      
+      console.log('useFolhaPonto - result final:', result);
+      
+      return result;
     },
     enabled
   });

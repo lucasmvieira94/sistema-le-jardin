@@ -32,9 +32,16 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
     ano, 
     !!funcionarioId && mes > 0 && ano > 0
   );
+  
+  console.log('ModalFolhaPonto - data:', data);
+  console.log('ModalFolhaPonto - funcionarioId:', funcionarioId);
 
   const handleExportPDF = async () => {
+    console.log('handleExportPDF - data:', data);
+    console.log('handleExportPDF - data.dados.length:', data?.dados?.length);
+    
     if (!data || !data.dados.length) {
+      console.log('PDF Export - Nenhum dado encontrado');
       toast({
         variant: "destructive",
         title: "Nenhum dado encontrado para exportação"
@@ -58,7 +65,11 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
   };
 
   const handleExportExcel = async () => {
+    console.log('handleExportExcel - data:', data);
+    console.log('handleExportExcel - data.dados.length:', data?.dados?.length);
+    
     if (!data || !data.dados.length) {
+      console.log('Excel Export - Nenhum dado encontrado');
       toast({
         variant: "destructive",
         title: "Nenhum dado encontrado para exportação"

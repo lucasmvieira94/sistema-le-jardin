@@ -1038,6 +1038,26 @@ export type Database = {
           status: string
         }[]
       }
+      calcular_horas_extras_diurnas: {
+        Args: {
+          p_entrada: string
+          p_escala_entrada: string
+          p_escala_saida: string
+          p_intervalo_fim: string
+          p_intervalo_inicio: string
+          p_saida: string
+        }
+        Returns: unknown
+      }
+      calcular_horas_extras_noturnas: {
+        Args: {
+          p_entrada: string
+          p_intervalo_fim: string
+          p_intervalo_inicio: string
+          p_saida: string
+        }
+        Returns: unknown
+      }
       calcular_horas_noturnas: {
         Args: {
           p_entrada: string
