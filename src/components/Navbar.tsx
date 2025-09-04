@@ -28,7 +28,10 @@ import {
 export default function Navbar() {
   const location = useLocation();
   const { user } = useAuthSession();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, loading } = useUserRole();
+
+  // Force component refresh to clear any cached references
+  console.log('Navbar rendering with isAdmin:', isAdmin);
 
   const handleLogout = async () => {
     // Implementar logout se necessário
