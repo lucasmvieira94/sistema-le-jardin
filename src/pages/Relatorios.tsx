@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from "react";
-import { FileBarChart2, FileText } from "lucide-react";
+import { FileBarChart2, FileText, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import ModalFolhaPonto from "@/components/relatorios/ModalFolhaPonto";
+import ModalFolhaPontoGeral from "@/components/relatorios/ModalFolhaPontoGeral";
 
 interface Funcionario {
   id: string;
@@ -13,6 +14,7 @@ interface Funcionario {
 export default function Relatorios() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [modalFolhaPontoOpen, setModalFolhaPontoOpen] = useState(false);
+  const [modalFolhaPontoGeralOpen, setModalFolhaPontoGeralOpen] = useState(false);
 
   useEffect(() => {
     fetchFuncionarios();
@@ -41,15 +43,31 @@ export default function Relatorios() {
             <div className="flex items-center gap-3 mb-3">
               <FileText className="w-5 h-5 text-primary" />
               <div>
-                <h3 className="font-semibold">Folha de Ponto Mensal</h3>
+                <h3 className="font-semibold">Folha de Ponto Individual</h3>
                 <p className="text-sm text-muted-foreground">
-                  Relatório completo com registros diários, horas trabalhadas, extras e faltas
+                  Relatório de um funcionário específico com registros diários, horas trabalhadas, extras e faltas
                 </p>
               </div>
             </div>
             <Button onClick={() => setModalFolhaPontoOpen(true)}>
               <FileBarChart2 className="w-4 h-4 mr-2" />
-              Gerar Folha de Ponto
+              Gerar Folha Individual
+            </Button>
+          </div>
+
+          <div className="border rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Users className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="font-semibold">Folhas de Ponto - Todos os Funcionários</h3>
+                <p className="text-sm text-muted-foreground">
+                  Relatório consolidado com folhas de ponto de todos os funcionários ativos do período
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => setModalFolhaPontoGeralOpen(true)} variant="secondary">
+              <Users className="w-4 h-4 mr-2" />
+              Gerar Folhas Completas
             </Button>
           </div>
 
@@ -88,6 +106,12 @@ export default function Relatorios() {
       <ModalFolhaPonto 
         open={modalFolhaPontoOpen}
         onOpenChange={setModalFolhaPontoOpen}
+        funcionarios={funcionarios}
+      />
+
+      <ModalFolhaPontoGeral 
+        open={modalFolhaPontoGeralOpen}
+        onOpenChange={setModalFolhaPontoGeralOpen}
         funcionarios={funcionarios}
       />
     </div>
