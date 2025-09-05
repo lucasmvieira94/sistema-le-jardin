@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from "react";
-import { FileBarChart2, FileText, Users } from "lucide-react";
+import { FileBarChart2, FileText, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import ModalFolhaPonto from "@/components/relatorios/ModalFolhaPonto";
 import ModalFolhaPontoGeral from "@/components/relatorios/ModalFolhaPontoGeral";
+import ModalEscalaMensal from "@/components/relatorios/ModalEscalaMensal";
 
 interface Funcionario {
   id: string;
@@ -15,6 +16,7 @@ export default function Relatorios() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [modalFolhaPontoOpen, setModalFolhaPontoOpen] = useState(false);
   const [modalFolhaPontoGeralOpen, setModalFolhaPontoGeralOpen] = useState(false);
+  const [modalEscalaMensalOpen, setModalEscalaMensalOpen] = useState(false);
 
   useEffect(() => {
     fetchFuncionarios();
@@ -71,6 +73,22 @@ export default function Relatorios() {
             </Button>
           </div>
 
+          <div className="border rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Calendar className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="font-semibold">Escala Mensal - Todos os Funcionários</h3>
+                <p className="text-sm text-muted-foreground">
+                  Grade visual com a escala de trabalho de todos os funcionários do mês
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => setModalEscalaMensalOpen(true)} variant="outline">
+              <Calendar className="w-4 h-4 mr-2" />
+              Gerar Escala Mensal
+            </Button>
+          </div>
+
           <div className="border rounded-lg p-4 opacity-60">
             <div className="flex items-center gap-3 mb-3">
               <FileBarChart2 className="w-5 h-5 text-muted-foreground" />
@@ -112,6 +130,12 @@ export default function Relatorios() {
       <ModalFolhaPontoGeral 
         open={modalFolhaPontoGeralOpen}
         onOpenChange={setModalFolhaPontoGeralOpen}
+        funcionarios={funcionarios}
+      />
+
+      <ModalEscalaMensal 
+        open={modalEscalaMensalOpen}
+        onOpenChange={setModalEscalaMensalOpen}
         funcionarios={funcionarios}
       />
     </div>
