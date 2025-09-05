@@ -233,6 +233,7 @@ export type Database = {
           hora_inicio_noturno: string | null
           id: string
           intervalo_minimo_minutos: number | null
+          logo_url: string | null
           nome_empresa: string
           updated_at: string | null
         }
@@ -248,6 +249,7 @@ export type Database = {
           hora_inicio_noturno?: string | null
           id?: string
           intervalo_minimo_minutos?: number | null
+          logo_url?: string | null
           nome_empresa: string
           updated_at?: string | null
         }
@@ -263,6 +265,7 @@ export type Database = {
           hora_inicio_noturno?: string | null
           id?: string
           intervalo_minimo_minutos?: number | null
+          logo_url?: string | null
           nome_empresa?: string
           updated_at?: string | null
         }

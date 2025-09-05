@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { GestaoPermissoes } from "@/components/configuracoes/GestaoPermissoes";
+import { ConviteGestor } from "@/components/configuracoes/ConviteGestor";
+import { LogotipoEmpresa } from "@/components/configuracoes/LogotipoEmpresa";
 
 export default function Configuracoes() {
   const [loading, setLoading] = useState(true);
@@ -20,7 +23,8 @@ export default function Configuracoes() {
     adicional_hora_extra_100: 100,
     hora_inicio_noturno: "22:00",
     hora_fim_noturno: "05:00",
-    intervalo_minimo_minutos: 60
+    intervalo_minimo_minutos: 60,
+    logo_url: ""
   });
 
   useEffect(() => {
@@ -49,7 +53,8 @@ export default function Configuracoes() {
           adicional_hora_extra_100: data.adicional_hora_extra_100 || 100,
           hora_inicio_noturno: data.hora_inicio_noturno || "22:00",
           hora_fim_noturno: data.hora_fim_noturno || "05:00",
-          intervalo_minimo_minutos: data.intervalo_minimo_minutos || 60
+          intervalo_minimo_minutos: data.intervalo_minimo_minutos || 60,
+          logo_url: data.logo_url || ""
         });
       }
     } catch (error) {
@@ -63,13 +68,20 @@ export default function Configuracoes() {
   const salvarConfiguracoes = async () => {
     setSaving(true);
     try {
+      // Usar upsert com id específico para garantir que sempre atualize o mesmo registro
       const { error } = await supabase
         .from('configuracoes_empresa')
-        .upsert(config);
+        .upsert({
+          ...config,
+          id: '00000000-0000-0000-0000-000000000001' // ID fixo para configuração única
+        }, { 
+          onConflict: 'id' 
+        });
 
       if (error) throw error;
 
       toast.success('Configurações salvas com sucesso!');
+      await carregarConfiguracoes(); // Recarregar para sincronizar
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       toast.error('Erro ao salvar configurações');
@@ -227,6 +239,18 @@ export default function Configuracoes() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Logotipo da Empresa */}
+        <LogotipoEmpresa
+          logoUrl={config.logo_url}
+          onLogoUpdate={(url) => setConfig({ ...config, logo_url: url })}
+        />
+
+        {/* Gestão de Permissões */}
+        <GestaoPermissoes />
+
+        {/* Convite para Gestores */}
+        <ConviteGestor />
 
         {/* Botão Salvar */}
         <div className="flex justify-end">
