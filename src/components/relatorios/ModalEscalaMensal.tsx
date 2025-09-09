@@ -21,6 +21,7 @@ interface EscalaData {
   funcionario_id: string;
   funcionario_nome: string;
   jornada_trabalho: string;
+  horario_entrada: string;
   dias: { [key: number]: boolean };
 }
 
@@ -28,11 +29,20 @@ interface ConfiguracaoEmpresa {
   nome_empresa: string;
 }
 
-const cores_jornadas: { [key: string]: string } = {
+const cores_jornadas_horarios: { [key: string]: string } = {
+  // 12x36 - Diferenciação por horário
+  '12x36_07:00': '#f59e0b', // Laranja - 7h
+  '12x36_08:00': '#eab308', // Amarelo - 8h  
+  '12x36_19:00': '#dc2626', // Vermelho - 19h
+  '12x36_20:00': '#b91c1c', // Vermelho escuro - 20h
+  
+  // 24x48
+  '24x48_07:00': '#ef4444', // Vermelho
+  '24x48_08:00': '#dc2626', // Vermelho escuro
+  
+  // Outras jornadas mantêm cor padrão
   '44h_8h_segsex': '#3b82f6', // Azul
   '44h_8h_segsex_4h_sab': '#10b981', // Verde
-  '12x36': '#f59e0b', // Amarelo/Laranja
-  '24x48': '#ef4444', // Vermelho
   '6x1': '#8b5cf6', // Roxo
   '5x2': '#06b6d4', // Ciano
   '4x2': '#f97316', // Laranja
@@ -79,7 +89,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
           .select(`
             id,
             nome_completo,
-            escalas!inner(jornada_trabalho)
+            escalas!inner(jornada_trabalho, entrada)
           `)
           .eq("id", funcionario.id)
           .single();
@@ -105,6 +115,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
           funcionario_id: funcionario.id,
           funcionario_nome: funcionario.nome_completo,
           jornada_trabalho: funcionarioData.escalas.jornada_trabalho,
+          horario_entrada: funcionarioData.escalas.entrada,
           dias
         };
       });
@@ -126,7 +137,12 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
     window.print();
   };
 
-  const jornadasUnicas = Array.from(new Set(escalaData.map(e => e.jornada_trabalho)));
+  const getCorEscala = (jornada: string, horario: string) => {
+    const chave = `${jornada}_${horario}`;
+    return cores_jornadas_horarios[chave] || cores_jornadas_horarios[jornada] || '#6b7280';
+  };
+
+  const jornadasUnicas = Array.from(new Set(escalaData.map(e => `${e.jornada_trabalho} - ${e.horario_entrada}`)));
   const diasDoMes = getDaysInMonth(selectedMonth, selectedYear);
 
   return (
@@ -217,7 +233,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
                           </td>
                           {Array.from({ length: diasDoMes }, (_, i) => i + 1).map(dia => {
                             const trabalhaNoDia = funcionario.dias[dia];
-                            const cor = cores_jornadas[funcionario.jornada_trabalho] || '#6b7280';
+                            const cor = getCorEscala(funcionario.jornada_trabalho, funcionario.horario_entrada);
                             
                             return (
                               <td
@@ -243,17 +259,21 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
 
               {/* Legenda */}
               <div className="border rounded-lg p-4">
-                <h4 className="font-semibold mb-3">Legenda das Jornadas</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {jornadasUnicas.map(jornada => (
-                    <div key={jornada} className="flex items-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded"
-                        style={{ backgroundColor: cores_jornadas[jornada] || '#6b7280' }}
-                      />
-                      <span className="text-sm">{jornada}</span>
-                    </div>
-                  ))}
+                <h4 className="font-semibold mb-3">Legenda das Escalas</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {escalaData.map(escala => {
+                    const chaveUnica = `${escala.jornada_trabalho}_${escala.horario_entrada}`;
+                    return escalaData.findIndex(e => `${e.jornada_trabalho}_${e.horario_entrada}` === chaveUnica) === 
+                           escalaData.indexOf(escala) ? (
+                      <div key={chaveUnica} className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: getCorEscala(escala.jornada_trabalho, escala.horario_entrada) }}
+                        />
+                        <span className="text-sm">{escala.jornada_trabalho} - {escala.horario_entrada}</span>
+                      </div>
+                    ) : null;
+                  }).filter(Boolean)}
                 </div>
               </div>
             </div>
