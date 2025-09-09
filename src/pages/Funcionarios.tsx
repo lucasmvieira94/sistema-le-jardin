@@ -17,8 +17,6 @@ import { Badge } from "@/components/ui/badge";
 type Funcionario = {
   id: string;
   nome_completo: string;
-  email: string;
-  cpf: string;
   funcao: string;
   escala_id: number;
   ativo: boolean;
@@ -48,8 +46,6 @@ export default function Funcionarios() {
       .select(`
         id, 
         nome_completo, 
-        email, 
-        cpf, 
         funcao, 
         escala_id, 
         ativo,
@@ -295,10 +291,8 @@ export default function Funcionarios() {
             <thead>
               <tr className="bg-green-50 text-muted-foreground">
                 <th className="py-2 px-3 text-left">Nome</th>
-                <th className="py-2 px-3 text-left hidden md:table-cell">Email</th>
-                <th className="py-2 px-3 text-left hidden md:table-cell">Função</th>
-                <th className="py-2 px-3 text-left hidden lg:table-cell">Escala</th>
-                <th className="py-2 px-3 text-left hidden md:table-cell">CPF</th>
+                <th className="py-2 px-3 text-left">Função</th>
+                <th className="py-2 px-3 text-left">Escala</th>
                 <th className="py-2 px-3 text-left">Status</th>
                 <th className="py-2 px-3 text-center">Ações</th>
               </tr>
@@ -307,10 +301,8 @@ export default function Funcionarios() {
               {funcionariosFiltrados.map((func) => (
                 <tr key={func.id} className="border-b last:border-b-0">
                   <td className="py-2 px-3">{func.nome_completo}</td>
-                  <td className="py-2 px-3 hidden md:table-cell">{func.email}</td>
-                  <td className="py-2 px-3 hidden md:table-cell">{func.funcao}</td>
-                  <td className="py-2 px-3 hidden lg:table-cell">{func.escalas?.nome || '-'}</td>
-                  <td className="py-2 px-3 hidden md:table-cell">{func.cpf}</td>
+                  <td className="py-2 px-3">{func.funcao}</td>
+                  <td className="py-2 px-3">{func.escalas?.nome || '-'}</td>
                   <td className="py-2 px-3 font-semibold">
                     {func.ativo ? (
                       <Badge variant="outline" className="border-green-500 text-green-600">Ativo</Badge>
@@ -354,14 +346,14 @@ export default function Funcionarios() {
               ))}
               {funcionariosFiltrados.length === 0 && funcionarios.length > 0 && (
                 <tr>
-                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={7}>
+                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={5}>
                     Nenhum funcionário encontrado com os filtros aplicados.
                   </td>
                 </tr>
               )}
               {funcionarios.length === 0 && (
                 <tr>
-                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={7}>
+                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={5}>
                     Nenhum funcionário cadastrado ainda.
                   </td>
                 </tr>
