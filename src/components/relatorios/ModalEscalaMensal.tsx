@@ -29,26 +29,29 @@ interface ConfiguracaoEmpresa {
   nome_empresa: string;
 }
 
-const cores_jornadas_horarios: { [key: string]: string } = {
-  // 12x36 - Diferenciação por horário
-  '12x36_07:00': '#f59e0b', // Laranja - 7h
-  '12x36_08:00': '#eab308', // Amarelo - 8h  
-  '12x36_19:00': '#dc2626', // Vermelho - 19h
-  '12x36_20:00': '#b91c1c', // Vermelho escuro - 20h
-  
-  // 24x48 - Diferenciação por horário
-  '24x48_07:00': '#ef4444', // Vermelho
-  '24x48_08:00': '#dc2626', // Vermelho escuro
-  
-  // Jornadas padrão (quando não há diferenciação por horário)
-  '12x36': '#f59e0b', // Laranja padrão para 12x36
-  '24x48': '#ef4444', // Vermelho padrão para 24x48
-  '44h_8h_segsex': '#3b82f6', // Azul
-  '44h_8h_segsex_4h_sab': '#10b981', // Verde
-  '6x1': '#8b5cf6', // Roxo
-  '5x2': '#06b6d4', // Ciano
-  '4x2': '#f97316', // Laranja
-};
+// Cores quentes para escalas até 11:59 AM
+const coresQuentes = [
+  '#dc2626', // Vermelho
+  '#ef4444', // Vermelho claro
+  '#f59e0b', // Laranja
+  '#f97316', // Laranja escuro
+  '#eab308', // Amarelo
+  '#d97706', // Âmbar
+  '#b91c1c', // Vermelho escuro
+  '#ea580c', // Laranja queimado
+];
+
+// Cores frias para escalas após 12:00 PM
+const coresFrias = [
+  '#3b82f6', // Azul
+  '#1d4ed8', // Azul escuro
+  '#10b981', // Verde
+  '#059669', // Verde escuro
+  '#8b5cf6', // Roxo
+  '#7c3aed', // Roxo escuro
+  '#06b6d4', // Ciano
+  '#0891b2', // Ciano escuro
+];
 
 export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: ModalEscalaMensalProps) {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
@@ -142,22 +145,31 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
   const getCorEscala = (jornada: string, horario: string) => {
     // Normalizar horário para formato HH:MM (remover segundos se houver)
     const horarioFormatado = horario.substring(0, 5);
+    
+    // Extrair horas do horário
+    const [horasStr] = horarioFormatado.split(':');
+    const horas = parseInt(horasStr, 10);
+    
+    // Determinar se é manhã (até 11:59) ou tarde/noite (12:00 em diante)
+    const ehManha = horas < 12;
+    
+    // Criar um hash simples baseado na combinação jornada + horário para consistência
     const chave = `${jornada}_${horarioFormatado}`;
-    
-    console.log(`Buscando cor para: ${chave}, horário original: ${horario}`);
-    
-    // Primeiro tenta chave específica jornada_horário
-    if (cores_jornadas_horarios[chave]) {
-      return cores_jornadas_horarios[chave];
+    let hash = 0;
+    for (let i = 0; i < chave.length; i++) {
+      const char = chave.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Converter para 32bit integer
     }
     
-    // Depois tenta só a jornada
-    if (cores_jornadas_horarios[jornada]) {
-      return cores_jornadas_horarios[jornada];
+    // Selecionar cor baseada no período
+    if (ehManha) {
+      const indice = Math.abs(hash) % coresQuentes.length;
+      return coresQuentes[indice];
+    } else {
+      const indice = Math.abs(hash) % coresFrias.length;
+      return coresFrias[indice];
     }
-    
-    // Cor padrão
-    return '#6b7280';
   };
 
   const jornadasUnicas = Array.from(new Set(escalaData.map(e => `${e.jornada_trabalho} - ${e.horario_entrada}`)));
