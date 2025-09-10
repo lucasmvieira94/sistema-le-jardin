@@ -26,7 +26,60 @@ export function ConviteGestor() {
 
     setSending(true);
     try {
-      // Criar funcionário primeiro
+      // Verificar se CPF já existe
+      const { data: existingCpf, error: cpfError } = await supabase
+        .from('funcionarios')
+        .select('id, nome_completo')
+        .eq('cpf', formData.cpf)
+        .maybeSingle();
+
+      if (cpfError && cpfError.code !== 'PGRST116') {
+        throw cpfError;
+      }
+
+      if (existingCpf) {
+        toast.error(`CPF já cadastrado para: ${existingCpf.nome_completo}`);
+        setSending(false);
+        return;
+      }
+
+      // Verificar se email já existe
+      const { data: existingEmail, error: emailError } = await supabase
+        .from('funcionarios')
+        .select('id, nome_completo')
+        .eq('email', formData.email)
+        .maybeSingle();
+
+      if (emailError && emailError.code !== 'PGRST116') {
+        throw emailError;
+      }
+
+      if (existingEmail) {
+        toast.error(`Email já cadastrado para: ${existingEmail.nome_completo}`);
+        setSending(false);
+        return;
+      }
+
+      // Gerar código único
+      let codigoUnico;
+      let codigoExiste = true;
+      
+      while (codigoExiste) {
+        codigoUnico = Math.floor(1000 + Math.random() * 9000).toString();
+        const { data: existingCodigo, error: codigoError } = await supabase
+          .from('funcionarios')
+          .select('id')
+          .eq('codigo_4_digitos', codigoUnico)
+          .maybeSingle();
+        
+        if (codigoError && codigoError.code !== 'PGRST116') {
+          throw codigoError;
+        }
+        
+        codigoExiste = !!existingCodigo;
+      }
+
+      // Criar funcionário
       const { data: funcionario, error: funcionarioError } = await supabase
         .from('funcionarios')
         .insert({
@@ -38,7 +91,7 @@ export function ConviteGestor() {
           data_admissao: new Date().toISOString().split('T')[0],
           data_inicio_vigencia: new Date().toISOString().split('T')[0],
           escala_id: 1, // Escala padrão
-          codigo_4_digitos: Math.floor(1000 + Math.random() * 9000).toString(),
+          codigo_4_digitos: codigoUnico,
           ativo: false // Inativo até aceitar o convite
         })
         .select()
@@ -47,7 +100,7 @@ export function ConviteGestor() {
       if (funcionarioError) throw funcionarioError;
 
       // Enviar convite por email através de edge function
-      const { error: emailError } = await supabase.functions.invoke('enviar-convite-gestor', {
+      const { error: inviteEmailError } = await supabase.functions.invoke('enviar-convite-gestor', {
         body: {
           email: formData.email,
           nome: formData.nome_completo,
@@ -56,14 +109,28 @@ export function ConviteGestor() {
         }
       });
 
-      if (emailError) throw emailError;
+      if (inviteEmailError) throw inviteEmailError;
 
       toast.success('Convite enviado com sucesso!');
       setFormData({ email: '', nome_completo: '', cpf: '', funcao: 'Gestor' });
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar convite:', error);
-      toast.error('Erro ao enviar convite');
+      
+      // Tratamento específico de erros
+      if (error?.code === '23505') {
+        if (error.message.includes('funcionarios_cpf_key')) {
+          toast.error('Este CPF já está cadastrado no sistema');
+        } else if (error.message.includes('funcionarios_email_key')) {
+          toast.error('Este email já está cadastrado no sistema');
+        } else {
+          toast.error('Dados já existem no sistema');
+        }
+      } else if (error?.message) {
+        toast.error(`Erro: ${error.message}`);
+      } else {
+        toast.error('Erro ao enviar convite. Tente novamente.');
+      }
     } finally {
       setSending(false);
     }
