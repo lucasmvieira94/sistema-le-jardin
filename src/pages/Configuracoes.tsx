@@ -68,17 +68,28 @@ export default function Configuracoes() {
   const salvarConfiguracoes = async () => {
     setSaving(true);
     try {
-      // Usar upsert com id específico para garantir que sempre atualize o mesmo registro
-      const { error } = await supabase
+      // Primeiro, verificar se já existe uma configuração
+      const { data: existingConfig } = await supabase
         .from('configuracoes_empresa')
-        .upsert({
-          ...config,
-          id: '00000000-0000-0000-0000-000000000001' // ID fixo para configuração única
-        }, { 
-          onConflict: 'id' 
-        });
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (existingConfig) {
+        // Atualizar configuração existente
+        const { error } = await supabase
+          .from('configuracoes_empresa')
+          .update(config)
+          .eq('id', existingConfig.id);
+        
+        if (error) throw error;
+      } else {
+        // Criar nova configuração
+        const { error } = await supabase
+          .from('configuracoes_empresa')
+          .insert(config);
+        
+        if (error) throw error;
+      }
 
       toast.success('Configurações salvas com sucesso!');
       await carregarConfiguracoes(); // Recarregar para sincronizar
