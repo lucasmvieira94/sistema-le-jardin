@@ -39,45 +39,47 @@ export function ConviteGestor() {
 
       if (existingCpf) {
         toast.error(`CPF já cadastrado para: ${existingCpf.nome_completo}`);
-        setSending(false);
         return;
       }
 
       // Verificar se email já existe
-      const { data: existingEmail, error: emailError } = await supabase
+      const { data: existingEmail, error: emailCheckError } = await supabase
         .from('funcionarios')
         .select('id, nome_completo')
         .eq('email', formData.email)
         .maybeSingle();
 
-      if (emailError && emailError.code !== 'PGRST116') {
-        throw emailError;
+      if (emailCheckError && emailCheckError.code !== 'PGRST116') {
+        throw emailCheckError;
       }
 
       if (existingEmail) {
         toast.error(`Email já cadastrado para: ${existingEmail.nome_completo}`);
-        setSending(false);
         return;
       }
 
-      // Gerar código único
-      let codigoUnico;
-      let codigoExiste = true;
-      
-      while (codigoExiste) {
-        codigoUnico = Math.floor(1000 + Math.random() * 9000).toString();
-        const { data: existingCodigo, error: codigoError } = await supabase
-          .from('funcionarios')
-          .select('id')
-          .eq('codigo_4_digitos', codigoUnico)
-          .maybeSingle();
-        
-        if (codigoError && codigoError.code !== 'PGRST116') {
-          throw codigoError;
+      // Gerar código único de 4 dígitos
+      const gerarCodigoUnico = async (): Promise<string> => {
+        for (let tentativas = 0; tentativas < 10; tentativas++) {
+          const codigo = Math.floor(1000 + Math.random() * 9000).toString();
+          const { data: existingCodigo, error: codigoError } = await supabase
+            .from('funcionarios')
+            .select('id')
+            .eq('codigo_4_digitos', codigo)
+            .maybeSingle();
+          
+          if (codigoError && codigoError.code !== 'PGRST116') {
+            throw codigoError;
+          }
+          
+          if (!existingCodigo) {
+            return codigo;
+          }
         }
-        
-        codigoExiste = !!existingCodigo;
-      }
+        throw new Error('Não foi possível gerar um código único');
+      };
+
+      const codigoUnico = await gerarCodigoUnico();
 
       // Criar funcionário
       const { data: funcionario, error: funcionarioError } = await supabase
@@ -87,12 +89,12 @@ export function ConviteGestor() {
           email: formData.email,
           cpf: formData.cpf,
           funcao: formData.funcao,
-          data_nascimento: new Date().toISOString().split('T')[0], // Data temporária
+          data_nascimento: new Date().toISOString().split('T')[0],
           data_admissao: new Date().toISOString().split('T')[0],
           data_inicio_vigencia: new Date().toISOString().split('T')[0],
-          escala_id: 1, // Escala padrão
+          escala_id: 1,
           codigo_4_digitos: codigoUnico,
-          ativo: false // Inativo até aceitar o convite
+          ativo: false
         })
         .select()
         .single();
