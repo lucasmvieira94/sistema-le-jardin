@@ -81,6 +81,22 @@ export function ConviteGestor() {
 
       const codigoUnico = await gerarCodigoUnico();
 
+      // Buscar primeira escala disponível
+      const { data: escalaDisponivel, error: escalaError } = await supabase
+        .from('escalas')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      if (escalaError) {
+        throw new Error('Erro ao buscar escalas disponíveis');
+      }
+
+      if (!escalaDisponivel) {
+        toast.error('Nenhuma escala cadastrada. Cadastre uma escala antes de convidar gestores.');
+        return;
+      }
+
       // Criar funcionário
       const { data: funcionario, error: funcionarioError } = await supabase
         .from('funcionarios')
@@ -92,7 +108,7 @@ export function ConviteGestor() {
           data_nascimento: new Date().toISOString().split('T')[0],
           data_admissao: new Date().toISOString().split('T')[0],
           data_inicio_vigencia: new Date().toISOString().split('T')[0],
-          escala_id: 1,
+          escala_id: escalaDisponivel.id,
           codigo_4_digitos: codigoUnico,
           ativo: false
         })
