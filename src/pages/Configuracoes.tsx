@@ -72,7 +72,7 @@ export default function Configuracoes() {
       const { data: existingConfig } = await supabase
         .from('configuracoes_empresa')
         .select('id')
-        .single();
+        .maybeSingle();
 
       if (existingConfig) {
         // Atualizar configuração existente
