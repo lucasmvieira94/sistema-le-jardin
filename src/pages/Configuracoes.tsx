@@ -36,9 +36,11 @@ export default function Configuracoes() {
       const { data, error } = await supabase
         .from('configuracoes_empresa')
         .select('*')
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
@@ -72,6 +74,8 @@ export default function Configuracoes() {
       const { data: existingConfig } = await supabase
         .from('configuracoes_empresa')
         .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (existingConfig) {
