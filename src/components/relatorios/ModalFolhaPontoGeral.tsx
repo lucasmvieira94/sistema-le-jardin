@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useFolhaPonto, FolhaPontoData, TotaisFolhaPonto } from "@/hooks/useFolhaPonto";
-import { exportToPDF, exportToExcel } from "@/utils/folhaPontoExport";
+import { exportToPDF, exportToExcel, exportMultipleFuncionariosToPDF, exportMultipleFuncionariosToExcel } from "@/utils/folhaPontoExport";
 
 interface Funcionario {
   id: string;
@@ -28,15 +28,8 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
 
   const buscarDadosTodosFuncionarios = async () => {
     setLoading(true);
-    const dadosConsolidados: FolhaPontoData[] = [];
-    let totaisGerais: TotaisFolhaPonto = {
-      total_horas_trabalhadas: '00:00:00',
-      total_horas_extras_diurnas: '00:00:00', 
-      total_horas_extras_noturnas: '00:00:00',
-      total_faltas: 0,
-      total_abonos: 0,
-      dias_trabalhados: 0
-    };
+    const funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }> = [];
+    const resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }> = [];
 
     try {
       for (const funcionario of funcionarios) {
@@ -58,19 +51,38 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
           }
         );
 
-        if (folhaData && folhaData.length > 0) {
-          dadosConsolidados.push(...folhaData);
-        }
-
-        if (totaisData && totaisData[0]) {
+        if (folhaData && folhaData.length > 0 && totaisData && totaisData[0]) {
           const totais = totaisData[0];
-          totaisGerais.total_faltas += totais.total_faltas || 0;
-          totaisGerais.total_abonos += totais.total_abonos || 0;
-          totaisGerais.dias_trabalhados += totais.dias_trabalhados || 0;
+          
+          // Garantir que os tipos estão corretos
+          const totaisFormatados: TotaisFolhaPonto = {
+            total_horas_trabalhadas: String(totais.total_horas_trabalhadas || '00:00:00'),
+            total_horas_extras_diurnas: String(totais.total_horas_extras_diurnas || '00:00:00'),
+            total_horas_extras_noturnas: String(totais.total_horas_extras_noturnas || '00:00:00'),
+            total_faltas: Number(totais.total_faltas || 0),
+            total_abonos: Number(totais.total_abonos || 0),
+            dias_trabalhados: Number(totais.dias_trabalhados || 0)
+          };
+          
+          funcionariosDados.push({
+            dados: folhaData,
+            totais: totaisFormatados
+          });
+
+          // Adicionar ao resumo geral
+          const funcionarioInfo = folhaData[0];
+          resumoGeral.push({
+            nome: funcionarioInfo.funcionario_nome,
+            cpf: funcionarioInfo.funcionario_cpf,
+            horas_trabalhadas: String(totais.total_horas_trabalhadas || '00:00:00'),
+            horas_extras: String(totais.total_horas_extras_diurnas || '00:00:00'),
+            horas_noturnas: String(totais.total_horas_extras_noturnas || '00:00:00'),
+            faltas: Number(totais.total_faltas || 0)
+          });
         }
       }
 
-      return { dados: dadosConsolidados, totais: totaisGerais };
+      return { funcionariosDados, resumoGeral };
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
       throw error;
@@ -84,7 +96,7 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
     try {
       const dadosCompletos = await buscarDadosTodosFuncionarios();
       
-      if (!dadosCompletos.dados.length) {
+      if (!dadosCompletos.funcionariosDados.length) {
         toast({
           variant: "destructive",
           title: "Nenhum dado encontrado para exportação"
@@ -92,9 +104,9 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
         return;
       }
 
-      await exportToPDF(dadosCompletos.dados, dadosCompletos.totais, mes, ano);
+      exportMultipleFuncionariosToPDF(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({
-        title: "PDF com folhas de todos os funcionários gerado com sucesso!"
+        title: "PDF com folhas individuais e resumo geral gerado com sucesso!"
       });
     } catch (error) {
       console.error('Erro na exportação PDF:', error);
@@ -111,7 +123,7 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
     try {
       const dadosCompletos = await buscarDadosTodosFuncionarios();
       
-      if (!dadosCompletos.dados.length) {
+      if (!dadosCompletos.funcionariosDados.length) {
         toast({
           variant: "destructive",
           title: "Nenhum dado encontrado para exportação"
@@ -119,9 +131,9 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
         return;
       }
 
-      await exportToExcel(dadosCompletos.dados, dadosCompletos.totais, mes, ano);
+      exportMultipleFuncionariosToExcel(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({
-        title: "Excel com folhas de todos os funcionários gerado com sucesso!"
+        title: "Excel com abas individuais e resumo geral gerado com sucesso!"
       });
     } catch (error) {
       console.error('Erro na exportação Excel:', error);
