@@ -1,9 +1,16 @@
 
 import { FileX } from "lucide-react";
+import { useRef } from "react";
 import AfastamentoForm from "@/components/afastamentos/AfastamentoForm";
-import AfastamentosList from "@/components/afastamentos/AfastamentosList";
+import AfastamentosList, { AfastamentosListRef } from "@/components/afastamentos/AfastamentosList";
 
 export default function Faltas() {
+  const afastamentosListRef = useRef<AfastamentosListRef>(null);
+
+  const handleAfastamentoAdded = () => {
+    afastamentosListRef.current?.fetchAfastamentos();
+  };
+
   return (
     <div className="container mx-auto max-w-4xl pt-12 font-heebo">
       <h2 className="text-3xl font-bold mb-3 text-primary">Afastamentos</h2>
@@ -19,8 +26,8 @@ export default function Faltas() {
           </div>
         </div>
         
-        <AfastamentoForm />
-        <AfastamentosList />
+        <AfastamentoForm onAfastamentoAdded={handleAfastamentoAdded} />
+        <AfastamentosList ref={afastamentosListRef} />
       </div>
     </div>
   );

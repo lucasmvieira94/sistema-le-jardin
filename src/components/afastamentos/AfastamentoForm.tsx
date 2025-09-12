@@ -33,7 +33,11 @@ interface FormData {
   observacoes?: string;
 }
 
-export default function AfastamentoForm() {
+interface AfastamentoFormProps {
+  onAfastamentoAdded?: () => void;
+}
+
+export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormProps) {
   const form = useForm<FormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
@@ -119,6 +123,7 @@ export default function AfastamentoForm() {
 
       form.reset();
       setTipoPeriodo("dias");
+      onAfastamentoAdded?.();
     } catch (err: any) {
       toast({
         variant: "destructive",
