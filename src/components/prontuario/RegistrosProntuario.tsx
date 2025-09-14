@@ -277,7 +277,7 @@ export default function RegistrosProntuario({
                   
                   <div className="flex justify-between items-center text-xs text-muted-foreground">
                     <span>Registrado por: {registro.funcionarios?.nome_completo}</span>
-                    <span>{format(new Date(registro.data_registro), "dd/MM/yyyy")}</span>
+                    <span>{format(new Date(registro.data_registro + 'T12:00:00'), "dd/MM/yyyy")}</span>
                   </div>
                 </div>
               </CardContent>

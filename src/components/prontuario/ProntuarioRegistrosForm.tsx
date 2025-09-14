@@ -288,7 +288,7 @@ export default function ProntuarioRegistrosForm({
               Prontuário - {ciclo.residente.nome_completo}
             </h2>
             <p className="text-muted-foreground">
-              {format(new Date(ciclo.data_ciclo), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} •
+              {format(new Date(ciclo.data_ciclo + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} •
               Prontuário: {ciclo.residente.numero_prontuario}
               {ciclo.residente.quarto && ` • Quarto: ${ciclo.residente.quarto}`}
             </p>

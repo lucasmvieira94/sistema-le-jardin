@@ -184,7 +184,7 @@ export default function AlertasProntuarios() {
               
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                 <span>
-                  {format(new Date(prontuario.data_ciclo), "dd/MM", { locale: ptBR })}
+                  {format(new Date(prontuario.data_ciclo + 'T12:00:00'), "dd/MM", { locale: ptBR })}
                 </span>
                 <span>•</span>
                 <span>

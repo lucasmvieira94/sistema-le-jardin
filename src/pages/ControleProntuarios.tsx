@@ -422,7 +422,7 @@ export default function ControleProntuarios() {
       
       const headerInfo = [
         ['Residente', prontuario.residentes?.nome_completo || 'N/A'],
-        ['Data', new Date(prontuario.data_registro).toLocaleDateString('pt-BR')],
+        ['Data', new Date(prontuario.data_registro + 'T12:00:00').toLocaleDateString('pt-BR')],
         ['Horário', prontuario.horario_registro?.substring(0, 5) || 'N/A'],
         ['Funcionário', prontuario.funcionarios?.nome_completo || 'N/A'],
         ['Quarto', prontuario.residentes?.quarto || 'N/A']
@@ -512,7 +512,7 @@ export default function ControleProntuarios() {
       }
 
       // Nome do arquivo
-      const nomeArquivo = `prontuario_${prontuario.residentes?.nome_completo?.replace(/\s+/g, '_')}_${new Date(prontuario.data_registro).toISOString().split('T')[0]}.pdf`;
+      const nomeArquivo = `prontuario_${prontuario.residentes?.nome_completo?.replace(/\s+/g, '_')}_${new Date(prontuario.data_registro + 'T12:00:00').toISOString().split('T')[0]}.pdf`;
       
       // Salvar PDF
       pdf.save(nomeArquivo);
@@ -714,7 +714,7 @@ export default function ControleProntuarios() {
                           <TableCell>
                             <div className="text-sm">
                               <div className="font-medium">
-                                {format(new Date(prontuario.data_registro), 'dd/MM/yyyy', { locale: ptBR })}
+                                {format(new Date(prontuario.data_registro + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}
                               </div>
                               <div className="text-gray-500">
                                 {prontuario.horario_registro.substring(0, 5)}

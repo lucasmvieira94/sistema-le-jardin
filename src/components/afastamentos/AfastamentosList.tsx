@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +23,17 @@ interface Afastamento {
   created_at: string;
 }
 
-export default function AfastamentosList() {
+export interface AfastamentosListRef {
+  fetchAfastamentos: () => void;
+}
+
+const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
   const [afastamentos, setAfastamentos] = useState<Afastamento[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useImperativeHandle(ref, () => ({
+    fetchAfastamentos
+  }));
 
   useEffect(() => {
     fetchAfastamentos();
@@ -177,4 +185,8 @@ export default function AfastamentosList() {
       </div>
     </div>
   );
-}
+});
+
+AfastamentosList.displayName = 'AfastamentosList';
+
+export default AfastamentosList;
