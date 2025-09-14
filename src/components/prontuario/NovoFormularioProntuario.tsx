@@ -147,6 +147,11 @@ export default function NovoFormularioProntuario({
               description: "Este prontuário já foi finalizado hoje.",
               variant: "default",
             });
+          } else if (cicloStatusProp === 'completo') {
+            toast({
+              title: "Prontuário completo",
+              description: "Prontuário preenchido e pronto para finalização.",
+            });
           } else {
             toast({
               title: "Prontuário em andamento",
@@ -211,6 +216,11 @@ export default function NovoFormularioProntuario({
                 description: "Este prontuário já foi finalizado hoje.",
                 variant: "default",
               });
+            } else if (cicloExistente.status === 'completo') {
+              toast({
+                title: "Prontuário completo",
+                description: "Prontuário pronto para finalização.",
+              });
             } else if (cicloExistente.status === 'nao_iniciado') {
               // Iniciar o prontuário automaticamente
               const { data: novoCiclo, error: cicloError } = await supabase
@@ -253,9 +263,12 @@ export default function NovoFormularioProntuario({
                 });
               }
             } else {
+              const statusMsg = cicloExistente.status === 'completo' 
+                ? "Continuando prontuário completo..."
+                : "Continuando o prontuário de hoje...";
               toast({
                 title: "Prontuário em andamento",
-                description: "Continuando o prontuário de hoje...",
+                description: statusMsg,
               });
             }
 
