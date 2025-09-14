@@ -54,9 +54,6 @@ export default function Prontuario() {
             case 'em_andamento':
               progresso = 45; // 45% quando está em andamento
               break;
-            case 'completo':
-              progresso = 80; // 80% quando está completo (preenchido mas não finalizado)
-              break;
             case 'encerrado':
               progresso = 100;
               break;
@@ -135,13 +132,6 @@ export default function Prontuario() {
             Em Andamento
           </Badge>
         );
-      case 'completo':
-        return (
-          <Badge className="flex items-center gap-1 bg-green-500 text-white">
-            <CheckCircle className="w-3 h-3" />
-            Completo
-          </Badge>
-        );
       case 'encerrado':
         return (
           <Badge className="flex items-center gap-1 bg-green-600 text-white">
@@ -165,8 +155,6 @@ export default function Prontuario() {
         return 'Iniciar Prontuário';
       case 'em_andamento':
         return 'Continuar Prontuário';
-      case 'completo':
-        return 'Finalizar Prontuário';
       case 'encerrado':
         return 'Ver Prontuário';
       default:

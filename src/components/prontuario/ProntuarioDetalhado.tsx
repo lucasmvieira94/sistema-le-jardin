@@ -153,7 +153,7 @@ export default function ProntuarioDetalhado({ dados, prontuario }: ProntuarioDet
           </div>
           <div>
             <span className="font-medium text-blue-800">Data:</span>
-            <p className="text-blue-700">{new Date(prontuario.data_registro + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+            <p className="text-blue-700">{new Date(prontuario.data_registro).toLocaleDateString('pt-BR')}</p>
           </div>
           <div>
             <span className="font-medium text-blue-800">Horário:</span>

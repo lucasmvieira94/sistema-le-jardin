@@ -266,7 +266,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(ciclo.data_ciclo + 'T12:00:00'), "dd/MM/yyyy")}
+                        {format(new Date(ciclo.data_ciclo), "dd/MM/yyyy")}
                       </div>
                     </div>
                   </CardHeader>
@@ -347,7 +347,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(ciclo.data_ciclo + 'T12:00:00'), "dd/MM/yyyy")}
+                        {format(new Date(ciclo.data_ciclo), "dd/MM/yyyy")}
                       </div>
                     </div>
                   </CardHeader>

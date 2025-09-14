@@ -198,7 +198,7 @@ export default function AlertasProntuariosAtraso() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                         <Calendar className="w-3 h-3" />
                         <span>
-                          {format(new Date(prontuario.data_ciclo + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}
+                          {format(new Date(prontuario.data_ciclo), "dd/MM/yyyy", { locale: ptBR })}
                         </span>
                       </div>
 
@@ -260,7 +260,7 @@ export default function AlertasProntuariosAtraso() {
                   <strong>Residente:</strong> {selectedCiclo.residente_nome}
                 </p>
                 <p className="text-sm">
-                  <strong>Data:</strong> {format(new Date(selectedCiclo.data_ciclo + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })}
+                  <strong>Data:</strong> {format(new Date(selectedCiclo.data_ciclo), "dd/MM/yyyy", { locale: ptBR })}
                 </p>
                 <p className="text-sm">
                   <strong>Atraso:</strong> {selectedCiclo.horas_atraso} horas
