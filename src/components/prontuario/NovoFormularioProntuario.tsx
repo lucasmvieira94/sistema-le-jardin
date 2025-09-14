@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle, Shield, Lock } from "lucide-react";
+import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle, Shield, Lock, Save } from "lucide-react";
 import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
 
 interface FormularioData {
@@ -170,6 +170,8 @@ export default function NovoFormularioProntuario({
               .select('*')
               .eq('ciclo_id', cicloExistente.ciclo_id)
               .eq('tipo_registro', 'prontuario_completo')
+              .order('created_at', { ascending: false })
+              .limit(1)
               .single();
 
             if (registroExistente) {
@@ -264,6 +266,8 @@ export default function NovoFormularioProntuario({
                 .select('*')
                 .eq('ciclo_id', cicloExistente.ciclo_id)
                 .eq('tipo_registro', 'prontuario_completo')
+                .order('created_at', { ascending: false })
+                .limit(1)
                 .single();
 
               if (registroExistente) {
@@ -386,22 +390,47 @@ export default function NovoFormularioProntuario({
 
   // Auto-save functionality (não salvar se finalizado)
   useEffect(() => {
-    if (prontuarioJaFinalizado) return; // Não salvar se finalizado
+    if (prontuarioJaFinalizado || !cicloId) return; // Não salvar se finalizado ou sem ciclo
     
     const timer = setTimeout(() => {
-      if (registroId || Object.keys(watchedValues).some(key => watchedValues[key as keyof FormularioData])) {
-        saveFormData();
+      // Verificar se há dados preenchidos para salvar
+      const hasData = Object.keys(watchedValues).some(key => {
+        const value = watchedValues[key as keyof FormularioData];
+        if (Array.isArray(value)) return value.length > 0;
+        if (typeof value === 'string') return value.trim() !== '';
+        if (typeof value === 'number') return value > 0;
+        return value != null;
+      });
+      
+      if (hasData) {
+        saveFormData(false); // Auto-save silencioso
       }
-    }, 2000);
+    }, 3000); // Aumentado para 3 segundos para evitar muitas chamadas
 
     return () => clearTimeout(timer);
-  }, [watchedValues, prontuarioJaFinalizado]);
+  }, [watchedValues, prontuarioJaFinalizado, cicloId]);
 
-  const saveFormData = async () => {
+  const saveFormData = async (showSuccessToast = false) => {
     if (!cicloId || prontuarioJaFinalizado) return;
     
     setIsSaving(true);
     try {
+      // Verificar se já existe um registro do tipo prontuario_completo para este ciclo
+      if (!registroId) {
+        const { data: existingRecord } = await supabase
+          .from('prontuario_registros')
+          .select('id')
+          .eq('ciclo_id', cicloId)
+          .eq('tipo_registro', 'prontuario_completo')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (existingRecord) {
+          setRegistroId(existingRecord.id);
+        }
+      }
+
       const formData = {
         residente_id: residenteId,
         funcionario_id: funcionarioId,
@@ -420,7 +449,17 @@ export default function NovoFormularioProntuario({
           .update(formData)
           .eq('id', registroId);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao atualizar prontuário:', error);
+          throw error;
+        }
+        
+        if (showSuccessToast) {
+          toast({
+            title: "Prontuário atualizado",
+            description: "Dados salvos com sucesso!",
+          });
+        }
       } else {
         const { data, error } = await supabase
           .from('prontuario_registros')
@@ -428,11 +467,27 @@ export default function NovoFormularioProntuario({
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao inserir prontuário:', error);
+          throw error;
+        }
+        
         setRegistroId(data.id);
+        
+        if (showSuccessToast) {
+          toast({
+            title: "Prontuário criado",
+            description: "Dados salvos com sucesso!",
+          });
+        }
       }
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      console.error('Erro ao salvar prontuário:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar o prontuário. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -457,14 +512,11 @@ export default function NovoFormularioProntuario({
     // Salvar dados atuais antes de abrir o diálogo de código
     setIsSaving(true);
     try {
-      await saveFormData();
+      await saveFormData(true); // Mostrar toast de sucesso
       setShowCodigoDialog(true);
     } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Erro ao salvar dados antes da finalização.",
-        variant: "destructive",
-      });
+      // Erro já tratado na função saveFormData
+      return;
     } finally {
       setIsSaving(false);
     }
@@ -952,61 +1004,83 @@ export default function NovoFormularioProntuario({
 
       {/* Botão de finalizar fixo na parte inferior */}
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4">
-        <AlertDialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
-          <AlertDialogTrigger asChild>
-            <Button 
-              onClick={handleFinalizarClick}
-              disabled={isFinalizando || loading || prontuarioJaFinalizado}
-              className={`w-full h-12 text-lg font-semibold ${
-                prontuarioJaFinalizado ? 'bg-green-600 hover:bg-green-700' : ''
-              }`}
-              size="lg"
-              variant={prontuarioJaFinalizado ? "secondary" : "default"}
-            >
-              {loading ? (
-                "Carregando..."
-              ) : isFinalizando ? (
-                "Finalizando..."
-              ) : prontuarioJaFinalizado ? (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Prontuário Finalizado
-                </>
-              ) : (
-                <>
-                  <Shield className="w-5 h-5 mr-2" />
-                  Finalizar Prontuário
-                </>
-              )}
-            </Button>
-          </AlertDialogTrigger>
+        <div className="flex gap-3">
+          {/* Indicador de salvamento e botão de salvar manual */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                <span>Salvando...</span>
+              </>
+            ) : !prontuarioJaFinalizado ? (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => saveFormData(true)}
+                disabled={loading || !cicloId}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Salvar
+              </Button>
+            ) : null}
+          </div>
           
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Finalizar Prontuário
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-base">
-                <strong>Atenção:</strong> Uma vez finalizado, este prontuário não poderá mais ser acessado ou editado hoje. 
-                <br /><br />
-                • O prontuário será marcado como <strong>FINALIZADO</strong>
-                <br />
-                • Não será possível fazer alterações até o próximo ciclo diário
-                <br />
-                • Esta ação requer confirmação com código de funcionário
-                <br /><br />
-                Deseja realmente finalizar este prontuário?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmFinalizar}>
-                Continuar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          <AlertDialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
+            <AlertDialogTrigger asChild>
+              <Button 
+                onClick={handleFinalizarClick}
+                disabled={isFinalizando || loading || prontuarioJaFinalizado}
+                className={`flex-1 h-12 text-lg font-semibold ${
+                  prontuarioJaFinalizado ? 'bg-green-600 hover:bg-green-700' : ''
+                }`}
+                size="lg"
+                variant={prontuarioJaFinalizado ? "secondary" : "default"}
+              >
+                {loading ? (
+                  "Carregando..."
+                ) : isFinalizando ? (
+                  "Finalizando..."
+                ) : prontuarioJaFinalizado ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Prontuário Finalizado
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-5 h-5 mr-2" />
+                    Finalizar Prontuário
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  Finalizar Prontuário
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-base">
+                  <strong>Atenção:</strong> Uma vez finalizado, este prontuário não poderá mais ser acessado ou editado hoje. 
+                  <br /><br />
+                  • O prontuário será marcado como <strong>FINALIZADO</strong>
+                  <br />
+                  • Não será possível fazer alterações até o próximo ciclo diário
+                  <br />
+                  • Esta ação requer confirmação com código de funcionário
+                  <br /><br />
+                  Deseja realmente finalizar este prontuário?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmFinalizar}>
+                  Continuar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {/* Dialog para validação com código */}
