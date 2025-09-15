@@ -5,12 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import { formatInTimeZone } from "date-fns-tz";
+import { supabase } from "@/integrations/supabase/client";
+import careLogo from "@/assets/logo-care.png";
 
 export default function FuncionarioAccess() {
   const navigate = useNavigate();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
+  const [companyLogo, setCompanyLogo] = useState<string>('');
 
   // Update current time every second
   useEffect(() => {
@@ -19,6 +23,32 @@ export default function FuncionarioAccess() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  // Fetch company configuration
+  useEffect(() => {
+    const fetchCompanyConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('configuracoes_empresa')
+          .select('nome_empresa, logo_url')
+          .single();
+
+        if (error) {
+          console.error('Erro ao buscar configurações da empresa:', error);
+          return;
+        }
+
+        if (data) {
+          setCompanyName(data.nome_empresa || 'Sistema de Gestão');
+          setCompanyLogo(data.logo_url || '');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar configurações:', error);
+      }
+    };
+
+    fetchCompanyConfig();
   }, []);
 
   const handleFuncionarioValidado = (id: string, nome: string) => {
@@ -51,9 +81,21 @@ export default function FuncionarioAccess() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
           <div className="text-center mb-8">
-            <User className="w-16 h-16 text-primary mx-auto mb-4" />
+            {companyLogo ? (
+              <img 
+                src={companyLogo} 
+                alt="Logo da empresa" 
+                className="w-16 h-16 mx-auto mb-4 object-contain"
+              />
+            ) : (
+              <img 
+                src={careLogo} 
+                alt="Logo da empresa" 
+                className="w-16 h-16 mx-auto mb-4 object-contain"
+              />
+            )}
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Sistema de Gestão
+              {companyName}
             </h1>
             <p className="text-gray-600">
               Acesse o registro de ponto e prontuário eletrônico
@@ -89,7 +131,19 @@ export default function FuncionarioAccess() {
         <div className="bg-white rounded-2xl p-6 shadow-xl mb-6">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
-              <User className="w-8 h-8 text-primary" />
+              {companyLogo ? (
+                <img 
+                  src={companyLogo} 
+                  alt="Logo da empresa" 
+                  className="w-8 h-8 object-contain"
+                />
+              ) : (
+                <img 
+                  src={careLogo} 
+                  alt="Logo da empresa" 
+                  className="w-8 h-8 object-contain"
+                />
+              )}
               <div>
                 <h1 className="text-2xl font-bold text-primary">
                   {getGreeting()}, {funcionarioNome.split(' ')[0]}!
