@@ -37,17 +37,18 @@ export default function Prontuario() {
     
     for (const residente of residentesData) {
       try {
-        const { data: verificacao, error } = await supabase
-          .rpc('verificar_prontuario_diario_existente', { 
-            p_residente_id: residente.id 
-          });
+        // Buscar diretamente do banco de dados para ter informações atualizadas
+        const { data: ciclo, error } = await supabase
+          .from('prontuario_ciclos')
+          .select('id, status, data_inicio_efetivo')
+          .eq('residente_id', residente.id)
+          .eq('data_ciclo', new Date().toISOString().split('T')[0])
+          .single();
 
-        if (!error && verificacao?.[0]) {
-          const cicloInfo = verificacao[0];
-          
-          // Progresso básico baseado no status
+        if (!error && ciclo) {
+          // Progresso baseado no status real do banco
           let progresso = 0;
-          switch (cicloInfo.status) {
+          switch (ciclo.status) {
             case 'nao_iniciado':
               progresso = 0;
               break;
@@ -65,16 +66,50 @@ export default function Prontuario() {
           }
           
           statusMap[residente.id] = {
-            status: cicloInfo.status || 'nao_iniciado',
-            cicloId: cicloInfo.ciclo_id,
+            status: ciclo.status,
+            cicloId: ciclo.id,
             progresso
           };
         } else {
-          statusMap[residente.id] = {
-            status: 'nao_iniciado',
-            cicloId: null,
-            progresso: 0
-          };
+          // Se não encontrou ciclo, verificar com a função RPC como fallback
+          const { data: verificacao, error: rpcError } = await supabase
+            .rpc('verificar_prontuario_diario_existente', { 
+              p_residente_id: residente.id 
+            });
+          
+          if (!rpcError && verificacao?.[0]) {
+            const cicloInfo = verificacao[0];
+            
+            let progresso = 0;
+            switch (cicloInfo.status) {
+              case 'nao_iniciado':
+                progresso = 0;
+                break;
+              case 'em_andamento':
+                progresso = 45;
+                break;
+              case 'completo':
+                progresso = 80;
+                break;
+              case 'encerrado':
+                progresso = 100;
+                break;
+              default:
+                progresso = 0;
+            }
+            
+            statusMap[residente.id] = {
+              status: cicloInfo.status || 'nao_iniciado',
+              cicloId: cicloInfo.ciclo_id,
+              progresso
+            };
+          } else {
+            statusMap[residente.id] = {
+              status: 'nao_iniciado',
+              cicloId: null,
+              progresso: 0
+            };
+          }
         }
       } catch (err) {
         console.error('Erro ao verificar status do prontuário:', err);
@@ -330,9 +365,28 @@ export default function Prontuario() {
               recarregarStatusProntuarios();
             }}
             onStatusChange={(residenteId, status, cicloId) => {
+              // Calcular progresso baseado no status
+              let progresso = 0;
+              switch (status) {
+                case 'nao_iniciado':
+                  progresso = 0;
+                  break;
+                case 'em_andamento':
+                  progresso = 45;
+                  break;
+                case 'completo':
+                  progresso = 80;
+                  break;
+                case 'encerrado':
+                  progresso = 100;
+                  break;
+                default:
+                  progresso = 0;
+              }
+              
               setProntuariosStatus(prev => ({
                 ...prev,
-                [residenteId]: { status, cicloId, progresso: prev[residenteId]?.progresso || 0 }
+                [residenteId]: { status, cicloId, progresso }
               }));
             }}
           />
