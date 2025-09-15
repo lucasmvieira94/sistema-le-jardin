@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -9,10 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioProntuario";
 import ResidentesList from "@/components/prontuario/ResidentesList";
-import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 
 export default function Prontuario() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
@@ -20,7 +20,7 @@ export default function Prontuario() {
   const [residentes, setResidentes] = useState<any[]>([]);
   const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, progresso?: number}>>({});
 
-  // Verificar se já tem dados do funcionário na URL (vindos do registro de ponto)
+  // Verificar se já tem dados do funcionário na URL
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const funcId = searchParams.get('funcionario_id');
@@ -29,8 +29,14 @@ export default function Prontuario() {
     if (funcId && funcNome) {
       setFuncionarioId(funcId);
       setFuncionarioNome(decodeURIComponent(funcNome));
+      
+      // Carregar residentes imediatamente
+      handleFuncionarioValidado(funcId, decodeURIComponent(funcNome));
+    } else {
+      // Se não tem dados na URL, redireciona para a página de acesso
+      navigate('/funcionario-access');
     }
-  }, [location]);
+  }, [location, navigate]);
 
   const verificarStatusProntuarios = async (residentesData: any[]) => {
     const statusMap: Record<string, {status: string, cicloId: string | null, progresso?: number}> = {};
@@ -148,10 +154,7 @@ export default function Prontuario() {
   };
 
   const handleLogout = () => {
-    setFuncionarioId(null);
-    setFuncionarioNome("");
-    setSelectedResidente(null);
-    setResidentes([]);
+    navigate('/funcionario-access');
   };
 
   const getStatusBadge = (status: string) => {
@@ -213,24 +216,9 @@ export default function Prontuario() {
     return status === 'encerrado';
   };
 
+  // Se não tem funcionário ID, não renderiza nada (vai redirecionar)
   if (!funcionarioId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <FileHeart className="w-16 h-16 text-primary mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Sistema de Prontuário Eletrônico
-            </h1>
-            <p className="text-gray-600">
-              Registre atividades e observações dos residentes
-            </p>
-          </div>
-          
-          <CodigoFuncionarioInput onFuncionarioValidado={handleFuncionarioValidado} />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -239,23 +227,21 @@ export default function Prontuario() {
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold flex items-center gap-2">
-                <FileHeart className="w-6 h-6 text-primary" />
-                Prontuário Eletrônico
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {funcionarioNome}
-              </p>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold flex items-center gap-2">
+                  <FileHeart className="w-6 h-6 text-primary" />
+                  Prontuário Eletrônico
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {funcionarioNome}
+                </p>
+              </div>
             </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-            >
-              Trocar usuário
-            </Button>
           </div>
         </div>
       </div>

@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from "react";
-import { CalendarRange, RefreshCw, FileHeart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { CalendarRange, RefreshCw, FileHeart, ArrowLeft } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import BotoesRegistroPonto from "@/components/BotoesRegistroPonto";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,12 +14,29 @@ interface RegistroHoje {
 }
 
 export default function RegistroPonto() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [registrosHoje, setRegistrosHoje] = useState<RegistroHoje[]>([]);
   const [atualizando, setAtualizando] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { latitude, longitude } = useGeolocation();
+
+  // Receber dados do funcionário via URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const funcId = searchParams.get('funcionario_id');
+    const funcNome = searchParams.get('funcionario_nome');
+    
+    if (funcId && funcNome) {
+      setFuncionarioId(funcId);
+      setFuncionarioNome(decodeURIComponent(funcNome));
+    } else {
+      // Se não tem dados na URL, redireciona para a página de acesso
+      navigate('/funcionario-access');
+    }
+  }, [location, navigate]);
 
   const carregarRegistrosHoje = async () => {
     if (!funcionarioId) return;
@@ -69,25 +85,34 @@ export default function RegistroPonto() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleFuncionarioValidado = (id: string, nome: string) => {
-    setFuncionarioId(id);
-    setFuncionarioNome(nome);
-  };
-
   const handleRegistroRealizado = () => {
     carregarRegistrosHoje();
   };
 
-  const handleLogout = () => {
-    setFuncionarioId(null);
-    setFuncionarioNome('');
-    setRegistrosHoje([]);
+  const handleVoltar = () => {
+    navigate('/funcionario-access');
   };
+
+  // Se não tem funcionário ID, não renderiza nada (vai redirecionar)
+  if (!funcionarioId) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
       <div className="container mx-auto max-w-md">
         <div className="bg-white rounded-2xl p-6 shadow-xl space-y-6">
+          {/* Header com botão voltar */}
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" size="sm" onClick={handleVoltar}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            <div className="text-sm text-muted-foreground">
+              {funcionarioNome.split(' ')[0]}
+            </div>
+          </div>
+
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-primary">Registro de Ponto</h1>
             <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -100,21 +125,17 @@ export default function RegistroPonto() {
               })}</span>
             </div>
             <div className="text-lg font-medium">
-              {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm')}
+              {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
             </div>
           </div>
 
-          {!funcionarioId ? (
-            <CodigoFuncionarioInput onFuncionarioValidado={handleFuncionarioValidado} />
-          ) : (
-            <>
-              <BotoesRegistroPonto
-                funcionarioId={funcionarioId}
-                funcionarioNome={funcionarioNome}
-                latitude={latitude}
-                longitude={longitude}
-                onRegistroRealizado={handleRegistroRealizado}
-              />
+          <BotoesRegistroPonto
+            funcionarioId={funcionarioId}
+            funcionarioNome={funcionarioNome}
+            latitude={latitude}
+            longitude={longitude}
+            onRegistroRealizado={handleRegistroRealizado}
+          />
 
               {registrosHoje.length > 0 && (
                 <div className="space-y-3">
@@ -150,27 +171,17 @@ export default function RegistroPonto() {
                 </div>
               )}
 
-              <div className="space-y-3">
-                <Link 
-                  to={`/prontuario?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`}
-                  className="w-full"
-                >
-                  <Button variant="default" className="w-full flex items-center gap-2">
-                    <FileHeart className="w-4 h-4" />
-                    Acessar Prontuário Eletrônico
-                  </Button>
-                </Link>
-                
-                <Button
-                  variant="outline"
-                  onClick={handleLogout}
-                  className="w-full"
-                >
-                  Usar outro código
-                </Button>
-              </div>
-            </>
-          )}
+          <div className="space-y-3">
+            <Link 
+              to={`/prontuario?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`}
+              className="w-full"
+            >
+              <Button variant="default" className="w-full flex items-center gap-2">
+                <FileHeart className="w-4 h-4" />
+                Acessar Prontuário Eletrônico
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

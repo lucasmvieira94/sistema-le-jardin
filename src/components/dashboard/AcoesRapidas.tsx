@@ -1,10 +1,17 @@
 import { Link } from "react-router-dom";
-import { Users, Clock, UserX, FileHeart, Pill, Settings } from "lucide-react";
+import { Users, Clock, UserX, FileHeart, Pill, Settings, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function AcoesRapidas() {
   const acoes = [
+    {
+      titulo: "Acesso Funcionários",
+      descricao: "Registro de Ponto e Prontuários",
+      icon: <User className="h-5 w-5" />,
+      link: "/funcionario-access",
+      cor: "bg-blue-100 hover:bg-blue-200"
+    },
     {
       titulo: "Gerenciar Funcionários",
       descricao: "Ver lista e editar funcionários",
@@ -28,9 +35,9 @@ export default function AcoesRapidas() {
     },
     {
       titulo: "Controle de Prontuários",
-      descricao: "Gerenciar prontuários médicos",
+      descricao: "Visualizar prontuários médicos",
       icon: <FileHeart className="h-5 w-5" />,
-      link: "/prontuario",
+      link: "/controle-prontuarios",
       cor: "bg-muted/10 hover:bg-muted/20"
     },
     {
