@@ -101,9 +101,21 @@ export default function FuncionarioAccess() {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {companyName}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-4">
               Acesse o registro de ponto e prontuário eletrônico
             </p>
+            
+            {/* Botão de Acesso Administrativo - Proeminente */}
+            <div className="mb-4">
+              <Button
+                onClick={navigateToAuth}
+                variant="outline"
+                className="px-6 py-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Acesso Administrativo
+              </Button>
+            </div>
           </div>
           
           <div className="text-center mb-6">
