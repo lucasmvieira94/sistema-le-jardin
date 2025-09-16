@@ -70,7 +70,7 @@ export default function FuncionarioAccess() {
   };
 
   const navigateToAuth = () => {
-    navigate('/auth');
+    window.open('/auth', '_blank');
   };
 
   const getGreeting = () => {
