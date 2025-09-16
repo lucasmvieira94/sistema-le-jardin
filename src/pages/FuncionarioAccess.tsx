@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
-import careLogo from "@/assets/logo-care.png";
+import careLogo from "@/assets/logo-senex-care.png";
 
 export default function FuncionarioAccess() {
   const navigate = useNavigate();
@@ -85,13 +85,13 @@ export default function FuncionarioAccess() {
               <img 
                 src={companyLogo} 
                 alt="Logo da empresa" 
-                className="w-16 h-16 mx-auto mb-4 object-contain"
+                className="w-32 h-32 mx-auto mb-4 object-contain"
               />
             ) : (
               <img 
                 src={careLogo} 
                 alt="Logo da empresa" 
-                className="w-16 h-16 mx-auto mb-4 object-contain"
+                className="w-32 h-32 mx-auto mb-4 object-contain"
               />
             )}
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -135,13 +135,13 @@ export default function FuncionarioAccess() {
                 <img 
                   src={companyLogo} 
                   alt="Logo da empresa" 
-                  className="w-8 h-8 object-contain"
+                  className="w-16 h-16 object-contain"
                 />
               ) : (
                 <img 
                   src={careLogo} 
                   alt="Logo da empresa" 
-                  className="w-8 h-8 object-contain"
+                  className="w-16 h-16 object-contain"
                 />
               )}
               <div>
