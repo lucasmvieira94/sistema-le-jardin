@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +67,10 @@ export default function FuncionarioAccess() {
 
   const navigateToProntuario = () => {
     navigate(`/prontuario?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToAuth = () => {
+    navigate('/auth');
   };
 
   const getGreeting = () => {
@@ -226,7 +230,7 @@ export default function FuncionarioAccess() {
           </div>
 
           {/* Botão de logout */}
-          <div className="text-center mt-8">
+          <div className="text-center mt-8 space-y-4">
             <Button
               variant="outline"
               onClick={handleLogout}
@@ -234,6 +238,32 @@ export default function FuncionarioAccess() {
             >
               Usar outro código
             </Button>
+            
+            {/* Separador visual */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-gradient-to-br from-blue-50 to-indigo-100 px-2 text-muted-foreground">
+                  ou
+                </span>
+              </div>
+            </div>
+            
+            {/* Botão de login do gestor */}
+            <div className="text-center">
+              <Button
+                onClick={navigateToAuth}
+                className="px-8 bg-primary hover:bg-primary/90"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Acesso Administrativo
+              </Button>
+              <p className="text-sm text-muted-foreground mt-2">
+                Área exclusiva para gestores
+              </p>
+            </div>
           </div>
         </div>
       </div>
