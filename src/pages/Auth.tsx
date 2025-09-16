@@ -32,9 +32,9 @@ export default function Auth() {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect authenticated users to main page
+        // Redirect authenticated users to dashboard
         if (session?.user) {
-          navigate('/');
+          navigate('/dashboard');
         }
       }
     );
@@ -45,7 +45,7 @@ export default function Auth() {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        navigate('/');
+        navigate('/dashboard');
       }
     });
 
