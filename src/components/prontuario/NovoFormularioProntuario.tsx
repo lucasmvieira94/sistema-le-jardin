@@ -372,12 +372,20 @@ export default function NovoFormularioProntuario({
 
   // Auto-save functionality melhorado - mais conservador
   useEffect(() => {
-    if (prontuarioJaFinalizado || !cicloId || loading) return;
+    if (prontuarioJaFinalizado || !cicloId || loading || isSaving) return;
     
     const timer = setTimeout(() => {
       // Verificação mais restritiva para auto-save
       const hasRealData = Object.keys(watchedValues).some(key => {
         const value = watchedValues[key as keyof FormularioData];
+        
+        // Para campos do formulário configurado (campo_xxx) - MAIS IMPORTANTE
+        if (key.startsWith('campo_')) {
+          if (typeof value === 'string') return value.trim().length > 0;
+          if (Array.isArray(value)) return value.length > 0;
+          if (typeof value === 'number') return !isNaN(value) && isFinite(value);
+          return value !== undefined && value !== null && value !== '';
+        }
         
         // Para medicações, verificar se há dados completos
         if (key === 'medicacoes') {
@@ -405,10 +413,10 @@ export default function NovoFormularioProntuario({
         console.log('🔄 Auto-save ativado com dados válidos');
         saveFormData(false); // Auto-save silencioso
       }
-    }, 5000); // 5 segundos para dar mais tempo ao usuário
+    }, 8000); // Aumentado para 8 segundos para evitar conflitos
 
     return () => clearTimeout(timer);
-  }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus, loading]); // Adicionado loading para evitar auto-save durante carregamento
+  }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus, loading, isSaving]); // Adicionado isSaving para evitar auto-save durante salvamento manual
 
   const saveFormData = async (showSuccessToast = false) => {
     if (!cicloId || prontuarioJaFinalizado) {
@@ -442,25 +450,35 @@ export default function NovoFormularioProntuario({
         }
       }
 
-      // Verificar se já existe um registro do tipo prontuario_completo para este ciclo
-      if (!registroId) {
-        const { data: existingRecord } = await supabase
-          .from('prontuario_registros')
-          .select('id')
-          .eq('ciclo_id', cicloId)
-          .eq('tipo_registro', 'prontuario_completo')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        if (existingRecord) {
-          setRegistroId(existingRecord.id);
-        }
+      // Buscar registro existente SEMPRE antes de decidir criar ou atualizar
+      console.log('🔍 Buscando registro existente para ciclo:', cicloId);
+      const { data: registroExistente, error: buscaError } = await supabase
+        .from('prontuario_registros')
+        .select('id')
+        .eq('ciclo_id', cicloId)
+        .eq('tipo_registro', 'prontuario_completo')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (buscaError && buscaError.code !== 'PGRST116') {
+        console.error('❌ Erro ao buscar registro existente:', buscaError);
+        throw buscaError;
       }
 
-      // Melhorar a validação de dados significativos para salvamento
+      const registroEncontrado = registroExistente?.id || registroId;
+
+      // Validação melhorada incluindo campos configurados
       const hasSignificantData = Object.keys(watchedValues).some(key => {
         const value = watchedValues[key as keyof FormularioData];
+        
+        // Para campos do formulário configurado (campo_xxx) - CRÍTICO
+        if (key.startsWith('campo_')) {
+          if (typeof value === 'string') return value.trim().length > 0;
+          if (Array.isArray(value)) return value.length > 0;
+          if (typeof value === 'number') return !isNaN(value) && isFinite(value);
+          return value !== undefined && value !== null && value !== '';
+        }
         
         // Para medicações, verificar se há dados reais
         if (key === 'medicacoes') {
@@ -497,13 +515,14 @@ export default function NovoFormularioProntuario({
       const dados = JSON.stringify(watchedValues);
       console.log('📊 Dados preparados para salvamento:', {
         tamanho: dados.length,
-        keys: Object.keys(watchedValues).length
+        keys: Object.keys(watchedValues).length,
+        registroEncontrado
       });
 
       let savedData;
       
-      if (registroId) {
-        console.log('📝 Atualizando prontuário existente:', registroId);
+      if (registroEncontrado) {
+        console.log('📝 Atualizando prontuário existente:', registroEncontrado);
         
         const { data, error } = await supabase
           .from('prontuario_registros')
@@ -512,20 +531,21 @@ export default function NovoFormularioProntuario({
             funcionario_id: funcionarioId,
             updated_at: new Date().toISOString()
           })
-          .eq('id', registroId)
+          .eq('id', registroEncontrado)
           .select()
           .single();
         
         if (error) {
           console.error('❌ Erro ao atualizar prontuário:', {
             error,
-            registroId,
+            registroId: registroEncontrado,
             funcionarioId
           });
           throw error;
         }
         
         console.log('✅ Prontuário atualizado com sucesso');
+        if (!registroId) setRegistroId(registroEncontrado); // Garantir que o state está correto
         savedData = data;
         
         if (showSuccessToast) {
@@ -550,7 +570,7 @@ export default function NovoFormularioProntuario({
             updated_at: new Date().toISOString()
           })
           .select()
-          .maybeSingle();
+          .single();
         
         if (error) {
           console.error('❌ Erro ao inserir novo prontuário:', {
@@ -567,7 +587,7 @@ export default function NovoFormularioProntuario({
           cicloId
         });
         
-        setRegistroId(data.id);
+        setRegistroId(data.id); // Definir imediatamente no state
         savedData = data;
         
         if (showSuccessToast) {
