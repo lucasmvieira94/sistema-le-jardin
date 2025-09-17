@@ -19,6 +19,7 @@ import ConfiguracoesProntuario from "@/components/prontuario/ConfiguracoesProntu
 import ProntuarioDetalhado from "@/components/prontuario/ProntuarioDetalhado";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -56,7 +57,7 @@ export default function ControleProntuarios() {
   const [loading, setLoading] = useState(true);
   const [prontuarios, setProntuarios] = useState<ProntuarioRegistro[]>([]);
   const [filtros, setFiltros] = useState({
-    dataInicio: new Date().toISOString().split('T')[0], // Data de hoje por padrão
+    dataInicio: formatInTimeZone(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd'), // Data de hoje no horário de Brasília
     dataFim: "",
     residente: "todos_residentes",
     funcionario: "todos_funcionarios",
@@ -158,12 +159,16 @@ export default function ControleProntuarios() {
         `)
         .order('data_ciclo', { ascending: false });
 
-      // Aplicar filtros
+      // Aplicar filtros considerando horário de Brasília
       if (filtros.dataInicio) {
-        query = query.gte('data_ciclo', filtros.dataInicio);
+        // Converter data para o início do dia no horário de Brasília
+        const dataInicioUTC = formatInTimeZone(new Date(filtros.dataInicio + 'T00:00:00'), 'America/Sao_Paulo', 'yyyy-MM-dd');
+        query = query.gte('data_ciclo', dataInicioUTC);
       }
       if (filtros.dataFim) {
-        query = query.lte('data_ciclo', filtros.dataFim);
+        // Converter data para o final do dia no horário de Brasília  
+        const dataFimUTC = formatInTimeZone(new Date(filtros.dataFim + 'T23:59:59'), 'America/Sao_Paulo', 'yyyy-MM-dd');
+        query = query.lte('data_ciclo', dataFimUTC);
       }
       if (filtros.residente && filtros.residente !== "todos_residentes") {
         query = query.eq('residente_id', filtros.residente);
