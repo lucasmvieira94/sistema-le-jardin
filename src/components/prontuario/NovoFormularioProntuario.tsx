@@ -414,72 +414,77 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  // Auto-save functionality (não salvar se finalizado)
+  // Auto-save functionality melhorado - mais conservador
   useEffect(() => {
-    if (prontuarioJaFinalizado || !cicloId) return; // Não salvar se finalizado ou sem ciclo
+    if (prontuarioJaFinalizado || !cicloId) return;
     
     const timer = setTimeout(() => {
-      // Melhorar a verificação de dados preenchidos para auto-save
-      const hasSignificantData = Object.keys(watchedValues).some(key => {
+      // Verificação mais restritiva para auto-save
+      const hasRealData = Object.keys(watchedValues).some(key => {
         const value = watchedValues[key as keyof FormularioData];
         
-        // Para medicações, verificar se há dados reais
+        // Para medicações, verificar se há dados completos
         if (key === 'medicacoes') {
           return Array.isArray(value) && value.some((med: any) => 
-            med.nome?.trim() || med.dosagem?.trim() || (med.horarios && med.horarios.length > 0)
+            med.nome?.trim() && med.dosagem?.trim()
           );
         }
         
-        // Para arrays, verificar se há itens válidos
+        // Para arrays, verificar se há itens com conteúdo
         if (Array.isArray(value)) {
           return value.length > 0 && value.some(v => v?.toString().trim());
         }
         
-        // Para strings, verificar se não está vazia
-        if (typeof value === 'string') return value.trim() !== '';
+        // Para strings, verificar se há conteúdo real (mínimo 2 caracteres)
+        if (typeof value === 'string') return value.trim().length > 2;
         
-        // Para números, aceitar qualquer valor válido (incluindo 0)
+        // Para números, aceitar apenas valores válidos
         if (typeof value === 'number') return !isNaN(value) && isFinite(value);
         
-        // Para booleans, aceitar qualquer valor
-        if (typeof value === 'boolean') return true;
-        
-        return value != null && value !== undefined;
+        return false;
       });
       
-      // Só salvar se há dados significativos
-      if (hasSignificantData) {
+      // Auto-save apenas se há dados reais e ciclo está ativo
+      if (hasRealData && cicloStatus !== 'nao_iniciado') {
+        console.log('🔄 Auto-save ativado com dados válidos');
         saveFormData(false); // Auto-save silencioso
       }
-    }, 3000); // 3 segundos para evitar muitas chamadas
+    }, 5000); // 5 segundos para dar mais tempo ao usuário
 
     return () => clearTimeout(timer);
-  }, [watchedValues, prontuarioJaFinalizado, cicloId]);
+  }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus]);
 
   const saveFormData = async (showSuccessToast = false) => {
-    if (!cicloId || prontuarioJaFinalizado) return;
+    if (!cicloId || prontuarioJaFinalizado) {
+      console.log('❌ Não é possível salvar: cicloId =', cicloId, 'finalizado =', prontuarioJaFinalizado);
+      return;
+    }
     
     setIsSaving(true);
+    console.log('💾 Iniciando salvamento dos dados do prontuário...');
+    
     try {
-      // CRÍTICO: Garantir que o ciclo seja iniciado antes de salvar
+      // CRÍTICO: Usar RPC para iniciar corretamente se necessário
       if (cicloStatus === 'nao_iniciado') {
-        console.log('🚀 Iniciando ciclo antes do salvamento...');
-        const { error: inicioError } = await supabase
-          .from('prontuario_ciclos')
-          .update({
-            status: 'em_andamento',
-            data_inicio_efetivo: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', cicloId);
+        console.log('🚀 Iniciando ciclo via RPC antes do salvamento...');
+        const { data: inicioCiclo, error: inicioError } = await supabase
+          .rpc('iniciar_prontuario_diario', {
+            p_residente_id: residenteId,
+            p_funcionario_id: funcionarioId
+          });
           
         if (inicioError) {
-          console.error('❌ Erro ao iniciar ciclo:', inicioError);
+          console.error('❌ Erro ao iniciar ciclo via RPC:', inicioError);
           throw inicioError;
         }
         
-        setCicloStatus('em_andamento');
-        console.log('✅ Ciclo iniciado com sucesso');
+        const resultado = inicioCiclo?.[0];
+        if (resultado?.success) {
+          setCicloStatus('em_andamento');
+          // Atualizar callback imediatamente
+          onStatusChange?.(residenteId, 'em_andamento', cicloId);
+          console.log('✅ Ciclo iniciado com sucesso via RPC');
+        }
       }
       // Verificar se já existe um registro do tipo prontuario_completo para este ciclo
       if (!registroId) {
@@ -497,7 +502,7 @@ export default function NovoFormularioProntuario({
         }
       }
 
-      // Melhorar a validação de dados significativos
+      // Melhorar a validação de dados significativos para salvamento
       const hasSignificantData = Object.keys(watchedValues).some(key => {
         const value = watchedValues[key as keyof FormularioData];
         
@@ -525,6 +530,12 @@ export default function NovoFormularioProntuario({
         return value != null && value !== undefined;
       });
 
+      // Sempre salvar se há dados ou se é um salvamento manual
+      if (!hasSignificantData && !showSuccessToast) {
+        console.log('⏭️ Pulando salvamento: sem dados significativos');
+        return;
+      }
+
       const formData = {
         residente_id: residenteId,
         funcionario_id: funcionarioId,
@@ -537,14 +548,14 @@ export default function NovoFormularioProntuario({
         observacoes: watchedValues.observacoes_gerais || ''
       };
 
-      // Melhorar logging do formData
-      console.log('📝 Salvando com dados:', {
+      console.log('📝 Salvando dados do prontuário:', {
         cicloId,
         registroId,
         funcionarioId,
         residenteId,
         hasSignificantData,
-        status: cicloStatus
+        status: cicloStatus,
+        isManualSave: showSuccessToast
       });
 
       let savedData = null;
