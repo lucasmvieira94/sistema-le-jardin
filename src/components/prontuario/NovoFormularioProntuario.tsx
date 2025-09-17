@@ -483,9 +483,9 @@ export default function NovoFormularioProntuario({
           setCicloStatus('em_andamento');
           // Atualizar callback imediatamente
           onStatusChange?.(residenteId, 'em_andamento', cicloId);
-          console.log('✅ Ciclo iniciado com sucesso via RPC');
         }
       }
+
       // Verificar se já existe um registro do tipo prontuario_completo para este ciclo
       if (!registroId) {
         const { data: existingRecord } = await supabase
@@ -515,87 +515,84 @@ export default function NovoFormularioProntuario({
         
         // Para arrays, verificar se há itens válidos
         if (Array.isArray(value)) {
-          return value.length > 0 && value.some(v => v?.toString().trim());
+          return value.length > 0 && value.some(v => {
+            if (typeof v === 'string') return v.trim().length > 0;
+            return v !== undefined && v !== null;
+          });
         }
         
-        // Para strings, verificar se não está vazia
-        if (typeof value === 'string') return value.trim() !== '';
+        // Para strings, verificar conteúdo válido
+        if (typeof value === 'string') return value.trim().length > 0;
         
-        // Para números, aceitar qualquer valor válido (incluindo 0)
+        // Para números, verificar se são válidos
         if (typeof value === 'number') return !isNaN(value) && isFinite(value);
         
-        // Para booleans, aceitar qualquer valor
-        if (typeof value === 'boolean') return true;
-        
-        return value != null && value !== undefined;
+        return value !== undefined && value !== null && value !== '';
       });
-
-      // Sempre salvar se há dados ou se é um salvamento manual
-      if (!hasSignificantData && !showSuccessToast) {
-        console.log('⏭️ Pulando salvamento: sem dados significativos');
+      
+      if (!hasSignificantData) {
+        console.log('⚠️ Nenhum dado significativo encontrado, pulando salvamento');
         return;
       }
-
-      const formData = {
-        residente_id: residenteId,
-        funcionario_id: funcionarioId,
-        ciclo_id: cicloId,
-        data_registro: new Date().toISOString().split('T')[0],
-        horario_registro: new Date().toTimeString().split(' ')[0],
-        tipo_registro: 'prontuario_completo',
-        titulo: 'Prontuário Diário',
-        descricao: JSON.stringify(watchedValues),
-        observacoes: watchedValues.observacoes_gerais || ''
-      };
-
-      console.log('📝 Salvando dados do prontuário:', {
-        cicloId,
-        registroId,
-        funcionarioId,
-        residenteId,
-        hasSignificantData,
-        status: cicloStatus,
-        isManualSave: showSuccessToast
+      
+      console.log('📊 Dados significativos encontrados, continuando salvamento...');
+      
+      // Preparar dados para salvamento
+      const dados = JSON.stringify(watchedValues);
+      console.log('📊 Dados preparados para salvamento:', {
+        tamanho: dados.length,
+        keys: Object.keys(watchedValues).length
       });
 
-      let savedData = null;
+      let savedData;
+      
       if (registroId) {
-        console.log('🔄 Atualizando registro existente...');
+        console.log('📝 Atualizando prontuário existente:', registroId);
+        
         const { data, error } = await supabase
           .from('prontuario_registros')
-          .update(formData)
+          .update({
+            descricao: dados,
+            funcionario_id: funcionarioId,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', registroId)
           .select()
-          .maybeSingle();
+          .single();
         
         if (error) {
-          console.error('❌ Erro ao atualizar prontuário existente:', {
+          console.error('❌ Erro ao atualizar prontuário:', {
             error,
             registroId,
-            cicloId,
             funcionarioId
           });
           throw error;
         }
         
-        console.log('✅ Prontuário atualizado com sucesso:', {
-          registroId,
-          cicloId
-        });
-        
+        console.log('✅ Prontuário atualizado com sucesso');
         savedData = data;
         
         if (showSuccessToast) {
           toast({
-            title: "Prontuário atualizado",
-            description: "Dados salvos com sucesso!",
+            title: "Dados atualizados",
+            description: "Informações salvas com sucesso!",
           });
         }
       } else {
-        console.log('➕ Criando novo registro...');
+        console.log('🆕 Criando novo prontuário...');
+        
         const { data, error } = await supabase
           .from('prontuario_registros')
-          .insert(formData)
+          .insert({
+            ciclo_id: cicloId,
+            residente_id: residenteId,
+            funcionario_id: funcionarioId,
+            tipo_registro: 'prontuario_completo',
+            titulo: 'Prontuário Completo',
+            descricao: dados,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
           .select()
           .maybeSingle();
         
@@ -640,6 +637,7 @@ export default function NovoFormularioProntuario({
         
         if (!statusError) {
           setCicloStatus(newStatus);
+          // Notificar mudança de status para que o progresso seja recalculado na página pai
           onStatusChange?.(residenteId, newStatus, cicloId);
         }
       }
@@ -765,7 +763,6 @@ export default function NovoFormularioProntuario({
       setIsFinalizando(false);
     }
   };
-
 
   const doencasCronicas = [
     "Diabetes", "Hipertensão", "Alzheimer", "Parkinson", "Artrite", 
@@ -899,10 +896,36 @@ export default function NovoFormularioProntuario({
           </div>
         );
 
+      case 'slider':
+        return (
+          <div key={campo.id}>
+            <Label className="text-base font-medium">
+              {campo.label}
+              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="mt-3">
+              <Slider
+                value={Array.isArray(valor) ? valor : [campo.configuracoes?.min || 0]}
+                onValueChange={(newValue) => !isDisabled && onChange(newValue)}
+                max={campo.configuracoes?.max || 100}
+                min={campo.configuracoes?.min || 0}
+                step={campo.configuracoes?.step || 1}
+                className="w-full"
+                disabled={isDisabled}
+              />
+              <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                <span>{campo.configuracoes?.min || 0}</span>
+                <span>Valor: {Array.isArray(valor) ? valor[0] : (campo.configuracoes?.min || 0)}</span>
+                <span>{campo.configuracoes?.max || 100}</span>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'select':
         return (
           <div key={campo.id}>
-            <Label htmlFor={campo.id} className="text-base font-medium">
+            <Label className="text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
@@ -912,12 +935,11 @@ export default function NovoFormularioProntuario({
               disabled={isDisabled}
             >
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder={
-                  isDisabled ? "Campo bloqueado - prontuário finalizado" : 
-                  (campo.placeholder || "Selecione uma opção")
-                } />
+                <SelectValue 
+                  placeholder={isDisabled ? "Campo bloqueado" : "Selecione uma opção"} 
+                />
               </SelectTrigger>
-              <SelectContent className="bg-white border shadow-lg z-50">
+              <SelectContent>
                 {(campo.opcoes || []).map((opcao: string) => (
                   <SelectItem key={opcao} value={opcao}>
                     {opcao}
@@ -928,63 +950,15 @@ export default function NovoFormularioProntuario({
           </div>
         );
 
-      case 'slider':
-        const configuracoes = campo.configuracoes || {};
-        const min = configuracoes.min || 0;
-        const max = configuracoes.max || 10;
-        const step = configuracoes.step || 1;
-        const currentValue = Array.isArray(valor) ? valor[0] : (valor || min);
-        
-        return (
-          <div key={campo.id}>
-            <Label className="text-base font-medium">
-              {campo.label}: {currentValue}
-              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Slider
-              value={[currentValue]}
-              onValueChange={(newValue) => !isDisabled && onChange(newValue)}
-              min={min}
-              max={max}
-              step={step}
-              className="mt-3"
-              disabled={isDisabled}
-            />
-            {isDisabled && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Campo bloqueado - prontuário finalizado
-              </p>
-            )}
-          </div>
-        );
-
-      case 'number':
-        const numConfig = campo.configuracoes || {};
-        return (
-          <div key={campo.id}>
-            <Label htmlFor={campo.id} className="text-base font-medium">
-              {campo.label}
-              {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Input
-              id={campo.id}
-              type="number"
-              placeholder={isDisabled ? "Campo bloqueado - prontuário finalizado" : (campo.placeholder || '')}
-              value={valor || ''}
-              onChange={(e) => !isDisabled && onChange(e.target.value)}
-              min={numConfig.min}
-              max={numConfig.max}
-              step={numConfig.step}
-              className="mt-1"
-              disabled={isDisabled}
-            />
-          </div>
-        );
-
       default:
         return null;
     }
   };
+
+  // Se ainda está carregando, não renderizar nada
+  if (!funcionarioId) {
+    return null; // Isso vai disparar o redirect no useEffect da página principal
+  }
 
   // Agrupar campos por seção
   const camposPorSecao = camposConfigurados.reduce((acc: any, campo: any) => {
@@ -995,8 +969,11 @@ export default function NovoFormularioProntuario({
     return acc;
   }, {});
 
-  // Mapeamento de ícones por seção
+  // Ícones para cada seção
   const iconesSecao: { [key: string]: any } = {
+    identificacao: User,
+    historico_saude: Heart,
+    medicacoes: Pill,
     rotina_diaria: Clock,
     aspectos_clinicos: Stethoscope,
     bem_estar: Smile,

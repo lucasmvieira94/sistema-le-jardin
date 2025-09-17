@@ -38,6 +38,86 @@ export default function Prontuario() {
     }
   }, [location, navigate]);
 
+  const calcularProgressoBaseadoCampos = async (cicloId: string) => {
+    try {
+      // Buscar campos obrigatórios configurados
+      const { data: camposObrigatorios, error: camposError } = await supabase
+        .from('formulario_campos_config')
+        .select('id, label, tipo')
+        .eq('ativo', true)
+        .eq('obrigatorio', true);
+
+      if (camposError || !camposObrigatorios || camposObrigatorios.length === 0) {
+        return 0; // Se não há campos obrigatórios ou erro, progresso 0
+      }
+
+      // Buscar registro do prontuário para este ciclo
+      const { data: registro, error: registroError } = await supabase
+        .from('prontuario_registros')
+        .select('descricao')
+        .eq('ciclo_id', cicloId)
+        .eq('tipo_registro', 'prontuario_completo')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (registroError || !registro) {
+        return 0; // Se não há dados salvos, progresso 0
+      }
+
+      // Analisar dados preenchidos
+      let dadosPreenchidos;
+      try {
+        dadosPreenchidos = JSON.parse(registro.descricao);
+      } catch (e) {
+        return 0; // Se não consegue parsear, progresso 0
+      }
+
+      // Contar campos obrigatórios preenchidos
+      let camposPreenchidos = 0;
+      
+      for (const campo of camposObrigatorios) {
+        const chaveFormulario = `campo_${campo.id}`;
+        const valor = dadosPreenchidos[chaveFormulario];
+        
+        // Verificar se o campo está preenchido baseado no tipo
+        let preenchido = false;
+        
+        switch (campo.tipo) {
+          case 'text':
+          case 'textarea':
+            preenchido = valor && typeof valor === 'string' && valor.trim().length > 0;
+            break;
+          case 'radio':
+          case 'select':
+            preenchido = valor && typeof valor === 'string' && valor.trim().length > 0;
+            break;
+          case 'checkbox':
+            preenchido = Array.isArray(valor) && valor.length > 0;
+            break;
+          case 'slider':
+            preenchido = Array.isArray(valor) && valor.length > 0 && valor[0] !== undefined;
+            break;
+          default:
+            preenchido = valor !== undefined && valor !== null && valor !== '';
+        }
+        
+        if (preenchido) {
+          camposPreenchidos++;
+        }
+      }
+
+      // Calcular progresso percentual
+      const progressoPercentual = Math.round((camposPreenchidos / camposObrigatorios.length) * 100);
+      console.log(`🎯 Progresso calculado: ${camposPreenchidos}/${camposObrigatorios.length} campos obrigatórios = ${progressoPercentual}%`);
+      
+      return progressoPercentual;
+    } catch (error) {
+      console.error('Erro ao calcular progresso baseado em campos:', error);
+      return 0;
+    }
+  };
+
   const verificarStatusProntuarios = async (residentesData: any[]) => {
     const statusMap: Record<string, {status: string, cicloId: string | null, progresso?: number}> = {};
     
@@ -52,23 +132,16 @@ export default function Prontuario() {
           .single();
 
         if (!error && ciclo) {
-          // Progresso baseado no status real do banco
+          // Calcular progresso baseado nos campos obrigatórios preenchidos
           let progresso = 0;
-          switch (ciclo.status) {
-            case 'nao_iniciado':
-              progresso = 0;
-              break;
-            case 'em_andamento':
-              progresso = 45; // 45% quando está em andamento
-              break;
-            case 'completo':
-              progresso = 80; // 80% quando está completo (preenchido mas não finalizado)
-              break;
-            case 'encerrado':
-              progresso = 100;
-              break;
-            default:
-              progresso = 0;
+          
+          if (ciclo.status === 'encerrado') {
+            progresso = 100; // Finalizado = 100%
+          } else if (ciclo.status === 'nao_iniciado') {
+            progresso = 0; // Não iniciado = 0%
+          } else {
+            // Para 'em_andamento' e 'completo', calcular baseado nos campos
+            progresso = await calcularProgressoBaseadoCampos(ciclo.id);
           }
           
           statusMap[residente.id] = {
@@ -87,21 +160,12 @@ export default function Prontuario() {
             const cicloInfo = verificacao[0];
             
             let progresso = 0;
-            switch (cicloInfo.status) {
-              case 'nao_iniciado':
-                progresso = 0;
-                break;
-              case 'em_andamento':
-                progresso = 45;
-                break;
-              case 'completo':
-                progresso = 80;
-                break;
-              case 'encerrado':
-                progresso = 100;
-                break;
-              default:
-                progresso = 0;
+            if (cicloInfo.status === 'encerrado') {
+              progresso = 100;
+            } else if (cicloInfo.status === 'nao_iniciado') {
+              progresso = 0;
+            } else if (cicloInfo.ciclo_id) {
+              progresso = await calcularProgressoBaseadoCampos(cicloInfo.ciclo_id);
             }
             
             statusMap[residente.id] = {
@@ -350,24 +414,17 @@ export default function Prontuario() {
               // Recarregar status quando voltar
               recarregarStatusProntuarios();
             }}
-            onStatusChange={(residenteId, status, cicloId) => {
-              // Calcular progresso baseado no status
+            onStatusChange={async (residenteId, status, cicloId) => {
+              // Calcular progresso baseado nos campos obrigatórios preenchidos
               let progresso = 0;
-              switch (status) {
-                case 'nao_iniciado':
-                  progresso = 0;
-                  break;
-                case 'em_andamento':
-                  progresso = 45;
-                  break;
-                case 'completo':
-                  progresso = 80;
-                  break;
-                case 'encerrado':
-                  progresso = 100;
-                  break;
-                default:
-                  progresso = 0;
+              
+              if (status === 'encerrado') {
+                progresso = 100; // Finalizado = 100%
+              } else if (status === 'nao_iniciado') {
+                progresso = 0; // Não iniciado = 0%
+              } else if (cicloId) {
+                // Para 'em_andamento' e 'completo', calcular baseado nos campos
+                progresso = await calcularProgressoBaseadoCampos(cicloId);
               }
               
               setProntuariosStatus(prev => ({
