@@ -84,26 +84,26 @@ export default function FuncionarioAccess() {
 
   if (!funcionarioId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-2 sm:p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 w-full max-w-md">
+          <div className="text-center mb-6 sm:mb-8">
             {companyLogo ? (
               <img 
                 src={companyLogo} 
                 alt="Logo da empresa" 
-                className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto mb-4 object-contain"
+                className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 mx-auto mb-3 sm:mb-4 object-contain"
               />
             ) : (
               <img 
                 src={careLogo} 
                 alt="Logo da empresa" 
-                className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto mb-4 object-contain"
+                className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 mx-auto mb-3 sm:mb-4 object-contain"
               />
             )}
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">
               {companyName}
             </h1>
-            <p className="text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 mb-4 px-2">
               Acesse o registro de ponto e prontuário eletrônico
             </p>
             
@@ -112,7 +112,7 @@ export default function FuncionarioAccess() {
               <Button
                 onClick={navigateToAuth}
                 variant="outline"
-                className="px-6 py-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                className="px-4 sm:px-6 py-2 text-sm sm:text-base border-primary text-primary hover:bg-primary hover:text-white transition-colors"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Acesso Administrativo
@@ -120,18 +120,18 @@ export default function FuncionarioAccess() {
             </div>
           </div>
           
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
-              <CalendarRange className="w-4 h-4" />
-              <span>{currentTime.toLocaleDateString('pt-BR', { 
+          <div className="text-center mb-4 sm:mb-6">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2 text-xs sm:text-sm">
+              <CalendarRange className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="break-words">{currentTime.toLocaleDateString('pt-BR', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               })}</span>
             </div>
-            <div className="text-lg font-medium flex items-center justify-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
+            <div className="text-base sm:text-lg font-medium flex items-center justify-center gap-2">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
             </div>
           </div>
@@ -143,36 +143,36 @@ export default function FuncionarioAccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-4">
       <div className="container mx-auto max-w-2xl">
         {/* Header com saudação */}
-        <div className="bg-white rounded-2xl p-6 shadow-xl mb-6">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4 sm:mb-6">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3">
               {companyLogo ? (
                 <img 
                   src={companyLogo} 
                   alt="Logo da empresa" 
-                  className="w-40 h-40 object-contain"
+                  className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 object-contain flex-shrink-0"
                 />
               ) : (
                 <img 
                   src={careLogo} 
                   alt="Logo da empresa" 
-                  className="w-40 h-40 object-contain"
+                  className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 object-contain flex-shrink-0"
                 />
               )}
-              <div>
-                <h1 className="text-2xl font-bold text-primary">
+              <div className="text-center sm:text-left">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-primary break-words">
                   {getGreeting()}, {funcionarioNome.split(' ')[0]}!
                 </h1>
-                <p className="text-gray-600">Bem-vindo(a) ao sistema</p>
+                <p className="text-sm sm:text-base text-gray-600">Bem-vindo(a) ao sistema</p>
               </div>
             </div>
             
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <CalendarRange className="w-4 h-4" />
-              <span>{currentTime.toLocaleDateString('pt-BR', { 
+            <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs sm:text-sm">
+              <CalendarRange className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="break-words text-center">{currentTime.toLocaleDateString('pt-BR', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
@@ -180,8 +180,8 @@ export default function FuncionarioAccess() {
               })}</span>
             </div>
             
-            <div className="text-xl font-medium flex items-center justify-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
+            <div className="text-lg sm:text-xl font-medium flex items-center justify-center gap-2">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
             </div>
           </div>
@@ -189,28 +189,28 @@ export default function FuncionarioAccess() {
 
         {/* Seleção de funcionalidade */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-center text-gray-800 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-center text-gray-800 mb-4 sm:mb-6 px-2">
             Escolha a funcionalidade que deseja acessar:
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Registro de Ponto */}
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 hover:border-green-300"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-300"
               onClick={navigateToRegistroPonto}
             >
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CalendarRange className="w-8 h-8 text-green-600" />
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <CalendarRange className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
                 </div>
-                <CardTitle className="text-green-700">Registro de Ponto</CardTitle>
+                <CardTitle className="text-green-700 text-base sm:text-lg">Registro de Ponto</CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-gray-600 mb-4">
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                   Registre entrada, saída e intervalos do seu horário de trabalho
                 </p>
                 <Button 
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base py-2 sm:py-3"
                   onClick={navigateToRegistroPonto}
                 >
                   Acessar Registro
@@ -220,21 +220,21 @@ export default function FuncionarioAccess() {
 
             {/* Prontuário Eletrônico */}
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 hover:border-blue-300"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-blue-300"
               onClick={navigateToProntuario}
             >
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FileHeart className="w-8 h-8 text-blue-600" />
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <FileHeart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
                 </div>
-                <CardTitle className="text-blue-700">Prontuário Eletrônico</CardTitle>
+                <CardTitle className="text-blue-700 text-base sm:text-lg">Prontuário Eletrônico</CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-gray-600 mb-4">
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                   Registre atividades e observações dos residentes
                 </p>
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-2 sm:py-3"
                   onClick={navigateToProntuario}
                 >
                   Acessar Prontuário
@@ -244,11 +244,11 @@ export default function FuncionarioAccess() {
           </div>
 
           {/* Botão de logout */}
-          <div className="text-center mt-8 space-y-4">
+          <div className="text-center mt-6 sm:mt-8 space-y-4">
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="px-8"
+              className="px-6 sm:px-8 text-sm sm:text-base"
             >
               Usar outro código
             </Button>
@@ -269,12 +269,12 @@ export default function FuncionarioAccess() {
             <div className="text-center">
               <Button
                 onClick={navigateToAuth}
-                className="px-8 bg-primary hover:bg-primary/90"
+                className="px-6 sm:px-8 bg-primary hover:bg-primary/90 text-sm sm:text-base"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Acesso Administrativo
               </Button>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                 Área exclusiva para gestores
               </p>
             </div>
