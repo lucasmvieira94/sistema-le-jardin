@@ -15,6 +15,7 @@ import CpfInput from "./cadastro-funcionario/CpfInput";
 import DataInput from "./cadastro-funcionario/DataInput";
 import FuncaoInput from "./cadastro-funcionario/FuncaoInput";
 import EscalaSelect from "./cadastro-funcionario/EscalaSelect";
+import RegistraPontoSwitch from "./cadastro-funcionario/RegistraPontoSwitch";
 
 type Escala = {
   id: number;
@@ -36,6 +37,7 @@ type FormData = {
   data_inicio_vigencia: string;
   funcao: string;
   escala_id: string;
+  registra_ponto: boolean;
 };
 
 interface Props {
@@ -59,7 +61,10 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       data_inicio_vigencia: funcionarioData.data_inicio_vigencia || '',
       funcao: funcionarioData.funcao || '',
       escala_id: funcionarioData.escala_id?.toString() || '',
-    } : undefined
+      registra_ponto: funcionarioData.registra_ponto ?? true,
+    } : {
+      registra_ponto: true,
+    }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [escalas, setEscalas] = useState<Escala[]>([]);
@@ -153,7 +158,8 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         // Update existing funcionario
         const updateData = {
           ...sanitizedValues,
-          escala_id: Number(sanitizedValues.escala_id),
+          escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
+          data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
         };
 
         const { error } = await supabase
@@ -176,7 +182,8 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
 
         const newFuncionario = {
           ...sanitizedValues,
-          escala_id: Number(sanitizedValues.escala_id),
+          escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
+          data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
           codigo_4_digitos: codigo,
         };
 
@@ -230,14 +237,24 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           <DataInput control={form.control} name="data_admissao" label="Data de Admissão" />
         </div>
         <FuncaoInput control={form.control} />
+        <RegistraPontoSwitch control={form.control} />
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
-          <EscalaSelect control={form.control} escalas={escalas} />
-          <DataInput 
-            control={form.control} 
-            name="data_inicio_vigencia" 
-            label="Data de Início da Vigência da Escala"
-          />
+          {form.watch("registra_ponto") && (
+            <>
+              <EscalaSelect control={form.control} escalas={escalas} />
+              <DataInput 
+                control={form.control} 
+                name="data_inicio_vigencia" 
+                label="Data de Início da Vigência da Escala"
+              />
+            </>
+          )}
+          {!form.watch("registra_ponto") && (
+            <p className="text-sm text-muted-foreground">
+              Este funcionário não registra ponto e não precisa de escala de trabalho.
+            </p>
+          )}
         </div>
         <Button className="w-full" type="submit" disabled={isSubmitting}>
           {isSubmitting ? (

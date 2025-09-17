@@ -12,6 +12,7 @@ export default function FuncionarioAccess() {
   const navigate = useNavigate();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
+  const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
   const [companyLogo, setCompanyLogo] = useState<string>('');
@@ -53,14 +54,34 @@ export default function FuncionarioAccess() {
     fetchCompanyConfig();
   }, []);
 
-  const handleFuncionarioValidado = (id: string, nome: string) => {
+  const handleFuncionarioValidado = async (id: string, nome: string) => {
     setFuncionarioId(id);
     setFuncionarioNome(nome);
+    
+    // Buscar se o funcionário registra ponto
+    try {
+      const { data, error } = await supabase
+        .from('funcionarios')
+        .select('registra_ponto')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Erro ao buscar dados do funcionário:', error);
+        setFuncionarioRegistraPonto(true); // default
+      } else {
+        setFuncionarioRegistraPonto(data.registra_ponto);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar funcionário:', error);
+      setFuncionarioRegistraPonto(true); // default
+    }
   };
 
   const handleLogout = () => {
     setFuncionarioId(null);
     setFuncionarioNome('');
+    setFuncionarioRegistraPonto(true);
   };
 
   const navigateToRegistroPonto = () => {
@@ -190,30 +211,32 @@ export default function FuncionarioAccess() {
         {/* Seleção de funcionalidade */}
         <div className="space-y-4">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {/* Registro de Ponto */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-              onClick={navigateToRegistroPonto}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <CalendarRange className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
-                </div>
-                <CardTitle className="text-green-800 text-base sm:text-lg">Registro de Ponto</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Registre entrada, saída e intervalos do seu horário de trabalho
-                </p>
-                <Button 
-                  className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToRegistroPonto}
-                >
-                  Acessar Registro
-                </Button>
-              </CardContent>
-            </Card>
+          <div className={`grid ${funcionarioRegistraPonto ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-3 sm:gap-4`}>
+            {/* Registro de Ponto - só mostra se funcionário registra ponto */}
+            {funcionarioRegistraPonto && (
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
+                onClick={navigateToRegistroPonto}
+              >
+                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <CalendarRange className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
+                  </div>
+                  <CardTitle className="text-green-800 text-base sm:text-lg">Registro de Ponto</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center p-4 sm:p-6 pt-0">
+                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                    Registre entrada, saída e intervalos do seu horário de trabalho
+                  </p>
+                  <Button 
+                    className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
+                    onClick={navigateToRegistroPonto}
+                  >
+                    Acessar Registro
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Prontuário Eletrônico */}
             <Card 
