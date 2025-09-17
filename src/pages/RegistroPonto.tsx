@@ -190,7 +190,7 @@ export default function RegistroPonto() {
               onClick={handleVoltar}
             >
               <ArrowLeft className="w-5 h-5" />
-              Usar outro código
+              Trocar usuário
             </Button>
           </div>
         </div>
