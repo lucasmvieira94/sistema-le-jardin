@@ -557,7 +557,7 @@ export type Database = {
           cpf: string
           created_at: string
           data_admissao: string
-          data_inicio_vigencia: string
+          data_inicio_vigencia: string | null
           data_nascimento: string
           email: string
           escala_id: number | null
@@ -573,7 +573,7 @@ export type Database = {
           cpf: string
           created_at?: string
           data_admissao: string
-          data_inicio_vigencia: string
+          data_inicio_vigencia?: string | null
           data_nascimento: string
           email: string
           escala_id?: number | null
@@ -589,7 +589,7 @@ export type Database = {
           cpf?: string
           created_at?: string
           data_admissao?: string
-          data_inicio_vigencia?: string
+          data_inicio_vigencia?: string | null
           data_nascimento?: string
           email?: string
           escala_id?: number | null
