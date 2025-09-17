@@ -262,19 +262,6 @@ export default function FuncionarioAccess() {
               </div>
             </div>
             
-            {/* Botão de login do gestor */}
-            <div className="text-center">
-              <Button
-                onClick={navigateToAuth}
-                className="px-6 sm:px-8 bg-green-700 hover:bg-green-800 text-sm sm:text-base"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Acesso Administrativo
-              </Button>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                Área exclusiva para gestores
-              </p>
-            </div>
           </div>
         </div>
       </div>
