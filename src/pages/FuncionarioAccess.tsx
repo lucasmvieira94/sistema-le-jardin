@@ -84,7 +84,7 @@ export default function FuncionarioAccess() {
 
   if (!funcionarioId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-2 sm:p-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center p-2 sm:p-4">
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 w-full max-w-md">
           <div className="text-center mb-6 sm:mb-8">
             {companyLogo ? (
@@ -143,7 +143,7 @@ export default function FuncionarioAccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-2 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4">
       <div className="container mx-auto max-w-2xl">
         {/* Header com saudação */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4 sm:mb-6">
@@ -259,7 +259,7 @@ export default function FuncionarioAccess() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-gradient-to-br from-green-50 to-green-100 px-2 text-muted-foreground">
+                <span className="bg-gradient-to-br from-green-800 to-green-900 px-2 text-muted-foreground">
                   ou
                 </span>
               </div>
