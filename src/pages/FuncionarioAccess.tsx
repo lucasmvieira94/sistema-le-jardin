@@ -247,7 +247,7 @@ export default function FuncionarioAccess() {
               onClick={handleLogout}
               className="px-6 sm:px-8 text-sm sm:text-base"
             >
-              Usar outro código
+              Trocar usuário
             </Button>
             
             {/* Separador visual */}
