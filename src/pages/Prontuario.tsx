@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar, ArrowLeft, Users } from "lucide-react";
+import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -404,81 +404,35 @@ export default function Prontuario() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-12 gap-6">
-            {/* Lista compacta de residentes */}
-            <div className="col-span-12 lg:col-span-3">
-              <div className="sticky top-24 space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Residentes
-                </h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {residentes.map((residente) => {
-                    const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null, progresso: 0 };
-                    const isDisabled = isButtonDisabled(statusInfo.status);
-                    const isSelected = residente.id === selectedResidente;
-                    
-                    return (
-                      <div
-                        key={residente.id}
-                        onClick={() => !isDisabled && setSelectedResidente(residente.id)}
-                        className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                          isSelected 
-                            ? 'border-primary bg-primary/5' 
-                            : isDisabled 
-                              ? 'border-gray-200 opacity-50 cursor-not-allowed' 
-                              : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm truncate">{residente.nome_completo}</h4>
-                          <div className="ml-2 flex-shrink-0">
-                            {getStatusBadge(statusInfo.status)}
-                          </div>
-                        </div>
-                        {statusInfo.status !== 'nao_iniciado' && (
-                          <div>
-                            <Progress value={statusInfo.progresso || 0} className="h-1" />
-                            <span className="text-xs text-muted-foreground">{statusInfo.progresso || 0}%</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-            
-            {/* Formulário */}
-            <div className="col-span-12 lg:col-span-9">
-              <NovoFormularioProntuario 
-                funcionarioId={funcionarioId} 
-                residenteId={selectedResidente}
-                cicloStatus={prontuariosStatus[selectedResidente]?.status || 'nao_iniciado'}
-                onChangeResidente={setSelectedResidente}
-                residentes={residentes}
-                prontuariosStatus={prontuariosStatus}
-                onStatusChange={async (residenteId, status, cicloId) => {
-                  // Calcular progresso baseado nos campos obrigatórios preenchidos
-                  let progresso = 0;
-                  
-                  if (status === 'encerrado') {
-                    progresso = 100; // Finalizado = 100%
-                  } else if (status === 'nao_iniciado') {
-                    progresso = 0; // Não iniciado = 0%
-                  } else if (cicloId) {
-                    // Para 'em_andamento' e 'completo', calcular baseado nos campos
-                    progresso = await calcularProgressoBaseadoCampos(cicloId);
-                  }
-                  
-                  setProntuariosStatus(prev => ({
-                    ...prev,
-                    [residenteId]: { status, cicloId, progresso }
-                  }));
-                }}
-              />
-            </div>
-          </div>
+          <NovoFormularioProntuario 
+            funcionarioId={funcionarioId} 
+            residenteId={selectedResidente}
+            cicloStatus={prontuariosStatus[selectedResidente]?.status || 'nao_iniciado'}
+            onChangeResidente={setSelectedResidente}
+            onVoltar={() => {
+              setSelectedResidente(null);
+              // Recarregar status quando voltar
+              recarregarStatusProntuarios();
+            }}
+            onStatusChange={async (residenteId, status, cicloId) => {
+              // Calcular progresso baseado nos campos obrigatórios preenchidos
+              let progresso = 0;
+              
+              if (status === 'encerrado') {
+                progresso = 100; // Finalizado = 100%
+              } else if (status === 'nao_iniciado') {
+                progresso = 0; // Não iniciado = 0%
+              } else if (cicloId) {
+                // Para 'em_andamento' e 'completo', calcular baseado nos campos
+                progresso = await calcularProgressoBaseadoCampos(cicloId);
+              }
+              
+              setProntuariosStatus(prev => ({
+                ...prev,
+                [residenteId]: { status, cicloId, progresso }
+              }));
+            }}
+          />
         )}
       </div>
     </div>

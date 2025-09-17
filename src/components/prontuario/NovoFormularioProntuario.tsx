@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, Users, CheckCircle, Shield, Lock, Save, ChevronRight } from "lucide-react";
+import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle, Shield, Lock, Save } from "lucide-react";
 import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
 
 interface FormularioData {
@@ -78,9 +78,8 @@ interface NovoFormularioProntuarioProps {
   residenteId: string;
   cicloStatus?: string;
   onChangeResidente?: (residenteId: string) => void;
+  onVoltar?: () => void;
   onStatusChange?: (residenteId: string, status: string, cicloId: string) => void;
-  residentes?: any[];
-  prontuariosStatus?: Record<string, any>;
 }
 
 export default function NovoFormularioProntuario({ 
@@ -88,15 +87,15 @@ export default function NovoFormularioProntuario({
   residenteId, 
   cicloStatus: cicloStatusProp,
   onChangeResidente, 
-  onStatusChange,
-  residentes = [],
-  prontuariosStatus = {}
+  onVoltar,
+  onStatusChange 
 }: NovoFormularioProntuarioProps) {
   const { toast } = useToast();
   const [isFinalizando, setIsFinalizando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [registroId, setRegistroId] = useState<string | null>(null);
   const [residenteData, setResidenteData] = useState<any>(null);
+  const [residentes, setResidentes] = useState<any[]>([]);
   const [cicloId, setCicloId] = useState<string | null>(null);
   const [cicloStatus, setCicloStatus] = useState<string>('');
   const [prontuarioJaFinalizado, setProntuarioJaFinalizado] = useState(false);
@@ -226,8 +225,23 @@ export default function NovoFormularioProntuario({
     }
   }, [residenteId, funcionarioId, setValue, toast]); // Dependências mínimas
 
-  // Carregar campos configurados do banco de dados
+  // Buscar lista de residentes para o dropdown
   useEffect(() => {
+    const fetchResidentes = async () => {
+      const { data, error } = await supabase
+        .from('residentes')
+        .select('*')
+        .eq('ativo', true)
+        .order('nome_completo');
+      
+      if (error) {
+        console.error('Erro ao buscar residentes:', error);
+      } else {
+        setResidentes(data || []);
+      }
+    };
+
+    fetchResidentes();
     loadCamposConfigurados();
   }, []);
 
@@ -573,22 +587,6 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  // Função para encontrar próximo residente disponível
-  const handleProximoResidente = () => {
-    const residentesDisponiveis = residentes.filter(r => {
-      const status = prontuariosStatus[r.id]?.status || 'nao_iniciado';
-      return status !== 'encerrado';
-    });
-    
-    const currentIndex = residentesDisponiveis.findIndex(r => r.id === residenteId);
-    const nextIndex = (currentIndex + 1) % residentesDisponiveis.length;
-    const proximoResidente = residentesDisponiveis[nextIndex];
-    
-    if (proximoResidente && proximoResidente.id !== residenteId) {
-      onChangeResidente?.(proximoResidente.id);
-    }
-  };
-
   const handleFinalizarProntuario = async (codigo: string, funcionarioNome: string) => {
     setIsFinalizando(true);
     try {
@@ -639,7 +637,10 @@ export default function NovoFormularioProntuario({
             variant: "default",
           });
           
-          // Não precisa fazer nada, usuário pode selecionar outro residente
+          // Voltar para a lista após delay
+          setTimeout(() => {
+            onVoltar?.();
+          }, 2000);
         }
       } else {
         toast({
@@ -895,6 +896,17 @@ export default function NovoFormularioProntuario({
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-4 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
+            {onVoltar && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onVoltar}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </Button>
+            )}
             <div>
               <h2 className="text-xl font-semibold">Prontuário Diário</h2>
               <p className="text-sm text-muted-foreground">
@@ -904,19 +916,6 @@ export default function NovoFormularioProntuario({
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Botão próximo residente */}
-            {residentes.length > 1 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleProximoResidente}
-                className="flex items-center gap-2"
-              >
-                <ChevronRight className="w-4 h-4" />
-                Próximo Residente
-              </Button>
-            )}
-            
             {/* Status de salvamento */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {isSaving && <span>Salvando...</span>}
