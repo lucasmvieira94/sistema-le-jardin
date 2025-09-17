@@ -91,13 +91,13 @@ export default function FuncionarioAccess() {
               <img 
                 src={companyLogo} 
                 alt="Logo da empresa" 
-                className="w-80 h-80 mx-auto mb-4 object-contain"
+                className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto mb-4 object-contain"
               />
             ) : (
               <img 
                 src={careLogo} 
                 alt="Logo da empresa" 
-                className="w-80 h-80 mx-auto mb-4 object-contain"
+                className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto mb-4 object-contain"
               />
             )}
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
