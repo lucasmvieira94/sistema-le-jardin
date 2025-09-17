@@ -86,7 +86,7 @@ export default function FuncionarioAccess() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center p-2 sm:p-4">
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 w-full max-w-md">
-          <div className="text-center mb-6 sm:mb-8">
+          <div className="text-center mb-6 sm:mb-8 -mt-2">
             {companyLogo ? (
               <img 
                 src={companyLogo} 
