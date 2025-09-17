@@ -13,7 +13,7 @@ import { LogotipoEmpresa } from "@/components/configuracoes/LogotipoEmpresa";
 export default function Configuracoes() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const gestaoPermissoesRef = useRef<{ carregarDados?: () => void }>(null);
+  const gestaoPermissoesRef = useRef<{ carregarDados: () => void }>(null);
   const [config, setConfig] = useState({
     nome_empresa: "",
     cnpj: "",
@@ -73,6 +73,8 @@ export default function Configuracoes() {
     if (gestaoPermissoesRef.current?.carregarDados) {
       gestaoPermissoesRef.current.carregarDados();
     }
+  };
+
   const salvarConfiguracoes = async () => {
     setSaving(true);
     try {
