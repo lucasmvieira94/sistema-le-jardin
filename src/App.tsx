@@ -15,7 +15,6 @@ import ApropriacaoHoras from "./pages/ApropriacaoHoras";
 import Configuracoes from "./pages/Configuracoes";
 import Prontuario from "./pages/Prontuario";
 import NotFound from "./pages/NotFound";
-import Navbar from "./components/Navbar";
 import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
 import EditarFuncionario from "./pages/EditarFuncionario";
@@ -25,6 +24,8 @@ import ConfiguracaoFormulario from "./pages/ConfiguracaoFormulario";
 import ControleMedicamentos from "./pages/ControleMedicamentos";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
+import { AppSidebar } from "./components/AppSidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 const queryClient = new QueryClient();
 
@@ -46,129 +47,157 @@ const AppContent = () => {
     return publicRoutes.includes(pathname);
   };
 
+  const isAdminRoute = (pathname: string) => {
+    return !isPublicRoute(pathname);
+  };
+
   return (
     <>
-      {/* Só mostrar Navbar em rotas protegidas */}
-      {!isPublicRoute(location.pathname) && <Navbar />}
-      <div className={`bg-background ${!isPublicRoute(location.pathname) ? 'min-h-[calc(100vh-60px)]' : 'min-h-screen'}`}>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          {/* Página inicial: Acesso unificado ao sistema */}
-          <Route path="/" element={<FuncionarioAccess />} />
-          <Route path="/funcionario-access" element={<FuncionarioAccess />} />
-          {/* Registro de Ponto (recebe dados via URL) */}
-          <Route path="/registro-ponto" element={<RegistroPonto />} />
-          {/* Prontuário eletrônico (recebe dados via URL) */}
-          <Route path="/prontuario" element={<Prontuario />} />
-          {/* Dashboard protegido */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Index />
-              </ProtectedRoute>
-            }
-          />
-          {/* Outras rotas protegidas */}
-          <Route
-            path="/funcionarios"
-            element={
-              <ProtectedRoute>
-                <Funcionarios />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/funcionarios/novo"
-            element={
-              <ProtectedRoute>
-                <NovoFuncionario />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/funcionarios/:id/editar"
-            element={
-              <ProtectedRoute>
-                <EditarFuncionario />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/escalas"
-            element={
-              <ProtectedRoute>
-                <Escalas />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/apropriacao"
-            element={
-              <ProtectedRoute>
-                <ApropriacaoHoras />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/relatorios"
-            element={
-              <ProtectedRoute>
-                <Relatorios />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/faltas"
-            element={
-              <ProtectedRoute>
-                <Faltas />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/configuracoes"
-            element={
-              <ProtectedRoute>
-                <Configuracoes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/residentes"
-            element={
-              <ProtectedRoute>
-                <Residentes />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/controle-prontuarios"
-            element={
-              <ProtectedRoute>
-                <ControleProntuarios />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/configuracao-formulario"
-            element={
-              <ProtectedRoute>
-                <ConfiguracaoFormulario />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/controle-medicamentos"
-            element={
-              <ProtectedRoute>
-                <ControleMedicamentos />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
+      {isAdminRoute(location.pathname) ? (
+        // Layout com Sidebar para rotas administrativas
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <AppSidebar />
+            <main className="flex-1">
+              {/* Header com trigger da sidebar */}
+              <header className="h-12 flex items-center border-b bg-white px-4">
+                <SidebarTrigger />
+              </header>
+              <div className="bg-background min-h-[calc(100vh-48px)]">
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  {/* Página inicial: Acesso unificado ao sistema */}
+                  <Route path="/" element={<FuncionarioAccess />} />
+                  <Route path="/funcionario-access" element={<FuncionarioAccess />} />
+                  {/* Registro de Ponto (recebe dados via URL) */}
+                  <Route path="/registro-ponto" element={<RegistroPonto />} />
+                  {/* Prontuário eletrônico (recebe dados via URL) */}
+                  <Route path="/prontuario" element={<Prontuario />} />
+                  {/* Dashboard protegido */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Index />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* Outras rotas protegidas */}
+                  <Route
+                    path="/funcionarios"
+                    element={
+                      <ProtectedRoute>
+                        <Funcionarios />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/funcionarios/novo"
+                    element={
+                      <ProtectedRoute>
+                        <NovoFuncionario />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/funcionarios/:id/editar"
+                    element={
+                      <ProtectedRoute>
+                        <EditarFuncionario />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/escalas"
+                    element={
+                      <ProtectedRoute>
+                        <Escalas />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/apropriacao"
+                    element={
+                      <ProtectedRoute>
+                        <ApropriacaoHoras />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/relatorios"
+                    element={
+                      <ProtectedRoute>
+                        <Relatorios />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/faltas"
+                    element={
+                      <ProtectedRoute>
+                        <Faltas />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/configuracoes"
+                    element={
+                      <ProtectedRoute>
+                        <Configuracoes />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/residentes"
+                    element={
+                      <ProtectedRoute>
+                        <Residentes />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/controle-prontuarios"
+                    element={
+                      <ProtectedRoute>
+                        <ControleProntuarios />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/configuracao-formulario"
+                    element={
+                      <ProtectedRoute>
+                        <ConfiguracaoFormulario />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/controle-medicamentos"
+                    element={
+                      <ProtectedRoute>
+                        <ControleMedicamentos />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </main>
+          </div>
+        </SidebarProvider>
+      ) : (
+        // Layout simples para rotas públicas
+        <div className="min-h-screen bg-background">
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<FuncionarioAccess />} />
+            <Route path="/funcionario-access" element={<FuncionarioAccess />} />
+            <Route path="/registro-ponto" element={<RegistroPonto />} />
+            <Route path="/prontuario" element={<Prontuario />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      )}
     </>
   );
 };
