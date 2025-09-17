@@ -690,8 +690,8 @@ export default function NovoFormularioProntuario({
     switch (campo.tipo) {
       case 'text':
         return (
-          <div key={campo.id}>
-            <Label htmlFor={campo.id} className="text-base font-medium">
+          <div key={campo.id} className="space-y-2">
+            <Label htmlFor={campo.id} className="text-sm sm:text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
@@ -700,7 +700,7 @@ export default function NovoFormularioProntuario({
               placeholder={isDisabled ? "Campo bloqueado - prontuário finalizado" : (campo.placeholder || '')}
               value={valor || ''}
               onChange={(e) => !isDisabled && onChange(e.target.value)}
-              className="mt-1"
+              className="mt-1 text-sm sm:text-base"
               disabled={isDisabled}
             />
           </div>
@@ -708,8 +708,8 @@ export default function NovoFormularioProntuario({
 
       case 'textarea':
         return (
-          <div key={campo.id}>
-            <Label htmlFor={campo.id} className="text-base font-medium">
+          <div key={campo.id} className="space-y-2">
+            <Label htmlFor={campo.id} className="text-sm sm:text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
@@ -718,7 +718,7 @@ export default function NovoFormularioProntuario({
               placeholder={isDisabled ? "Campo bloqueado - prontuário finalizado" : (campo.placeholder || '')}
               value={valor || ''}
               onChange={(e) => !isDisabled && onChange(e.target.value)}
-              className="mt-1 min-h-[80px]"
+              className="mt-1 min-h-[80px] text-sm sm:text-base resize-none"
               rows={campo.configuracoes?.rows || 3}
               disabled={isDisabled}
             />
@@ -727,19 +727,19 @@ export default function NovoFormularioProntuario({
 
       case 'radio':
         return (
-          <div key={campo.id}>
-            <Label className="text-base font-medium">
+          <div key={campo.id} className="space-y-2">
+            <Label className="text-sm sm:text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <RadioGroup
               value={valor || ""}
               onValueChange={(value) => !isDisabled && onChange(value)}
-              className="mt-2"
+              className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2"
               disabled={isDisabled}
             >
               {(campo.opcoes || []).map((opcao: string) => (
-                <div key={opcao} className="flex items-center space-x-2">
+                <div key={opcao} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50">
                   <RadioGroupItem 
                     value={opcao} 
                     id={`${campo.id}_${opcao}`} 
@@ -747,7 +747,7 @@ export default function NovoFormularioProntuario({
                   />
                   <Label 
                     htmlFor={`${campo.id}_${opcao}`}
-                    className={isDisabled ? "text-muted-foreground" : ""}
+                    className={`text-sm flex-1 cursor-pointer ${isDisabled ? "text-muted-foreground" : ""}`}
                   >
                     {opcao}
                   </Label>
@@ -759,14 +759,14 @@ export default function NovoFormularioProntuario({
 
       case 'checkbox':
         return (
-          <div key={campo.id}>
-            <Label className="text-base font-medium">
+          <div key={campo.id} className="space-y-2">
+            <Label className="text-sm sm:text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
-            <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-3">
               {(campo.opcoes || []).map((opcao: string) => (
-                <div key={opcao} className="flex items-center space-x-2">
+                <div key={opcao} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50">
                   <Checkbox
                     id={`${campo.id}_${opcao}`}
                     checked={Array.isArray(valor) ? valor.includes(opcao) : false}
@@ -783,7 +783,7 @@ export default function NovoFormularioProntuario({
                   />
                   <Label 
                     htmlFor={`${campo.id}_${opcao}`} 
-                    className={`text-sm ${isDisabled ? "text-muted-foreground" : ""}`}
+                    className={`text-sm flex-1 cursor-pointer ${isDisabled ? "text-muted-foreground" : ""}`}
                   >
                     {opcao}
                   </Label>
@@ -795,24 +795,24 @@ export default function NovoFormularioProntuario({
 
       case 'slider':
         return (
-          <div key={campo.id}>
-            <Label className="text-base font-medium">
+          <div key={campo.id} className="space-y-2">
+            <Label className="text-sm sm:text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
-            <div className="mt-3">
+            <div className="mt-3 px-2">
               <Slider
                 value={Array.isArray(valor) ? valor : [campo.configuracoes?.min || 0]}
                 onValueChange={(newValue) => !isDisabled && onChange(newValue)}
                 max={campo.configuracoes?.max || 100}
                 min={campo.configuracoes?.min || 0}
                 step={campo.configuracoes?.step || 1}
-                className="w-full"
+                className="w-full touch-pan-x"
                 disabled={isDisabled}
               />
-              <div className="flex justify-between text-sm text-muted-foreground mt-1">
+              <div className="flex justify-between text-xs sm:text-sm text-muted-foreground mt-2">
                 <span>{campo.configuracoes?.min || 0}</span>
-                <span>Valor: {Array.isArray(valor) ? valor[0] : (campo.configuracoes?.min || 0)}</span>
+                <span className="font-medium">Valor: {Array.isArray(valor) ? valor[0] : (campo.configuracoes?.min || 0)}</span>
                 <span>{campo.configuracoes?.max || 100}</span>
               </div>
             </div>
@@ -821,8 +821,8 @@ export default function NovoFormularioProntuario({
 
       case 'select':
         return (
-          <div key={campo.id}>
-            <Label className="text-base font-medium">
+          <div key={campo.id} className="space-y-2">
+            <Label className="text-sm sm:text-base font-medium">
               {campo.label}
               {campo.obrigatorio && <span className="text-red-500 ml-1">*</span>}
             </Label>
@@ -831,14 +831,14 @@ export default function NovoFormularioProntuario({
               onValueChange={(value) => !isDisabled && onChange(value)}
               disabled={isDisabled}
             >
-              <SelectTrigger className="mt-1">
+              <SelectTrigger className="mt-1 text-sm sm:text-base">
                 <SelectValue 
                   placeholder={isDisabled ? "Campo bloqueado" : "Selecione uma opção"} 
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-60">
                 {(campo.opcoes || []).map((opcao: string) => (
-                  <SelectItem key={opcao} value={opcao}>
+                  <SelectItem key={opcao} value={opcao} className="text-sm sm:text-base">
                     {opcao}
                   </SelectItem>
                 ))}
@@ -891,58 +891,58 @@ export default function NovoFormularioProntuario({
   const ordemSecoes = ['rotina_diaria', 'aspectos_clinicos', 'bem_estar', 'ocorrencias', 'observacoes'];
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-20">
       {/* Header com navegação e status de salvamento */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-4 z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-2 sm:p-4 z-10">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             {onVoltar && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onVoltar}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 sm:gap-2 flex-shrink-0"
               >
                 <Users className="w-4 h-4" />
-                Próximo Residente
+                <span className="hidden sm:inline">Próximo Residente</span>
               </Button>
             )}
-            <div>
-              <h2 className="text-xl font-semibold">Prontuário Diário</h2>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-semibold truncate">Prontuário Diário</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {residenteData?.nome_completo || 'Carregando...'}
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {/* Status de salvamento */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {isSaving && <span>Salvando...</span>}
-              {!isSaving && registroId && <span>✓ Salvo</span>}
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              {isSaving && <span className="hidden sm:inline">Salvando...</span>}
+              {!isSaving && registroId && <span>✓</span>}
             </div>
           </div>
         </div>
       </div>
 
       {/* Identificação do Idoso */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="w-5 h-5" />
+      <Card className="mx-2 sm:mx-0">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <User className="w-4 h-4 sm:w-5 sm:h-5" />
             Identificação do Idoso
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           <div>
-            <Label>Nome completo</Label>
-            <div className="mt-1 p-3 bg-muted rounded-md text-sm">
+            <Label className="text-sm font-medium">Nome completo</Label>
+            <div className="mt-1 p-2 sm:p-3 bg-muted rounded-md text-xs sm:text-sm break-words">
               {residenteData?.nome_completo || 'Carregando...'}
             </div>
           </div>
           <div>
-            <Label>Data de nascimento</Label>
-            <div className="mt-1 p-3 bg-muted rounded-md text-sm">
+            <Label className="text-sm font-medium">Data de nascimento</Label>
+            <div className="mt-1 p-2 sm:p-3 bg-muted rounded-md text-xs sm:text-sm">
               {residenteData?.data_nascimento ? 
                 new Date(residenteData.data_nascimento).toLocaleDateString('pt-BR') : 
                 'Carregando...'}
@@ -960,24 +960,24 @@ export default function NovoFormularioProntuario({
       </Card>
 
       {/* Histórico de Saúde */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Heart className="w-5 h-5" />
+      <Card className="mx-2 sm:mx-0">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
             Histórico de Saúde
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           <div>
-            <Label className="text-base font-medium">Condições médicas</Label>
-            <div className="mt-3 p-3 bg-muted rounded-md text-sm">
+            <Label className="text-sm sm:text-base font-medium">Condições médicas</Label>
+            <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-muted rounded-md text-xs sm:text-sm break-words">
               {residenteData?.condicoes_medicas || 'Nenhuma condição médica cadastrada'}
             </div>
           </div>
           
           <div>
-            <Label className="text-base font-medium">Observações gerais do histórico</Label>
-            <div className="mt-3 p-3 bg-muted rounded-md text-sm">
+            <Label className="text-sm sm:text-base font-medium">Observações gerais do histórico</Label>
+            <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-muted rounded-md text-xs sm:text-sm break-words">
               {residenteData?.observacoes_gerais || 'Nenhuma observação cadastrada'}
             </div>
           </div>
@@ -996,14 +996,14 @@ export default function NovoFormularioProntuario({
             console.log(`🔄 Renderizando seção: ${titulo} com ${campos.length} campos`);
             
             return (
-              <Card key={secao}>
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icone className="w-5 h-5" />
+              <Card key={secao} className="mx-2 sm:mx-0">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Icone className="w-4 h-4 sm:w-5 sm:h-5" />
                     {titulo}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 sm:space-y-6">
                   {campos
                     .sort((a: any, b: any) => a.ordem - b.ordem)
                     .map((campo: any) => {
@@ -1021,11 +1021,11 @@ export default function NovoFormularioProntuario({
             );
           })
       ) : (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">Configuração não encontrada</h3>
-            <p className="text-muted-foreground">
+        <Card className="mx-2 sm:mx-0">
+          <CardContent className="p-6 sm:p-8 text-center">
+            <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-base sm:text-lg font-medium mb-2">Configuração não encontrada</h3>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Nenhum campo foi configurado para o formulário. 
               Acesse a configuração do formulário para adicionar campos.
             </p>
@@ -1035,10 +1035,10 @@ export default function NovoFormularioProntuario({
 
       {/* Aviso de prontuário finalizado */}
       {prontuarioJaFinalizado && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-4 mx-2 sm:mx-0">
           <div className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-green-800 font-medium">
+            <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+            <p className="text-xs sm:text-sm text-green-800 font-medium">
               Este prontuário foi finalizado e não pode mais ser editado. 
               A edição será liberada no próximo ciclo diário.
             </p>
@@ -1047,14 +1047,14 @@ export default function NovoFormularioProntuario({
       )}
 
       {/* Botão de finalizar fixo na parte inferior */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-4">
-        <div className="flex gap-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-3 sm:p-4 safe-area-pb">
+        <div className="flex gap-2 sm:gap-3 max-w-screen-xl mx-auto">
           {/* Indicador de salvamento e botão de salvar manual */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
             {isSaving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                <span>Salvando...</span>
+                <span className="hidden sm:inline">Salvando...</span>
               </>
             ) : !prontuarioJaFinalizado ? (
               <Button 
@@ -1062,9 +1062,10 @@ export default function NovoFormularioProntuario({
                 size="sm"
                 onClick={() => saveFormData(true)}
                 disabled={loading || !cicloId}
+                className="h-10 sm:h-auto"
               >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
+                <Save className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Salvar</span>
               </Button>
             ) : null}
           </div>
@@ -1074,7 +1075,7 @@ export default function NovoFormularioProntuario({
               <Button 
                 onClick={handleFinalizarClick}
                 disabled={isFinalizando || loading || prontuarioJaFinalizado}
-                className={`flex-1 h-12 text-lg font-semibold ${
+                className={`flex-1 h-10 sm:h-12 text-sm sm:text-lg font-semibold ${
                   prontuarioJaFinalizado ? 'bg-green-600 hover:bg-green-700' : ''
                 }`}
                 size="lg"
@@ -1086,13 +1087,15 @@ export default function NovoFormularioProntuario({
                   "Finalizando..."
                 ) : prontuarioJaFinalizado ? (
                   <>
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Prontuário Finalizado
+                    <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                    <span className="hidden sm:inline">Prontuário Finalizado</span>
+                    <span className="sm:hidden">Finalizado</span>
                   </>
                 ) : (
                   <>
-                    <Shield className="w-5 h-5 mr-2" />
-                    Finalizar Prontuário
+                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                    <span className="hidden sm:inline">Finalizar Prontuário</span>
+                    <span className="sm:hidden">Finalizar</span>
                   </>
                 )}
               </Button>

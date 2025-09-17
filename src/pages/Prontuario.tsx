@@ -289,18 +289,19 @@ export default function Prontuario() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-50">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-2 sm:px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="flex-shrink-0">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <div>
-                <h1 className="text-xl font-bold flex items-center gap-2">
-                  <FileHeart className="w-6 h-6 text-primary" />
-                  Prontuário Eletrônico
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-xl font-bold flex items-center gap-2 truncate">
+                  <FileHeart className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+                  <span className="hidden sm:inline">Prontuário Eletrônico</span>
+                  <span className="sm:hidden">Prontuário</span>
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   {funcionarioNome}
                 </p>
               </div>
@@ -309,13 +310,13 @@ export default function Prontuario() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
         {!selectedResidente ? (
-          <div className="space-y-6">
-            <div className="text-center">
-              <UserPlus className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">Selecione um residente</h2>
-              <p className="text-muted-foreground">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="text-center px-4">
+              <UserPlus className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl sm:text-2xl font-semibold mb-2">Selecione um residente</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Escolha o residente para preencher o prontuário diário
               </p>
             </div>
@@ -327,7 +328,7 @@ export default function Prontuario() {
                 </Button>
               </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-6xl mx-auto">
                 {residentes.map((residente) => {
                   const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null, progresso: 0 };
                   const isDisabled = isButtonDisabled(statusInfo.status);
@@ -342,10 +343,10 @@ export default function Prontuario() {
                     <div
                       key={residente.id}
                       onClick={() => !isDisabled && setSelectedResidente(residente.id)}
-                      className={`p-4 bg-white rounded-lg border border-gray-200 transition-all ${
+                      className={`p-3 sm:p-4 bg-white rounded-lg border border-gray-200 transition-all ${
                         isDisabled 
                           ? 'cursor-not-allowed opacity-70' 
-                          : 'hover:border-primary hover:shadow-md cursor-pointer'
+                          : 'hover:border-primary hover:shadow-md cursor-pointer active:scale-95'
                       } group`}
                     >
                       {/* Data do dia */}
