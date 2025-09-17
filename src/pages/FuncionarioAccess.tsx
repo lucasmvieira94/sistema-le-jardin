@@ -106,18 +106,6 @@ export default function FuncionarioAccess() {
             <p className="text-sm sm:text-base text-gray-600 mb-4 px-2">
               Acesse o registro de ponto e prontuário eletrônico
             </p>
-            
-            {/* Botão de Acesso Administrativo - Proeminente */}
-            <div className="mb-4">
-              <Button
-                onClick={navigateToAuth}
-                variant="outline"
-                className="px-4 sm:px-6 py-2 text-sm sm:text-base border-green-700 text-green-700 hover:bg-green-700 hover:text-white transition-colors"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Acesso Administrativo
-              </Button>
-            </div>
           </div>
           
           <div className="text-center mb-4 sm:mb-6">
@@ -137,6 +125,18 @@ export default function FuncionarioAccess() {
           </div>
           
           <CodigoFuncionarioInput onFuncionarioValidado={handleFuncionarioValidado} />
+          
+          {/* Botão de Acesso Administrativo */}
+          <div className="mt-6 text-center">
+            <Button
+              onClick={navigateToAuth}
+              variant="outline"
+              className="px-4 sm:px-6 py-2 text-sm sm:text-base border-green-700 text-green-700 hover:bg-green-700 hover:text-white transition-colors"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Acesso Administrativo
+            </Button>
+          </div>
         </div>
       </div>
     );
