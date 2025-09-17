@@ -903,8 +903,8 @@ export default function NovoFormularioProntuario({
                 onClick={onVoltar}
                 className="flex items-center gap-2"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Voltar
+                <Users className="w-4 h-4" />
+                Próximo Residente
               </Button>
             )}
             <div>
