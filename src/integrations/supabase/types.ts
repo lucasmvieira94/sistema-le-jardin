@@ -560,7 +560,7 @@ export type Database = {
           data_inicio_vigencia: string
           data_nascimento: string
           email: string
-          escala_id: number
+          escala_id: number | null
           funcao: string
           id: string
           nome_completo: string
@@ -576,7 +576,7 @@ export type Database = {
           data_inicio_vigencia: string
           data_nascimento: string
           email: string
-          escala_id: number
+          escala_id?: number | null
           funcao: string
           id?: string
           nome_completo: string
@@ -592,7 +592,7 @@ export type Database = {
           data_inicio_vigencia?: string
           data_nascimento?: string
           email?: string
-          escala_id?: number
+          escala_id?: number | null
           funcao?: string
           id?: string
           nome_completo?: string
