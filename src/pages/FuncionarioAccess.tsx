@@ -189,9 +189,6 @@ export default function FuncionarioAccess() {
 
         {/* Seleção de funcionalidade */}
         <div className="space-y-4">
-          <h2 className="text-lg sm:text-xl font-semibold text-center text-gray-800 mb-4 sm:mb-6 px-2">
-            Escolha a funcionalidade que deseja acessar:
-          </h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Registro de Ponto */}
