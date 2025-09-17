@@ -12,9 +12,11 @@ type Escala = {
 export default function EscalaSelect({
   control,
   escalas,
+  required = true,
 }: {
   control: any;
   escalas: Escala[];
+  required?: boolean;
 }) {
   return (
     <FormField
@@ -23,12 +25,12 @@ export default function EscalaSelect({
       render={({ field }) => (
         <FormItem>
           <FormLabel>Escala</FormLabel>
-          <Select
-            onValueChange={field.onChange}
-            value={field.value}
-            defaultValue={field.value}
-            required
-          >
+            <Select
+              onValueChange={field.onChange}
+              value={field.value}
+              defaultValue={field.value}
+              required={required}
+            >
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma escala" />
             </SelectTrigger>

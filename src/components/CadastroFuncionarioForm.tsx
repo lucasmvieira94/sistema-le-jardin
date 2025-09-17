@@ -79,6 +79,17 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
     fetchEscalas();
   }, []);
 
+  // Limpar valores de escala quando registra_ponto for desabilitado
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "registra_ponto" && !value.registra_ponto) {
+        form.setValue("escala_id", "");
+        form.setValue("data_inicio_vigencia", "");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   async function geraCodigoUnico() {
     let codigo;
     let existe = true;
@@ -115,6 +126,13 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
 
       if (!validateEmail(values.email)) {
         toast({ variant: "destructive", title: "Email inválido" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validar escala apenas se o funcionário registra ponto
+      if (values.registra_ponto && (!values.escala_id || values.escala_id === "")) {
+        toast({ variant: "destructive", title: "Escala é obrigatória para funcionários que registram ponto" });
         setIsSubmitting(false);
         return;
       }
@@ -242,7 +260,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
           {form.watch("registra_ponto") && (
             <>
-              <EscalaSelect control={form.control} escalas={escalas} />
+              <EscalaSelect control={form.control} escalas={escalas} required={true} />
               <DataInput 
                 control={form.control} 
                 name="data_inicio_vigencia" 
