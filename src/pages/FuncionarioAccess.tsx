@@ -32,7 +32,9 @@ export default function FuncionarioAccess() {
         const { data, error } = await supabase
           .from('configuracoes_empresa')
           .select('nome_empresa, logo_url')
-          .single();
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
         if (error) {
           console.error('Erro ao buscar configurações da empresa:', error);

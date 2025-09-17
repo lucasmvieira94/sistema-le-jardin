@@ -180,9 +180,10 @@ export default function ProntuarioRegistrosForm({
     try {
       setSaving(true);
       
-      // Marcar início efetivo do ciclo se ainda não foi marcado
+      // CRÍTICO: Garantir que o ciclo seja iniciado antes de salvar qualquer registro
       if (!ciclo.data_inicio_efetivo && ciclo.status === 'nao_iniciado') {
-        await supabase
+        console.log('🚀 Iniciando ciclo não iniciado antes do salvamento...');
+        const { error: inicioError } = await supabase
           .from('prontuario_ciclos')
           .update({
             status: 'em_andamento',
@@ -191,6 +192,12 @@ export default function ProntuarioRegistrosForm({
           })
           .eq('id', ciclo.id);
         
+        if (inicioError) {
+          console.error('❌ Erro ao iniciar ciclo:', inicioError);
+          throw inicioError;
+        }
+        
+        console.log('✅ Ciclo iniciado automaticamente');
         onUpdate(); // Atualizar o estado do ciclo
       }
 
@@ -205,7 +212,20 @@ export default function ProntuarioRegistrosForm({
         })
         .eq('id', registroId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao salvar registro:', {
+          error,
+          registroId,
+          cicloId: ciclo.id,
+          funcionarioId
+        });
+        throw error;
+      }
+
+      console.log('✅ Registro salvo com sucesso:', {
+        registroId,
+        cicloId: ciclo.id
+      });
 
       toast({
         title: "Sucesso",

@@ -281,7 +281,7 @@ export default function NovoFormularioProntuario({
                 .eq('tipo_registro', 'prontuario_completo')
                 .order('created_at', { ascending: false })
                 .limit(1)
-                .single();
+                .maybeSingle();
 
               if (registroExistente) {
                 setRegistroId(registroExistente.id);
@@ -419,7 +419,7 @@ export default function NovoFormularioProntuario({
     if (prontuarioJaFinalizado || !cicloId) return; // Não salvar se finalizado ou sem ciclo
     
     const timer = setTimeout(() => {
-      // Verificar se há dados preenchidos significativos para salvar
+      // Melhorar a verificação de dados preenchidos para auto-save
       const hasSignificantData = Object.keys(watchedValues).some(key => {
         const value = watchedValues[key as keyof FormularioData];
         
@@ -438,14 +438,13 @@ export default function NovoFormularioProntuario({
         // Para strings, verificar se não está vazia
         if (typeof value === 'string') return value.trim() !== '';
         
-        // Para números, verificar se é maior que 0 (exceto para alguns campos específicos)
-        if (typeof value === 'number') {
-          // Dor pode ser 0, então não usar essa validação para ela
-          if (key === 'dor') return true;
-          return value > 0;
-        }
+        // Para números, aceitar qualquer valor válido (incluindo 0)
+        if (typeof value === 'number') return !isNaN(value) && isFinite(value);
         
-        return value != null;
+        // Para booleans, aceitar qualquer valor
+        if (typeof value === 'boolean') return true;
+        
+        return value != null && value !== undefined;
       });
       
       // Só salvar se há dados significativos
@@ -462,6 +461,26 @@ export default function NovoFormularioProntuario({
     
     setIsSaving(true);
     try {
+      // CRÍTICO: Garantir que o ciclo seja iniciado antes de salvar
+      if (cicloStatus === 'nao_iniciado') {
+        console.log('🚀 Iniciando ciclo antes do salvamento...');
+        const { error: inicioError } = await supabase
+          .from('prontuario_ciclos')
+          .update({
+            status: 'em_andamento',
+            data_inicio_efetivo: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', cicloId);
+          
+        if (inicioError) {
+          console.error('❌ Erro ao iniciar ciclo:', inicioError);
+          throw inicioError;
+        }
+        
+        setCicloStatus('em_andamento');
+        console.log('✅ Ciclo iniciado com sucesso');
+      }
       // Verificar se já existe um registro do tipo prontuario_completo para este ciclo
       if (!registroId) {
         const { data: existingRecord } = await supabase
@@ -471,25 +490,39 @@ export default function NovoFormularioProntuario({
           .eq('tipo_registro', 'prontuario_completo')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
         
         if (existingRecord) {
           setRegistroId(existingRecord.id);
         }
       }
 
-      // Verificar se há dados significativos preenchidos
+      // Melhorar a validação de dados significativos
       const hasSignificantData = Object.keys(watchedValues).some(key => {
         const value = watchedValues[key as keyof FormularioData];
+        
+        // Para medicações, verificar se há dados reais
         if (key === 'medicacoes') {
           return Array.isArray(value) && value.some((med: any) => 
             med.nome?.trim() || med.dosagem?.trim() || (med.horarios && med.horarios.length > 0)
           );
         }
-        if (Array.isArray(value)) return value.length > 0 && value.some(v => v?.toString().trim());
+        
+        // Para arrays, verificar se há itens válidos
+        if (Array.isArray(value)) {
+          return value.length > 0 && value.some(v => v?.toString().trim());
+        }
+        
+        // Para strings, verificar se não está vazia
         if (typeof value === 'string') return value.trim() !== '';
-        if (typeof value === 'number') return value > 0;
-        return value != null;
+        
+        // Para números, aceitar qualquer valor válido (incluindo 0)
+        if (typeof value === 'number') return !isNaN(value) && isFinite(value);
+        
+        // Para booleans, aceitar qualquer valor
+        if (typeof value === 'boolean') return true;
+        
+        return value != null && value !== undefined;
       });
 
       const formData = {
@@ -504,19 +537,40 @@ export default function NovoFormularioProntuario({
         observacoes: watchedValues.observacoes_gerais || ''
       };
 
+      // Melhorar logging do formData
+      console.log('📝 Salvando com dados:', {
+        cicloId,
+        registroId,
+        funcionarioId,
+        residenteId,
+        hasSignificantData,
+        status: cicloStatus
+      });
+
       let savedData = null;
       if (registroId) {
+        console.log('🔄 Atualizando registro existente...');
         const { data, error } = await supabase
           .from('prontuario_registros')
           .update(formData)
           .eq('id', registroId)
           .select()
-          .single();
+          .maybeSingle();
         
         if (error) {
-          console.error('Erro ao atualizar prontuário:', error);
+          console.error('❌ Erro ao atualizar prontuário existente:', {
+            error,
+            registroId,
+            cicloId,
+            funcionarioId
+          });
           throw error;
         }
+        
+        console.log('✅ Prontuário atualizado com sucesso:', {
+          registroId,
+          cicloId
+        });
         
         savedData = data;
         
@@ -527,16 +581,27 @@ export default function NovoFormularioProntuario({
           });
         }
       } else {
+        console.log('➕ Criando novo registro...');
         const { data, error } = await supabase
           .from('prontuario_registros')
           .insert(formData)
           .select()
-          .single();
+          .maybeSingle();
         
         if (error) {
-          console.error('Erro ao inserir prontuário:', error);
+          console.error('❌ Erro ao inserir novo prontuário:', {
+            error,
+            cicloId,
+            funcionarioId,
+            residenteId
+          });
           throw error;
         }
+        
+        console.log('✅ Novo prontuário criado com sucesso:', {
+          registroId: data?.id,
+          cicloId
+        });
         
         setRegistroId(data.id);
         savedData = data;
@@ -569,10 +634,17 @@ export default function NovoFormularioProntuario({
       }
       
     } catch (error) {
-      console.error('Erro ao salvar prontuário:', error);
+      console.error('❌ Erro completo ao salvar prontuário:', {
+        error,
+        message: error?.message || 'Erro desconhecido',
+        cicloId,
+        registroId,
+        funcionarioId,
+        residenteId
+      });
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar o prontuário. Tente novamente.",
+        description: `Falha no salvamento: ${error?.message || 'Erro desconhecido'}. Tente novamente.`,
         variant: "destructive",
       });
     } finally {
