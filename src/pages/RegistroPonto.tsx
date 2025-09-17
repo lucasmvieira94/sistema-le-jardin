@@ -99,85 +99,97 @@ export default function RegistroPonto() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="container mx-auto max-w-md">
-        <div className="bg-white rounded-2xl p-6 shadow-xl space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md mx-auto">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
           {/* Header com botão voltar */}
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="sm" onClick={handleVoltar}>
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={handleVoltar} className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground font-medium">
               {funcionarioNome.split(' ')[0]}
             </div>
           </div>
 
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-primary">Registro de Ponto</h1>
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <CalendarRange className="w-4 h-4" />
-              <span>{currentTime.toLocaleDateString('pt-BR', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}</span>
-            </div>
-            <div className="text-lg font-medium">
-              {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
+          {/* Header da página */}
+          <div className="text-center space-y-3">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Registro de Ponto</h1>
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <CalendarRange className="w-4 h-4" />
+                <span className="capitalize">{currentTime.toLocaleDateString('pt-BR', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}</span>
+              </div>
+              <div className="text-2xl md:text-3xl font-mono font-bold text-primary">
+                {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
+              </div>
             </div>
           </div>
 
-          <BotoesRegistroPonto
-            funcionarioId={funcionarioId}
-            funcionarioNome={funcionarioNome}
-            latitude={latitude}
-            longitude={longitude}
-            onRegistroRealizado={handleRegistroRealizado}
-          />
+          {/* Botões de registro */}
+          <div className="space-y-4">
+            <BotoesRegistroPonto
+              funcionarioId={funcionarioId}
+              funcionarioNome={funcionarioNome}
+              latitude={latitude}
+              longitude={longitude}
+              onRegistroRealizado={handleRegistroRealizado}
+            />
+          </div>
 
-              {registrosHoje.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-muted-foreground">Registros de hoje</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={carregarRegistrosHoje}
-                      disabled={atualizando}
-                    >
-                      <RefreshCw className={`w-4 h-4 ${atualizando ? 'animate-spin' : ''}`} />
-                    </Button>
-                  </div>
-                  <div className="bg-green-50 rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-xs font-medium text-muted-foreground bg-green-100">
-                          <th className="py-2 px-3">Horário</th>
-                          <th className="py-2 px-3">Tipo</th>
+          {/* Registros de hoje */}
+          {registrosHoje.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-foreground">Registros de hoje</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={carregarRegistrosHoje}
+                  disabled={atualizando}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className={`w-4 h-4 ${atualizando ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl overflow-hidden border border-green-100">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-xs font-medium text-muted-foreground bg-gradient-to-r from-green-100 to-emerald-100">
+                        <th className="py-3 px-4 font-semibold">Horário</th>
+                        <th className="py-3 px-4 font-semibold">Tipo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registrosHoje.map((registro, index) => (
+                        <tr key={index} className="border-t border-green-200/50 hover:bg-green-50/50 transition-colors">
+                          <td className="py-3 px-4 font-mono text-sm font-semibold text-primary">{registro.horario}</td>
+                          <td className="py-3 px-4 text-sm text-foreground">{registro.tipo}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {registrosHoje.map((registro, index) => (
-                          <tr key={index} className="border-t border-green-200">
-                            <td className="py-2 px-3 font-mono text-sm">{registro.horario}</td>
-                            <td className="py-2 px-3 text-sm">{registro.tipo}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-          <div className="space-y-3">
+          {/* Botão Prontuário */}
+          <div className="pt-4 border-t border-border">
             <Link 
               to={`/prontuario?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`}
-              className="w-full"
+              className="block"
             >
-              <Button variant="default" className="w-full flex items-center gap-2">
-                <FileHeart className="w-4 h-4" />
+              <Button variant="secondary" className="w-full flex items-center justify-center gap-2 h-12 text-base font-semibold">
+                <FileHeart className="w-5 h-5" />
                 Acessar Prontuário Eletrônico
               </Button>
             </Link>
