@@ -136,180 +136,37 @@ export default function NovoFormularioProntuario({
           setResidenteData(residenteData);
         }
 
-        // Se já temos o status do ciclo passado pela prop, usá-lo
-        if (cicloStatusProp && cicloStatusProp !== 'nao_iniciado') {
-          setCicloStatus(cicloStatusProp);
+        // Verificar se já existe prontuário para hoje
+        const { data: verificacao, error: verificacaoError } = await supabase
+          .rpc('verificar_prontuario_diario_existente', { 
+            p_residente_id: residenteId 
+          });
+
+        if (verificacaoError) {
+          console.error('Erro ao verificar prontuário:', verificacaoError);
+          return;
+        }
+
+        const cicloExistente = verificacao?.[0];
+        
+        if (cicloExistente?.ja_iniciado) {
+          setCicloId(cicloExistente.ciclo_id);
+          setCicloStatus(cicloExistente.status);
           
-          if (cicloStatusProp === 'encerrado') {
+          if (cicloExistente.status === 'encerrado') {
             setProntuarioJaFinalizado(true);
             toast({
               title: "Prontuário já finalizado",
               description: "Este prontuário já foi finalizado hoje.",
               variant: "default",
             });
-          } else if (cicloStatusProp === 'completo') {
+          } else if (cicloExistente.status === 'completo') {
             toast({
               title: "Prontuário completo",
-              description: "Prontuário preenchido e pronto para finalização.",
+              description: "Prontuário pronto para finalização.",
             });
-          } else {
-            toast({
-              title: "Prontuário em andamento",
-              description: "Continuando o prontuário de hoje...",
-            });
-          }
-
-          // Buscar ciclo existente
-          const { data: verificacao, error: verificacaoError } = await supabase
-            .rpc('verificar_prontuario_diario_existente', { 
-              p_residente_id: residenteId 
-            });
-
-          if (!verificacaoError && verificacao?.[0]?.ja_iniciado) {
-            const cicloExistente = verificacao[0];
-            setCicloId(cicloExistente.ciclo_id);
-
-            // Carregar dados existentes do prontuário
-            const { data: registroExistente } = await supabase
-              .from('prontuario_registros')
-              .select('*')
-              .eq('ciclo_id', cicloExistente.ciclo_id)
-              .eq('tipo_registro', 'prontuario_completo')
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-
-            if (registroExistente) {
-              setRegistroId(registroExistente.id);
-              try {
-                const dadosExistentes = JSON.parse(registroExistente.descricao);
-                Object.keys(dadosExistentes).forEach(key => {
-                  setValue(key as keyof FormularioData, dadosExistentes[key]);
-                });
-              } catch (e) {
-                console.error('Erro ao carregar dados do prontuário:', e);
-              }
-            }
-          }
-        } else {
-          // Verificar se já existe prontuário para hoje
-          const { data: verificacao, error: verificacaoError } = await supabase
-            .rpc('verificar_prontuario_diario_existente', { 
-              p_residente_id: residenteId 
-            });
-
-          if (verificacaoError) {
-            console.error('Erro ao verificar prontuário:', verificacaoError);
-            return;
-          }
-
-          const cicloExistente = verificacao?.[0];
-          
-          if (cicloExistente?.ja_iniciado) {
-            setCicloId(cicloExistente.ciclo_id);
-            setCicloStatus(cicloExistente.status);
-            
-            if (cicloExistente.status === 'encerrado') {
-              setProntuarioJaFinalizado(true);
-              toast({
-                title: "Prontuário já finalizado",
-                description: "Este prontuário já foi finalizado hoje.",
-                variant: "default",
-              });
-            } else if (cicloExistente.status === 'completo') {
-              toast({
-                title: "Prontuário completo",
-                description: "Prontuário pronto para finalização.",
-              });
-            } else if (cicloExistente.status === 'nao_iniciado') {
-              // Iniciar o prontuário automaticamente
-              const { data: novoCiclo, error: cicloError } = await supabase
-                .rpc('iniciar_prontuario_diario', {
-                  p_residente_id: residenteId,
-                  p_funcionario_id: funcionarioId
-                });
-
-              if (cicloError) {
-                console.error('Erro ao iniciar prontuário:', cicloError);
-                toast({
-                  title: "Erro ao iniciar prontuário",
-                  description: "Não foi possível iniciar o prontuário diário.",
-                  variant: "destructive",
-                });
-                return;
-              }
-
-              const resultado = novoCiclo?.[0];
-              if (resultado?.success) {
-                setCicloId(resultado.ciclo_id);
-                setCicloStatus('em_andamento');
-                
-                // Marcar início efetivo no banco
-                await supabase
-                  .from('prontuario_ciclos')
-                  .update({
-                    status: 'em_andamento',
-                    data_inicio_efetivo: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('id', resultado.ciclo_id);
-                
-                // Atualizar o status imediatamente
-                onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
-                
-                toast({
-                  title: "Prontuário iniciado",
-                  description: resultado.message,
-                });
-              }
-            } else {
-              const statusMsg = cicloExistente.status === 'completo' 
-                ? "Continuando prontuário completo..."
-                : "Continuando o prontuário de hoje...";
-              toast({
-                title: "Prontuário em andamento",
-                description: statusMsg,
-              });
-            }
-
-            // Carregar dados existentes do prontuário se não for nao_iniciado
-            if (cicloExistente.status !== 'nao_iniciado') {
-              const { data: registroExistente } = await supabase
-                .from('prontuario_registros')
-                .select('*')
-                .eq('ciclo_id', cicloExistente.ciclo_id)
-                .eq('tipo_registro', 'prontuario_completo')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              if (registroExistente) {
-                setRegistroId(registroExistente.id);
-                try {
-                  const dadosExistentes = JSON.parse(registroExistente.descricao);
-                  Object.keys(dadosExistentes).forEach(key => {
-                    setValue(key as keyof FormularioData, dadosExistentes[key]);
-                  });
-                  
-                  // Garantir que o status do ciclo seja preservado
-                  const { error: preserveStatusError } = await supabase
-                    .from('prontuario_ciclos')
-                    .update({
-                      status: cicloExistente.status,
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('id', cicloExistente.ciclo_id);
-                  
-                  if (!preserveStatusError) {
-                    onStatusChange?.(residenteId, cicloExistente.status, cicloExistente.ciclo_id);
-                  }
-                } catch (e) {
-                  console.error('Erro ao carregar dados do prontuário:', e);
-                }
-              }
-            }
-          } else {
-            // Iniciar novo prontuário
+          } else if (cicloExistente.status === 'nao_iniciado') {
+            // Iniciar o prontuário automaticamente
             const { data: novoCiclo, error: cicloError } = await supabase
               .rpc('iniciar_prontuario_diario', {
                 p_residente_id: residenteId,
@@ -349,6 +206,92 @@ export default function NovoFormularioProntuario({
                 description: resultado.message,
               });
             }
+          } else {
+            const statusMsg = cicloExistente.status === 'completo' 
+              ? "Continuando prontuário completo..."
+              : "Continuando o prontuário de hoje...";
+            toast({
+              title: "Prontuário em andamento",
+              description: statusMsg,
+            });
+          }
+
+          // Carregar dados existentes do prontuário se não for nao_iniciado
+          if (cicloExistente.status !== 'nao_iniciado') {
+            const { data: registroExistente } = await supabase
+              .from('prontuario_registros')
+              .select('*')
+              .eq('ciclo_id', cicloExistente.ciclo_id)
+              .eq('tipo_registro', 'prontuario_completo')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (registroExistente) {
+              setRegistroId(registroExistente.id);
+              try {
+                const dadosExistentes = JSON.parse(registroExistente.descricao);
+                Object.keys(dadosExistentes).forEach(key => {
+                  setValue(key as keyof FormularioData, dadosExistentes[key]);
+                });
+                
+                // Garantir que o status do ciclo seja preservado
+                const { error: preserveStatusError } = await supabase
+                  .from('prontuario_ciclos')
+                  .update({
+                    status: cicloExistente.status,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('id', cicloExistente.ciclo_id);
+                
+                if (!preserveStatusError) {
+                  onStatusChange?.(residenteId, cicloExistente.status, cicloExistente.ciclo_id);
+                }
+              } catch (e) {
+                console.error('Erro ao carregar dados do prontuário:', e);
+              }
+            }
+          }
+        } else {
+          // Iniciar novo prontuário
+          const { data: novoCiclo, error: cicloError } = await supabase
+            .rpc('iniciar_prontuario_diario', {
+              p_residente_id: residenteId,
+              p_funcionario_id: funcionarioId
+            });
+
+          if (cicloError) {
+            console.error('Erro ao iniciar prontuário:', cicloError);
+            toast({
+              title: "Erro ao iniciar prontuário",
+              description: "Não foi possível iniciar o prontuário diário.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const resultado = novoCiclo?.[0];
+          if (resultado?.success) {
+            setCicloId(resultado.ciclo_id);
+            setCicloStatus('em_andamento');
+            
+            // Marcar início efetivo no banco
+            await supabase
+              .from('prontuario_ciclos')
+              .update({
+                status: 'em_andamento',
+                data_inicio_efetivo: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', resultado.ciclo_id);
+            
+            // Atualizar o status imediatamente
+            onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
+            
+            toast({
+              title: "Prontuário iniciado",
+              description: resultado.message,
+            });
           }
         }
 
@@ -365,7 +308,20 @@ export default function NovoFormularioProntuario({
     };
 
     inicializarProntuario();
-  }, [residenteId, funcionarioId, cicloStatusProp]);
+  }, [residenteId, funcionarioId]); // Removido cicloStatusProp para evitar re-inicialização desnecessária
+
+  // UseEffect separado para atualizar status quando a prop muda
+  useEffect(() => {
+    if (cicloStatusProp) {
+      setCicloStatus(cicloStatusProp);
+      
+      if (cicloStatusProp === 'encerrado') {
+        setProntuarioJaFinalizado(true);
+      } else {
+        setProntuarioJaFinalizado(false);
+      }
+    }
+  }, [cicloStatusProp]);
 
   // Buscar lista de residentes para o dropdown
   useEffect(() => {
@@ -416,7 +372,7 @@ export default function NovoFormularioProntuario({
 
   // Auto-save functionality melhorado - mais conservador
   useEffect(() => {
-    if (prontuarioJaFinalizado || !cicloId) return;
+    if (prontuarioJaFinalizado || !cicloId || loading) return;
     
     const timer = setTimeout(() => {
       // Verificação mais restritiva para auto-save
@@ -452,7 +408,7 @@ export default function NovoFormularioProntuario({
     }, 5000); // 5 segundos para dar mais tempo ao usuário
 
     return () => clearTimeout(timer);
-  }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus]);
+  }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus, loading]); // Adicionado loading para evitar auto-save durante carregamento
 
   const saveFormData = async (showSuccessToast = false) => {
     if (!cicloId || prontuarioJaFinalizado) {
