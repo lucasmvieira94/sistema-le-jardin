@@ -893,7 +893,7 @@ export default function NovoFormularioProntuario({
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-20">
       {/* Header com navegação e status de salvamento */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-2 sm:p-4 z-10">
+      <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b p-2 sm:p-4 z-50">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             {onVoltar && (
