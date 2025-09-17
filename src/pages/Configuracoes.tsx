@@ -1,5 +1,5 @@
 import { Settings, Save } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { LogotipoEmpresa } from "@/components/configuracoes/LogotipoEmpresa";
 export default function Configuracoes() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const gestaoPermissoesRef = useRef<{ carregarDados?: () => void }>(null);
   const [config, setConfig] = useState({
     nome_empresa: "",
     cnpj: "",
@@ -67,6 +68,11 @@ export default function Configuracoes() {
     }
   };
 
+  const handleConviteEnviado = () => {
+    // Notificar o componente GestaoPermissoes para recarregar os dados
+    if (gestaoPermissoesRef.current?.carregarDados) {
+      gestaoPermissoesRef.current.carregarDados();
+    }
   const salvarConfiguracoes = async () => {
     setSaving(true);
     try {
@@ -262,10 +268,10 @@ export default function Configuracoes() {
         />
 
         {/* Gestão de Permissões */}
-        <GestaoPermissoes />
+        <GestaoPermissoes ref={gestaoPermissoesRef} />
 
         {/* Convite para Gestores */}
-        <ConviteGestor />
+        <ConviteGestor onConviteEnviado={handleConviteEnviado} />
 
         {/* Botão Salvar */}
         <div className="flex justify-end">

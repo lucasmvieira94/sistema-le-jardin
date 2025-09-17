@@ -8,7 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-export function ConviteGestor() {
+interface ConviteGestorProps {
+  onConviteEnviado?: () => void;
+}
+
+export function ConviteGestor({ onConviteEnviado }: ConviteGestorProps) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,6 +61,42 @@ export function ConviteGestor() {
         toast.error(`Email já cadastrado para: ${existingEmail.nome_completo}`);
         return;
       }
+
+      // Verificar se já existe convite pendente para este email
+      const { data: convitePendente } = await supabase
+        .from('convites')
+        .select('id, status')
+        .eq('email', formData.email)
+        .eq('status', 'pendente')
+        .maybeSingle();
+
+      if (convitePendente) {
+        toast.error('Já existe um convite pendente para este email');
+        return;
+      }
+
+      // Gerar token único para o convite
+      const { data: tokenData, error: tokenError } = await supabase
+        .rpc('gerar_token_convite');
+
+      if (tokenError || !tokenData) {
+        throw new Error('Erro ao gerar token de convite');
+      }
+
+      // Criar convite na tabela
+      const { data: novoConvite, error: conviteError } = await supabase
+        .from('convites')
+        .insert({
+          email: formData.email,
+          role: 'admin', // Gestores são admins por padrão
+          token: tokenData,
+          status: 'pendente',
+          enviado_por: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (conviteError) throw conviteError;
 
       // Gerar código único de 4 dígitos
       const gerarCodigoUnico = async (): Promise<string> => {
@@ -123,15 +163,30 @@ export function ConviteGestor() {
           email: formData.email,
           nome: formData.nome_completo,
           funcao: formData.funcao,
-          funcionario_id: funcionario.id
+          funcionario_id: funcionario.id,
+          token: tokenData,
+          conviteId: novoConvite.id
         }
       });
 
-      if (inviteEmailError) throw inviteEmailError;
+      if (inviteEmailError) {
+        // Se falhou ao enviar email, marcar convite como erro
+        await supabase
+          .from('convites')
+          .update({ status: 'erro_envio' })
+          .eq('id', novoConvite.id);
+        
+        throw inviteEmailError;
+      }
 
       toast.success('Convite enviado com sucesso!');
       setFormData({ email: '', nome_completo: '', cpf: '', funcao: 'Gestor' });
       setOpen(false);
+      
+      // Notificar componente pai
+      if (onConviteEnviado) {
+        onConviteEnviado();
+      }
     } catch (error: any) {
       console.error('Erro ao enviar convite:', error);
       

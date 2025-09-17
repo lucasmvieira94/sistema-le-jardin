@@ -298,6 +298,51 @@ export type Database = {
         }
         Relationships: []
       }
+      convites: {
+        Row: {
+          aceito_por: string | null
+          created_at: string
+          data_aceite: string | null
+          data_envio: string
+          data_expiracao: string
+          email: string
+          enviado_por: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          aceito_por?: string | null
+          created_at?: string
+          data_aceite?: string | null
+          data_envio?: string
+          data_expiracao?: string
+          email: string
+          enviado_por: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          aceito_por?: string | null
+          created_at?: string
+          data_aceite?: string | null
+          data_envio?: string
+          data_expiracao?: string
+          email?: string
+          enviado_por?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       entrada_medicamentos: {
         Row: {
           created_at: string | null
@@ -1163,6 +1208,10 @@ export type Database = {
           observacoes: string
           saida: string
         }[]
+      }
+      gerar_token_convite: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
