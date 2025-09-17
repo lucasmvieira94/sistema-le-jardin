@@ -182,17 +182,16 @@ export default function RegistroPonto() {
             </div>
           )}
 
-          {/* Botão Prontuário */}
+          {/* Botão para usar outro código */}
           <div className="pt-4 border-t border-border">
-            <Link 
-              to={`/prontuario?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`}
-              className="block"
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2 h-12 text-base font-semibold"
+              onClick={handleVoltar}
             >
-              <Button variant="secondary" className="w-full flex items-center justify-center gap-2 h-12 text-base font-semibold">
-                <FileHeart className="w-5 h-5" />
-                Acessar Prontuário Eletrônico
-              </Button>
-            </Link>
+              <ArrowLeft className="w-5 h-5" />
+              Usar outro código
+            </Button>
           </div>
         </div>
       </div>
