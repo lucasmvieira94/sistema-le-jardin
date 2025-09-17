@@ -97,7 +97,7 @@ export default function FuncionarioAccess() {
               <img 
                 src={careLogo} 
                 alt="Logo da empresa" 
-                className="w-64 h-64 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-160 lg:h-160 mx-auto mb-3 sm:mb-4 object-contain"
+                className="w-64 h-64 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-160 lg:h-160 mx-auto -mt-2 mb-1 sm:mb-2 object-contain"
               />
             )}
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">
