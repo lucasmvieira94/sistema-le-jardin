@@ -128,6 +128,7 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
         onClick={validarCodigo}
         disabled={codigo.length !== 4 || validando || isBlocked}
         className="w-full"
+        variant="secondary"
         size="lg"
       >
         {validando ? (
