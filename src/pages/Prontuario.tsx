@@ -294,7 +294,7 @@ export default function Prontuario() {
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
+                Voltar à Seleção
               </Button>
               <div>
                 <h1 className="text-xl font-bold flex items-center gap-2">
