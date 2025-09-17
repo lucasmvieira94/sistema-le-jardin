@@ -84,20 +84,20 @@ export default function FuncionarioAccess() {
 
   if (!funcionarioId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-2 sm:p-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-2 sm:p-4">
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 w-full max-w-md">
           <div className="text-center mb-6 sm:mb-8">
             {companyLogo ? (
               <img 
                 src={companyLogo} 
                 alt="Logo da empresa" 
-                className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 mx-auto mb-3 sm:mb-4 object-contain"
+                className="w-64 h-64 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-160 lg:h-160 mx-auto mb-3 sm:mb-4 object-contain"
               />
             ) : (
               <img 
                 src={careLogo} 
                 alt="Logo da empresa" 
-                className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 mx-auto mb-3 sm:mb-4 object-contain"
+                className="w-64 h-64 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-160 lg:h-160 mx-auto mb-3 sm:mb-4 object-contain"
               />
             )}
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">
@@ -112,7 +112,7 @@ export default function FuncionarioAccess() {
               <Button
                 onClick={navigateToAuth}
                 variant="outline"
-                className="px-4 sm:px-6 py-2 text-sm sm:text-base border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                className="px-4 sm:px-6 py-2 text-sm sm:text-base border-green-700 text-green-700 hover:bg-green-700 hover:text-white transition-colors"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Acesso Administrativo
@@ -131,7 +131,7 @@ export default function FuncionarioAccess() {
               })}</span>
             </div>
             <div className="text-base sm:text-lg font-medium flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function FuncionarioAccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-2 sm:p-4">
       <div className="container mx-auto max-w-2xl">
         {/* Header com saudação */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4 sm:mb-6">
@@ -153,17 +153,17 @@ export default function FuncionarioAccess() {
                 <img 
                   src={companyLogo} 
                   alt="Logo da empresa" 
-                  className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 object-contain flex-shrink-0"
+                  className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain flex-shrink-0"
                 />
               ) : (
                 <img 
                   src={careLogo} 
                   alt="Logo da empresa" 
-                  className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 object-contain flex-shrink-0"
+                  className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain flex-shrink-0"
                 />
               )}
               <div className="text-center sm:text-left">
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-primary break-words">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-green-700 break-words">
                   {getGreeting()}, {funcionarioNome.split(' ')[0]}!
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600">Bem-vindo(a) ao sistema</p>
@@ -181,7 +181,7 @@ export default function FuncionarioAccess() {
             </div>
             
             <div className="text-lg sm:text-xl font-medium flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               {formatInTimeZone(currentTime, 'America/Sao_Paulo', 'HH:mm:ss')}
             </div>
           </div>
@@ -196,21 +196,21 @@ export default function FuncionarioAccess() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Registro de Ponto */}
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-300"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
               onClick={navigateToRegistroPonto}
             >
               <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <CalendarRange className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
+                  <CalendarRange className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
                 </div>
-                <CardTitle className="text-green-700 text-base sm:text-lg">Registro de Ponto</CardTitle>
+                <CardTitle className="text-green-800 text-base sm:text-lg">Registro de Ponto</CardTitle>
               </CardHeader>
               <CardContent className="text-center p-4 sm:p-6 pt-0">
                 <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                   Registre entrada, saída e intervalos do seu horário de trabalho
                 </p>
                 <Button 
-                  className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base py-2 sm:py-3"
+                  className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
                   onClick={navigateToRegistroPonto}
                 >
                   Acessar Registro
@@ -220,21 +220,21 @@ export default function FuncionarioAccess() {
 
             {/* Prontuário Eletrônico */}
             <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-blue-300"
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
               onClick={navigateToProntuario}
             >
               <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <FileHeart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <FileHeart className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
                 </div>
-                <CardTitle className="text-blue-700 text-base sm:text-lg">Prontuário Eletrônico</CardTitle>
+                <CardTitle className="text-green-800 text-base sm:text-lg">Prontuário Eletrônico</CardTitle>
               </CardHeader>
               <CardContent className="text-center p-4 sm:p-6 pt-0">
                 <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                   Registre atividades e observações dos residentes
                 </p>
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-2 sm:py-3"
+                  className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
                   onClick={navigateToProntuario}
                 >
                   Acessar Prontuário
@@ -259,7 +259,7 @@ export default function FuncionarioAccess() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-gradient-to-br from-blue-50 to-indigo-100 px-2 text-muted-foreground">
+                <span className="bg-gradient-to-br from-green-50 to-green-100 px-2 text-muted-foreground">
                   ou
                 </span>
               </div>
@@ -269,7 +269,7 @@ export default function FuncionarioAccess() {
             <div className="text-center">
               <Button
                 onClick={navigateToAuth}
-                className="px-6 sm:px-8 bg-primary hover:bg-primary/90 text-sm sm:text-base"
+                className="px-6 sm:px-8 bg-green-700 hover:bg-green-800 text-sm sm:text-base"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Acesso Administrativo
