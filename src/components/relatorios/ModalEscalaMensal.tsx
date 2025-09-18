@@ -101,14 +101,22 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       setLoading(true);
 
       // Buscar configurações da empresa
-      const { data: configEmpresa } = await supabase
+      const { data: configEmpresa, error: configError } = await supabase
         .from("configuracoes_empresa")
         .select("nome_empresa")
+        .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      if (configError) {
+        console.error('Erro ao buscar configurações da empresa:', configError);
+      }
 
       if (configEmpresa) {
         setConfiguracaoEmpresa(configEmpresa);
+      } else {
+        // Se não encontrou configuração, definir um padrão
+        setConfiguracaoEmpresa({ nome_empresa: "Empresa" });
       }
 
       const dataInicio = new Date(selectedYear, selectedMonth - 1, 1);
