@@ -191,28 +191,35 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         columns.push(dia.toString());
       }
       
-      // Preparar linhas da tabela
+      // Preparar linhas da tabela com cores
       const rows = escalaData.map(funcionario => {
         const row = [funcionario.funcionario_nome];
         
         for (let dia = 1; dia <= diasDoMes; dia++) {
           const trabalhaNoDia = funcionario.dias[dia];
-          const escalaMarcacao = trabalhaNoDia ? 
-            `${funcionario.jornada_trabalho.replace('_', ' ').replace('segsex', 'seg-sex')} ${funcionario.horario_entrada.substring(0, 5)}` : 
-            '';
-          row.push(escalaMarcacao);
+          row.push(trabalhaNoDia ? '●' : '');
         }
         
         return row;
       });
+
+      // Função para converter hex para RGB
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+          parseInt(result[1], 16),
+          parseInt(result[2], 16),
+          parseInt(result[3], 16)
+        ] : [255, 255, 255];
+      };
       
-      // Gerar tabela no PDF
+      // Gerar tabela no PDF com cores
       const tableResult = autoTable(doc, {
         head: [columns],
         body: rows,
         startY: 30,
         styles: {
-          fontSize: 6,
+          fontSize: 8,
           cellPadding: 1,
           halign: 'center',
           valign: 'middle'
@@ -220,14 +227,29 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         headStyles: {
           fillColor: [51, 51, 51],
           textColor: [255, 255, 255],
-          fontSize: 7,
+          fontSize: 9,
           fontStyle: 'bold'
         },
         columnStyles: {
           0: { // Coluna do funcionário
             cellWidth: 35,
             halign: 'left',
-            fontSize: 7
+            fontSize: 8
+          }
+        },
+        didParseCell: function(data: any) {
+          // Aplicar cores nas células de dados (não no cabeçalho)
+          if (data.section === 'body' && data.column.index > 0) {
+            const funcionarioIndex = data.row.index;
+            const dia = data.column.index;
+            const funcionario = escalaData[funcionarioIndex];
+            
+            if (funcionario && funcionario.dias[dia]) {
+              const cor = getCorEscala(funcionario.jornada_trabalho, funcionario.horario_entrada);
+              const rgbColor = hexToRgb(cor);
+              data.cell.styles.fillColor = rgbColor;
+              data.cell.styles.textColor = [255, 255, 255]; // Texto branco
+            }
           }
         },
         theme: 'grid',
@@ -235,31 +257,54 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         margin: { left: 10, right: 10 }
       });
       
-      // Adicionar legenda
+      // Adicionar legenda colorida abaixo da tabela
       let yPosition = (doc as any).lastAutoTable.finalY + 15;
       
-      doc.setFontSize(10);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text('Legenda das Escalas:', 20, yPosition);
       
-      yPosition += 8;
-      doc.setFontSize(8);
+      yPosition += 10;
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       
       // Agrupar escalas únicas para a legenda
-      const escalasUnicas = new Set();
+      const escalasUnicas = new Map();
       escalaData.forEach(escala => {
         const chave = `${escala.jornada_trabalho} - ${escala.horario_entrada.substring(0, 5)}`;
-        escalasUnicas.add(chave);
+        const cor = getCorEscala(escala.jornada_trabalho, escala.horario_entrada);
+        escalasUnicas.set(chave, cor);
       });
       
-      Array.from(escalasUnicas).forEach((escala, index) => {
-        if (yPosition > 190) { // Se passar da página, quebrar
+      let xPosition = 20;
+      let coluna = 0;
+      const maxColunas = 3;
+      
+      Array.from(escalasUnicas.entries()).forEach(([escala, cor], index) => {
+        if (yPosition > 185) { // Se passar da página, quebrar
           doc.addPage();
           yPosition = 20;
+          xPosition = 20;
+          coluna = 0;
         }
-        doc.text(`• ${escala}`, 20, yPosition);
-        yPosition += 5;
+        
+        // Desenhar quadrado colorido
+        const rgbColor = hexToRgb(cor);
+        doc.setFillColor(rgbColor[0], rgbColor[1], rgbColor[2]);
+        doc.rect(xPosition, yPosition - 3, 4, 4, 'F');
+        
+        // Adicionar texto da legenda
+        doc.setTextColor(0, 0, 0);
+        doc.text(escala, xPosition + 6, yPosition);
+        
+        coluna++;
+        if (coluna >= maxColunas) {
+          yPosition += 7;
+          xPosition = 20;
+          coluna = 0;
+        } else {
+          xPosition += 85; // Espaçamento entre colunas
+        }
       });
       
       // Salvar o PDF
