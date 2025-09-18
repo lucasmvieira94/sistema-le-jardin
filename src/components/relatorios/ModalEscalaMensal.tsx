@@ -29,6 +29,7 @@ interface EscalaData {
 
 interface ConfiguracaoEmpresa {
   nome_empresa: string;
+  logo_url?: string;
 }
 
 // Cores quentes para escalas até 11:59 AM
@@ -103,7 +104,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       // Buscar configurações da empresa
       const { data: configEmpresa, error: configError } = await supabase
         .from("configuracoes_empresa")
-        .select("nome_empresa")
+        .select("nome_empresa, logo_url")
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -122,14 +123,6 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       const dataInicio = new Date(selectedYear, selectedMonth - 1, 1);
       const diasDoMes = getDaysInMonth(selectedMonth, selectedYear);
       const dataFim = new Date(selectedYear, selectedMonth - 1, diasDoMes);
-      
-      console.log('Debug Escala:', {
-        mes: selectedMonth,
-        ano: selectedYear,
-        diasDoMes: diasDoMes,
-        dataInicio: dataInicio.toISOString().split('T')[0],
-        dataFim: dataFim.toISOString().split('T')[0]
-      });
 
       const escalaPromises = funcionarios.map(async (funcionario) => {
         // Buscar dados do funcionário com escala
@@ -154,17 +147,12 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
 
         const dias: { [key: number]: boolean } = {};
         if (horarios) {
-          console.log(`Debug Horários para ${funcionario.nome_completo}:`, horarios.length, 'registros');
           horarios.forEach((horario: any) => {
             // Usar UTC para evitar problemas de timezone
             const dataHorario = new Date(horario.data + 'T00:00:00Z');
             const dia = dataHorario.getUTCDate();
             dias[dia] = horario.deve_trabalhar;
-            if (dia >= 28) {
-              console.log(`Dia ${dia}: ${horario.data} -> deve_trabalhar: ${horario.deve_trabalhar} (UTC: ${dataHorario.toISOString()})`);
-            }
           });
-          console.log('Dias processados:', Object.keys(dias).map(Number).sort((a, b) => a - b));
         }
 
         return {
@@ -198,13 +186,48 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         format: 'a4'
       });
       
-      // Configurar título
-      const nomeEmpresa = configuracaoEmpresa?.nome_empresa || "Empresa";
-      const titulo = `${nomeEmpresa} - Escala de ${monthNames[selectedMonth - 1]} ${selectedYear}`;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let currentY = 20;
       
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text(titulo, 20, 20);
+      // Configurar título e logo
+      const nomeEmpresa = configuracaoEmpresa?.nome_empresa || "Empresa";
+      const titulo = `Escala de ${monthNames[selectedMonth - 1]} ${selectedYear}`;
+      
+      // Adicionar logo se existir
+      if (configuracaoEmpresa?.logo_url) {
+        try {
+          // Tentar adicionar logo (assumindo que é uma URL válida)
+          doc.addImage(configuracaoEmpresa.logo_url, 'JPEG', 15, 10, 30, 20);
+          // Ajustar posição do título quando há logo
+          doc.setFontSize(16);
+          doc.setFont('helvetica', 'bold');
+          doc.text(nomeEmpresa, 50, 20);
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'normal');
+          doc.text(titulo, 50, 28);
+          currentY = 40;
+        } catch (logoError) {
+          console.warn('Erro ao carregar logo:', logoError);
+          // Fallback sem logo
+          doc.setFontSize(16);
+          doc.setFont('helvetica', 'bold');
+          doc.text(nomeEmpresa, 20, 20);
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'normal');
+          doc.text(titulo, 20, 28);
+          currentY = 35;
+        }
+      } else {
+        // Sem logo
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(nomeEmpresa, 20, 20);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.text(titulo, 20, 28);
+        currentY = 35;
+      }
       
       // Preparar dados da tabela
       const diasDoMes = getDaysInMonth(selectedMonth, selectedYear);
@@ -215,12 +238,11 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         columns.push(dia.toString());
       }
       
-      // Preparar linhas da tabela com cores (sem símbolos)
+      // Preparar linhas da tabela (sem símbolos)
       const rows = escalaData.map(funcionario => {
         const row = [funcionario.funcionario_nome];
         
         for (let dia = 1; dia <= diasDoMes; dia++) {
-          const trabalhaNoDia = funcionario.dias[dia];
           row.push(''); // Célula vazia, cor será aplicada no didParseCell
         }
         
@@ -237,29 +259,47 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         ] : [255, 255, 255];
       };
       
-      // Gerar tabela no PDF com cores
+      // Calcular larguras das colunas
+      const nomeColumnWidth = 50; // Largura fixa para nome
+      const availableWidth = pageWidth - 30 - nomeColumnWidth; // Descontar margens e coluna nome
+      const dayColumnWidth = Math.min(availableWidth / diasDoMes, 8); // Máximo 8mm por dia
+      
+      // Gerar tabela no PDF com células padronizadas
       const tableResult = autoTable(doc, {
         head: [columns],
         body: rows,
-        startY: 30,
+        startY: currentY,
         styles: {
-          fontSize: 8,
+          fontSize: 7,
           cellPadding: 1,
           halign: 'center',
-          valign: 'middle'
+          valign: 'middle',
+          minCellHeight: 6, // Altura mínima padronizada
         },
         headStyles: {
           fillColor: [51, 51, 51],
           textColor: [255, 255, 255],
-          fontSize: 9,
-          fontStyle: 'bold'
+          fontSize: 8,
+          fontStyle: 'bold',
+          minCellHeight: 8,
         },
         columnStyles: {
           0: { // Coluna do funcionário
-            cellWidth: 35,
+            cellWidth: nomeColumnWidth,
             halign: 'left',
-            fontSize: 8
-          }
+            fontSize: 7
+          },
+          // Aplicar largura padrão para todas as colunas de dias
+          ...Object.fromEntries(
+            Array.from({ length: diasDoMes }, (_, i) => [
+              i + 1, 
+              { 
+                cellWidth: dayColumnWidth,
+                halign: 'center',
+                minCellHeight: 6
+              }
+            ])
+          )
         },
         didParseCell: function(data: any) {
           // Aplicar cores nas células de dados (não no cabeçalho)
@@ -278,7 +318,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         },
         theme: 'grid',
         tableWidth: 'auto',
-        margin: { left: 10, right: 10 }
+        margin: { left: 15, right: 15 }
       });
       
       // Adicionar legenda colorida abaixo da tabela
