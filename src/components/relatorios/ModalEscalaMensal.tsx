@@ -88,6 +88,9 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
   ];
 
   const getDaysInMonth = (month: number, year: number) => {
+    // month é 1-indexed (1-12), mas Date() espera 0-indexed (0-11)
+    // new Date(year, month, 0) retorna o último dia do mês anterior
+    // Como estamos passando month (que é 1-12), isso nos dá o último dia do mês atual
     return new Date(year, month, 0).getDate();
   };
 
