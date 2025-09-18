@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 interface Funcionario {
   id: string;
@@ -207,7 +207,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       });
       
       // Gerar tabela no PDF
-      (doc as any).autoTable({
+      const tableResult = autoTable(doc, {
         head: [columns],
         body: rows,
         startY: 30,
