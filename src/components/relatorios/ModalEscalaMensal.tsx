@@ -39,6 +39,16 @@ const coresQuentes = [
   '#d97706', // Âmbar
   '#b91c1c', // Vermelho escuro
   '#ea580c', // Laranja queimado
+  '#fbbf24', // Amarelo dourado
+  '#f59e0b', // Laranja vibrante
+  '#fb923c', // Laranja salmão
+  '#ec4899', // Rosa quente
+  '#e11d48', // Rosa vermelho
+  '#be123c', // Rosa escuro
+  '#a16207', // Amarelo escuro
+  '#92400e', // Bronze
+  '#78350f', // Marrom
+  '#451a03', // Marrom escuro
 ];
 
 // Cores frias para escalas após 12:00 PM
@@ -51,6 +61,18 @@ const coresFrias = [
   '#7c3aed', // Roxo escuro
   '#06b6d4', // Ciano
   '#0891b2', // Ciano escuro
+  '#14b8a6', // Turquesa
+  '#0d9488', // Verde azulado
+  '#065f46', // Verde floresta
+  '#047857', // Verde esmeralda
+  '#4338ca', // Índigo
+  '#3730a3', // Índigo escuro
+  '#1e40af', // Azul royal
+  '#1e3a8a', // Azul marinho
+  '#0369a1', // Azul céu
+  '#0c4a6e', // Azul petróleo
+  '#134e4a', // Verde azul escuro
+  '#064e3b', // Verde escuro profundo
 ];
 
 export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: ModalEscalaMensalProps) {
