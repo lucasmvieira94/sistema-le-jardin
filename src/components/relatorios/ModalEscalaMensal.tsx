@@ -112,7 +112,8 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       }
 
       const dataInicio = new Date(selectedYear, selectedMonth - 1, 1);
-      const dataFim = new Date(selectedYear, selectedMonth - 1, getDaysInMonth(selectedMonth, selectedYear));
+      const diasDoMes = getDaysInMonth(selectedMonth, selectedYear);
+      const dataFim = new Date(selectedYear, selectedMonth - 1, diasDoMes);
 
       const escalaPromises = funcionarios.map(async (funcionario) => {
         // Buscar dados do funcionário com escala
@@ -191,13 +192,13 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         columns.push(dia.toString());
       }
       
-      // Preparar linhas da tabela com cores
+      // Preparar linhas da tabela com cores (sem símbolos)
       const rows = escalaData.map(funcionario => {
         const row = [funcionario.funcionario_nome];
         
         for (let dia = 1; dia <= diasDoMes; dia++) {
           const trabalhaNoDia = funcionario.dias[dia];
-          row.push(trabalhaNoDia ? '●' : '');
+          row.push(''); // Célula vazia, cor será aplicada no didParseCell
         }
         
         return row;
