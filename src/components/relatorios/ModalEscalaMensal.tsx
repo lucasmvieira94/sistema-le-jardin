@@ -156,10 +156,12 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
         if (horarios) {
           console.log(`Debug Horários para ${funcionario.nome_completo}:`, horarios.length, 'registros');
           horarios.forEach((horario: any) => {
-            const dia = new Date(horario.data).getDate();
+            // Usar UTC para evitar problemas de timezone
+            const dataHorario = new Date(horario.data + 'T00:00:00Z');
+            const dia = dataHorario.getUTCDate();
             dias[dia] = horario.deve_trabalhar;
             if (dia >= 28) {
-              console.log(`Dia ${dia}: ${horario.data} -> deve_trabalhar: ${horario.deve_trabalhar}`);
+              console.log(`Dia ${dia}: ${horario.data} -> deve_trabalhar: ${horario.deve_trabalhar} (UTC: ${dataHorario.toISOString()})`);
             }
           });
           console.log('Dias processados:', Object.keys(dias).map(Number).sort((a, b) => a - b));
