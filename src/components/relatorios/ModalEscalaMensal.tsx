@@ -122,6 +122,14 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       const dataInicio = new Date(selectedYear, selectedMonth - 1, 1);
       const diasDoMes = getDaysInMonth(selectedMonth, selectedYear);
       const dataFim = new Date(selectedYear, selectedMonth - 1, diasDoMes);
+      
+      console.log('Debug Escala:', {
+        mes: selectedMonth,
+        ano: selectedYear,
+        diasDoMes: diasDoMes,
+        dataInicio: dataInicio.toISOString().split('T')[0],
+        dataFim: dataFim.toISOString().split('T')[0]
+      });
 
       const escalaPromises = funcionarios.map(async (funcionario) => {
         // Buscar dados do funcionário com escala
@@ -146,10 +154,15 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
 
         const dias: { [key: number]: boolean } = {};
         if (horarios) {
+          console.log(`Debug Horários para ${funcionario.nome_completo}:`, horarios.length, 'registros');
           horarios.forEach((horario: any) => {
             const dia = new Date(horario.data).getDate();
             dias[dia] = horario.deve_trabalhar;
+            if (dia >= 28) {
+              console.log(`Dia ${dia}: ${horario.data} -> deve_trabalhar: ${horario.deve_trabalhar}`);
+            }
           });
+          console.log('Dias processados:', Object.keys(dias).map(Number).sort((a, b) => a - b));
         }
 
         return {
