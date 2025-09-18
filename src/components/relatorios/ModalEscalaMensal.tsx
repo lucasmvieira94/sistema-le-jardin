@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Calendar, Download } from "lucide-react";
+import { Calendar, Download, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Funcionario {
   id: string;
@@ -164,7 +166,110 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
   };
 
   const exportarPDF = () => {
-    window.print();
+    try {
+      // Criar documento PDF em modo paisagem
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Configurar título
+      const nomeEmpresa = configuracaoEmpresa?.nome_empresa || "Empresa";
+      const titulo = `${nomeEmpresa} - Escala de ${monthNames[selectedMonth - 1]} ${selectedYear}`;
+      
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(titulo, 20, 20);
+      
+      // Preparar dados da tabela
+      const diasDoMes = getDaysInMonth(selectedMonth, selectedYear);
+      const columns = ['Funcionário'];
+      
+      // Adicionar colunas dos dias
+      for (let dia = 1; dia <= diasDoMes; dia++) {
+        columns.push(dia.toString());
+      }
+      
+      // Preparar linhas da tabela
+      const rows = escalaData.map(funcionario => {
+        const row = [funcionario.funcionario_nome];
+        
+        for (let dia = 1; dia <= diasDoMes; dia++) {
+          const trabalhaNoDia = funcionario.dias[dia];
+          const escalaMarcacao = trabalhaNoDia ? 
+            `${funcionario.jornada_trabalho.replace('_', ' ').replace('segsex', 'seg-sex')} ${funcionario.horario_entrada.substring(0, 5)}` : 
+            '';
+          row.push(escalaMarcacao);
+        }
+        
+        return row;
+      });
+      
+      // Gerar tabela no PDF
+      (doc as any).autoTable({
+        head: [columns],
+        body: rows,
+        startY: 30,
+        styles: {
+          fontSize: 6,
+          cellPadding: 1,
+          halign: 'center',
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [51, 51, 51],
+          textColor: [255, 255, 255],
+          fontSize: 7,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { // Coluna do funcionário
+            cellWidth: 35,
+            halign: 'left',
+            fontSize: 7
+          }
+        },
+        theme: 'grid',
+        tableWidth: 'auto',
+        margin: { left: 10, right: 10 }
+      });
+      
+      // Adicionar legenda
+      let yPosition = (doc as any).lastAutoTable.finalY + 15;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Legenda das Escalas:', 20, yPosition);
+      
+      yPosition += 8;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      
+      // Agrupar escalas únicas para a legenda
+      const escalasUnicas = new Set();
+      escalaData.forEach(escala => {
+        const chave = `${escala.jornada_trabalho} - ${escala.horario_entrada.substring(0, 5)}`;
+        escalasUnicas.add(chave);
+      });
+      
+      Array.from(escalasUnicas).forEach((escala, index) => {
+        if (yPosition > 190) { // Se passar da página, quebrar
+          doc.addPage();
+          yPosition = 20;
+        }
+        doc.text(`• ${escala}`, 20, yPosition);
+        yPosition += 5;
+      });
+      
+      // Salvar o PDF
+      doc.save(`Escala_${monthNames[selectedMonth - 1]}_${selectedYear}.pdf`);
+      toast.success("PDF gerado com sucesso!");
+      
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error("Erro ao gerar PDF");
+    }
   };
 
   const getCorEscala = (jornada: string, horario: string) => {
@@ -202,16 +307,45 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto print:max-w-none print:max-h-none print:overflow-visible">
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              @page {
+                size: landscape;
+                margin: 10mm;
+              }
+              .print\\:hidden {
+                display: none !important;
+              }
+              table {
+                page-break-inside: auto;
+              }
+              tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+              }
+              thead {
+                display: table-header-group;
+              }
+              .text-sm {
+                font-size: 8px !important;
+              }
+            }
+          `
+        }} />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Escala Mensal - Todos os Funcionários
+            {configuracaoEmpresa?.nome_empresa ? 
+              `${configuracaoEmpresa.nome_empresa} - Escala Mensal` : 
+              "Escala Mensal - Todos os Funcionários"
+            }
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex gap-4 items-end">
+          <div className="flex gap-4 items-end print:hidden">
             <div className="flex-1">
               <label className="block text-sm font-medium mb-1">Mês</label>
               <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(Number(value))}>
@@ -251,7 +385,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
 
           {escalaData.length > 0 && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center print:block">
                 <div>
                   <h3 className="text-lg font-semibold">
                     {configuracaoEmpresa?.nome_empresa || "Empresa"}
@@ -260,10 +394,16 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
                     Escala de {monthNames[selectedMonth - 1]} de {selectedYear}
                   </p>
                 </div>
-                <Button onClick={exportarPDF} variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar PDF
-                </Button>
+                <div className="flex gap-2 print:hidden">
+                  <Button onClick={exportarPDF} variant="outline">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Gerar PDF
+                  </Button>
+                  <Button onClick={() => window.print()} variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Imprimir
+                  </Button>
+                </div>
               </div>
 
               {/* Grid da Escala */}
