@@ -22,6 +22,8 @@ import Residentes from "./pages/Residentes";
 import ControleProntuarios from "./pages/ControleProntuarios";
 import ConfiguracaoFormulario from "./pages/ConfiguracaoFormulario";
 import ControleMedicamentos from "./pages/ControleMedicamentos";
+import ControleTemperatura from "./pages/ControleTemperatura";
+import ControleTemperaturaPublico from "./pages/ControleTemperaturaPublico";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 import { AppSidebar } from "./components/AppSidebar";
@@ -43,7 +45,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const location = useLocation();
   const isPublicRoute = (pathname: string) => {
-    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario'];
+    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos'];
     return publicRoutes.includes(pathname);
   };
 
@@ -179,6 +181,14 @@ const AppContent = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/controle-temperatura"
+                    element={
+                      <ProtectedRoute>
+                        <ControleTemperatura />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
@@ -194,6 +204,7 @@ const AppContent = () => {
             <Route path="/funcionario-access" element={<FuncionarioAccess />} />
             <Route path="/registro-ponto" element={<RegistroPonto />} />
             <Route path="/prontuario" element={<Prontuario />} />
+            <Route path="/temperatura-medicamentos" element={<ControleTemperaturaPublico />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

@@ -13,7 +13,8 @@ import {
   Clock, 
   Settings,
   ChevronDown,
-  Pill
+  Pill,
+  Thermometer
 } from "lucide-react";
 import {
   Sidebar,
@@ -62,6 +63,7 @@ export function AppSidebar() {
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
     { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
+    { path: "/controle-temperatura", icon: Thermometer, label: "Controle de Temperatura", adminOnly: true },
     { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];

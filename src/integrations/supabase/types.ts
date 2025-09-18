@@ -298,6 +298,62 @@ export type Database = {
         }
         Relationships: []
       }
+      controle_temperatura_medicamentos: {
+        Row: {
+          acoes_corretivas: string | null
+          conformidade: boolean
+          created_at: string
+          data_registro: string
+          funcionario_responsavel: string | null
+          horario_medicao: string
+          id: string
+          localizacao_sala: string | null
+          nome_responsavel: string
+          observacoes: string | null
+          periodo_dia: string
+          temperatura: number
+          updated_at: string
+        }
+        Insert: {
+          acoes_corretivas?: string | null
+          conformidade?: boolean
+          created_at?: string
+          data_registro?: string
+          funcionario_responsavel?: string | null
+          horario_medicao: string
+          id?: string
+          localizacao_sala?: string | null
+          nome_responsavel: string
+          observacoes?: string | null
+          periodo_dia: string
+          temperatura: number
+          updated_at?: string
+        }
+        Update: {
+          acoes_corretivas?: string | null
+          conformidade?: boolean
+          created_at?: string
+          data_registro?: string
+          funcionario_responsavel?: string | null
+          horario_medicao?: string
+          id?: string
+          localizacao_sala?: string | null
+          nome_responsavel?: string
+          observacoes?: string | null
+          periodo_dia?: string
+          temperatura?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_temperatura_medicamentos_funcionario_responsavel_fkey"
+            columns: ["funcionario_responsavel"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convites: {
         Row: {
           aceito_por: string | null
