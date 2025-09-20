@@ -33,10 +33,14 @@ type FormData = z.infer<typeof formSchema>;
 
 interface FormularioTemperaturaProps {
   onSuccess?: () => void;
+  funcionarioId?: string | null;
+  funcionarioNome?: string | null;
 }
 
-export function FormularioTemperatura({ onSuccess }: FormularioTemperaturaProps) {
-  const [funcionarioValidado, setFuncionarioValidado] = useState<{id: string, nome: string} | null>(null);
+export function FormularioTemperatura({ onSuccess, funcionarioId, funcionarioNome }: FormularioTemperaturaProps) {
+  const [funcionarioValidado, setFuncionarioValidado] = useState<{id: string, nome: string} | null>(
+    funcionarioId && funcionarioNome ? { id: funcionarioId, nome: decodeURIComponent(funcionarioNome) } : null
+  );
   const [showCodigoInput, setShowCodigoInput] = useState(false);
   const { adicionarRegistro } = useTemperatura();
   
@@ -45,7 +49,7 @@ export function FormularioTemperatura({ onSuccess }: FormularioTemperaturaProps)
     defaultValues: {
       temperatura: 25,
       horario_medicao: new Date().toTimeString().slice(0, 5),
-      nome_responsavel: "",
+      nome_responsavel: funcionarioNome ? decodeURIComponent(funcionarioNome) : "",
       localizacao_sala: "Sala de Medicamentos",
       acoes_corretivas: "",
       observacoes: "",

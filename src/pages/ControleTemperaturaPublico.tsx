@@ -2,10 +2,13 @@ import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormularioTemperatura } from "@/components/temperatura/FormularioTemperatura";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const ControleTemperaturaPublico = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const funcionarioId = searchParams.get('funcionario_id');
+  const funcionarioNome = searchParams.get('funcionario_nome');
 
   const handleSuccess = () => {
     // Voltar para página inicial após 2 segundos
@@ -29,7 +32,11 @@ const ControleTemperaturaPublico = () => {
         </div>
         
         <Card className="w-full">
-          <FormularioTemperatura onSuccess={handleSuccess} />
+          <FormularioTemperatura 
+            onSuccess={handleSuccess} 
+            funcionarioId={funcionarioId}
+            funcionarioNome={funcionarioNome}
+          />
         </Card>
       </div>
     </div>

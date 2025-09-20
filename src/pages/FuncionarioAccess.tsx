@@ -93,7 +93,7 @@ export default function FuncionarioAccess() {
   };
 
   const navigateToTemperatura = () => {
-    navigate('/temperatura-medicamentos');
+    navigate(`/temperatura-medicamentos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
