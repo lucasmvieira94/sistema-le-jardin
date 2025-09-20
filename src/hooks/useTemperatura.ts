@@ -29,7 +29,6 @@ interface EstatisticasTemperatura {
 
 interface NovoRegistroTemperatura {
   temperatura: number;
-  periodo_dia: string;
   horario_medicao: string;
   nome_responsavel: string;
   funcionario_responsavel?: string;
@@ -104,6 +103,7 @@ export function useTemperatura() {
         .from('controle_temperatura_medicamentos')
         .insert({
           ...novoRegistro,
+          periodo_dia: 'geral', // valor padrão já que removemos o campo
           data_registro: new Date().toISOString().split('T')[0]
         })
         .select()

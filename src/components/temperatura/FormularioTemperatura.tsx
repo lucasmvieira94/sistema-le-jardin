@@ -22,7 +22,6 @@ const formSchema = z.object({
   temperatura: z.number()
     .min(0, "Temperatura deve ser maior que 0°C")
     .max(50, "Temperatura deve ser menor que 50°C"),
-  periodo_dia: z.enum(["manha", "tarde", "noite", "madrugada"]),
   horario_medicao: z.string().min(1, "Horário é obrigatório"),
   nome_responsavel: z.string().min(1, "Nome do responsável é obrigatório"),
   localizacao_sala: z.string().default("Sala de Medicamentos"),
@@ -45,7 +44,6 @@ export function FormularioTemperatura({ onSuccess }: FormularioTemperaturaProps)
     resolver: zodResolver(formSchema),
     defaultValues: {
       temperatura: 25,
-      periodo_dia: "manha",
       horario_medicao: new Date().toTimeString().slice(0, 5),
       nome_responsavel: "",
       localizacao_sala: "Sala de Medicamentos",
@@ -61,7 +59,6 @@ export function FormularioTemperatura({ onSuccess }: FormularioTemperaturaProps)
     try {
       await adicionarRegistro.mutateAsync({
         temperatura: data.temperatura,
-        periodo_dia: data.periodo_dia,
         horario_medicao: data.horario_medicao,
         nome_responsavel: data.nome_responsavel,
         funcionario_responsavel: funcionarioValidado?.id,
@@ -229,56 +226,30 @@ export function FormularioTemperatura({ onSuccess }: FormularioTemperaturaProps)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="periodo_dia"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Período do Dia</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="manha">Manhã</SelectItem>
-                          <SelectItem value="tarde">Tarde</SelectItem>
-                          <SelectItem value="noite">Noite</SelectItem>
-                          <SelectItem value="madrugada">Madrugada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="temperatura"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Temperatura (°C)</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="50"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            className={cn("text-lg font-bold", getTemperaturaColor())}
-                          />
-                          <span className="text-muted-foreground">°C</span>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="temperatura"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Temperatura (°C)</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="50"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          className={cn("text-lg font-bold", getTemperaturaColor())}
+                        />
+                        <span className="text-muted-foreground">°C</span>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Indicador de Conformidade */}
               <div className="p-4 border rounded-lg">
@@ -348,7 +319,7 @@ export function FormularioTemperatura({ onSuccess }: FormularioTemperaturaProps)
           </Card>
 
           <div className="flex gap-3">
-            <Button 
+            <Button
               type="submit" 
               className="flex-1"
               disabled={adicionarRegistro.isPending}
