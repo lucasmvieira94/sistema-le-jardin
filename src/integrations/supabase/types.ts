@@ -154,6 +154,95 @@ export type Database = {
           },
         ]
       }
+      agendamentos_whatsapp: {
+        Row: {
+          alerta_id: string
+          created_at: string
+          id: string
+          proxima_execucao: string
+          status: string
+          tentativas: number | null
+          updated_at: string
+        }
+        Insert: {
+          alerta_id: string
+          created_at?: string
+          id?: string
+          proxima_execucao: string
+          status?: string
+          tentativas?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alerta_id?: string
+          created_at?: string
+          id?: string
+          proxima_execucao?: string
+          status?: string
+          tentativas?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_whatsapp_alerta_id_fkey"
+            columns: ["alerta_id"]
+            isOneToOne: false
+            referencedRelation: "alertas_whatsapp"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alertas_whatsapp: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          data_inicio: string
+          frequencia_tipo: string
+          frequencia_valor: number
+          horario_especifico: string | null
+          id: string
+          mensagem: string
+          mensagem_dinamica: boolean | null
+          nome: string
+          numeros_destino: string[]
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_inicio?: string
+          frequencia_tipo: string
+          frequencia_valor: number
+          horario_especifico?: string | null
+          id?: string
+          mensagem: string
+          mensagem_dinamica?: boolean | null
+          nome: string
+          numeros_destino: string[]
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          data_inicio?: string
+          frequencia_tipo?: string
+          frequencia_valor?: number
+          horario_especifico?: string | null
+          id?: string
+          mensagem?: string
+          mensagem_dinamica?: boolean | null
+          nome?: string
+          numeros_destino?: string[]
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       atividades_templates: {
         Row: {
           ativo: boolean
@@ -661,6 +750,63 @@ export type Database = {
             columns: ["escala_id"]
             isOneToOne: false
             referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_notificacoes_whatsapp: {
+        Row: {
+          agendamento_id: string | null
+          alerta_id: string
+          created_at: string
+          data_envio: string
+          erro_descricao: string | null
+          id: string
+          mensagem_enviada: string
+          numero_destino: string
+          status: string
+          tentativa_numero: number | null
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          agendamento_id?: string | null
+          alerta_id: string
+          created_at?: string
+          data_envio?: string
+          erro_descricao?: string | null
+          id?: string
+          mensagem_enviada: string
+          numero_destino: string
+          status: string
+          tentativa_numero?: number | null
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          agendamento_id?: string | null
+          alerta_id?: string
+          created_at?: string
+          data_envio?: string
+          erro_descricao?: string | null
+          id?: string
+          mensagem_enviada?: string
+          numero_destino?: string
+          status?: string
+          tentativa_numero?: number | null
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_notificacoes_whatsapp_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos_whatsapp"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_notificacoes_whatsapp_alerta_id_fkey"
+            columns: ["alerta_id"]
+            isOneToOne: false
+            referencedRelation: "alertas_whatsapp"
             referencedColumns: ["id"]
           },
         ]
@@ -1192,6 +1338,16 @@ export type Database = {
         }
         Returns: unknown
       }
+      calcular_proxima_execucao: {
+        Args: {
+          p_data_base?: string
+          p_frequencia_tipo: string
+          p_frequencia_valor: number
+          p_horario_especifico: string
+          p_timezone?: string
+        }
+        Returns: string
+      }
       calcular_totais_folha_ponto: {
         Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
@@ -1357,6 +1513,10 @@ export type Database = {
           intervalo_inicio: string
           saida: string
         }[]
+      }
+      processar_mensagem_dinamica: {
+        Args: { p_mensagem: string; p_timezone?: string }
+        Returns: string
       }
       redefinir_prontuarios_automatico: {
         Args: Record<PropertyKey, never>
