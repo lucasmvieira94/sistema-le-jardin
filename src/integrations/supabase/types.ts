@@ -186,7 +186,7 @@ export type Database = {
           {
             foreignKeyName: "agendamentos_whatsapp_alerta_id_fkey"
             columns: ["alerta_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "alertas_whatsapp"
             referencedColumns: ["id"]
           },
