@@ -12,8 +12,13 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
   const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
   const twilioWhatsAppNumber = Deno.env.get('TWILIO_WHATSAPP_NUMBER');
 
+  console.log('Verificando credenciais Twilio...');
+  console.log('TWILIO_ACCOUNT_SID:', accountSid ? `${accountSid.substring(0, 10)}...` : 'NÃO CONFIGURADO');
+  console.log('TWILIO_AUTH_TOKEN:', authToken ? 'CONFIGURADO' : 'NÃO CONFIGURADO');
+  console.log('TWILIO_WHATSAPP_NUMBER:', twilioWhatsAppNumber ? twilioWhatsAppNumber : 'NÃO CONFIGURADO');
+
   if (!accountSid || !authToken || !twilioWhatsAppNumber) {
-    throw new Error('Credenciais do Twilio não configuradas');
+    throw new Error('Credenciais do Twilio não configuradas. Verifique: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN e TWILIO_WHATSAPP_NUMBER');
   }
 
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
