@@ -24,6 +24,7 @@ import ConfiguracaoFormulario from "./pages/ConfiguracaoFormulario";
 import ControleMedicamentos from "./pages/ControleMedicamentos";
 import ControleTemperatura from "./pages/ControleTemperatura";
 import ControleTemperaturaPublico from "./pages/ControleTemperaturaPublico";
+import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 import { AppSidebar } from "./components/AppSidebar";
@@ -186,6 +187,14 @@ const AppContent = () => {
                     element={
                       <ProtectedRoute>
                         <ControleTemperatura />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/notificacoes-whatsapp"
+                    element={
+                      <ProtectedRoute>
+                        <NotificacoesWhatsApp />
                       </ProtectedRoute>
                     }
                   />

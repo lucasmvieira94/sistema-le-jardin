@@ -1,5 +1,9 @@
 project_id = "kvjgmqicictxxfnvhuwl"
 
+[cron.whatsapp-agendamentos]
+schedule = "* * * * *"
+command = "SELECT net.http_post('https://kvjgmqicictxxfnvhuwl.supabase.co/functions/v1/processar-agendamentos-whatsapp', '{}', 'application/json', '{\"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2amdtcWljaWN0eHhmbnZodXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5NDU3NzIsImV4cCI6MjA2NTUyMTc3Mn0.gGPP76kvvjC6pKZMV9mbJawcccGKdMnLT1SLq6s56rY\"}'::jsonb);"
+
 [api]
 enabled = true
 port = 54321
@@ -35,4 +39,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.cronometro-prontuarios]
+verify_jwt = false
+
+[functions.enviar-whatsapp]
+verify_jwt = false
+
+[functions.processar-agendamentos-whatsapp]
 verify_jwt = false
