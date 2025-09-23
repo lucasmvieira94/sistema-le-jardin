@@ -30,6 +30,8 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
     ContentVariables: JSON.stringify({1: mensagem})
   });
 
+  console.log('Enviando para Twilio com body:', body.toString());
+  
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -40,9 +42,12 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
   });
 
   const result = await response.json();
+  console.log('Resposta do Twilio:', JSON.stringify(result));
   
   if (!response.ok) {
-    throw new Error(`Erro do Twilio: ${result.message || 'Erro desconhecido'}`);
+    console.error('Erro do Twilio - Status:', response.status);
+    console.error('Erro do Twilio - Response:', JSON.stringify(result));
+    throw new Error(`Erro do Twilio (${response.status}): ${result.message || result.code || 'Erro desconhecido'} - ${JSON.stringify(result)}`);
   }
 
   return result;
