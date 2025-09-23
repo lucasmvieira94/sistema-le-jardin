@@ -23,11 +23,17 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
 
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
   
+  // Para mensagens business-initiated, usar template aprovado
   const body = new URLSearchParams({
     From: `whatsapp:${twilioWhatsAppNumber}`,
     To: `whatsapp:${numero}`,
-    Body: mensagem
+    // Usar template em vez de Body para business-initiated messages
+    ContentSid: 'HX...' // Substitua pelo Content SID do seu template aprovado
+    // ContentVariables: JSON.stringify({1: mensagem}) // Se o template tiver variáveis
   });
+  
+  // TEMPORÁRIO: Para testes, usar Body (só funciona em sandbox ou se o usuário iniciou a conversa)
+  // body.append('Body', mensagem);
 
   const response = await fetch(url, {
     method: 'POST',
