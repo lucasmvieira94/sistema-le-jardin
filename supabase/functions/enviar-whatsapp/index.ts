@@ -26,11 +26,9 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
   const body = new URLSearchParams({
     From: `whatsapp:${twilioWhatsAppNumber}`,
     To: `whatsapp:${numero}`,
-    ContentSid: 'HX271c12f1c8d39e8beb6afe21d17fdd36'
+    ContentSid: 'HX271c12f1c8d39e8beb6afe21d17fdd36',
+    ContentVariables: JSON.stringify({1: mensagem})
   });
-  
-  // Se o template tiver variáveis, adicionar aqui:
-  // body.append('ContentVariables', JSON.stringify({1: mensagem}));
 
   const response = await fetch(url, {
     method: 'POST',
