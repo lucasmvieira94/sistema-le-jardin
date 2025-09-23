@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Função para enviar mensagem via Twilio WhatsApp API
+// Função para enviar mensagem via Twilio WhatsApp API usando template
 async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -23,12 +23,16 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
 
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
   
-  const body = new URLSearchParams({
-    From: `whatsapp:${twilioWhatsAppNumber}`,
-    To: `whatsapp:${numero}`,
-    ContentSid: 'HX271c12f1c8d39e8beb6afe21d17fdd36',
-    ContentVariables: JSON.stringify({1: mensagem})
-  });
+  // Garantir que estamos usando apenas ContentSid e ContentVariables para mensagens de template
+  // NUNCA usar Body para mensagens iniciadas pelo negócio após abril 2025
+  const body = new URLSearchParams();
+  body.append('From', `whatsapp:${twilioWhatsAppNumber}`);
+  body.append('To', `whatsapp:${numero}`);
+  body.append('ContentSid', 'HX271c12f1c8d39e8beb6afe21d17fdd36');
+  body.append('ContentVariables', JSON.stringify({"1": mensagem}));
+  
+  console.log('Enviando mensagem WhatsApp como template com ContentSid...');
+  console.log('ContentVariables:', JSON.stringify({"1": mensagem}));
 
   console.log('Enviando para Twilio com body:', body.toString());
   
