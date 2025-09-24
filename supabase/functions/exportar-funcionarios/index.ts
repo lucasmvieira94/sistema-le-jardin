@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,7 +39,7 @@ serve(async (req) => {
         data_inicio_vigencia,
         ativo,
         codigo_4_digitos,
-        escalas!inner(nome)
+        escalas(nome)
       `)
       .order('nome_completo', { ascending: true });
 
@@ -96,7 +96,7 @@ serve(async (req) => {
       funcionario.data_inicio_vigencia,
       funcionario.ativo ? 'Ativo' : 'Inativo',
       funcionario.codigo_4_digitos,
-      funcionario.escalas?.nome || 'N/A'
+      (funcionario.escalas as any)?.[0]?.nome || 'N/A'
     ]);
 
     // Convert to CSV format
@@ -133,7 +133,7 @@ serve(async (req) => {
     console.error('❌ Erro na exportação:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Erro interno no servidor' 
+        error: (error as Error).message || 'Erro interno no servidor' 
       }),
       {
         status: 500,

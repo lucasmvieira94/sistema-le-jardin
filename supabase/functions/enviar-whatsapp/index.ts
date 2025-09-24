@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -193,7 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
             .from('agendamentos_whatsapp')
             .update({ 
               status: 'erro',
-              tentativas: supabaseClient.raw('tentativas + 1'),
+              tentativas: 1,
               updated_at: new Date().toISOString()
             })
             .eq('id', agendamentoId);
