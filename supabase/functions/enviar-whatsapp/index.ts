@@ -28,7 +28,7 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
   const body = new URLSearchParams();
   body.append('From', `whatsapp:${twilioWhatsAppNumber}`);
   body.append('To', `whatsapp:${numero}`);
-  body.append('ContentSid', 'HX271c12f1c8d39e8beb6afe21d17fdd36');
+  body.append('ContentSid', 'HX333047c068881b30f385de9e9fce1957');
   body.append('ContentVariables', JSON.stringify({"1": mensagem}));
   
   console.log('Enviando mensagem WhatsApp como template com ContentSid...');
