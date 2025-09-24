@@ -65,7 +65,8 @@ export function AppSidebar() {
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
     { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
     { path: "/controle-temperatura", icon: Thermometer, label: "Controle de Temperatura", adminOnly: true },
-    { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Notificações WhatsApp", adminOnly: true },
+    { path: "/gerenciamento-whatsapp", icon: MessageSquare, label: "WhatsApp & IA", adminOnly: true },
+    { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Alertas WhatsApp", adminOnly: true },
     { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];

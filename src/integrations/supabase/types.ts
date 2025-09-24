@@ -387,6 +387,50 @@ export type Database = {
         }
         Relationships: []
       }
+      consultas_ia_whatsapp: {
+        Row: {
+          conversa_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          pergunta: string
+          resposta: string | null
+          status: string | null
+          tempo_resposta: number | null
+          usuario_id: string | null
+        }
+        Insert: {
+          conversa_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          pergunta: string
+          resposta?: string | null
+          status?: string | null
+          tempo_resposta?: number | null
+          usuario_id?: string | null
+        }
+        Update: {
+          conversa_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          pergunta?: string
+          resposta?: string | null
+          status?: string | null
+          tempo_resposta?: number | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultas_ia_whatsapp_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas_whatsapp"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       controle_temperatura_medicamentos: {
         Row: {
           acoes_corretivas: string | null
@@ -442,6 +486,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      conversas_whatsapp: {
+        Row: {
+          created_at: string | null
+          id: string
+          mensagens_nao_lidas: number | null
+          nome_contato: string | null
+          numero_whatsapp: string
+          status: string | null
+          ultima_atividade: string | null
+          ultima_mensagem: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mensagens_nao_lidas?: number | null
+          nome_contato?: string | null
+          numero_whatsapp: string
+          status?: string | null
+          ultima_atividade?: string | null
+          ultima_mensagem?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mensagens_nao_lidas?: number | null
+          nome_contato?: string | null
+          numero_whatsapp?: string
+          status?: string | null
+          ultima_atividade?: string | null
+          ultima_mensagem?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       convites: {
         Row: {
@@ -864,6 +944,86 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      mensagens_predefinidas_whatsapp: {
+        Row: {
+          ativo: boolean | null
+          categoria: string | null
+          conteudo: string
+          created_at: string | null
+          id: string
+          ordem: number | null
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria?: string | null
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          ordem?: number | null
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string | null
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          ordem?: number | null
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mensagens_whatsapp: {
+        Row: {
+          conteudo: string
+          conversa_id: string
+          created_at: string | null
+          direcao: string
+          id: string
+          metadata: Json | null
+          remetente: string | null
+          status: string | null
+          tipo: string | null
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          conteudo: string
+          conversa_id: string
+          created_at?: string | null
+          direcao: string
+          id?: string
+          metadata?: Json | null
+          remetente?: string | null
+          status?: string | null
+          tipo?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          conteudo?: string
+          conversa_id?: string
+          created_at?: string | null
+          direcao?: string
+          id?: string
+          metadata?: Json | null
+          remetente?: string | null
+          status?: string | null
+          tipo?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_whatsapp_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas_whatsapp"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prontuario_ciclos: {
         Row: {
