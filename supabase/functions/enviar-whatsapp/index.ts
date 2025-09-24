@@ -47,12 +47,24 @@ async function enviarMensagemWhatsApp(numero: string, mensagem: string) {
 
   const result = await response.json();
   console.log('Resposta do Twilio:', JSON.stringify(result));
+  console.log('Status da resposta Twilio:', response.status);
+  console.log('Headers da resposta Twilio:', Object.fromEntries(response.headers.entries()));
   
   if (!response.ok) {
     console.error('Erro do Twilio - Status:', response.status);
     console.error('Erro do Twilio - Response:', JSON.stringify(result));
     throw new Error(`Erro do Twilio (${response.status}): ${result.message || result.code || 'Erro desconhecido'} - ${JSON.stringify(result)}`);
   }
+
+  // Verificar se há warnings ou problemas na resposta
+  if (result.error_code) {
+    console.warn('Twilio Warning - Error Code:', result.error_code);
+    console.warn('Twilio Warning - Error Message:', result.error_message);
+  }
+
+  // Log do status final da mensagem
+  console.log('Status final da mensagem Twilio:', result.status);
+  console.log('SID da mensagem:', result.sid);
 
   return result;
 }
