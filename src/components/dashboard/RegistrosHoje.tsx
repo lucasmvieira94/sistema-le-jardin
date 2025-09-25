@@ -174,35 +174,37 @@ export default function RegistrosHoje() {
           Funcionários na Escala de Hoje
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+      <CardContent className="p-3 sm:p-6">
+        <div className="space-y-3 max-h-80 sm:max-h-96 overflow-y-auto">
           {registros.length === 0 ? (
-            <div className="text-center py-8">
-              <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">
+            <div className="text-center py-6 sm:py-8">
+              <Clock className="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Nenhum funcionário na escala de hoje.
               </p>
             </div>
           ) : (
             registros.map((registro, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-sm transition-all">
-                <div className="flex items-center gap-3">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-card border rounded-lg hover:shadow-sm transition-all gap-2 sm:gap-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   {getStatusIcon(registro.status)}
-                  <div>
-                    <p className="font-medium">{registro.funcionario_nome}</p>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm sm:text-base truncate">{registro.funcionario_nome}</p>
+                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 flex-shrink-0" />
                         Entrada: {registro.entrada || '--:--'}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 flex-shrink-0" />
                         Saída: {registro.saida || '--:--'}
                       </span>
                     </div>
                   </div>
                 </div>
-                {getStatusBadge(registro.status)}
+                <div className="flex-shrink-0">
+                  {getStatusBadge(registro.status)}
+                </div>
               </div>
             ))
           )}

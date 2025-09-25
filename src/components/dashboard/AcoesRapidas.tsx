@@ -58,23 +58,23 @@ export default function AcoesRapidas() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Ações Rápidas</CardTitle>
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-lg sm:text-xl">Ações Rápidas</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <CardContent className="p-3 sm:p-6 pt-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-3">
           {acoes.map((acao, index) => (
             <Link key={index} to={acao.link}>
               <Button 
                 variant="ghost" 
-                className={`h-auto p-4 flex flex-col items-center gap-2 text-center w-full ${acao.cor}`}
+                className={`h-auto p-3 sm:p-4 flex flex-col items-center gap-1 sm:gap-2 text-center w-full ${acao.cor}`}
               >
                 <div className="text-primary">
                   {acao.icon}
                 </div>
                 <div>
-                  <p className="font-medium text-sm">{acao.titulo}</p>
-                  <p className="text-xs text-muted-foreground">{acao.descricao}</p>
+                  <p className="font-medium text-xs sm:text-sm leading-tight">{acao.titulo}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight hidden sm:block">{acao.descricao}</p>
                 </div>
               </Button>
             </Link>

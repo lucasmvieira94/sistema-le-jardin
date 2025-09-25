@@ -8,21 +8,21 @@ import AcoesRapidas from "@/components/dashboard/AcoesRapidas";
 
 export default function Index() {
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <DashboardHeader />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         <RegistrosHoje />
         <AlertasProntuarios />
         <AlertasMedicamentos />
       </div>
       
       {/* Alertas de Prontuários em Atraso */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         <AlertasProntuariosAtraso />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <AlertasEscalas />
       </div>
       

@@ -79,66 +79,66 @@ export default function DashboardHeader() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Centro de Controle</h1>
-              <p className="text-muted-foreground capitalize">{hoje}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Centro de Controle</h1>
+              <p className="text-sm sm:text-base text-muted-foreground capitalize">{hoje}</p>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="h-8 w-8 text-primary" />
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            <div className="bg-primary/10 rounded-lg p-4 text-center hover:bg-primary/20 transition-colors">
-              <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="bg-primary/10 rounded-lg p-3 sm:p-4 text-center hover:bg-primary/20 transition-colors">
+              <Users className="h-4 w-4 sm:h-6 sm:w-6 text-primary mx-auto mb-1 sm:mb-2" />
+              <div className="text-lg sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : stats.funcionariosAtivos}
               </div>
-              <p className="text-sm text-muted-foreground">Funcionários Ativos</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Funcionários Ativos</p>
             </div>
             
-            <div className="bg-accent/10 rounded-lg p-4 text-center hover:bg-accent/20 transition-colors">
-              <Clock className="h-6 w-6 text-accent-foreground mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
+            <div className="bg-accent/10 rounded-lg p-3 sm:p-4 text-center hover:bg-accent/20 transition-colors">
+              <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-accent-foreground mx-auto mb-1 sm:mb-2" />
+              <div className="text-lg sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : stats.registrosHoje}
               </div>
-              <p className="text-sm text-muted-foreground">Registros Hoje</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Registros Hoje</p>
             </div>
             
-            <div className="bg-destructive/10 rounded-lg p-4 text-center hover:bg-destructive/20 transition-colors">
-              <AlertTriangle className="h-6 w-6 text-destructive mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
+            <div className="bg-destructive/10 rounded-lg p-3 sm:p-4 text-center hover:bg-destructive/20 transition-colors">
+              <AlertTriangle className="h-4 w-4 sm:h-6 sm:w-6 text-destructive mx-auto mb-1 sm:mb-2" />
+              <div className="text-lg sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : stats.pendencias}
               </div>
-              <p className="text-sm text-muted-foreground">Pendências</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Pendências</p>
             </div>
             
-            <div className="bg-secondary/10 rounded-lg p-4 text-center hover:bg-secondary/20 transition-colors">
-              <Activity className="h-6 w-6 text-secondary-foreground mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
+            <div className="bg-secondary/10 rounded-lg p-3 sm:p-4 text-center hover:bg-secondary/20 transition-colors">
+              <Activity className="h-4 w-4 sm:h-6 sm:w-6 text-secondary-foreground mx-auto mb-1 sm:mb-2" />
+              <div className="text-lg sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : stats.escalasAtivas}
               </div>
-              <p className="text-sm text-muted-foreground">Escalas Ativas</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Escalas Ativas</p>
             </div>
             
-            <div className="bg-orange-100 rounded-lg p-4 text-center hover:bg-orange-200 transition-colors">
-              <Clipboard className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
+            <div className="bg-orange-100 rounded-lg p-3 sm:p-4 text-center hover:bg-orange-200 transition-colors">
+              <Clipboard className="h-4 w-4 sm:h-6 sm:w-6 text-orange-600 mx-auto mb-1 sm:mb-2" />
+              <div className="text-lg sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : stats.prontuariosPendentes}
               </div>
-              <p className="text-sm text-muted-foreground">Prontuários</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Prontuários</p>
             </div>
             
-            <div className="bg-red-100 rounded-lg p-4 text-center hover:bg-red-200 transition-colors">
-              <AlertTriangle className="h-6 w-6 text-red-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-foreground">
+            <div className="bg-red-100 rounded-lg p-3 sm:p-4 text-center hover:bg-red-200 transition-colors">
+              <AlertTriangle className="h-4 w-4 sm:h-6 sm:w-6 text-red-600 mx-auto mb-1 sm:mb-2" />
+              <div className="text-lg sm:text-2xl font-bold text-foreground">
                 {loading ? "..." : stats.medicamentosVencendo}
               </div>
-              <p className="text-sm text-muted-foreground">Vencimentos</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Vencimentos</p>
             </div>
           </div>
         </CardContent>
@@ -146,21 +146,21 @@ export default function DashboardHeader() {
       
       {/* Quick Actions */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <span className="font-medium">Status do Sistema</span>
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <span className="font-medium text-sm sm:text-base">Status do Sistema</span>
             </div>
-            <div className="flex items-center gap-4">
-              <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50 text-xs sm:text-sm">
                 Sistema Online
               </Badge>
-              <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">
+              <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50 text-xs sm:text-sm">
                 {stats.funcionariosAtivos} Ativos
               </Badge>
               {stats.pendencias > 0 && (
-                <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">
+                <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50 text-xs sm:text-sm">
                   {stats.pendencias} Pendentes
                 </Badge>
               )}
