@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
-import careLogo from "@/assets/logo-senex-care-new.png";
+import careLogo from "@/assets/logo-senex-care-main.png";
 
 export default function FuncionarioAccess() {
   const navigate = useNavigate();
