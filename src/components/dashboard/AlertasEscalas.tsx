@@ -89,11 +89,11 @@ export default function AlertasEscalas() {
   const getUrgenciaBadge = (urgencia: string) => {
     switch (urgencia) {
       case 'alta':
-        return <Badge variant="destructive">Alta</Badge>;
+        return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Alta</Badge>;
       case 'media':
-        return <Badge variant="secondary">Média</Badge>;
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Média</Badge>;
       default:
-        return <Badge variant="outline">Baixa</Badge>;
+        return <Badge variant="outline" className="border-gray-500 text-gray-600 bg-gray-50">Baixa</Badge>;
     }
   };
 
@@ -134,22 +134,28 @@ export default function AlertasEscalas() {
       </CardHeader>
       <CardContent>
         {alertas.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">
-            Nenhum alerta no momento
-          </p>
+          <div className="text-center py-8">
+            <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground">
+              Nenhum alerta no momento
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tudo funcionando normalmente
+            </p>
+          </div>
         ) : (
           <div className="space-y-3">
             {alertas.map((alerta, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                <div className="mt-0.5">
+              <div key={index} className="flex items-start gap-3 p-4 bg-card border rounded-lg hover:shadow-sm transition-all">
+                <div className="mt-0.5 p-2 rounded-full bg-muted">
                   {getTipoIcon(alerta.tipo)}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="font-medium text-sm">{alerta.titulo}</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium">{alerta.titulo}</p>
                     {getUrgenciaBadge(alerta.urgencia)}
                   </div>
-                  <p className="text-xs text-muted-foreground">{alerta.descricao}</p>
+                  <p className="text-sm text-muted-foreground">{alerta.descricao}</p>
                 </div>
               </div>
             ))}

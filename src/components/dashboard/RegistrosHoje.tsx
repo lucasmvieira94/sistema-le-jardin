@@ -140,11 +140,11 @@ export default function RegistrosHoje() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completo':
-        return <Badge variant="default" className="bg-primary text-primary-foreground">Completo</Badge>;
+        return <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">Completo</Badge>;
       case 'em_andamento':
-        return <Badge variant="secondary">Em andamento</Badge>;
+        return <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">Em andamento</Badge>;
       case 'falta':
-        return <Badge variant="destructive">Falta</Badge>;
+        return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Falta</Badge>;
       default:
         return <Badge variant="outline">Pendente</Badge>;
     }
@@ -177,19 +177,28 @@ export default function RegistrosHoje() {
       <CardContent>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {registros.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">
-              Nenhum funcionário na escala de hoje.
-            </p>
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                Nenhum funcionário na escala de hoje.
+              </p>
+            </div>
           ) : (
             registros.map((registro, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-sm transition-all">
                 <div className="flex items-center gap-3">
                   {getStatusIcon(registro.status)}
                   <div>
-                    <p className="font-medium text-sm">{registro.funcionario_nome}</p>
-                    <div className="flex gap-4 text-xs text-muted-foreground">
-                      <span>Entrada: {registro.entrada || '--:--'}</span>
-                      <span>Saída: {registro.saida || '--:--'}</span>
+                    <p className="font-medium">{registro.funcionario_nome}</p>
+                    <div className="flex gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Entrada: {registro.entrada || '--:--'}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Saída: {registro.saida || '--:--'}
+                      </span>
                     </div>
                   </div>
                 </div>
