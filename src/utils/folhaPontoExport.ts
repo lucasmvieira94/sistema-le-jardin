@@ -3,6 +3,35 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
+import { supabase } from '@/integrations/supabase/client';
+
+interface DadosEmpresa {
+  nome_empresa: string;
+  cnpj?: string;
+  endereco?: string;
+  logo_url?: string;
+}
+
+async function buscarDadosEmpresa(): Promise<DadosEmpresa | null> {
+  try {
+    const { data, error } = await supabase
+      .from('configuracoes_empresa')
+      .select('nome_empresa, cnpj, endereco, logo_url')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (error) {
+      console.error('Erro ao buscar dados da empresa:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar dados da empresa:', error);
+    return null;
+  }
+}
 
 function formatTime(time: string | null): string {
   if (!time) return '--';
@@ -15,7 +44,7 @@ function formatInterval(interval: string): string {
 }
 
 // Função para exportação individual (mantida como estava)
-export function exportToPDF(
+export async function exportToPDF(
   dados: FolhaPontoData[],
   totais: TotaisFolhaPonto,
   mes: number,
@@ -27,10 +56,38 @@ export function exportToPDF(
   
   const funcionario = dados[0];
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const dadosEmpresa = await buscarDadosEmpresa();
+
+  let currentY = 10;
+
+  // Cabeçalho da empresa
+  if (dadosEmpresa) {
+    doc.setFontSize(16);
+    doc.text(dadosEmpresa.nome_empresa, 105, currentY, { align: 'center' });
+    currentY += 7;
+    
+    if (dadosEmpresa.cnpj) {
+      doc.setFontSize(10);
+      doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 105, currentY, { align: 'center' });
+      currentY += 5;
+    }
+    
+    if (dadosEmpresa.endereco) {
+      doc.setFontSize(8);
+      doc.text(dadosEmpresa.endereco, 105, currentY, { align: 'center' });
+      currentY += 8;
+    }
+    
+    // Linha separadora
+    doc.setLineWidth(0.5);
+    doc.line(10, currentY, 200, currentY);
+    currentY += 8;
+  }
 
   // Título
   doc.setFontSize(14);
-  doc.text('FOLHA DE PONTO MENSAL', 105, 15, { align: 'center' });
+  doc.text('FOLHA DE PONTO MENSAL', 105, currentY, { align: 'center' });
+  currentY += 7;
 
   // Cabeçalho em formato de tabela
   const headerData = [
@@ -40,7 +97,7 @@ export function exportToPDF(
   ];
 
   autoTable(doc, {
-    startY: 22,
+    startY: currentY,
     body: headerData,
     theme: 'plain',
     styles: { 
@@ -70,7 +127,7 @@ export function exportToPDF(
   ]);
 
   autoTable(doc, {
-    startY: 50,
+    startY: (doc as any).lastAutoTable.finalY + 5,
     head: [['Dia', 'Sem', 'Ent', 'I.Ini', 'I.Fim', 'Saí', 'H.Trab', 'H.Ext', 'Falta', 'Abono']],
     body: tableData,
     theme: 'grid',
@@ -115,13 +172,14 @@ export function exportToPDF(
 }
 
 // Nova função para exportação individual de funcionário em PDF geral
-function addFuncionarioPageToPDF(
+async function addFuncionarioPageToPDF(
   doc: jsPDF,
   dados: FolhaPontoData[],
   totais: TotaisFolhaPonto,
   mes: number,
   ano: number,
-  isFirstPage = false
+  isFirstPage = false,
+  dadosEmpresa: DadosEmpresa | null = null
 ) {
   if (!isFirstPage) {
     doc.addPage();
@@ -130,9 +188,36 @@ function addFuncionarioPageToPDF(
   const funcionario = dados[0];
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
+  let currentY = 10;
+
+  // Cabeçalho da empresa (apenas na primeira página)
+  if (isFirstPage && dadosEmpresa) {
+    doc.setFontSize(16);
+    doc.text(dadosEmpresa.nome_empresa, 105, currentY, { align: 'center' });
+    currentY += 7;
+    
+    if (dadosEmpresa.cnpj) {
+      doc.setFontSize(10);
+      doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 105, currentY, { align: 'center' });
+      currentY += 5;
+    }
+    
+    if (dadosEmpresa.endereco) {
+      doc.setFontSize(8);
+      doc.text(dadosEmpresa.endereco, 105, currentY, { align: 'center' });
+      currentY += 8;
+    }
+    
+    // Linha separadora
+    doc.setLineWidth(0.5);
+    doc.line(10, currentY, 200, currentY);
+    currentY += 8;
+  }
+
   // Título
   doc.setFontSize(14);
-  doc.text('FOLHA DE PONTO MENSAL', 105, 15, { align: 'center' });
+  doc.text('FOLHA DE PONTO MENSAL', 105, currentY, { align: 'center' });
+  currentY += 7;
 
   // Cabeçalho em formato de tabela
   const headerData = [
@@ -142,7 +227,7 @@ function addFuncionarioPageToPDF(
   ];
 
   autoTable(doc, {
-    startY: 22,
+    startY: currentY,
     body: headerData,
     theme: 'plain',
     styles: { 
@@ -172,7 +257,7 @@ function addFuncionarioPageToPDF(
   ]);
 
   autoTable(doc, {
-    startY: 50,
+    startY: (doc as any).lastAutoTable.finalY + 5,
     head: [['Dia', 'Sem', 'Ent', 'I.Ini', 'I.Fim', 'Saí', 'H.Trab', 'H.Ext', 'Falta', 'Abono']],
     body: tableData,
     theme: 'grid',
@@ -214,7 +299,7 @@ function addFuncionarioPageToPDF(
 }
 
 // Nova função para exportação geral com múltiplos funcionários
-export function exportMultipleFuncionariosToPDF(
+export async function exportMultipleFuncionariosToPDF(
   funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }>,
   resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }>,
   mes: number,
@@ -224,23 +309,48 @@ export function exportMultipleFuncionariosToPDF(
   
   if (funcionariosDados.length === 0) return;
 
+  const dadosEmpresa = await buscarDadosEmpresa();
+
   // Gerar página para cada funcionário
-  funcionariosDados.forEach((funcionarioData, index) => {
+  for (let index = 0; index < funcionariosDados.length; index++) {
+    const funcionarioData = funcionariosDados[index];
     if (funcionarioData.dados.length > 0) {
-      addFuncionarioPageToPDF(doc, funcionarioData.dados, funcionarioData.totais, mes, ano, index === 0);
+      await addFuncionarioPageToPDF(doc, funcionarioData.dados, funcionarioData.totais, mes, ano, index === 0, dadosEmpresa);
     }
-  });
+  }
 
   // Adicionar página de resumo
   doc.addPage();
   
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   
+  let currentY = 10;
+
+  // Cabeçalho da empresa na página de resumo
+  if (dadosEmpresa) {
+    doc.setFontSize(16);
+    doc.text(dadosEmpresa.nome_empresa, 105, currentY, { align: 'center' });
+    currentY += 7;
+    
+    if (dadosEmpresa.cnpj) {
+      doc.setFontSize(10);
+      doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 105, currentY, { align: 'center' });
+      currentY += 5;
+    }
+    
+    // Linha separadora
+    doc.setLineWidth(0.5);
+    doc.line(10, currentY, 200, currentY);
+    currentY += 8;
+  }
+  
   // Título da página de resumo
   doc.setFontSize(16);
-  doc.text('RELATÓRIO GERAL DE FUNCIONÁRIOS', 105, 20, { align: 'center' });
+  doc.text('RELATÓRIO GERAL DE FUNCIONÁRIOS', 105, currentY, { align: 'center' });
+  currentY += 7;
   doc.setFontSize(12);
-  doc.text(`Período: ${mesNome}`, 105, 30, { align: 'center' });
+  doc.text(`Período: ${mesNome}`, 105, currentY, { align: 'center' });
+  currentY += 10;
 
   // Tabela de resumo
   const resumoHeaders = ['Funcionário', 'CPF', 'H. Trabalhadas', 'H. Extras', 'H. Noturnas', 'Faltas'];
@@ -254,7 +364,7 @@ export function exportMultipleFuncionariosToPDF(
   ]);
 
   autoTable(doc, {
-    startY: 45,
+    startY: currentY,
     head: [resumoHeaders],
     body: resumoData,
     theme: 'grid',
@@ -283,7 +393,7 @@ export function exportMultipleFuncionariosToPDF(
   doc.save(`folhas-ponto-geral-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
 }
 
-export function exportToExcel(
+export async function exportToExcel(
   dados: FolhaPontoData[],
   totais: TotaisFolhaPonto,
   mes: number,
@@ -293,9 +403,24 @@ export function exportToExcel(
   
   const funcionario = dados[0];
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const dadosEmpresa = await buscarDadosEmpresa();
 
   // Dados da planilha
-  const worksheetData = [
+  const worksheetData: any[] = [];
+
+  // Cabeçalho da empresa
+  if (dadosEmpresa) {
+    worksheetData.push([dadosEmpresa.nome_empresa]);
+    if (dadosEmpresa.cnpj) {
+      worksheetData.push([`CNPJ: ${dadosEmpresa.cnpj}`]);
+    }
+    if (dadosEmpresa.endereco) {
+      worksheetData.push([dadosEmpresa.endereco]);
+    }
+    worksheetData.push([]);
+  }
+
+  worksheetData.push(
     ['FOLHA DE PONTO MENSAL'],
     [],
     [`Funcionário: ${funcionario.funcionario_nome}`],
@@ -324,7 +449,7 @@ export function exportToExcel(
     [`Total de Faltas: ${totais.total_faltas}`],
     [`Total de Abonos: ${totais.total_abonos}`],
     [`Dias Trabalhados: ${totais.dias_trabalhados}`]
-  ];
+  );
 
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
   const workbook = XLSX.utils.book_new();
@@ -335,7 +460,7 @@ export function exportToExcel(
 }
 
 // Nova função para exportação geral com múltiplos funcionários para Excel
-export function exportMultipleFuncionariosToExcel(
+export async function exportMultipleFuncionariosToExcel(
   funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }>,
   resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }>,
   mes: number,
@@ -345,13 +470,28 @@ export function exportMultipleFuncionariosToExcel(
 
   const workbook = XLSX.utils.book_new();
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const dadosEmpresa = await buscarDadosEmpresa();
 
   // Criar aba para cada funcionário
   funcionariosDados.forEach((funcionarioData, index) => {
     if (funcionarioData.dados.length > 0) {
       const funcionario = funcionarioData.dados[0];
       
-      const worksheetData = [
+      const worksheetData: any[] = [];
+
+      // Cabeçalho da empresa
+      if (dadosEmpresa) {
+        worksheetData.push([dadosEmpresa.nome_empresa]);
+        if (dadosEmpresa.cnpj) {
+          worksheetData.push([`CNPJ: ${dadosEmpresa.cnpj}`]);
+        }
+        if (dadosEmpresa.endereco) {
+          worksheetData.push([dadosEmpresa.endereco]);
+        }
+        worksheetData.push([]);
+      }
+
+      worksheetData.push(
         ['FOLHA DE PONTO MENSAL'],
         [],
         [`Funcionário: ${funcionario.funcionario_nome}`],
@@ -380,7 +520,7 @@ export function exportMultipleFuncionariosToExcel(
         [`Total de Faltas: ${funcionarioData.totais.total_faltas}`],
         [`Total de Abonos: ${funcionarioData.totais.total_abonos}`],
         [`Dias Trabalhados: ${funcionarioData.totais.dias_trabalhados}`]
-      ];
+      );
 
       const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
       const sheetName = funcionario.funcionario_nome.substring(0, 31); // Limite de 31 caracteres para nome da aba
@@ -389,7 +529,18 @@ export function exportMultipleFuncionariosToExcel(
   });
 
   // Criar aba de resumo geral
-  const resumoWorksheetData = [
+  const resumoWorksheetData: any[] = [];
+
+  // Cabeçalho da empresa no resumo
+  if (dadosEmpresa) {
+    resumoWorksheetData.push([dadosEmpresa.nome_empresa]);
+    if (dadosEmpresa.cnpj) {
+      resumoWorksheetData.push([`CNPJ: ${dadosEmpresa.cnpj}`]);
+    }
+    resumoWorksheetData.push([]);
+  }
+
+  resumoWorksheetData.push(
     ['RELATÓRIO GERAL DE FUNCIONÁRIOS'],
     [`Período: ${mesNome}`],
     [],
@@ -402,7 +553,7 @@ export function exportMultipleFuncionariosToExcel(
       formatInterval(funcionario.horas_noturnas),
       funcionario.faltas
     ])
-  ];
+  );
 
   const resumoWorksheet = XLSX.utils.aoa_to_sheet(resumoWorksheetData);
   XLSX.utils.book_append_sheet(workbook, resumoWorksheet, 'Resumo Geral');

@@ -105,7 +105,7 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
         return;
       }
 
-      exportMultipleFuncionariosToPDF(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
+      await exportMultipleFuncionariosToPDF(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({
         title: "PDF gerado com sucesso!",
         description: `Relatório com ${dadosCompletos.funcionariosDados.length} funcionários exportado`
@@ -135,7 +135,7 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
         return;
       }
 
-      exportMultipleFuncionariosToExcel(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
+      await exportMultipleFuncionariosToExcel(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({
         title: "Excel gerado com sucesso!",
         description: `Planilha com ${dadosCompletos.funcionariosDados.length} funcionários exportada`
