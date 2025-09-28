@@ -1514,9 +1514,9 @@ export type Database = {
           dias_trabalhados: number
           total_abonos: number
           total_faltas: number
-          total_horas_extras_diurnas: unknown
-          total_horas_extras_noturnas: unknown
-          total_horas_trabalhadas: unknown
+          total_horas_extras_diurnas: string
+          total_horas_extras_noturnas: string
+          total_horas_trabalhadas: string
         }[]
       }
       criar_ciclo_prontuario_diario: {
