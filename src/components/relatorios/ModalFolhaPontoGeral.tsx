@@ -99,20 +99,23 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
       if (!dadosCompletos.funcionariosDados.length) {
         toast({
           variant: "destructive",
-          title: "Nenhum dado encontrado para exportação"
+          title: "Nenhum registro encontrado",
+          description: `Nenhum funcionário possui registros de ponto em ${meses.find(m => m.value === mes)?.label}/${ano}`
         });
         return;
       }
 
       exportMultipleFuncionariosToPDF(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({
-        title: "PDF com folhas individuais e resumo geral gerado com sucesso!"
+        title: "PDF gerado com sucesso!",
+        description: `Relatório com ${dadosCompletos.funcionariosDados.length} funcionários exportado`
       });
     } catch (error) {
       console.error('Erro na exportação PDF:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao gerar PDF"
+        title: "Erro ao gerar PDF",
+        description: "Verifique se há dados disponíveis para o período selecionado"
       });
     }
     setExporting(null);
@@ -126,20 +129,23 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
       if (!dadosCompletos.funcionariosDados.length) {
         toast({
           variant: "destructive",
-          title: "Nenhum dado encontrado para exportação"
+          title: "Nenhum registro encontrado",
+          description: `Nenhum funcionário possui registros de ponto em ${meses.find(m => m.value === mes)?.label}/${ano}`
         });
         return;
       }
 
       exportMultipleFuncionariosToExcel(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({
-        title: "Excel com abas individuais e resumo geral gerado com sucesso!"
+        title: "Excel gerado com sucesso!",
+        description: `Planilha com ${dadosCompletos.funcionariosDados.length} funcionários exportada`
       });
     } catch (error) {
       console.error('Erro na exportação Excel:', error);
       toast({
         variant: "destructive",
-        title: "Erro ao gerar Excel"
+        title: "Erro ao gerar Excel",
+        description: "Verifique se há dados disponíveis para o período selecionado"
       });
     }
     setExporting(null);

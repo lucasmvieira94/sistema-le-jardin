@@ -37,14 +37,20 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
   console.log('ModalFolhaPonto - funcionarioId:', funcionarioId);
 
   const handleExportPDF = async () => {
-    console.log('handleExportPDF - data:', data);
-    console.log('handleExportPDF - data.dados.length:', data?.dados?.length);
-    
-    if (!data || !data.dados.length) {
-      console.log('PDF Export - Nenhum dado encontrado');
+    if (!funcionarioId) {
       toast({
         variant: "destructive",
-        title: "Nenhum dado encontrado para exportação"
+        title: "Selecione um funcionário antes de exportar"
+      });
+      return;
+    }
+
+    if (!data || !data.dados.length) {
+      const funcionarioNome = funcionarios.find(f => f.id === funcionarioId)?.nome_completo || 'funcionário selecionado';
+      toast({
+        variant: "destructive",
+        title: "Nenhum registro de ponto encontrado",
+        description: `Não há registros de ponto para ${funcionarioNome} em ${meses.find(m => m.value === mes)?.label}/${ano}`
       });
       return;
     }
@@ -56,6 +62,7 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
         title: "PDF gerado com sucesso!"
       });
     } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
       toast({
         variant: "destructive",
         title: "Erro ao gerar PDF"
@@ -65,14 +72,20 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
   };
 
   const handleExportExcel = async () => {
-    console.log('handleExportExcel - data:', data);
-    console.log('handleExportExcel - data.dados.length:', data?.dados?.length);
-    
-    if (!data || !data.dados.length) {
-      console.log('Excel Export - Nenhum dado encontrado');
+    if (!funcionarioId) {
       toast({
         variant: "destructive",
-        title: "Nenhum dado encontrado para exportação"
+        title: "Selecione um funcionário antes de exportar"
+      });
+      return;
+    }
+
+    if (!data || !data.dados.length) {
+      const funcionarioNome = funcionarios.find(f => f.id === funcionarioId)?.nome_completo || 'funcionário selecionado';
+      toast({
+        variant: "destructive",
+        title: "Nenhum registro de ponto encontrado",
+        description: `Não há registros de ponto para ${funcionarioNome} em ${meses.find(m => m.value === mes)?.label}/${ano}`
       });
       return;
     }
@@ -84,6 +97,7 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
         title: "Excel gerado com sucesso!"
       });
     } catch (error) {
+      console.error('Erro ao gerar Excel:', error);
       toast({
         variant: "destructive",
         title: "Erro ao gerar Excel"

@@ -36,6 +36,10 @@ export function useFolhaPonto(funcionarioId: string, mes: number, ano: number, e
   return useQuery({
     queryKey: ['folha-ponto', funcionarioId, mes, ano],
     queryFn: async () => {
+      if (!funcionarioId) {
+        throw new Error('ID do funcionário é obrigatório');
+      }
+
       console.log('useFolhaPonto - chamando RPCs com:', { funcionarioId, mes, ano });
       
       const { data: folhaData, error: folhaError } = await supabase.rpc(
@@ -47,10 +51,10 @@ export function useFolhaPonto(funcionarioId: string, mes: number, ano: number, e
         }
       );
 
-      console.log('useFolhaPonto - folhaData:', folhaData);
-      console.log('useFolhaPonto - folhaError:', folhaError);
-
-      if (folhaError) throw folhaError;
+      if (folhaError) {
+        console.error('Erro ao buscar dados da folha de ponto:', folhaError);
+        throw folhaError;
+      }
 
       const { data: totaisData, error: totaisError } = await supabase.rpc(
         'calcular_totais_folha_ponto',
@@ -61,20 +65,27 @@ export function useFolhaPonto(funcionarioId: string, mes: number, ano: number, e
         }
       );
 
-      console.log('useFolhaPonto - totaisData:', totaisData);
-      console.log('useFolhaPonto - totaisError:', totaisError);
-
-      if (totaisError) throw totaisError;
+      if (totaisError) {
+        console.error('Erro ao calcular totais:', totaisError);
+        throw totaisError;
+      }
 
       const result = {
-        dados: folhaData as FolhaPontoData[],
-        totais: totaisData[0] as TotaisFolhaPonto
+        dados: (folhaData || []) as FolhaPontoData[],
+        totais: (totaisData && totaisData[0]) ? totaisData[0] as TotaisFolhaPonto : {
+          total_horas_trabalhadas: '00:00:00',
+          total_horas_extras_diurnas: '00:00:00',
+          total_horas_extras_noturnas: '00:00:00',
+          total_faltas: 0,
+          total_abonos: 0,
+          dias_trabalhados: 0
+        }
       };
       
       console.log('useFolhaPonto - result final:', result);
       
       return result;
     },
-    enabled
+    enabled: enabled && !!funcionarioId
   });
 }
