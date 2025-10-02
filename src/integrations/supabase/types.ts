@@ -1375,6 +1375,83 @@ export type Database = {
           },
         ]
       }
+      tenant_rotation_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          new_code_hash: string
+          old_code_hash: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          new_code_hash: string
+          old_code_hash: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          new_code_hash?: string
+          old_code_hash?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_rotation_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          ativo: boolean
+          cnpj: string | null
+          config: Json | null
+          created_at: string
+          employer_code_hash: string
+          endereco: string | null
+          id: string
+          logo_url: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj?: string | null
+          config?: Json | null
+          created_at?: string
+          employer_code_hash: string
+          endereco?: string | null
+          id?: string
+          logo_url?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string | null
+          config?: Json | null
+          created_at?: string
+          employer_code_hash?: string
+          endereco?: string | null
+          id?: string
+          logo_url?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tipos_afastamento: {
         Row: {
           categoria: string
@@ -1519,6 +1596,10 @@ export type Database = {
           total_horas_trabalhadas: string
         }[]
       }
+      cleanup_expired_rotation_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       criar_ciclo_prontuario_diario: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1597,6 +1678,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_tenant_access: {
+        Args: { _tenant_id: string }
         Returns: boolean
       }
       iniciar_prontuario_diario: {
@@ -1694,6 +1779,13 @@ export type Database = {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
       }
+      rotate_employer_code: {
+        Args: { p_new_code: string; p_old_code: string; p_tenant_id: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       salvar_prontuario_simples: {
         Args: { p_ciclo_id: string }
         Returns: {
@@ -1706,6 +1798,14 @@ export type Database = {
         Returns: {
           funcionario_id: string
           nome_completo: string
+          valid: boolean
+        }[]
+      }
+      validate_employer_code: {
+        Args: { p_employer_code: string }
+        Returns: {
+          tenant_id: string
+          tenant_name: string
           valid: boolean
         }[]
       }

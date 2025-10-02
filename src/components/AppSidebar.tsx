@@ -2,6 +2,7 @@ import { useLocation, Link } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { 
   Home, 
   Users, 
@@ -74,11 +75,16 @@ export function AppSidebar() {
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-60"}>
       <SidebarContent>
-        {/* Branding */}
-        <div className={`p-4 border-b ${isCollapsed ? 'text-center' : ''}`}>
+        {/* Branding and Tenant Switcher */}
+        <div className={`p-4 border-b space-y-3 ${isCollapsed ? 'text-center' : ''}`}>
           <h1 className={`font-bold text-primary ${isCollapsed ? 'text-sm' : 'text-xl'}`}>
             {isCollapsed ? 'SC' : 'SenexCare'}
           </h1>
+          {!isCollapsed && (
+            <div className="flex justify-center">
+              <TenantSwitcher />
+            </div>
+          )}
         </div>
 
         {/* User Info */}
