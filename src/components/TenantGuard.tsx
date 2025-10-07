@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { TenantSelector } from './TenantSelector';
-import { useTenant } from '@/hooks/useTenant';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { Loader2 } from 'lucide-react';
 
 interface TenantGuardProps {
@@ -12,7 +12,7 @@ interface TenantGuardProps {
  * antes de renderizar o conteúdo protegido
  */
 export function TenantGuard({ children }: TenantGuardProps) {
-  const { loading, isAuthenticated } = useTenant();
+  const { loading, isAuthenticated } = useTenantContext();
 
   // Mostra loading enquanto verifica cache
   if (loading) {

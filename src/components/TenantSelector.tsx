@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTenant } from '@/hooks/useTenant';
+import { useTenantContext } from '@/contexts/TenantContext';
 
 interface TenantSelectorProps {
   onSuccess?: () => void;
@@ -13,7 +14,8 @@ interface TenantSelectorProps {
 export function TenantSelector({ onSuccess }: TenantSelectorProps) {
   const [employerCode, setEmployerCode] = useState('');
   const [error, setError] = useState('');
-  const { validateEmployerCode, validating } = useTenant();
+  const { validateEmployerCode, validating } = useTenantContext();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +33,9 @@ export function TenantSelector({ onSuccess }: TenantSelectorProps) {
       return;
     }
 
-    // Sucesso! Redirecionar ou atualizar UI
+    // Sucesso! Redirecionar para o dashboard
     onSuccess?.();
+    navigate('/dashboard');
   };
 
   return (
