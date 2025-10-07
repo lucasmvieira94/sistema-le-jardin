@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Building2, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,6 @@ export function TenantSelector({ onSuccess }: TenantSelectorProps) {
   const [employerCode, setEmployerCode] = useState('');
   const [error, setError] = useState('');
   const { validateEmployerCode, validating } = useTenantContext();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +31,8 @@ export function TenantSelector({ onSuccess }: TenantSelectorProps) {
       return;
     }
 
-    // Sucesso! Redirecionar para o dashboard
+    // Sucesso! O TenantGuard automaticamente vai renderizar o conteúdo
     onSuccess?.();
-    navigate('/dashboard');
   };
 
   return (
