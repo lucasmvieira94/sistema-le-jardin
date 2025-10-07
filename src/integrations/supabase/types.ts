@@ -1508,6 +1508,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      armor: {
+        Args: { "": string }
+        Returns: string
+      }
       buscar_prontuarios_em_atraso: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1604,6 +1608,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      dearmor: {
+        Args: { "": string }
+        Returns: string
+      }
       eh_horario_noturno: {
         Args: {
           p_fim_noturno?: string
@@ -1641,6 +1649,18 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      gen_random_bytes: {
+        Args: { "": number }
+        Returns: string
+      }
+      gen_random_uuid: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      gen_salt: {
+        Args: { "": string }
+        Returns: string
       }
       gerar_folha_ponto_mensal: {
         Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
@@ -1743,6 +1763,14 @@ export type Database = {
           quantidade_atual: number
           quantidade_minima: number
         }[]
+      }
+      pgp_armor_headers: {
+        Args: { "": string }
+        Returns: Record<string, unknown>[]
+      }
+      pgp_key_id: {
+        Args: { "": string }
+        Returns: string
       }
       preencher_horarios_por_escala: {
         Args: {
