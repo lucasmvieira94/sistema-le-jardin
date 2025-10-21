@@ -237,15 +237,15 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TenantProvider>
-        <TenantGuard>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <TenantGuard>
               <AppContent />
-            </BrowserRouter>
-          </TooltipProvider>
-        </TenantGuard>
+            </TenantGuard>
+          </BrowserRouter>
+        </TooltipProvider>
       </TenantProvider>
     </QueryClientProvider>
   );
