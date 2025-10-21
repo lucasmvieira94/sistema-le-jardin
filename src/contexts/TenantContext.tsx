@@ -15,6 +15,7 @@ interface TenantContextType {
   }>;
   clearTenant: () => void;
   revalidateTenant: () => Promise<boolean>;
+  setTenantByUserId: (userId: string) => Promise<boolean>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);

@@ -121,6 +121,42 @@ export function useTenant() {
     setTenantName(null);
   }, []);
 
+  // Buscar e definir tenant automaticamente pelo user_id
+  const setTenantByUserId = useCallback(async (userId: string): Promise<boolean> => {
+    try {
+      // Buscar tenant_id do usuário na tabela user_roles
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('tenant_id, tenants(nome)')
+        .eq('user_id', userId)
+        .single();
+
+      if (error || !data || !data.tenant_id) {
+        console.error('Erro ao buscar tenant do usuário:', error);
+        return false;
+      }
+
+      // Salvar no cache
+      const tenantData: TenantData = {
+        tenantId: data.tenant_id,
+        tenantName: (data.tenants as any)?.nome || 'Empresa',
+        timestamp: Date.now()
+      };
+
+      localStorage.setItem(TENANT_STORAGE_KEY, JSON.stringify(tenantData));
+      localStorage.setItem(TENANT_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
+
+      // Atualizar estado
+      setTenantId(data.tenant_id);
+      setTenantName((data.tenants as any)?.nome || 'Empresa');
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao definir tenant pelo usuário:', error);
+      return false;
+    }
+  }, []);
+
   // Verificar se tenant ainda é válido
   const revalidateTenant = useCallback(async (): Promise<boolean> => {
     if (!tenantId) return false;
@@ -163,6 +199,7 @@ export function useTenant() {
     isAuthenticated: !!tenantId,
     validateEmployerCode,
     clearTenant,
-    revalidateTenant
+    revalidateTenant,
+    setTenantByUserId
   };
 }

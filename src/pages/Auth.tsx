@@ -8,12 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenantContext } from "@/contexts/TenantContext";
 import { User, Session } from '@supabase/supabase-js';
 import { LogIn, UserPlus, Shield } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setTenantByUserId } = useTenantContext();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,25 +34,39 @@ export default function Auth() {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect authenticated users to dashboard
+        // Definir tenant automaticamente após login e redirecionar
         if (session?.user) {
-          navigate('/dashboard');
+          setTimeout(async () => {
+            const tenantSet = await setTenantByUserId(session.user.id);
+            if (tenantSet) {
+              navigate('/dashboard');
+            } else {
+              toast({
+                title: "Erro ao carregar empresa",
+                description: "Não foi possível identificar sua empresa. Contate o suporte.",
+                variant: "destructive"
+              });
+            }
+          }, 0);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        navigate('/dashboard');
+        const tenantSet = await setTenantByUserId(session.user.id);
+        if (tenantSet) {
+          navigate('/dashboard');
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, setTenantByUserId, toast]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
