@@ -36,26 +36,26 @@ export function TenantSelector({ onSuccess }: TenantSelectorProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-3 sm:p-4">
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Building2 className="w-8 h-8 text-primary" />
+        <CardHeader className="space-y-3 sm:space-y-4 text-center px-4 sm:px-6 pt-6 sm:pt-8">
+          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Selecione sua Empresa</CardTitle>
-            <CardDescription className="mt-2">
+            <CardTitle className="text-xl sm:text-2xl font-bold">Selecione sua Empresa</CardTitle>
+            <CardDescription className="mt-1.5 sm:mt-2 text-sm sm:text-base">
               Para acessar o sistema, insira o código exclusivo da sua instituição
             </CardDescription>
           </div>
         </CardHeader>
 
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-4 sm:py-6">
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="py-2.5">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             )}
 
@@ -67,25 +67,24 @@ export function TenantSelector({ onSuccess }: TenantSelectorProps) {
               <Input
                 id="employerCode"
                 type="text"
-                placeholder="Digite o código (ex: EMPRESA2025)"
+                placeholder="Digite o código"
                 value={employerCode}
                 onChange={(e) => setEmployerCode(e.target.value.toUpperCase())}
                 disabled={validating}
                 maxLength={50}
-                className="text-center font-mono text-lg tracking-wider"
+                className="text-center font-mono text-base sm:text-lg tracking-wider h-11 sm:h-12"
                 autoFocus
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 O código é fornecido pelo administrador da sua instituição
               </p>
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col gap-3">
+          <CardFooter className="flex flex-col gap-3 px-4 sm:px-6 pb-6 sm:pb-8">
             <Button 
               type="submit" 
-              className="w-full" 
-              size="lg"
+              className="w-full h-11 sm:h-12 text-base" 
               disabled={validating || !employerCode.trim()}
             >
               {validating ? (
@@ -100,7 +99,7 @@ export function TenantSelector({ onSuccess }: TenantSelectorProps) {
               )}
             </Button>
 
-            <div className="text-xs text-center text-muted-foreground space-y-1">
+            <div className="text-xs sm:text-sm text-center text-muted-foreground space-y-0.5 sm:space-y-1">
               <p>Não possui um código de acesso?</p>
               <p>Entre em contato com o administrador do sistema</p>
             </div>
