@@ -127,19 +127,33 @@ export function useTenant() {
       // Buscar tenant_id do usuário na tabela user_roles
       const { data, error } = await supabase
         .from('user_roles')
-        .select('tenant_id, tenants(nome)')
+        .select(`
+          tenant_id,
+          tenants:tenant_id (
+            nome
+          )
+        `)
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error || !data || !data.tenant_id) {
+      if (error) {
         console.error('Erro ao buscar tenant do usuário:', error);
         return false;
       }
 
+      if (!data || !data.tenant_id) {
+        console.error('Usuário não está associado a nenhuma empresa');
+        return false;
+      }
+
+      // Extrair nome do tenant
+      const tenants = data.tenants as any;
+      const tenantName = tenants?.nome || 'Empresa';
+
       // Salvar no cache
       const tenantData: TenantData = {
         tenantId: data.tenant_id,
-        tenantName: (data.tenants as any)?.nome || 'Empresa',
+        tenantName: tenantName,
         timestamp: Date.now()
       };
 
@@ -148,7 +162,7 @@ export function useTenant() {
 
       // Atualizar estado
       setTenantId(data.tenant_id);
-      setTenantName((data.tenants as any)?.nome || 'Empresa');
+      setTenantName(tenantName);
 
       return true;
     } catch (error) {
