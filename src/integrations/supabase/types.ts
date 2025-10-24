@@ -279,7 +279,7 @@ export type Database = {
           dados_anteriores: Json | null
           dados_novos: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           operacao: string
           tabela: string
           user_agent: string | null
@@ -290,7 +290,7 @@ export type Database = {
           dados_anteriores?: Json | null
           dados_novos?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           operacao: string
           tabela: string
           user_agent?: string | null
@@ -301,11 +301,47 @@ export type Database = {
           dados_anteriores?: Json | null
           dados_novos?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           operacao?: string
           tabela?: string
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      configuracoes_alertas_fraldas: {
+        Row: {
+          created_at: string
+          dias_alerta_atencao: number
+          dias_alerta_aviso: number
+          dias_alerta_critico: number
+          id: string
+          notificar_dashboard: boolean
+          notificar_email: boolean
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dias_alerta_atencao?: number
+          dias_alerta_aviso?: number
+          dias_alerta_critico?: number
+          id?: string
+          notificar_dashboard?: boolean
+          notificar_email?: boolean
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dias_alerta_atencao?: number
+          dias_alerta_aviso?: number
+          dias_alerta_critico?: number
+          id?: string
+          notificar_dashboard?: boolean
+          notificar_email?: boolean
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -668,6 +704,63 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           saida?: string
+        }
+        Relationships: []
+      }
+      estoque_fraldas: {
+        Row: {
+          ativo: boolean
+          consumo_medio_diario: number | null
+          created_at: string
+          data_ultima_compra: string | null
+          fornecedor: string | null
+          id: string
+          localizacao: string | null
+          observacoes: string | null
+          preco_unitario: number | null
+          quantidade_atual: number
+          quantidade_minima: number
+          tamanho: string
+          tenant_id: string
+          tipo_fralda: string
+          unidade_medida: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          consumo_medio_diario?: number | null
+          created_at?: string
+          data_ultima_compra?: string | null
+          fornecedor?: string | null
+          id?: string
+          localizacao?: string | null
+          observacoes?: string | null
+          preco_unitario?: number | null
+          quantidade_atual?: number
+          quantidade_minima?: number
+          tamanho: string
+          tenant_id: string
+          tipo_fralda: string
+          unidade_medida?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          consumo_medio_diario?: number | null
+          created_at?: string
+          data_ultima_compra?: string | null
+          fornecedor?: string | null
+          id?: string
+          localizacao?: string | null
+          observacoes?: string | null
+          preco_unitario?: number | null
+          quantidade_atual?: number
+          quantidade_minima?: number
+          tamanho?: string
+          tenant_id?: string
+          tipo_fralda?: string
+          unidade_medida?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1175,7 +1268,7 @@ export type Database = {
           codigo_tentativa: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           tentativas: number | null
           updated_at: string
         }
@@ -1184,7 +1277,7 @@ export type Database = {
           codigo_tentativa: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           tentativas?: number | null
           updated_at?: string
         }
@@ -1193,7 +1286,7 @@ export type Database = {
           codigo_tentativa?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           tentativas?: number | null
           updated_at?: string
         }
@@ -1514,17 +1607,77 @@ export type Database = {
           },
         ]
       }
+      uso_fraldas: {
+        Row: {
+          created_at: string
+          data_uso: string
+          estoque_fralda_id: string
+          funcionario_id: string
+          horario_uso: string
+          id: string
+          observacoes: string | null
+          quantidade_usada: number
+          residente_id: string
+          tenant_id: string
+          tipo_troca: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_uso?: string
+          estoque_fralda_id: string
+          funcionario_id: string
+          horario_uso?: string
+          id?: string
+          observacoes?: string | null
+          quantidade_usada?: number
+          residente_id: string
+          tenant_id: string
+          tipo_troca?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_uso?: string
+          estoque_fralda_id?: string
+          funcionario_id?: string
+          horario_uso?: string
+          id?: string
+          observacoes?: string | null
+          quantidade_usada?: number
+          residente_id?: string
+          tenant_id?: string
+          tipo_troca?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uso_fraldas_estoque_fralda_id_fkey"
+            columns: ["estoque_fralda_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_fraldas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uso_fraldas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uso_fraldas_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      armor: {
-        Args: { "": string }
-        Returns: string
-      }
       buscar_prontuarios_em_atraso: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           ciclo_id: string
           data_ciclo: string
@@ -1611,18 +1764,9 @@ export type Database = {
           total_horas_trabalhadas: string
         }[]
       }
-      cleanup_expired_rotation_tokens: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      criar_ciclo_prontuario_diario: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      dearmor: {
-        Args: { "": string }
-        Returns: string
-      }
+      cleanup_expired_rotation_tokens: { Args: never; Returns: undefined }
+      criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
+      dearmor: { Args: { "": string }; Returns: string }
       eh_horario_noturno: {
         Args: {
           p_fim_noturno?: string
@@ -1635,10 +1779,7 @@ export type Database = {
         Args: { p_ciclo_id: string; p_funcionario_id: string }
         Returns: boolean
       }
-      executar_criacao_prontuarios_manual: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      executar_criacao_prontuarios_manual: { Args: never; Returns: undefined }
       finalizar_prontuario_atraso_gestor: {
         Args: {
           p_ciclo_id: string
@@ -1661,18 +1802,8 @@ export type Database = {
           success: boolean
         }[]
       }
-      gen_random_bytes: {
-        Args: { "": number }
-        Returns: string
-      }
-      gen_random_uuid: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      gen_salt: {
-        Args: { "": string }
-        Returns: string
-      }
+      gen_random_uuid: { Args: never; Returns: string }
+      gen_salt: { Args: { "": string }; Returns: string }
       gerar_folha_ponto_mensal: {
         Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
@@ -1696,12 +1827,9 @@ export type Database = {
           saida: string
         }[]
       }
-      gerar_token_convite: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      gerar_token_convite: { Args: never; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       has_role: {
@@ -1711,10 +1839,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      has_tenant_access: {
-        Args: { _tenant_id: string }
-        Returns: boolean
-      }
+      has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
       iniciar_prontuario_diario: {
         Args: { p_funcionario_id: string; p_residente_id: string }
         Returns: {
@@ -1744,6 +1869,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      obter_alertas_estoque_fraldas: {
+        Args: never
+        Returns: {
+          consumo_medio_diario: number
+          dias_restantes: number
+          estoque_id: string
+          localizacao: string
+          nivel_alerta: string
+          quantidade_atual: number
+          tamanho: string
+          tipo_fralda: string
+        }[]
+      }
       obter_data_referencia_registro: {
         Args: {
           p_data_entrada: string
@@ -1765,7 +1903,7 @@ export type Database = {
         }[]
       }
       obter_medicamentos_estoque_baixo: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           data_validade: string
           dias_restantes: number
@@ -1778,10 +1916,6 @@ export type Database = {
       pgp_armor_headers: {
         Args: { "": string }
         Returns: Record<string, unknown>[]
-      }
-      pgp_key_id: {
-        Args: { "": string }
-        Returns: string
       }
       preencher_horarios_por_escala: {
         Args: {
@@ -1802,18 +1936,9 @@ export type Database = {
         Args: { p_mensagem: string; p_timezone?: string }
         Returns: string
       }
-      redefinir_prontuarios_automatico: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      redefinir_prontuarios_com_horario: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      redefinir_status_prontuarios_diarios: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      redefinir_prontuarios_automatico: { Args: never; Returns: undefined }
+      redefinir_prontuarios_com_horario: { Args: never; Returns: undefined }
+      redefinir_status_prontuarios_diarios: { Args: never; Returns: undefined }
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined

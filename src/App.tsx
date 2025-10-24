@@ -26,6 +26,7 @@ import ConfiguracaoFormulario from "./pages/ConfiguracaoFormulario";
 import ControleMedicamentos from "./pages/ControleMedicamentos";
 import ControleTemperatura from "./pages/ControleTemperatura";
 import ControleTemperaturaPublico from "./pages/ControleTemperaturaPublico";
+import ControleFraldas from "./pages/ControleFraldas";
 import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -190,6 +191,14 @@ const AppContent = () => {
                     element={
                       <ProtectedRoute>
                         <ControleTemperatura />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/controle-fraldas"
+                    element={
+                      <ProtectedRoute>
+                        <ControleFraldas />
                       </ProtectedRoute>
                     }
                   />

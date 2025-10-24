@@ -16,7 +16,8 @@ import {
   ChevronDown,
   Pill,
   Thermometer,
-  MessageSquare
+  MessageSquare,
+  Baby
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,7 @@ export function AppSidebar() {
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
     { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
+    { path: "/controle-fraldas", icon: Baby, label: "Controle de Fraldas", adminOnly: true },
     { path: "/controle-temperatura", icon: Thermometer, label: "Controle de Temperatura", adminOnly: true },
     { path: "/gerenciamento-whatsapp", icon: MessageSquare, label: "WhatsApp & IA", adminOnly: true },
     { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Alertas WhatsApp", adminOnly: true },
