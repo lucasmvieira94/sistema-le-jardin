@@ -33,6 +33,7 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 import { AppSidebar } from "./components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -249,6 +250,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <PWAInstallPrompt />
           <BrowserRouter>
             <TenantGuard>
               <AppContent />
