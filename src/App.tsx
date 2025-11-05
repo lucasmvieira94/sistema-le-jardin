@@ -29,6 +29,7 @@ import ControleTemperaturaPublico from "./pages/ControleTemperaturaPublico";
 import ControleFraldas from "./pages/ControleFraldas";
 import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
+import ConfiguracoesAlertas from "./pages/ConfiguracoesAlertas";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 import { AppSidebar } from "./components/AppSidebar";
@@ -216,6 +217,14 @@ const AppContent = () => {
                     element={
                       <ProtectedRoute>
                         <GerenciamentoWhatsApp />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/configuracoes-alertas"
+                    element={
+                      <ProtectedRoute>
+                        <ConfiguracoesAlertas />
                       </ProtectedRoute>
                     }
                   />

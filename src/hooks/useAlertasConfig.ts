@@ -35,10 +35,19 @@ export const useAlertasConfig = () => {
     mutationFn: async (config: Partial<AlertaConfig>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
+      
+      if (!config.tipo_alerta) {
+        throw new Error('Tipo de alerta é obrigatório');
+      }
 
       const configData = {
-        ...config,
         user_id: user.id,
+        tipo_alerta: config.tipo_alerta,
+        notificar_push: config.notificar_push ?? true,
+        notificar_email: config.notificar_email ?? false,
+        notificar_dashboard: config.notificar_dashboard ?? true,
+        ativo: config.ativo ?? true,
+        condicoes: config.condicoes,
       };
 
       if (config.id) {

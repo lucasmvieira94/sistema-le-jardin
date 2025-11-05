@@ -345,6 +345,45 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_alertas_usuarios: {
+        Row: {
+          ativo: boolean
+          condicoes: Json | null
+          created_at: string
+          id: string
+          notificar_dashboard: boolean
+          notificar_email: boolean
+          notificar_push: boolean
+          tipo_alerta: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          condicoes?: Json | null
+          created_at?: string
+          id?: string
+          notificar_dashboard?: boolean
+          notificar_email?: boolean
+          notificar_push?: boolean
+          tipo_alerta: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          condicoes?: Json | null
+          created_at?: string
+          id?: string
+          notificar_dashboard?: boolean
+          notificar_email?: boolean
+          notificar_push?: boolean
+          tipo_alerta?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       configuracoes_empresa: {
         Row: {
           adicional_hora_extra_100: number | null
