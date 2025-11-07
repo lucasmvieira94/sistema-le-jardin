@@ -30,6 +30,7 @@ import ControleFraldas from "./pages/ControleFraldas";
 import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import ConfiguracoesAlertas from "./pages/ConfiguracoesAlertas";
+import RelatoriosIA from "./pages/RelatoriosIA";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 import { AppSidebar } from "./components/AppSidebar";
@@ -153,6 +154,22 @@ const AppContent = () => {
                     element={
                       <ProtectedRoute>
                         <Configuracoes />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/configuracoes-alertas"
+                    element={
+                      <ProtectedRoute>
+                        <ConfiguracoesAlertas />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/relatorios-ia"
+                    element={
+                      <ProtectedRoute>
+                        <RelatoriosIA />
                       </ProtectedRoute>
                     }
                   />

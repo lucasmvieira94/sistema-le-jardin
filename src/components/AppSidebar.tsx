@@ -18,7 +18,8 @@ import {
   Thermometer,
   MessageSquare,
   Baby,
-  Bell
+  Bell,
+  Brain
 } from "lucide-react";
 import {
   Sidebar,

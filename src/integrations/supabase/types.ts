@@ -192,6 +192,88 @@ export type Database = {
           },
         ]
       }
+      alertas_nao_conformidade: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          data_ocorrencia: string
+          descricao: string
+          detalhes: Json | null
+          id: string
+          observacoes: string | null
+          relatorio_id: string | null
+          residente_id: string | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          status: string | null
+          tenant_id: string | null
+          tipo_alerta: string
+          updated_at: string | null
+          visualizado_em: string | null
+          visualizado_por: string | null
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          data_ocorrencia: string
+          descricao: string
+          detalhes?: Json | null
+          id?: string
+          observacoes?: string | null
+          relatorio_id?: string | null
+          residente_id?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          tipo_alerta: string
+          updated_at?: string | null
+          visualizado_em?: string | null
+          visualizado_por?: string | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          data_ocorrencia?: string
+          descricao?: string
+          detalhes?: Json | null
+          id?: string
+          observacoes?: string | null
+          relatorio_id?: string | null
+          residente_id?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          tipo_alerta?: string
+          updated_at?: string | null
+          visualizado_em?: string | null
+          visualizado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_nao_conformidade_relatorio_id_fkey"
+            columns: ["relatorio_id"]
+            isOneToOne: false
+            referencedRelation: "relatorios_semanais_ia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_nao_conformidade_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_nao_conformidade_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alertas_whatsapp: {
         Row: {
           ativo: boolean
@@ -1386,6 +1468,56 @@ export type Database = {
             columns: ["funcionario_id"]
             isOneToOne: false
             referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relatorios_semanais_ia: {
+        Row: {
+          created_at: string | null
+          data_fim: string
+          data_inicio: string
+          gerado_em: string | null
+          id: string
+          nao_conformidades_encontradas: number | null
+          relatorio: Json
+          resumo_executivo: string | null
+          tenant_id: string | null
+          total_prontuarios: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_fim: string
+          data_inicio: string
+          gerado_em?: string | null
+          id?: string
+          nao_conformidades_encontradas?: number | null
+          relatorio: Json
+          resumo_executivo?: string | null
+          tenant_id?: string | null
+          total_prontuarios?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_fim?: string
+          data_inicio?: string
+          gerado_em?: string | null
+          id?: string
+          nao_conformidades_encontradas?: number | null
+          relatorio?: Json
+          resumo_executivo?: string | null
+          tenant_id?: string | null
+          total_prontuarios?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relatorios_semanais_ia_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]

@@ -46,3 +46,6 @@ verify_jwt = false
 
 [functions.processar-agendamentos-whatsapp]
 verify_jwt = false
+
+[functions.analisar-prontuarios]
+verify_jwt = false
