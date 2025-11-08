@@ -5,7 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CalendarIcon, FileText, Loader2, TrendingUp, AlertTriangle, Info, CheckCircle, Eye } from 'lucide-react';
+import { AlertCircle, CalendarIcon, FileText, Loader2, TrendingUp, AlertTriangle, Info, CheckCircle, Eye, Download } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRelatoriosIA } from '@/hooks/useRelatoriosIA';
@@ -13,6 +13,9 @@ import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
 
 export default function RelatoriosIA() {
   const [dataInicio, setDataInicio] = useState<Date>(subDays(new Date(), 7));
@@ -56,6 +59,251 @@ export default function RelatoriosIA() {
       });
       setAlertaSelecionado(null);
       setObservacoes('');
+    }
+  };
+
+  const handleDownloadPDF = (relatorio: any) => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      let yPos = 20;
+
+      // Título
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Relatorio Semanal - Analise com IA', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 10;
+
+      // Período
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      const periodo = `Periodo: ${format(new Date(relatorio.data_inicio), 'dd/MM/yyyy')} ate ${format(new Date(relatorio.data_fim), 'dd/MM/yyyy')}`;
+      doc.text(periodo, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // Resumo Executivo
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Resumo Executivo', 14, yPos);
+      yPos += 7;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const resumoLines = doc.splitTextToSize(relatorio.relatorio.resumo_executivo, pageWidth - 28);
+      doc.text(resumoLines, 14, yPos);
+      yPos += resumoLines.length * 5 + 10;
+
+      // Métricas Gerais
+      if (relatorio.relatorio.metricas_gerais) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Metricas Gerais', 14, yPos);
+        yPos += 7;
+
+        const metricas = Object.entries(relatorio.relatorio.metricas_gerais).map(([key, value]) => [
+          key.replace(/_/g, ' ').toUpperCase(),
+          String(value)
+        ]);
+
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Metrica', 'Valor']],
+          body: metricas,
+          theme: 'grid',
+          headStyles: { fillColor: [59, 130, 246] },
+          margin: { left: 14, right: 14 },
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 10;
+      }
+
+      // Nova página se necessário
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Análise Detalhada
+      if (relatorio.relatorio.analise_detalhada) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Analise Detalhada', 14, yPos);
+        yPos += 7;
+
+        const analise = relatorio.relatorio.analise_detalhada;
+
+        // Pontos Positivos
+        if (analise.pontos_positivos?.length > 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(34, 197, 94); // green
+          doc.setFont('helvetica', 'bold');
+          doc.text('Pontos Positivos:', 14, yPos);
+          yPos += 6;
+          
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.setFont('helvetica', 'normal');
+          analise.pontos_positivos.forEach((ponto: string) => {
+            const lines = doc.splitTextToSize(`• ${ponto}`, pageWidth - 28);
+            doc.text(lines, 14, yPos);
+            yPos += lines.length * 5 + 2;
+          });
+          yPos += 5;
+        }
+
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        // Áreas de Atenção
+        if (analise.areas_atencao?.length > 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(234, 179, 8); // yellow
+          doc.setFont('helvetica', 'bold');
+          doc.text('Areas de Atencao:', 14, yPos);
+          yPos += 6;
+          
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.setFont('helvetica', 'normal');
+          analise.areas_atencao.forEach((area: string) => {
+            const lines = doc.splitTextToSize(`• ${area}`, pageWidth - 28);
+            doc.text(lines, 14, yPos);
+            yPos += lines.length * 5 + 2;
+          });
+          yPos += 5;
+        }
+
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        // Tendências
+        if (analise.tendencias?.length > 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(59, 130, 246); // blue
+          doc.setFont('helvetica', 'bold');
+          doc.text('Tendencias Observadas:', 14, yPos);
+          yPos += 6;
+          
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.setFont('helvetica', 'normal');
+          analise.tendencias.forEach((tendencia: string) => {
+            const lines = doc.splitTextToSize(`• ${tendencia}`, pageWidth - 28);
+            doc.text(lines, 14, yPos);
+            yPos += lines.length * 5 + 2;
+          });
+          yPos += 5;
+        }
+
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        // Observações em Destaque
+        if (analise.observacoes_destaque?.length > 0) {
+          doc.setFontSize(12);
+          doc.setTextColor(168, 85, 247); // purple
+          doc.setFont('helvetica', 'bold');
+          doc.text('Observacoes em Destaque:', 14, yPos);
+          yPos += 6;
+          
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.setFont('helvetica', 'normal');
+          analise.observacoes_destaque.forEach((obs: string) => {
+            const lines = doc.splitTextToSize(`• ${obs}`, pageWidth - 28);
+            doc.text(lines, 14, yPos);
+            yPos += lines.length * 5 + 2;
+          });
+          yPos += 5;
+        }
+      }
+
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Soluções e Melhorias
+      if (relatorio.relatorio.solucoes_melhorias?.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('Solucoes e Melhorias Propostas', 14, yPos);
+        yPos += 7;
+
+        relatorio.relatorio.solucoes_melhorias.forEach((solucao: any, index: number) => {
+          if (yPos > 250) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${index + 1}. Area: ${solucao.area}`, 14, yPos);
+          yPos += 6;
+
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          
+          doc.text('Problema:', 14, yPos);
+          yPos += 5;
+          const problemaLines = doc.splitTextToSize(solucao.problema_identificado, pageWidth - 28);
+          doc.text(problemaLines, 14, yPos);
+          yPos += problemaLines.length * 5 + 3;
+
+          doc.text('Solucao:', 14, yPos);
+          yPos += 5;
+          const solucaoLines = doc.splitTextToSize(solucao.solucao_proposta, pageWidth - 28);
+          doc.text(solucaoLines, 14, yPos);
+          yPos += solucaoLines.length * 5 + 3;
+
+          doc.text('Beneficio:', 14, yPos);
+          yPos += 5;
+          const beneficioLines = doc.splitTextToSize(solucao.beneficio_esperado, pageWidth - 28);
+          doc.text(beneficioLines, 14, yPos);
+          yPos += beneficioLines.length * 5 + 8;
+        });
+      }
+
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Recomendações
+      if (relatorio.relatorio.recomendacoes?.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('Recomendacoes', 14, yPos);
+        yPos += 7;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        relatorio.relatorio.recomendacoes.forEach((rec: string, index: number) => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+          const lines = doc.splitTextToSize(`${index + 1}. ${rec}`, pageWidth - 28);
+          doc.text(lines, 14, yPos);
+          yPos += lines.length * 5 + 3;
+        });
+      }
+
+      // Salvar PDF
+      const nomeArquivo = `relatorio_${format(new Date(relatorio.data_inicio), 'dd-MM-yyyy')}_${format(new Date(relatorio.data_fim), 'dd-MM-yyyy')}.pdf`;
+      doc.save(nomeArquivo);
+      toast.success('Relatório baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
     }
   };
 
@@ -347,12 +595,11 @@ export default function RelatoriosIA() {
               relatorios.map((relatorio) => (
                 <Card 
                   key={relatorio.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setRelatorioSelecionado(relatorio)}
+                  className="hover:shadow-md transition-shadow"
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div>
+                      <div className="flex-1 cursor-pointer" onClick={() => setRelatorioSelecionado(relatorio)}>
                         <CardTitle className="text-lg">
                           Relatório Semanal
                         </CardTitle>
@@ -361,12 +608,25 @@ export default function RelatoriosIA() {
                           {format(new Date(relatorio.data_fim), 'dd/MM/yyyy', { locale: ptBR })}
                         </CardDescription>
                       </div>
-                      <Badge variant="outline">
-                        {relatorio.nao_conformidades_encontradas} alertas
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {relatorio.nao_conformidades_encontradas} alertas
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadPDF(relatorio);
+                          }}
+                          title="Baixar PDF"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="cursor-pointer" onClick={() => setRelatorioSelecionado(relatorio)}>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {relatorio.resumo_executivo}
                     </p>
@@ -494,15 +754,30 @@ export default function RelatoriosIA() {
       <Dialog open={!!relatorioSelecionado} onOpenChange={() => setRelatorioSelecionado(null)}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Relatório Semanal Completo</DialogTitle>
-            <DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle>Relatório Semanal Completo</DialogTitle>
+                <DialogDescription>
+                  {relatorioSelecionado && (
+                    <>
+                      {format(new Date(relatorioSelecionado.data_inicio), 'dd/MM/yyyy', { locale: ptBR })} até{' '}
+                      {format(new Date(relatorioSelecionado.data_fim), 'dd/MM/yyyy', { locale: ptBR })}
+                    </>
+                  )}
+                </DialogDescription>
+              </div>
               {relatorioSelecionado && (
-                <>
-                  {format(new Date(relatorioSelecionado.data_inicio), 'dd/MM/yyyy', { locale: ptBR })} até{' '}
-                  {format(new Date(relatorioSelecionado.data_fim), 'dd/MM/yyyy', { locale: ptBR })}
-                </>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadPDF(relatorioSelecionado)}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Baixar PDF
+                </Button>
               )}
-            </DialogDescription>
+            </div>
           </DialogHeader>
           
           {relatorioSelecionado?.relatorio && (
