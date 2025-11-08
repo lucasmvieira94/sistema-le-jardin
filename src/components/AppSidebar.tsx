@@ -73,6 +73,7 @@ export function AppSidebar() {
     { path: "/gerenciamento-whatsapp", icon: MessageSquare, label: "WhatsApp & IA", adminOnly: true },
     { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Alertas WhatsApp", adminOnly: true },
     { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
+    { path: "/relatorios-ia", icon: Brain, label: "Relatórios com IA", adminOnly: true },
     { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
