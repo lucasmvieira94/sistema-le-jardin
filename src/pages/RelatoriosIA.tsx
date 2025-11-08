@@ -412,16 +412,42 @@ export default function RelatoriosIA() {
               </div>
 
               {alertaSelecionado.detalhes && (
-                <div>
-                  <h4 className="font-semibold mb-2">Detalhes</h4>
-                  <div className="text-sm space-y-1 bg-muted p-3 rounded-md">
-                    {Object.entries(alertaSelecionado.detalhes).map(([key, value]) => (
-                      <div key={key}>
-                        <strong className="capitalize">{key.replace(/_/g, ' ')}:</strong>{' '}
-                        {String(value)}
-                      </div>
-                    ))}
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold mb-2">Contexto</h4>
+                    <p className="text-sm bg-muted p-3 rounded-md">
+                      {alertaSelecionado.detalhes.contexto}
+                    </p>
                   </div>
+                  
+                  {alertaSelecionado.detalhes.acao_recomendada && (
+                    <div>
+                      <h4 className="font-semibold mb-2 text-blue-600">Ação Recomendada</h4>
+                      <p className="text-sm bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                        {alertaSelecionado.detalhes.acao_recomendada}
+                      </p>
+                    </div>
+                  )}
+
+                  {alertaSelecionado.detalhes.prazo_acao && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        alertaSelecionado.detalhes.prazo_acao === 'urgente' ? 'destructive' :
+                        alertaSelecionado.detalhes.prazo_acao === 'curto prazo' ? 'default' : 'secondary'
+                      }>
+                        Prazo: {alertaSelecionado.detalhes.prazo_acao}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {alertaSelecionado.impacto_potencial && (
+                <div>
+                  <h4 className="font-semibold mb-2 text-orange-600">Impacto Potencial</h4>
+                  <p className="text-sm bg-orange-50 dark:bg-orange-950/20 p-3 rounded-md border border-orange-200 dark:border-orange-800">
+                    {alertaSelecionado.impacto_potencial}
+                  </p>
                 </div>
               )}
 
@@ -542,6 +568,50 @@ export default function RelatoriosIA() {
                       </ul>
                     </div>
                   )}
+
+                  {relatorioSelecionado.relatorio.analise_detalhada.observacoes_destaque?.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2 text-purple-600">Observações em Destaque</h4>
+                      <div className="space-y-2">
+                        {relatorioSelecionado.relatorio.analise_detalhada.observacoes_destaque.map((obs: string, i: number) => (
+                          <div key={i} className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-md border border-purple-200 dark:border-purple-800">
+                            <p className="text-sm">{obs}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {relatorioSelecionado.relatorio.solucoes_melhorias?.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-3">Soluções e Melhorias Propostas</h3>
+                  <div className="space-y-3">
+                    {relatorioSelecionado.relatorio.solucoes_melhorias.map((solucao: any, i: number) => (
+                      <Card key={i} className="border-green-200 dark:border-green-800">
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-start gap-2">
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              {solucao.area}
+                            </Badge>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Problema:</p>
+                            <p className="text-sm">{solucao.problema_identificado}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-blue-600">Solução Proposta:</p>
+                            <p className="text-sm">{solucao.solucao_proposta}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-green-600">Benefício Esperado:</p>
+                            <p className="text-sm">{solucao.beneficio_esperado}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
 
