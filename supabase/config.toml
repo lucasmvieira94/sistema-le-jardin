@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.analisar-prontuarios]
 verify_jwt = false
+
+[functions.enviar-relatorio-email]
+verify_jwt = false

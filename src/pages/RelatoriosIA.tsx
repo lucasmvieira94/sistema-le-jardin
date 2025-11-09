@@ -5,7 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CalendarIcon, FileText, Loader2, TrendingUp, AlertTriangle, Info, CheckCircle, Eye, Download } from 'lucide-react';
+import { AlertCircle, CalendarIcon, FileText, Loader2, TrendingUp, AlertTriangle, Info, CheckCircle, Eye, Download, Mail } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useRelatoriosIA } from '@/hooks/useRelatoriosIA';
@@ -16,6 +16,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 export default function RelatoriosIA() {
   const [dataInicio, setDataInicio] = useState<Date>(subDays(new Date(), 7));
@@ -23,6 +26,11 @@ export default function RelatoriosIA() {
   const [relatorioSelecionado, setRelatorioSelecionado] = useState<any>(null);
   const [alertaSelecionado, setAlertaSelecionado] = useState<any>(null);
   const [observacoes, setObservacoes] = useState('');
+  const [emailGestor, setEmailGestor] = useState('');
+  const [nomeGestor, setNomeGestor] = useState('');
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [relatorioParaEnviar, setRelatorioParaEnviar] = useState<any>(null);
+  const [enviandoEmail, setEnviandoEmail] = useState(false);
 
   const { 
     relatorios, 
@@ -62,213 +70,92 @@ export default function RelatoriosIA() {
     }
   };
 
-  const handleDownloadPDF = (relatorio: any) => {
-    try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.width;
-      let yPos = 20;
+  const generatePDFDoc = (relatorio: any) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    let yPos = 20;
 
-      // Título
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Relatorio Semanal - Analise com IA', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
+    // Título
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatorio Semanal - Analise com IA', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 10;
 
-      // Período
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      const periodo = `Periodo: ${format(new Date(relatorio.data_inicio), 'dd/MM/yyyy')} ate ${format(new Date(relatorio.data_fim), 'dd/MM/yyyy')}`;
-      doc.text(periodo, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 15;
+    // Período
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    const periodo = `Periodo: ${format(new Date(relatorio.data_inicio), 'dd/MM/yyyy')} ate ${format(new Date(relatorio.data_fim), 'dd/MM/yyyy')}`;
+    doc.text(periodo, pageWidth / 2, yPos, { align: 'center' });
+    yPos += 15;
 
-      // Resumo Executivo
+    // Resumo Executivo
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo Executivo', 14, yPos);
+    yPos += 7;
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const resumoLines = doc.splitTextToSize(relatorio.relatorio.resumo_executivo, pageWidth - 28);
+    doc.text(resumoLines, 14, yPos);
+    yPos += resumoLines.length * 5 + 10;
+
+    // Métricas Gerais
+    if (relatorio.relatorio.metricas_gerais) {
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Resumo Executivo', 14, yPos);
+      doc.text('Metricas Gerais', 14, yPos);
       yPos += 7;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const resumoLines = doc.splitTextToSize(relatorio.relatorio.resumo_executivo, pageWidth - 28);
-      doc.text(resumoLines, 14, yPos);
-      yPos += resumoLines.length * 5 + 10;
 
-      // Métricas Gerais
-      if (relatorio.relatorio.metricas_gerais) {
-        doc.setFontSize(14);
+      const metricas = Object.entries(relatorio.relatorio.metricas_gerais).map(([key, value]) => [
+        key.replace(/_/g, ' ').toUpperCase(),
+        String(value)
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Metrica', 'Valor']],
+        body: metricas,
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246] },
+        margin: { left: 14, right: 14 },
+      });
+
+      yPos = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Nova página se necessário
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Análise Detalhada
+    if (relatorio.relatorio.analise_detalhada) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Analise Detalhada', 14, yPos);
+      yPos += 7;
+
+      const analise = relatorio.relatorio.analise_detalhada;
+
+      // Pontos Positivos
+      if (analise.pontos_positivos?.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(34, 197, 94);
         doc.setFont('helvetica', 'bold');
-        doc.text('Metricas Gerais', 14, yPos);
-        yPos += 7;
-
-        const metricas = Object.entries(relatorio.relatorio.metricas_gerais).map(([key, value]) => [
-          key.replace(/_/g, ' ').toUpperCase(),
-          String(value)
-        ]);
-
-        autoTable(doc, {
-          startY: yPos,
-          head: [['Metrica', 'Valor']],
-          body: metricas,
-          theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246] },
-          margin: { left: 14, right: 14 },
-        });
-
-        yPos = (doc as any).lastAutoTable.finalY + 10;
-      }
-
-      // Nova página se necessário
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      // Análise Detalhada
-      if (relatorio.relatorio.analise_detalhada) {
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Analise Detalhada', 14, yPos);
-        yPos += 7;
-
-        const analise = relatorio.relatorio.analise_detalhada;
-
-        // Pontos Positivos
-        if (analise.pontos_positivos?.length > 0) {
-          doc.setFontSize(12);
-          doc.setTextColor(34, 197, 94); // green
-          doc.setFont('helvetica', 'bold');
-          doc.text('Pontos Positivos:', 14, yPos);
-          yPos += 6;
-          
-          doc.setFontSize(10);
-          doc.setTextColor(0, 0, 0);
-          doc.setFont('helvetica', 'normal');
-          analise.pontos_positivos.forEach((ponto: string) => {
-            const lines = doc.splitTextToSize(`• ${ponto}`, pageWidth - 28);
-            doc.text(lines, 14, yPos);
-            yPos += lines.length * 5 + 2;
-          });
-          yPos += 5;
-        }
-
-        if (yPos > 250) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        // Áreas de Atenção
-        if (analise.areas_atencao?.length > 0) {
-          doc.setFontSize(12);
-          doc.setTextColor(234, 179, 8); // yellow
-          doc.setFont('helvetica', 'bold');
-          doc.text('Areas de Atencao:', 14, yPos);
-          yPos += 6;
-          
-          doc.setFontSize(10);
-          doc.setTextColor(0, 0, 0);
-          doc.setFont('helvetica', 'normal');
-          analise.areas_atencao.forEach((area: string) => {
-            const lines = doc.splitTextToSize(`• ${area}`, pageWidth - 28);
-            doc.text(lines, 14, yPos);
-            yPos += lines.length * 5 + 2;
-          });
-          yPos += 5;
-        }
-
-        if (yPos > 250) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        // Tendências
-        if (analise.tendencias?.length > 0) {
-          doc.setFontSize(12);
-          doc.setTextColor(59, 130, 246); // blue
-          doc.setFont('helvetica', 'bold');
-          doc.text('Tendencias Observadas:', 14, yPos);
-          yPos += 6;
-          
-          doc.setFontSize(10);
-          doc.setTextColor(0, 0, 0);
-          doc.setFont('helvetica', 'normal');
-          analise.tendencias.forEach((tendencia: string) => {
-            const lines = doc.splitTextToSize(`• ${tendencia}`, pageWidth - 28);
-            doc.text(lines, 14, yPos);
-            yPos += lines.length * 5 + 2;
-          });
-          yPos += 5;
-        }
-
-        if (yPos > 250) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        // Observações em Destaque
-        if (analise.observacoes_destaque?.length > 0) {
-          doc.setFontSize(12);
-          doc.setTextColor(168, 85, 247); // purple
-          doc.setFont('helvetica', 'bold');
-          doc.text('Observacoes em Destaque:', 14, yPos);
-          yPos += 6;
-          
-          doc.setFontSize(10);
-          doc.setTextColor(0, 0, 0);
-          doc.setFont('helvetica', 'normal');
-          analise.observacoes_destaque.forEach((obs: string) => {
-            const lines = doc.splitTextToSize(`• ${obs}`, pageWidth - 28);
-            doc.text(lines, 14, yPos);
-            yPos += lines.length * 5 + 2;
-          });
-          yPos += 5;
-        }
-      }
-
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      // Soluções e Melhorias
-      if (relatorio.relatorio.solucoes_melhorias?.length > 0) {
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
+        doc.text('Pontos Positivos:', 14, yPos);
+        yPos += 6;
+        
+        doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
-        doc.text('Solucoes e Melhorias Propostas', 14, yPos);
-        yPos += 7;
-
-        relatorio.relatorio.solucoes_melhorias.forEach((solucao: any, index: number) => {
-          if (yPos > 250) {
-            doc.addPage();
-            yPos = 20;
-          }
-
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${index + 1}. Area: ${solucao.area}`, 14, yPos);
-          yPos += 6;
-
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          
-          doc.text('Problema:', 14, yPos);
-          yPos += 5;
-          const problemaLines = doc.splitTextToSize(solucao.problema_identificado, pageWidth - 28);
-          doc.text(problemaLines, 14, yPos);
-          yPos += problemaLines.length * 5 + 3;
-
-          doc.text('Solucao:', 14, yPos);
-          yPos += 5;
-          const solucaoLines = doc.splitTextToSize(solucao.solucao_proposta, pageWidth - 28);
-          doc.text(solucaoLines, 14, yPos);
-          yPos += solucaoLines.length * 5 + 3;
-
-          doc.text('Beneficio:', 14, yPos);
-          yPos += 5;
-          const beneficioLines = doc.splitTextToSize(solucao.beneficio_esperado, pageWidth - 28);
-          doc.text(beneficioLines, 14, yPos);
-          yPos += beneficioLines.length * 5 + 8;
+        doc.setFont('helvetica', 'normal');
+        analise.pontos_positivos.forEach((ponto: string) => {
+          const lines = doc.splitTextToSize(`• ${ponto}`, pageWidth - 28);
+          doc.text(lines, 14, yPos);
+          yPos += lines.length * 5 + 2;
         });
+        yPos += 5;
       }
 
       if (yPos > 250) {
@@ -276,28 +163,153 @@ export default function RelatoriosIA() {
         yPos = 20;
       }
 
-      // Recomendações
-      if (relatorio.relatorio.recomendacoes?.length > 0) {
-        doc.setFontSize(14);
+      // Áreas de Atenção
+      if (analise.areas_atencao?.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(234, 179, 8);
         doc.setFont('helvetica', 'bold');
+        doc.text('Areas de Atencao:', 14, yPos);
+        yPos += 6;
+        
+        doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
-        doc.text('Recomendacoes', 14, yPos);
-        yPos += 7;
+        doc.setFont('helvetica', 'normal');
+        analise.areas_atencao.forEach((area: string) => {
+          const lines = doc.splitTextToSize(`• ${area}`, pageWidth - 28);
+          doc.text(lines, 14, yPos);
+          yPos += lines.length * 5 + 2;
+        });
+        yPos += 5;
+      }
+
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Tendências
+      if (analise.tendencias?.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(59, 130, 246);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Tendencias Observadas:', 14, yPos);
+        yPos += 6;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        analise.tendencias.forEach((tendencia: string) => {
+          const lines = doc.splitTextToSize(`• ${tendencia}`, pageWidth - 28);
+          doc.text(lines, 14, yPos);
+          yPos += lines.length * 5 + 2;
+        });
+        yPos += 5;
+      }
+
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Observações em Destaque
+      if (analise.observacoes_destaque?.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(168, 85, 247);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Observacoes em Destaque:', 14, yPos);
+        yPos += 6;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        analise.observacoes_destaque.forEach((obs: string) => {
+          const lines = doc.splitTextToSize(`• ${obs}`, pageWidth - 28);
+          doc.text(lines, 14, yPos);
+          yPos += lines.length * 5 + 2;
+        });
+        yPos += 5;
+      }
+    }
+
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Soluções e Melhorias
+    if (relatorio.relatorio.solucoes_melhorias?.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Solucoes e Melhorias Propostas', 14, yPos);
+      yPos += 7;
+
+      relatorio.relatorio.solucoes_melhorias.forEach((solucao: any, index: number) => {
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${index + 1}. Area: ${solucao.area}`, 14, yPos);
+        yPos += 6;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        relatorio.relatorio.recomendacoes.forEach((rec: string, index: number) => {
-          if (yPos > 270) {
-            doc.addPage();
-            yPos = 20;
-          }
-          const lines = doc.splitTextToSize(`${index + 1}. ${rec}`, pageWidth - 28);
-          doc.text(lines, 14, yPos);
-          yPos += lines.length * 5 + 3;
-        });
-      }
+        
+        doc.text('Problema:', 14, yPos);
+        yPos += 5;
+        const problemaLines = doc.splitTextToSize(solucao.problema_identificado, pageWidth - 28);
+        doc.text(problemaLines, 14, yPos);
+        yPos += problemaLines.length * 5 + 3;
 
-      // Salvar PDF
+        doc.text('Solucao:', 14, yPos);
+        yPos += 5;
+        const solucaoLines = doc.splitTextToSize(solucao.solucao_proposta, pageWidth - 28);
+        doc.text(solucaoLines, 14, yPos);
+        yPos += solucaoLines.length * 5 + 3;
+
+        doc.text('Beneficio:', 14, yPos);
+        yPos += 5;
+        const beneficioLines = doc.splitTextToSize(solucao.beneficio_esperado, pageWidth - 28);
+        doc.text(beneficioLines, 14, yPos);
+        yPos += beneficioLines.length * 5 + 8;
+      });
+    }
+
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Recomendações
+    if (relatorio.relatorio.recomendacoes?.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Recomendacoes', 14, yPos);
+      yPos += 7;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      relatorio.relatorio.recomendacoes.forEach((rec: string, index: number) => {
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+        const lines = doc.splitTextToSize(`${index + 1}. ${rec}`, pageWidth - 28);
+        doc.text(lines, 14, yPos);
+        yPos += lines.length * 5 + 3;
+      });
+    }
+
+    return doc;
+  };
+
+  const handleDownloadPDF = (relatorio: any) => {
+    try {
+      const doc = generatePDFDoc(relatorio);
       const nomeArquivo = `relatorio_${format(new Date(relatorio.data_inicio), 'dd-MM-yyyy')}_${format(new Date(relatorio.data_fim), 'dd-MM-yyyy')}.pdf`;
       doc.save(nomeArquivo);
       toast.success('Relatório baixado com sucesso!');
@@ -305,6 +317,46 @@ export default function RelatoriosIA() {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
     }
+  };
+
+  const handleEnviarEmail = async () => {
+    if (!emailGestor || !nomeGestor || !relatorioParaEnviar) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
+
+    setEnviandoEmail(true);
+    try {
+      const doc = generatePDFDoc(relatorioParaEnviar);
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      
+      const { data, error } = await supabase.functions.invoke('enviar-relatorio-email', {
+        body: {
+          emailGestor,
+          nomeGestor,
+          relatorio: relatorioParaEnviar,
+          pdfBase64,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success('Relatório enviado por email com sucesso!');
+      setShowEmailDialog(false);
+      setEmailGestor('');
+      setNomeGestor('');
+      setRelatorioParaEnviar(null);
+    } catch (error: any) {
+      console.error('Erro ao enviar email:', error);
+      toast.error(error.message || 'Erro ao enviar email');
+    } finally {
+      setEnviandoEmail(false);
+    }
+  };
+
+  const abrirDialogEmail = (relatorio: any) => {
+    setRelatorioParaEnviar(relatorio);
+    setShowEmailDialog(true);
   };
 
   const getTipoIcon = (tipo: string) => {
@@ -617,6 +669,17 @@ export default function RelatoriosIA() {
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
+                            abrirDialogEmail(relatorio);
+                          }}
+                          title="Enviar por Email"
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleDownloadPDF(relatorio);
                           }}
                           title="Baixar PDF"
@@ -767,15 +830,26 @@ export default function RelatoriosIA() {
                 </DialogDescription>
               </div>
               {relatorioSelecionado && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownloadPDF(relatorioSelecionado)}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Baixar PDF
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => abrirDialogEmail(relatorioSelecionado)}
+                    className="gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Enviar por Email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadPDF(relatorioSelecionado)}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Baixar PDF
+                  </Button>
+                </div>
               )}
             </div>
           </DialogHeader>
@@ -904,6 +978,76 @@ export default function RelatoriosIA() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Envio por Email */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Enviar Relatório por Email</DialogTitle>
+            <DialogDescription>
+              Preencha os dados do gestor para enviar o relatório por email
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome-gestor">Nome do Gestor</Label>
+              <Input
+                id="nome-gestor"
+                placeholder="Digite o nome do gestor"
+                value={nomeGestor}
+                onChange={(e) => setNomeGestor(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-gestor">Email do Gestor</Label>
+              <Input
+                id="email-gestor"
+                type="email"
+                placeholder="gestor@exemplo.com"
+                value={emailGestor}
+                onChange={(e) => setEmailGestor(e.target.value)}
+              />
+            </div>
+            {relatorioParaEnviar && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm font-medium mb-1">Relatório a ser enviado:</p>
+                <p className="text-sm text-muted-foreground">
+                  Período: {format(new Date(relatorioParaEnviar.data_inicio), 'dd/MM/yyyy')} a{' '}
+                  {format(new Date(relatorioParaEnviar.data_fim), 'dd/MM/yyyy')}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {relatorioParaEnviar.total_prontuarios} prontuários • {relatorioParaEnviar.nao_conformidades_encontradas} não conformidades
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEmailDialog(false)} 
+              disabled={enviandoEmail}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleEnviarEmail} 
+              disabled={enviandoEmail || !emailGestor || !nomeGestor}
+            >
+              {enviandoEmail ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Enviar Email
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
