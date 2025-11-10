@@ -154,6 +154,53 @@ export type Database = {
           },
         ]
       }
+      agendamentos_relatorios_ia: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          dia_semana: number
+          email_destinatario: string
+          hora: string
+          id: string
+          nome_destinatario: string
+          periodo_dias: number
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          dia_semana: number
+          email_destinatario: string
+          hora?: string
+          id?: string
+          nome_destinatario: string
+          periodo_dias?: number
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          dia_semana?: number
+          email_destinatario?: string
+          hora?: string
+          id?: string
+          nome_destinatario?: string
+          periodo_dias?: number
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_relatorios_ia_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agendamentos_whatsapp: {
         Row: {
           alerta_id: string

@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { ConfiguracaoAgendamento } from '@/components/relatorios-ia/ConfiguracaoAgendamento';
 
 export default function RelatoriosIA() {
   const [dataInicio, setDataInicio] = useState<Date>(subDays(new Date(), 7));
@@ -492,6 +493,9 @@ export default function RelatoriosIA() {
           </Alert>
         </CardContent>
       </Card>
+
+      {/* Configuração de Agendamento */}
+      <ConfiguracaoAgendamento />
 
       {/* Tabs */}
       <Tabs defaultValue="alertas" className="w-full">
