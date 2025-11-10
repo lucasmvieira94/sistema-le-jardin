@@ -360,6 +360,53 @@ export default function RelatoriosIA() {
     setShowEmailDialog(true);
   };
 
+  const handleTesteEmail = async () => {
+    try {
+      toast.info("Gerando relatório de teste...");
+      
+      // Calcular últimos 7 dias
+      const dataFim = new Date();
+      const dataInicio = new Date();
+      dataInicio.setDate(dataInicio.getDate() - 7);
+
+      // Gerar relatório
+      const { data: relatorioData, error: relatorioError } = await supabase.functions.invoke('analisar-prontuarios', {
+        body: {
+          dataInicio: format(dataInicio, 'yyyy-MM-dd'),
+          dataFim: format(dataFim, 'yyyy-MM-dd'),
+        },
+      });
+
+      if (relatorioError) throw relatorioError;
+
+      if (!relatorioData?.relatorio) {
+        throw new Error("Erro ao gerar relatório");
+      }
+
+      toast.success("Relatório gerado! Enviando email...");
+
+      // Enviar email de teste
+      const doc = generatePDFDoc(relatorioData.relatorio);
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+      const { error: emailError } = await supabase.functions.invoke('enviar-relatorio-email', {
+        body: {
+          emailGestor: "lucasmoraesv.dev@gmail.com",
+          nomeGestor: "Lucas Moraes (Teste)",
+          relatorio: relatorioData.relatorio,
+          pdfBase64,
+        },
+      });
+
+      if (emailError) throw emailError;
+
+      toast.success("Email de teste enviado com sucesso para lucasmoraesv.dev@gmail.com!");
+    } catch (error: any) {
+      console.error('Erro no teste:', error);
+      toast.error(error.message || "Erro ao enviar email de teste");
+    }
+  };
+
   const getTipoIcon = (tipo: string) => {
     switch (tipo) {
       case 'critico':
@@ -481,6 +528,15 @@ export default function RelatoriosIA() {
                   Gerar Relatório
                 </>
               )}
+            </Button>
+
+            <Button 
+              onClick={handleTesteEmail}
+              variant="outline"
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              Teste de Email
             </Button>
           </div>
 
