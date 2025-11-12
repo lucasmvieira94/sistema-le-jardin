@@ -26,17 +26,18 @@ export const CadastroEstoqueFraldaForm = ({
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: estoque || {
       tipo_fralda: "",
+      marca: "",
       tamanho: "",
       quantidade_atual: 0,
       quantidade_minima: 100,
       unidade_medida: "unidades",
       localizacao: "",
-      fornecedor: "",
-      preco_unitario: 0,
       observacoes: "",
     },
   });
 
+  const tipoFralda = watch("tipo_fralda");
+  const marca = watch("marca");
   const tamanho = watch("tamanho");
 
   const onSubmit = async (data: any) => {
@@ -60,13 +61,47 @@ export const CadastroEstoqueFraldaForm = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="tipo_fralda">Tipo de Fralda *</Label>
-            <Input
-              id="tipo_fralda"
-              {...register("tipo_fralda", { required: true })}
-              placeholder="Ex: Fralda Geriátrica"
-            />
+            <Select
+              value={tipoFralda}
+              onValueChange={(value) => setValue("tipo_fralda", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="De Vestir">De Vestir</SelectItem>
+                <SelectItem value="Convencional">Convencional</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="marca">Marca *</Label>
+            <Select
+              value={marca}
+              onValueChange={(value) => setValue("marca", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a marca" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TENA">TENA</SelectItem>
+                <SelectItem value="BIGFRAL">BIGFRAL</SelectItem>
+                <SelectItem value="PLENITUD">PLENITUD</SelectItem>
+                <SelectItem value="COTIDIAN">COTIDIAN</SelectItem>
+                <SelectItem value="BIOFRAL">BIOFRAL</SelectItem>
+                <SelectItem value="MAXCLEAN">MAXCLEAN</SelectItem>
+                <SelectItem value="PROTEFRAL">PROTEFRAL</SelectItem>
+                <SelectItem value="DAUF">DAUF</SelectItem>
+                <SelectItem value="NEEDS">NEEDS</SelectItem>
+                <SelectItem value="SENEXCONFORT">SENEXCONFORT</SelectItem>
+                <SelectItem value="OUTRAS">OUTRAS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="tamanho">Tamanho *</Label>
             <Select
@@ -85,11 +120,9 @@ export const CadastroEstoqueFraldaForm = ({
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="quantidade_atual">Quantidade Atual *</Label>
+            <Label htmlFor="quantidade_atual">Quantidade Entrando *</Label>
             <Input
               id="quantidade_atual"
               type="number"
@@ -97,7 +130,9 @@ export const CadastroEstoqueFraldaForm = ({
               placeholder="0"
             />
           </div>
+        </div>
 
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="quantidade_minima">Quantidade Mínima *</Label>
             <Input
@@ -107,46 +142,13 @@ export const CadastroEstoqueFraldaForm = ({
               placeholder="100"
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="localizacao">Localização</Label>
             <Input
               id="localizacao"
               {...register("localizacao")}
               placeholder="Ex: Almoxarifado A - Prateleira 3"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="fornecedor">Fornecedor</Label>
-            <Input
-              id="fornecedor"
-              {...register("fornecedor")}
-              placeholder="Nome do fornecedor"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="preco_unitario">Preço Unitário (R$)</Label>
-            <Input
-              id="preco_unitario"
-              type="number"
-              step="0.01"
-              {...register("preco_unitario", { valueAsNumber: true })}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="data_ultima_compra">Data Última Compra</Label>
-            <Input
-              id="data_ultima_compra"
-              type="date"
-              {...register("data_ultima_compra")}
             />
           </div>
         </div>

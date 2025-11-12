@@ -884,6 +884,7 @@ export type Database = {
           fornecedor: string | null
           id: string
           localizacao: string | null
+          marca: string | null
           observacoes: string | null
           preco_unitario: number | null
           quantidade_atual: number
@@ -902,6 +903,7 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           localizacao?: string | null
+          marca?: string | null
           observacoes?: string | null
           preco_unitario?: number | null
           quantidade_atual?: number
@@ -920,6 +922,7 @@ export type Database = {
           fornecedor?: string | null
           id?: string
           localizacao?: string | null
+          marca?: string | null
           observacoes?: string | null
           preco_unitario?: number | null
           quantidade_atual?: number
