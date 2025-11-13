@@ -27,18 +27,12 @@ export const CadastroEstoqueFraldaForm = ({
     defaultValues: estoque || {
       tipo_fralda: "",
       marca: "",
-      tamanho: "",
       quantidade_atual: 0,
-      quantidade_minima: 100,
-      unidade_medida: "unidades",
-      localizacao: "",
-      observacoes: "",
     },
   });
 
   const tipoFralda = watch("tipo_fralda");
   const marca = watch("marca");
-  const tamanho = watch("tamanho");
 
   const onSubmit = async (data: any) => {
     if (estoque) {
@@ -58,108 +52,54 @@ export const CadastroEstoqueFraldaForm = ({
       </DialogHeader>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="tipo_fralda">Tipo de Fralda *</Label>
-            <Select
-              value={tipoFralda}
-              onValueChange={(value) => setValue("tipo_fralda", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="De Vestir">De Vestir</SelectItem>
-                <SelectItem value="Convencional">Convencional</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="marca">Marca *</Label>
-            <Select
-              value={marca}
-              onValueChange={(value) => setValue("marca", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a marca" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TENA">TENA</SelectItem>
-                <SelectItem value="BIGFRAL">BIGFRAL</SelectItem>
-                <SelectItem value="PLENITUD">PLENITUD</SelectItem>
-                <SelectItem value="COTIDIAN">COTIDIAN</SelectItem>
-                <SelectItem value="BIOFRAL">BIOFRAL</SelectItem>
-                <SelectItem value="MAXCLEAN">MAXCLEAN</SelectItem>
-                <SelectItem value="PROTEFRAL">PROTEFRAL</SelectItem>
-                <SelectItem value="DAUF">DAUF</SelectItem>
-                <SelectItem value="NEEDS">NEEDS</SelectItem>
-                <SelectItem value="SENEXCONFORT">SENEXCONFORT</SelectItem>
-                <SelectItem value="OUTRAS">OUTRAS</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="tamanho">Tamanho *</Label>
-            <Select
-              value={tamanho}
-              onValueChange={(value) => setValue("tamanho", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tamanho" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="P">P - Pequeno</SelectItem>
-                <SelectItem value="M">M - Médio</SelectItem>
-                <SelectItem value="G">G - Grande</SelectItem>
-                <SelectItem value="GG">GG - Extra Grande</SelectItem>
-                <SelectItem value="XG">XG - Super Grande</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="quantidade_atual">Quantidade Entrando *</Label>
-            <Input
-              id="quantidade_atual"
-              type="number"
-              {...register("quantidade_atual", { required: true, valueAsNumber: true })}
-              placeholder="0"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="quantidade_minima">Quantidade Mínima *</Label>
-            <Input
-              id="quantidade_minima"
-              type="number"
-              {...register("quantidade_minima", { required: true, valueAsNumber: true })}
-              placeholder="100"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="localizacao">Localização</Label>
-            <Input
-              id="localizacao"
-              {...register("localizacao")}
-              placeholder="Ex: Almoxarifado A - Prateleira 3"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="tipo_fralda">Tipo de Fralda *</Label>
+          <Select
+            value={tipoFralda}
+            onValueChange={(value) => setValue("tipo_fralda", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="De Vestir">De Vestir</SelectItem>
+              <SelectItem value="Convencional">Convencional</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="observacoes">Observações</Label>
-          <Textarea
-            id="observacoes"
-            {...register("observacoes")}
-            placeholder="Informações adicionais sobre o estoque"
-            rows={3}
+          <Label htmlFor="marca">Marca *</Label>
+          <Select
+            value={marca}
+            onValueChange={(value) => setValue("marca", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a marca" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TENA">TENA</SelectItem>
+              <SelectItem value="BIGFRAL">BIGFRAL</SelectItem>
+              <SelectItem value="PLENITUD">PLENITUD</SelectItem>
+              <SelectItem value="COTIDIAN">COTIDIAN</SelectItem>
+              <SelectItem value="BIOFRAL">BIOFRAL</SelectItem>
+              <SelectItem value="MAXCLEAN">MAXCLEAN</SelectItem>
+              <SelectItem value="PROTEFRAL">PROTEFRAL</SelectItem>
+              <SelectItem value="DAUF">DAUF</SelectItem>
+              <SelectItem value="NEEDS">NEEDS</SelectItem>
+              <SelectItem value="SENEXCONFORT">SENEXCONFORT</SelectItem>
+              <SelectItem value="OUTRAS">OUTRAS</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="quantidade_atual">Quantidade Entrando *</Label>
+          <Input
+            id="quantidade_atual"
+            type="number"
+            {...register("quantidade_atual", { required: true, valueAsNumber: true })}
+            placeholder="0"
           />
         </div>
 
