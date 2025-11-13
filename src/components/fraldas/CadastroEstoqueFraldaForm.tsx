@@ -27,12 +27,15 @@ export const CadastroEstoqueFraldaForm = ({
     defaultValues: estoque || {
       tipo_fralda: "",
       marca: "",
+      tamanho: "",
       quantidade_atual: 0,
+      observacoes: "",
     },
   });
 
   const tipoFralda = watch("tipo_fralda");
   const marca = watch("marca");
+  const tamanho = watch("tamanho");
 
   const onSubmit = async (data: any) => {
     if (estoque) {
@@ -94,12 +97,41 @@ export const CadastroEstoqueFraldaForm = ({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="tamanho">Tamanho *</Label>
+          <Select
+            value={tamanho}
+            onValueChange={(value) => setValue("tamanho", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tamanho" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="P">P - Pequeno</SelectItem>
+              <SelectItem value="M">M - Médio</SelectItem>
+              <SelectItem value="G">G - Grande</SelectItem>
+              <SelectItem value="GG">GG - Extra Grande</SelectItem>
+              <SelectItem value="XG">XG - Super Grande</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="quantidade_atual">Quantidade Entrando *</Label>
           <Input
             id="quantidade_atual"
             type="number"
             {...register("quantidade_atual", { required: true, valueAsNumber: true })}
             placeholder="0"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="observacoes">Observações</Label>
+          <Textarea
+            id="observacoes"
+            {...register("observacoes")}
+            placeholder="Informações adicionais sobre o estoque"
+            rows={3}
           />
         </div>
 
