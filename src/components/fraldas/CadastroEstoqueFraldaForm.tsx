@@ -29,6 +29,7 @@ export const CadastroEstoqueFraldaForm = ({
       marca: "",
       tamanho: "",
       quantidade_atual: 0,
+      quantidade_minima: 100,
       unidade_medida: "unidades",
       localizacao: "",
       observacoes: "",
@@ -131,13 +132,25 @@ export const CadastroEstoqueFraldaForm = ({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="localizacao">Localização</Label>
-          <Input
-            id="localizacao"
-            {...register("localizacao")}
-            placeholder="Ex: Almoxarifado A - Prateleira 3"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="quantidade_minima">Quantidade Mínima *</Label>
+            <Input
+              id="quantidade_minima"
+              type="number"
+              {...register("quantidade_minima", { required: true, valueAsNumber: true })}
+              placeholder="100"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="localizacao">Localização</Label>
+            <Input
+              id="localizacao"
+              {...register("localizacao")}
+              placeholder="Ex: Almoxarifado A - Prateleira 3"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
