@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTenant } from "@/hooks/useTenant";
 
 export interface EstoqueFralda {
   id: string;
@@ -57,6 +58,7 @@ export interface AlertaEstoqueFralda {
 
 export const useFraldas = () => {
   const queryClient = useQueryClient();
+  const { tenantId } = useTenant();
 
   // Buscar estoque de fraldas
   const { data: estoques, isLoading: loadingEstoques } = useQuery({
@@ -103,9 +105,12 @@ export const useFraldas = () => {
   // Criar estoque
   const criarEstoque = useMutation({
     mutationFn: async (data: any) => {
+      if (!tenantId) {
+        throw new Error("Tenant não identificado. Por favor, faça login novamente.");
+      }
       const { data: result, error } = await supabase
         .from("estoque_fraldas")
-        .insert([data])
+        .insert([{ ...data, tenant_id: tenantId }])
         .select()
         .single();
 
