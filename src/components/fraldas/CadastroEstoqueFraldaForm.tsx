@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useFraldas } from "@/hooks/useFraldas";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CadastroEstoqueFraldaFormProps {
   onSuccess: () => void;
@@ -23,8 +25,24 @@ export const CadastroEstoqueFraldaForm = ({
   estoque,
 }: CadastroEstoqueFraldaFormProps) => {
   const { criarEstoque, atualizarEstoque } = useFraldas();
+  
+  // Buscar residentes ativos
+  const { data: residentes } = useQuery({
+    queryKey: ["residentes-ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("residentes")
+        .select("id, nome_completo, quarto")
+        .eq("ativo", true)
+        .order("nome_completo");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: estoque || {
+      residente_id: "",
       tipo_fralda: "",
       marca: "",
       tamanho: "",
@@ -33,6 +51,7 @@ export const CadastroEstoqueFraldaForm = ({
     },
   });
 
+  const residenteId = watch("residente_id");
   const tipoFralda = watch("tipo_fralda");
   const marca = watch("marca");
   const tamanho = watch("tamanho");
@@ -55,6 +74,25 @@ export const CadastroEstoqueFraldaForm = ({
       </DialogHeader>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="residente_id">Residente *</Label>
+          <Select
+            value={residenteId}
+            onValueChange={(value) => setValue("residente_id", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o residente" />
+            </SelectTrigger>
+            <SelectContent>
+              {residentes?.map((residente) => (
+                <SelectItem key={residente.id} value={residente.id}>
+                  {residente.nome_completo} {residente.quarto ? `(${residente.quarto})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="tipo_fralda">Tipo de Fralda *</Label>
           <Select

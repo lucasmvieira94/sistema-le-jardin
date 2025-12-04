@@ -889,6 +889,7 @@ export type Database = {
           preco_unitario: number | null
           quantidade_atual: number
           quantidade_minima: number
+          residente_id: string | null
           tamanho: string
           tenant_id: string
           tipo_fralda: string
@@ -908,6 +909,7 @@ export type Database = {
           preco_unitario?: number | null
           quantidade_atual?: number
           quantidade_minima?: number
+          residente_id?: string | null
           tamanho: string
           tenant_id: string
           tipo_fralda: string
@@ -927,13 +929,22 @@ export type Database = {
           preco_unitario?: number | null
           quantidade_atual?: number
           quantidade_minima?: number
+          residente_id?: string | null
           tamanho?: string
           tenant_id?: string
           tipo_fralda?: string
           unidade_medida?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "estoque_fraldas_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       estoque_medicamentos: {
         Row: {
