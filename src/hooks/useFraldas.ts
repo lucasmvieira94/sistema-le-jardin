@@ -7,6 +7,7 @@ export interface EstoqueFralda {
   id: string;
   tipo_fralda: string;
   tamanho: string;
+  marca?: string;
   quantidade_atual: number;
   quantidade_minima: number;
   unidade_medida: string;
@@ -17,6 +18,8 @@ export interface EstoqueFralda {
   observacoes?: string;
   ativo: boolean;
   consumo_medio_diario: number;
+  residente_id?: string;
+  tenant_id: string;
   created_at: string;
   updated_at: string;
 }
