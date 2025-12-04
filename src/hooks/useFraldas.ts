@@ -39,6 +39,7 @@ export interface UsoFralda {
 
 export interface ConfiguracaoAlertasFraldas {
   id: string;
+  tenant_id: string;
   dias_alerta_critico: number;
   dias_alerta_aviso: number;
   dias_alerta_atencao: number;
@@ -89,20 +90,24 @@ export const useFraldas = () => {
     },
   });
 
-  // Buscar configurações de alertas
+  // Buscar configurações de alertas filtrado por tenant
   const { data: configuracoes } = useQuery({
-    queryKey: ["configuracoes-alertas-fraldas"],
+    queryKey: ["configuracoes-alertas-fraldas", tenantId],
     queryFn: async () => {
+      if (!tenantId) return null;
+      
       const { data, error } = await supabase
         .from("configuracoes_alertas_fraldas")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) throw error;
       return data as ConfiguracaoAlertasFraldas | null;
     },
+    enabled: !!tenantId,
   });
 
   // Criar estoque
@@ -177,6 +182,10 @@ export const useFraldas = () => {
   // Salvar configurações de alertas
   const salvarConfiguracoes = useMutation({
     mutationFn: async (data: any) => {
+      if (!tenantId) {
+        throw new Error("Tenant não identificado. Por favor, faça login novamente.");
+      }
+      
       if (configuracoes?.id) {
         const { data: result, error } = await supabase
           .from("configuracoes_alertas_fraldas")
@@ -190,7 +199,7 @@ export const useFraldas = () => {
       } else {
         const { data: result, error } = await supabase
           .from("configuracoes_alertas_fraldas")
-          .insert([data])
+          .insert([{ ...data, tenant_id: tenantId }])
           .select()
           .single();
 
@@ -199,7 +208,7 @@ export const useFraldas = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["configuracoes-alertas-fraldas"] });
+      queryClient.invalidateQueries({ queryKey: ["configuracoes-alertas-fraldas", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas"] });
       toast.success("Configurações salvas com sucesso!");
     },
