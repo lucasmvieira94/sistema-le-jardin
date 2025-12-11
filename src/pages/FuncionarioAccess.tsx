@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -94,6 +94,10 @@ export default function FuncionarioAccess() {
 
   const navigateToTemperatura = () => {
     navigate(`/temperatura-medicamentos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToFraldas = () => {
+    navigate(`/controle-fraldas-publico?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
@@ -215,7 +219,7 @@ export default function FuncionarioAccess() {
         {/* Seleção de funcionalidade */}
         <div className="space-y-4">
           
-          <div className={`grid ${funcionarioRegistraPonto ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'} gap-3 sm:gap-4`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Registro de Ponto - só mostra se funcionário registra ponto */}
             {funcionarioRegistraPonto && (
               <Card 
@@ -286,6 +290,30 @@ export default function FuncionarioAccess() {
                   onClick={navigateToTemperatura}
                 >
                   Registrar Temperatura
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Controle de Fraldas */}
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
+              onClick={navigateToFraldas}
+            >
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Baby className="w-6 h-6 sm:w-8 sm:h-8 text-purple-700" />
+                </div>
+                <CardTitle className="text-purple-800 text-base sm:text-lg">Controle de Fraldas</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                  Registre uso e cadastre estoque de fraldas
+                </p>
+                <Button 
+                  className="w-full bg-purple-700 hover:bg-purple-800 text-sm sm:text-base py-2 sm:py-3"
+                  onClick={navigateToFraldas}
+                >
+                  Acessar Fraldas
                 </Button>
               </CardContent>
             </Card>

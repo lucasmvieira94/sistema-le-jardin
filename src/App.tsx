@@ -27,6 +27,7 @@ import ControleMedicamentos from "./pages/ControleMedicamentos";
 import ControleTemperatura from "./pages/ControleTemperatura";
 import ControleTemperaturaPublico from "./pages/ControleTemperaturaPublico";
 import ControleFraldas from "./pages/ControleFraldas";
+import ControleFraldasPublico from "./pages/ControleFraldasPublico";
 import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import ConfiguracoesAlertas from "./pages/ConfiguracoesAlertas";
@@ -53,7 +54,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const location = useLocation();
   const isPublicRoute = (pathname: string) => {
-    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos'];
+    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos', '/controle-fraldas-publico'];
     return publicRoutes.includes(pathname);
   };
 
@@ -261,6 +262,7 @@ const AppContent = () => {
             <Route path="/registro-ponto" element={<RegistroPonto />} />
             <Route path="/prontuario" element={<Prontuario />} />
             <Route path="/temperatura-medicamentos" element={<ControleTemperaturaPublico />} />
+            <Route path="/controle-fraldas-publico" element={<ControleFraldasPublico />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
