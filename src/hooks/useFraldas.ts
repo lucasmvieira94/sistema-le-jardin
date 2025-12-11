@@ -64,30 +64,41 @@ export const useFraldas = () => {
   const queryClient = useQueryClient();
   const { tenantId } = useTenant();
 
-  // Buscar estoque de fraldas
+  // Buscar estoque de fraldas filtrado por tenant
   const { data: estoques, isLoading: loadingEstoques } = useQuery({
-    queryKey: ["estoque-fraldas"],
+    queryKey: ["estoque-fraldas", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
+      
       const { data, error } = await supabase
         .from("estoque_fraldas")
         .select("*")
         .eq("ativo", true)
+        .eq("tenant_id", tenantId)
         .order("tipo_fralda", { ascending: true });
 
       if (error) throw error;
       return data as EstoqueFralda[];
     },
+    enabled: !!tenantId,
   });
 
-  // Buscar alertas de estoque
+  // Buscar alertas de estoque filtrado por tenant
   const { data: alertas, isLoading: loadingAlertas } = useQuery({
-    queryKey: ["alertas-estoque-fraldas"],
+    queryKey: ["alertas-estoque-fraldas", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
+      
       const { data, error } = await supabase.rpc("obter_alertas_estoque_fraldas");
 
       if (error) throw error;
-      return data as AlertaEstoqueFralda[];
+      
+      // Filtrar alertas pelo tenant atual (a função RPC pode retornar de todos os tenants)
+      // Os IDs dos estoques são filtrados para incluir apenas os do tenant atual
+      const estoquesIds = estoques?.map(e => e.id) || [];
+      return (data as AlertaEstoqueFralda[]).filter(a => estoquesIds.includes(a.estoque_id));
     },
+    enabled: !!tenantId && !!estoques,
   });
 
   // Buscar configurações de alertas filtrado por tenant
@@ -126,7 +137,8 @@ export const useFraldas = () => {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["estoque-fraldas"] });
+      queryClient.invalidateQueries({ queryKey: ["estoque-fraldas", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas", tenantId] });
       toast.success("Estoque de fralda cadastrado com sucesso!");
     },
     onError: (error) => {
@@ -148,7 +160,8 @@ export const useFraldas = () => {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["estoque-fraldas"] });
+      queryClient.invalidateQueries({ queryKey: ["estoque-fraldas", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas", tenantId] });
       toast.success("Estoque atualizado com sucesso!");
     },
     onError: (error) => {
@@ -169,8 +182,8 @@ export const useFraldas = () => {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["estoque-fraldas"] });
-      queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas"] });
+      queryClient.invalidateQueries({ queryKey: ["estoque-fraldas", tenantId] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["uso-fraldas"] });
       toast.success("Uso de fralda registrado com sucesso!");
     },
@@ -209,7 +222,7 @@ export const useFraldas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes-alertas-fraldas", tenantId] });
-      queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas"] });
+      queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas", tenantId] });
       toast.success("Configurações salvas com sucesso!");
     },
     onError: (error) => {
