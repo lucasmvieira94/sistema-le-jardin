@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import {
   Table,
   TableBody,
@@ -13,9 +14,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export const HistoricoUsoFraldas = () => {
+  const { tenantId } = useTenant();
+  
   const { data: historico, isLoading } = useQuery({
-    queryKey: ["historico-uso-fraldas"],
+    queryKey: ["historico-uso-fraldas", tenantId],
     queryFn: async () => {
+      if (!tenantId) return [];
+      
       const { data, error } = await supabase
         .from("uso_fraldas")
         .select(
@@ -26,6 +31,7 @@ export const HistoricoUsoFraldas = () => {
           funcionarios:funcionario_id(nome_completo)
         `
         )
+        .eq("tenant_id", tenantId)
         .order("data_uso", { ascending: false })
         .order("horario_uso", { ascending: false })
         .limit(50);
@@ -33,6 +39,7 @@ export const HistoricoUsoFraldas = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!tenantId,
   });
 
   if (isLoading) {
