@@ -635,6 +635,95 @@ export type Database = {
           },
         ]
       }
+      contratos_residentes: {
+        Row: {
+          clausulas_especiais: string | null
+          contratante_cep: string | null
+          contratante_cidade: string | null
+          contratante_cpf: string | null
+          contratante_email: string | null
+          contratante_endereco: string | null
+          contratante_estado: string | null
+          contratante_nome: string
+          contratante_rg: string | null
+          contratante_telefone: string | null
+          created_at: string
+          data_fim_contrato: string | null
+          data_inicio_contrato: string
+          dia_vencimento: number
+          forma_pagamento: string
+          id: string
+          numero_contrato: string
+          observacoes: string | null
+          residente_id: string
+          servicos_adicionais: string | null
+          servicos_inclusos: string[] | null
+          status: string
+          updated_at: string
+          valor_mensalidade: number
+        }
+        Insert: {
+          clausulas_especiais?: string | null
+          contratante_cep?: string | null
+          contratante_cidade?: string | null
+          contratante_cpf?: string | null
+          contratante_email?: string | null
+          contratante_endereco?: string | null
+          contratante_estado?: string | null
+          contratante_nome: string
+          contratante_rg?: string | null
+          contratante_telefone?: string | null
+          created_at?: string
+          data_fim_contrato?: string | null
+          data_inicio_contrato: string
+          dia_vencimento: number
+          forma_pagamento?: string
+          id?: string
+          numero_contrato: string
+          observacoes?: string | null
+          residente_id: string
+          servicos_adicionais?: string | null
+          servicos_inclusos?: string[] | null
+          status?: string
+          updated_at?: string
+          valor_mensalidade: number
+        }
+        Update: {
+          clausulas_especiais?: string | null
+          contratante_cep?: string | null
+          contratante_cidade?: string | null
+          contratante_cpf?: string | null
+          contratante_email?: string | null
+          contratante_endereco?: string | null
+          contratante_estado?: string | null
+          contratante_nome?: string
+          contratante_rg?: string | null
+          contratante_telefone?: string | null
+          created_at?: string
+          data_fim_contrato?: string | null
+          data_inicio_contrato?: string
+          dia_vencimento?: number
+          forma_pagamento?: string
+          id?: string
+          numero_contrato?: string
+          observacoes?: string | null
+          residente_id?: string
+          servicos_adicionais?: string | null
+          servicos_inclusos?: string[] | null
+          status?: string
+          updated_at?: string
+          valor_mensalidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_residentes_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       controle_temperatura_medicamentos: {
         Row: {
           acoes_corretivas: string | null

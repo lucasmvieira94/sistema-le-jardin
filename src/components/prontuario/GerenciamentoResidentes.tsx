@@ -9,10 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Eye, Trash2, Upload, Download, UserX, UserCheck } from "lucide-react";
+import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
+import ContratoForm from "@/components/residentes/ContratoForm";
+import ContratoPDFGenerator from "@/components/residentes/ContratoPDFGenerator";
+import { useContratos } from "@/components/residentes/useContratos";
 
 interface Residente {
   id: string;
@@ -38,6 +41,16 @@ export default function GerenciamentoResidentes() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [editingResident, setEditingResident] = useState<Residente | null>(null);
+  
+  // Estados para contratos
+  const [contratoDialogOpen, setContratoDialogOpen] = useState(false);
+  const [contratoVisualizarOpen, setContratoVisualizarOpen] = useState(false);
+  const [selectedResidente, setSelectedResidente] = useState<Residente | null>(null);
+  const [selectedContrato, setSelectedContrato] = useState<any>(null);
+  const [savingContrato, setSavingContrato] = useState(false);
+  
+  const { contratos, fetchContratos, criarContrato } = useContratos();
+  
   const [formData, setFormData] = useState({
     nome_completo: "",
     cpf: "",
@@ -845,6 +858,19 @@ export default function GerenciamentoResidentes() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => {
+                          setSelectedResidente(residente);
+                          fetchContratos(residente.id);
+                          setContratoDialogOpen(true);
+                        }}
+                        title="Gerar contrato"
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleStatus(residente)}
                         title={residente.ativo ? "Desativar residente" : "Ativar residente"}
                         className={residente.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
@@ -866,6 +892,65 @@ export default function GerenciamentoResidentes() {
           </Table>
         </div>
       </CardContent>
+
+      {/* Dialog para Contrato */}
+      <Dialog open={contratoDialogOpen} onOpenChange={setContratoDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[95vh]">
+          <DialogHeader>
+            <DialogTitle>
+              Contrato de Prestação de Serviços - {selectedResidente?.nome_completo}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedResidente && (
+            <ContratoForm
+              residenteNome={selectedResidente.nome_completo}
+              responsavelNome={selectedResidente.responsavel_nome}
+              responsavelTelefone={selectedResidente.responsavel_telefone}
+              responsavelEmail={selectedResidente.responsavel_email}
+              onSubmit={async (data) => {
+                setSavingContrato(true);
+                try {
+                  const contrato = await criarContrato(selectedResidente.id, data);
+                  setContratoDialogOpen(false);
+                  setSelectedContrato({
+                    ...contrato,
+                    servicos_inclusos: data.servicos_inclusos
+                  });
+                  setContratoVisualizarOpen(true);
+                } catch (error) {
+                  console.error(error);
+                } finally {
+                  setSavingContrato(false);
+                }
+              }}
+              onCancel={() => setContratoDialogOpen(false)}
+              isLoading={savingContrato}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Visualização do Contrato para PDF */}
+      {selectedContrato && selectedResidente && (
+        <ContratoPDFGenerator
+          open={contratoVisualizarOpen}
+          onOpenChange={setContratoVisualizarOpen}
+          contrato={selectedContrato}
+          residente={{
+            nome_completo: selectedResidente.nome_completo,
+            cpf: selectedResidente.cpf,
+            data_nascimento: selectedResidente.data_nascimento,
+            numero_prontuario: selectedResidente.numero_prontuario,
+            quarto: selectedResidente.quarto
+          }}
+          empresa={{
+            nome_empresa: "Senex Care - Residencial para Idosos",
+            cnpj: "00.000.000/0001-00",
+            endereco: "Endereço da empresa"
+          }}
+        />
+      )}
     </Card>
   );
 }
