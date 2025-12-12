@@ -1,44 +1,7 @@
 import { forwardRef } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface ContratoData {
-  numero_contrato: string;
-  valor_mensalidade: number;
-  dia_vencimento: number;
-  forma_pagamento: string;
-  data_inicio_contrato: string;
-  data_fim_contrato?: string;
-  contratante_nome: string;
-  contratante_cpf?: string;
-  contratante_rg?: string;
-  contratante_endereco?: string;
-  contratante_cidade?: string;
-  contratante_estado?: string;
-  contratante_cep?: string;
-  contratante_telefone?: string;
-  contratante_email?: string;
-  servicos_inclusos?: string[];
-  servicos_adicionais?: string;
-  clausulas_especiais?: string;
-  observacoes?: string;
-  status: string;
-  created_at: string;
-}
-
-interface ResidenteData {
-  nome_completo: string;
-  cpf?: string;
-  data_nascimento: string;
-  numero_prontuario: string;
-  quarto?: string;
-}
-
-interface EmpresaData {
-  nome_empresa: string;
-  cnpj?: string;
-  endereco?: string;
-}
+import type { ContratoData, ResidenteData, EmpresaData } from "./types";
 
 interface ContratoVisualizacaoProps {
   contrato: ContratoData;
@@ -279,7 +242,7 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
 
 ContratoVisualizacao.displayName = "ContratoVisualizacao";
 
-// Função auxiliar para converter valor em extenso (simplificada)
+// Função auxiliar para converter valor em extenso
 function valorPorExtenso(valor: number): string {
   const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
   const dezADezenove = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];

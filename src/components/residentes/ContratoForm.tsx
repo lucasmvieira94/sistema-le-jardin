@@ -6,27 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface ContratoFormData {
-  valor_mensalidade: string;
-  dia_vencimento: string;
-  forma_pagamento: string;
-  data_inicio_contrato: string;
-  data_fim_contrato: string;
-  contratante_nome: string;
-  contratante_cpf: string;
-  contratante_rg: string;
-  contratante_endereco: string;
-  contratante_cidade: string;
-  contratante_estado: string;
-  contratante_cep: string;
-  contratante_telefone: string;
-  contratante_email: string;
-  servicos_inclusos: string[];
-  servicos_adicionais: string;
-  clausulas_especiais: string;
-  observacoes: string;
-}
+import type { ContratoFormData } from "./types";
 
 interface ContratoFormProps {
   initialData?: Partial<ContratoFormData>;

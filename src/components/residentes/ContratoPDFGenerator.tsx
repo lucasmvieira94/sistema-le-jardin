@@ -6,44 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import ContratoVisualizacao from "./ContratoVisualizacao";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
-interface ContratoData {
-  numero_contrato: string;
-  valor_mensalidade: number;
-  dia_vencimento: number;
-  forma_pagamento: string;
-  data_inicio_contrato: string;
-  data_fim_contrato?: string;
-  contratante_nome: string;
-  contratante_cpf?: string;
-  contratante_rg?: string;
-  contratante_endereco?: string;
-  contratante_cidade?: string;
-  contratante_estado?: string;
-  contratante_cep?: string;
-  contratante_telefone?: string;
-  contratante_email?: string;
-  servicos_inclusos?: string[];
-  servicos_adicionais?: string;
-  clausulas_especiais?: string;
-  observacoes?: string;
-  status: string;
-  created_at: string;
-}
-
-interface ResidenteData {
-  nome_completo: string;
-  cpf?: string;
-  data_nascimento: string;
-  numero_prontuario: string;
-  quarto?: string;
-}
-
-interface EmpresaData {
-  nome_empresa: string;
-  cnpj?: string;
-  endereco?: string;
-}
+import type { ContratoData, ResidenteData, EmpresaData } from "./types";
 
 interface ContratoPDFGeneratorProps {
   open: boolean;
@@ -78,7 +41,6 @@ export default function ContratoPDFGenerator({
 
       const element = contratoRef.current;
       
-      // Criar canvas do elemento
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -88,7 +50,6 @@ export default function ContratoPDFGenerator({
 
       const imgData = canvas.toDataURL('image/png');
       
-      // Calcular dimensões para A4
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -99,26 +60,20 @@ export default function ContratoPDFGenerator({
       const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
       
-      // Calcular quantas páginas serão necessárias
       const pageHeight = pdfHeight / ratio;
       let heightLeft = imgHeight;
       let position = 0;
-      let page = 1;
 
-      // Adicionar primeira página
       pdf.addImage(imgData, 'PNG', imgX, 0, imgWidth * ratio, imgHeight * ratio);
       heightLeft -= pageHeight;
 
-      // Adicionar páginas adicionais se necessário
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', imgX, position * ratio, imgWidth * ratio, imgHeight * ratio);
         heightLeft -= pageHeight;
-        page++;
       }
 
-      // Baixar o PDF
       pdf.save(`Contrato_${contrato.numero_contrato.replace('/', '-')}_${residente.nome_completo.split(' ')[0]}.pdf`);
 
       toast({
