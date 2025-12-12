@@ -1,58 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface Contrato {
-  id: string;
-  residente_id: string;
-  numero_contrato: string;
-  valor_mensalidade: number;
-  dia_vencimento: number;
-  forma_pagamento: string;
-  data_inicio_contrato: string;
-  data_fim_contrato: string | null;
-  contratante_nome: string;
-  contratante_cpf: string | null;
-  contratante_rg: string | null;
-  contratante_endereco: string | null;
-  contratante_cidade: string | null;
-  contratante_estado: string | null;
-  contratante_cep: string | null;
-  contratante_telefone: string | null;
-  contratante_email: string | null;
-  servicos_inclusos: string[] | null;
-  servicos_adicionais: string | null;
-  clausulas_especiais: string | null;
-  observacoes: string | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ContratoFormData {
-  valor_mensalidade: string;
-  dia_vencimento: string;
-  forma_pagamento: string;
-  data_inicio_contrato: string;
-  data_fim_contrato: string;
-  contratante_nome: string;
-  contratante_cpf: string;
-  contratante_rg: string;
-  contratante_endereco: string;
-  contratante_cidade: string;
-  contratante_estado: string;
-  contratante_cep: string;
-  contratante_telefone: string;
-  contratante_email: string;
-  servicos_inclusos: string[];
-  servicos_adicionais: string;
-  clausulas_especiais: string;
-  observacoes: string;
-}
+import type { ContratoData, ContratoFormData } from "./types";
 
 export function useContratos() {
   const { toast } = useToast();
-  const [contratos, setContratos] = useState<Contrato[]>([]);
+  const [contratos, setContratos] = useState<ContratoData[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchContratos = useCallback(async (residenteId?: string) => {
@@ -70,7 +23,7 @@ export function useContratos() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setContratos(data || []);
+      setContratos((data || []) as ContratoData[]);
     } catch (error) {
       console.error('Erro ao buscar contratos:', error);
       toast({
