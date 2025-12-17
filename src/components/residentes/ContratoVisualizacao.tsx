@@ -71,10 +71,7 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
           </p>
           
           <p className="text-justify mb-4">
-            <strong>CONTRATADA:</strong> <strong>{empresa?.nome_empresa || "[Nome da Empresa]"}</strong>
-            {empresa?.cnpj && <>, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº {empresa.cnpj}</>}
-            {empresa?.endereco && <>, com sede em {empresa.endereco}</>}
-            , neste ato representada por seus representantes legais.
+            <strong>CONTRATADA:</strong> <strong>LE JARDIN RESIDENCIAL SÊNIOR LTDA ME</strong>, pessoa jurídica de direito privado, com sede na Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE, inscrita no CNPJ sob o nº 48.897.411/0001-58, neste ato representado pela sócia Rosângela Moraes Sobral, Divorciada, Brasileira, Naturalidade Aracaju/SE, portadora da Cédula de Identidade R.G. nº 905.849 SSP/SE e CPF nº 532.193.685-49;
           </p>
 
           <p className="text-justify mb-4">
