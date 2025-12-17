@@ -13,9 +13,7 @@ import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, F
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
-import ContratoForm from "@/components/residentes/ContratoForm";
-import ContratoPDFGenerator from "@/components/residentes/ContratoPDFGenerator";
-import { useContratos } from "@/components/residentes/useContratos";
+import ContratosLista from "@/components/residentes/ContratosLista";
 
 interface Residente {
   id: string;
@@ -43,13 +41,8 @@ export default function GerenciamentoResidentes() {
   const [editingResident, setEditingResident] = useState<Residente | null>(null);
   
   // Estados para contratos
-  const [contratoDialogOpen, setContratoDialogOpen] = useState(false);
-  const [contratoVisualizarOpen, setContratoVisualizarOpen] = useState(false);
+  const [contratosDialogOpen, setContratosDialogOpen] = useState(false);
   const [selectedResidente, setSelectedResidente] = useState<Residente | null>(null);
-  const [selectedContrato, setSelectedContrato] = useState<any>(null);
-  const [savingContrato, setSavingContrato] = useState(false);
-  
-  const { contratos, fetchContratos, criarContrato } = useContratos();
   
   const [formData, setFormData] = useState({
     nome_completo: "",
@@ -860,10 +853,9 @@ export default function GerenciamentoResidentes() {
                         size="sm"
                         onClick={() => {
                           setSelectedResidente(residente);
-                          fetchContratos(residente.id);
-                          setContratoDialogOpen(true);
+                          setContratosDialogOpen(true);
                         }}
-                        title="Gerar contrato"
+                        title="Gerenciar contratos"
                         className="text-blue-600 hover:text-blue-700"
                       >
                         <FileText className="w-4 h-4" />
@@ -893,64 +885,33 @@ export default function GerenciamentoResidentes() {
         </div>
       </CardContent>
 
-      {/* Dialog para Contrato */}
-      <Dialog open={contratoDialogOpen} onOpenChange={setContratoDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[95vh]">
+      {/* Dialog para Gerenciar Contratos */}
+      <Dialog open={contratosDialogOpen} onOpenChange={setContratosDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Contrato de Prestação de Serviços - {selectedResidente?.nome_completo}
+              Contratos - {selectedResidente?.nome_completo}
             </DialogTitle>
           </DialogHeader>
           
           {selectedResidente && (
-            <ContratoForm
-              residenteNome={selectedResidente.nome_completo}
-              responsavelNome={selectedResidente.responsavel_nome}
-              responsavelTelefone={selectedResidente.responsavel_telefone}
-              responsavelEmail={selectedResidente.responsavel_email}
-              onSubmit={async (data) => {
-                setSavingContrato(true);
-                try {
-                  const contrato = await criarContrato(selectedResidente.id, data);
-                  setContratoDialogOpen(false);
-                  setSelectedContrato({
-                    ...contrato,
-                    servicos_inclusos: data.servicos_inclusos
-                  });
-                  setContratoVisualizarOpen(true);
-                } catch (error) {
-                  console.error(error);
-                } finally {
-                  setSavingContrato(false);
-                }
+            <ContratosLista
+              residenteId={selectedResidente.id}
+              residenteData={{
+                nome_completo: selectedResidente.nome_completo,
+                cpf: selectedResidente.cpf,
+                data_nascimento: selectedResidente.data_nascimento,
+                numero_prontuario: selectedResidente.numero_prontuario,
+                quarto: selectedResidente.quarto,
+                responsavel_nome: selectedResidente.responsavel_nome,
+                responsavel_telefone: selectedResidente.responsavel_telefone,
+                responsavel_email: selectedResidente.responsavel_email,
               }}
-              onCancel={() => setContratoDialogOpen(false)}
-              isLoading={savingContrato}
+              onClose={() => setContratosDialogOpen(false)}
             />
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Visualização do Contrato para PDF */}
-      {selectedContrato && selectedResidente && (
-        <ContratoPDFGenerator
-          open={contratoVisualizarOpen}
-          onOpenChange={setContratoVisualizarOpen}
-          contrato={selectedContrato}
-          residente={{
-            nome_completo: selectedResidente.nome_completo,
-            cpf: selectedResidente.cpf,
-            data_nascimento: selectedResidente.data_nascimento,
-            numero_prontuario: selectedResidente.numero_prontuario,
-            quarto: selectedResidente.quarto
-          }}
-          empresa={{
-            nome_empresa: "Senex Care - Residencial para Idosos",
-            cnpj: "00.000.000/0001-00",
-            endereco: "Endereço da empresa"
-          }}
-        />
-      )}
     </Card>
   );
 }
