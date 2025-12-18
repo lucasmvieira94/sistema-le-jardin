@@ -23,6 +23,8 @@ interface Residente {
   numero_prontuario: string;
   quarto: string;
   responsavel_nome: string;
+  responsavel_cpf: string;
+  responsavel_endereco: string;
   responsavel_telefone: string;
   responsavel_email: string;
   condicoes_medicas: string;
@@ -51,6 +53,8 @@ export default function GerenciamentoResidentes() {
     numero_prontuario: "",
     quarto: "",
     responsavel_nome: "",
+    responsavel_cpf: "",
+    responsavel_endereco: "",
     responsavel_telefone: "",
     responsavel_email: "",
     condicoes_medicas: "",
@@ -172,6 +176,8 @@ export default function GerenciamentoResidentes() {
       numero_prontuario: residente.numero_prontuario,
       quarto: residente.quarto || "",
       responsavel_nome: residente.responsavel_nome || "",
+      responsavel_cpf: residente.responsavel_cpf || "",
+      responsavel_endereco: residente.responsavel_endereco || "",
       responsavel_telefone: residente.responsavel_telefone || "",
       responsavel_email: residente.responsavel_email || "",
       condicoes_medicas: residente.condicoes_medicas || "",
@@ -561,6 +567,8 @@ export default function GerenciamentoResidentes() {
       numero_prontuario: "",
       quarto: "",
       responsavel_nome: "",
+      responsavel_cpf: "",
+      responsavel_endereco: "",
       responsavel_telefone: "",
       responsavel_email: "",
       condicoes_medicas: "",
@@ -731,14 +739,34 @@ export default function GerenciamentoResidentes() {
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="font-medium">Responsável/Contato de Emergência</h4>
+                  <h4 className="font-medium">Responsável Financeiro/Contato de Emergência</h4>
                   <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="responsavel_nome">Nome do responsável</Label>
+                        <Input
+                          id="responsavel_nome"
+                          value={formData.responsavel_nome}
+                          onChange={(e) => setFormData({...formData, responsavel_nome: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="responsavel_cpf">CPF do responsável</Label>
+                        <Input
+                          id="responsavel_cpf"
+                          value={formData.responsavel_cpf}
+                          onChange={(e) => setFormData({...formData, responsavel_cpf: e.target.value})}
+                          placeholder="000.000.000-00"
+                        />
+                      </div>
+                    </div>
                     <div>
-                      <Label htmlFor="responsavel_nome">Nome do responsável</Label>
+                      <Label htmlFor="responsavel_endereco">Endereço do responsável</Label>
                       <Input
-                        id="responsavel_nome"
-                        value={formData.responsavel_nome}
-                        onChange={(e) => setFormData({...formData, responsavel_nome: e.target.value})}
+                        id="responsavel_endereco"
+                        value={formData.responsavel_endereco}
+                        onChange={(e) => setFormData({...formData, responsavel_endereco: e.target.value})}
+                        placeholder="Rua, número, bairro, cidade/UF, CEP"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
