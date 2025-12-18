@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
+import logoLeJardin from "@/assets/logo-le-jardin.png";
 
 interface ContratoVisualizacaoProps {
   contrato: ContratoData;
@@ -51,8 +52,15 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
 
     return (
       <div ref={ref} className="bg-white text-black p-8 max-w-4xl mx-auto text-sm leading-relaxed print:p-4">
-        {/* Cabeçalho */}
+        {/* Cabeçalho com Logo */}
         <div className="text-center mb-8 border-b-2 border-black pb-4">
+          <div className="flex justify-center mb-4">
+            <img 
+              src={logoLeJardin} 
+              alt="Le Jardin Residencial Sênior" 
+              className="h-20 object-contain"
+            />
+          </div>
           <h1 className="text-2xl font-bold uppercase tracking-wide">
             Contrato de Prestação de Serviços
           </h1>
