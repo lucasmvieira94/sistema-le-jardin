@@ -58,7 +58,7 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
             <img 
               src={logoLeJardin} 
               alt="Le Jardin Residencial Sênior" 
-              className="h-20 object-contain"
+              className="h-40 object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold uppercase tracking-wide">
