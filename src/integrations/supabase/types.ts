@@ -1684,7 +1684,9 @@ export type Database = {
           numero_prontuario: string
           observacoes_gerais: string | null
           quarto: string | null
+          responsavel_cpf: string | null
           responsavel_email: string | null
+          responsavel_endereco: string | null
           responsavel_nome: string | null
           responsavel_telefone: string | null
           updated_at: string
@@ -1700,7 +1702,9 @@ export type Database = {
           numero_prontuario: string
           observacoes_gerais?: string | null
           quarto?: string | null
+          responsavel_cpf?: string | null
           responsavel_email?: string | null
+          responsavel_endereco?: string | null
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           updated_at?: string
@@ -1716,7 +1720,9 @@ export type Database = {
           numero_prontuario?: string
           observacoes_gerais?: string | null
           quarto?: string | null
+          responsavel_cpf?: string | null
           responsavel_email?: string | null
+          responsavel_endereco?: string | null
           responsavel_nome?: string | null
           responsavel_telefone?: string | null
           updated_at?: string
