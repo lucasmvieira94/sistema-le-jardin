@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
@@ -63,6 +64,7 @@ export default function BotoesRegistroPonto({
   longitude,
   onRegistroRealizado 
 }: BotoesRegistroPontoProps) {
+  const navigate = useNavigate();
   const [registrando, setRegistrando] = useState<TipoRegistro | null>(null);
   const [status, setStatus] = useState<RegistroStatus>({
     temEntrada: false,
@@ -73,6 +75,12 @@ export default function BotoesRegistroPonto({
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
   const { logEvent } = useAuditLog();
+
+  // Função para fechar alerta e voltar à tela inicial
+  const handleConfirmarAlerta = () => {
+    setAlertaAberto(false);
+    navigate('/funcionario-access');
+  };
 
   // Carregar status atual dos registros
   const carregarStatus = async () => {
@@ -377,7 +385,7 @@ export default function BotoesRegistroPonto({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:justify-center">
-            <AlertDialogAction className="w-full sm:w-auto">
+            <AlertDialogAction className="w-full sm:w-auto" onClick={handleConfirmarAlerta}>
               OK
             </AlertDialogAction>
           </AlertDialogFooter>
