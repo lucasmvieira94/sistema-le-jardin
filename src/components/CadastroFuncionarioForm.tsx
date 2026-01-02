@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Send, Key } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { Card, CardContent } from "@/components/ui/card";
 import { validateCPF, validateEmail, sanitizeString } from "@/utils/validation";
 import NomeInput from "./cadastro-funcionario/NomeInput";
 import EmailInput from "./cadastro-funcionario/EmailInput";
@@ -70,9 +71,47 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
     }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const { isAdmin } = useUserRole();
   const { logEvent } = useAuditLog();
+
+  // Função para reenviar código via SMS
+  async function reenviarCodigo() {
+    if (!funcionarioData?.codigo_4_digitos || !funcionarioData?.telefone) {
+      toast({ variant: "destructive", title: "Dados incompletos", description: "Telefone ou código não disponível" });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const telefoneNumeros = funcionarioData.telefone.replace(/\D/g, '');
+      const telefoneFormatado = '+55' + telefoneNumeros;
+
+      const resp = await fetch(
+        "https://kvjgmqicictxxfnvhuwl.functions.supabase.co/enviar-codigo",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            telefone: telefoneFormatado,
+            nome: funcionarioData.nome_completo,
+            codigo: funcionarioData.codigo_4_digitos,
+          }),
+        }
+      );
+
+      if (resp.ok) {
+        toast({ title: "Código reenviado!", description: "O código foi enviado por SMS para o telefone cadastrado." });
+      } else {
+        const errorData = await resp.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "Falha ao reenviar SMS", description: errorData.error || "Tente novamente" });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Erro ao reenviar código", description: err?.message });
+    }
+    setIsResending(false);
+  }
 
   useEffect(() => {
     async function fetchEscalas() {
@@ -273,6 +312,41 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+        {/* Exibir código de 4 dígitos quando editando */}
+        {isEditing && funcionarioData?.codigo_4_digitos && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/10">
+                    <Key className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Código de Acesso</p>
+                    <p className="text-2xl font-bold tracking-widest text-primary">
+                      {funcionarioData.codigo_4_digitos}
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={reenviarCodigo}
+                  disabled={isResending}
+                  className="shrink-0"
+                >
+                  {isResending ? (
+                    <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Enviando...</>
+                  ) : (
+                    <><Send className="mr-2 h-4 w-4" /> Reenviar SMS</>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <NomeInput control={form.control} />
         <div className="flex flex-col md:flex-row gap-4">
           <EmailInput control={form.control} />
