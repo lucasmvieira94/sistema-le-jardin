@@ -1,6 +1,4 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,62 +6,84 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, nome, codigo } = await req.json();
-    if (!email || !codigo) {
-      return new Response(JSON.stringify({ error: "email e codigo são obrigatórios" }), { status: 400, headers: corsHeaders });
+    const { telefone, nome, codigo } = await req.json();
+    
+    console.log("Recebido pedido de envio de SMS:", { telefone, nome, codigo: "***" });
+    
+    if (!telefone || !codigo) {
+      console.error("Campos obrigatórios faltando:", { telefone: !!telefone, codigo: !!codigo });
+      return new Response(
+        JSON.stringify({ error: "telefone e codigo são obrigatórios" }), 
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (!RESEND_API_KEY) {
-      return new Response(JSON.stringify({ error: "Chave RESEND_API_KEY não configurada." }), { status: 500, headers: corsHeaders });
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+      console.error("Configurações do Twilio faltando:", {
+        accountSid: !!TWILIO_ACCOUNT_SID,
+        authToken: !!TWILIO_AUTH_TOKEN,
+        phoneNumber: !!TWILIO_PHONE_NUMBER
+      });
+      return new Response(
+        JSON.stringify({ error: "Configurações do Twilio não encontradas." }), 
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Buscar configurações da empresa para obter o domínio
-    const { data: config } = await supabase
-      .from('configuracoes_empresa')
-      .select('dominio_email, nome_empresa')
-      .single();
+    // Montar mensagem SMS
+    const mensagem = `Olá${nome ? `, ${nome}` : ''}! Seu código de registro de ponto é: ${codigo}. Não compartilhe este código.`;
 
-    const dominioEmail = config?.dominio_email || "no-reply@resend.dev";
-    const nomeEmpresa = config?.nome_empresa || "Controle de Ponto";
+    console.log("Enviando SMS para:", telefone);
 
-    // Enviar email via Resend
-    const resp = await fetch("https://api.resend.com/emails", {
+    // Enviar SMS via Twilio
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+    
+    const authHeader = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    
+    const formData = new URLSearchParams();
+    formData.append("To", telefone);
+    formData.append("From", TWILIO_PHONE_NUMBER);
+    formData.append("Body", mensagem);
+
+    const resp = await fetch(twilioUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
+        "Authorization": `Basic ${authHeader}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify({
-        from: `${nomeEmpresa} <${dominioEmail}>`,
-        to: [email],
-        subject: `Bem-vindo(a)! Seu código de registro`,
-        html: `<h2>Olá, ${nome || "Funcionário"}!</h2>
-            <p>Seu código de registro de ponto é: <strong style="font-size:18px;">${codigo}</strong></p>
-            <p>Utilize este código para registrar seus pontos de entrada, intervalo e saída.</p>
-            <br/><small>Não compartilhe este código com terceiros.</small>`
-      }),
+      body: formData.toString(),
     });
 
+    const responseData = await resp.json();
+    
     if (!resp.ok) {
-      const msg = await resp.text();
-      throw new Error("Falha ao enviar email: " + msg);
+      console.error("Erro ao enviar SMS via Twilio:", responseData);
+      throw new Error(`Falha ao enviar SMS: ${responseData.message || JSON.stringify(responseData)}`);
     }
 
-    return new Response(JSON.stringify({ status: "ok" }), { headers: corsHeaders });
+    console.log("SMS enviado com sucesso! SID:", responseData.sid);
+
+    return new Response(
+      JSON.stringify({ status: "ok", sid: responseData.sid }), 
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || err }), { status: 500, headers: corsHeaders });
+    console.error("Erro na função enviar-codigo:", err);
+    return new Response(
+      JSON.stringify({ error: err?.message || String(err) }), 
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 };
 
