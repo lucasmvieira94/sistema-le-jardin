@@ -16,6 +16,7 @@ import DataInput from "./cadastro-funcionario/DataInput";
 import FuncaoInput from "./cadastro-funcionario/FuncaoInput";
 import EscalaSelect from "./cadastro-funcionario/EscalaSelect";
 import RegistraPontoSwitch from "./cadastro-funcionario/RegistraPontoSwitch";
+import TelefoneInput from "./cadastro-funcionario/TelefoneInput";
 
 type Escala = {
   id: number;
@@ -31,6 +32,7 @@ type Escala = {
 type FormData = {
   nome_completo: string;
   email: string;
+  telefone: string;
   cpf: string;
   data_nascimento: string;
   data_admissao: string;
@@ -55,6 +57,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
     defaultValues: funcionarioData ? {
       nome_completo: funcionarioData.nome_completo || '',
       email: funcionarioData.email || '',
+      telefone: funcionarioData.telefone || '',
       cpf: funcionarioData.cpf || '',
       data_nascimento: funcionarioData.data_nascimento || '',
       data_admissao: funcionarioData.data_admissao || '',
@@ -137,11 +140,20 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         return;
       }
 
+      // Validar telefone
+      const telefoneNumeros = values.telefone?.replace(/\D/g, '') || '';
+      if (!telefoneNumeros || telefoneNumeros.length < 10) {
+        toast({ variant: "destructive", title: "Telefone inválido", description: "Informe um telefone válido com DDD" });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Sanitize string inputs
       const sanitizedValues = {
         ...values,
         nome_completo: sanitizeString(values.nome_completo),
         email: sanitizeString(values.email),
+        telefone: values.telefone,
         funcao: sanitizeString(values.funcao)
       };
 
@@ -175,7 +187,14 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       if (isEditing && funcionarioData) {
         // Update existing funcionario
         const updateData = {
-          ...sanitizedValues,
+          nome_completo: sanitizedValues.nome_completo,
+          email: sanitizedValues.email,
+          telefone: sanitizedValues.telefone,
+          cpf: sanitizedValues.cpf,
+          data_nascimento: sanitizedValues.data_nascimento,
+          data_admissao: sanitizedValues.data_admissao,
+          funcao: sanitizedValues.funcao,
+          registra_ponto: sanitizedValues.registra_ponto,
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
         };
@@ -199,7 +218,14 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         const codigo = await geraCodigoUnico();
 
         const newFuncionario = {
-          ...sanitizedValues,
+          nome_completo: sanitizedValues.nome_completo,
+          email: sanitizedValues.email,
+          telefone: sanitizedValues.telefone,
+          cpf: sanitizedValues.cpf,
+          data_nascimento: sanitizedValues.data_nascimento,
+          data_admissao: sanitizedValues.data_admissao,
+          funcao: sanitizedValues.funcao,
+          registra_ponto: sanitizedValues.registra_ponto,
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
           codigo_4_digitos: codigo,
@@ -213,23 +239,25 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         // Log audit event
         await logEvent('funcionarios', 'INSERT', null, newFuncionario);
 
+        // Enviar código via SMS usando Twilio
+        const telefoneFormatado = '+55' + telefoneNumeros;
         const resp = await fetch(
           "https://kvjgmqicictxxfnvhuwl.functions.supabase.co/enviar-codigo",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              email: sanitizedValues.email,
+              telefone: telefoneFormatado,
               nome: sanitizedValues.nome_completo,
               codigo,
             }),
           }
         );
         if (resp.ok) {
-          toast({ title: "Funcionário cadastrado!", description: "O código de acesso foi enviado por email." });
+          toast({ title: "Funcionário cadastrado!", description: "O código de acesso foi enviado por SMS." });
           form.reset();
         } else {
-          toast({ variant: "destructive", title: "Funcionário cadastrado mas falha ao enviar email." });
+          toast({ variant: "destructive", title: "Funcionário cadastrado mas falha ao enviar SMS." });
         }
       }
     } catch (err: any) {
@@ -248,8 +276,9 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         <NomeInput control={form.control} />
         <div className="flex flex-col md:flex-row gap-4">
           <EmailInput control={form.control} />
-          <CpfInput control={form.control} />
+          <TelefoneInput control={form.control} />
         </div>
+        <CpfInput control={form.control} />
         <div className="flex flex-col md:flex-row gap-4">
           <DataInput control={form.control} name="data_nascimento" label="Data de Nascimento" />
           <DataInput control={form.control} name="data_admissao" label="Data de Admissão" />
