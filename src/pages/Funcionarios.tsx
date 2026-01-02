@@ -30,7 +30,7 @@ export default function Funcionarios() {
   const [funcionariosFiltrados, setFuncionariosFiltrados] = useState<Funcionario[]>([]);
   const [loading, setLoading] = useState(true);
   const [desligandoId, setDesligandoId] = useState<string | null>(null);
-  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroStatus, setFiltroStatus] = useState<string>("ativo");
   const [filtroFuncao, setFiltroFuncao] = useState<string>("todas");
   const [filtroEscala, setFiltroEscala] = useState<string>("todas");
   const [filtroNome, setFiltroNome] = useState<string>("");
