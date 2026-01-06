@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useFolhaPonto } from "@/hooks/useFolhaPonto";
 import { exportToPDF, exportToExcel } from "@/utils/folhaPontoExport";
@@ -12,19 +13,27 @@ import { toast } from "@/components/ui/use-toast";
 interface Funcionario {
   id: string;
   nome_completo: string;
+  ativo?: boolean;
 }
 
 interface ModalFolhaPontoProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   funcionarios: Funcionario[];
+  funcionariosInativos: Funcionario[];
 }
 
-export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: ModalFolhaPontoProps) {
+export default function ModalFolhaPonto({ open, onOpenChange, funcionarios, funcionariosInativos }: ModalFolhaPontoProps) {
   const [funcionarioId, setFuncionarioId] = useState<string>("");
   const [mes, setMes] = useState<number>(new Date().getMonth() + 1);
   const [ano, setAno] = useState<number>(new Date().getFullYear());
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
+  const [incluirInativos, setIncluirInativos] = useState(false);
+
+  // Lista combinada de funcionários baseada no switch
+  const listaFuncionarios = incluirInativos 
+    ? [...funcionarios, ...funcionariosInativos].sort((a, b) => a.nome_completo.localeCompare(b.nome_completo))
+    : funcionarios;
 
   const { data, isLoading } = useFolhaPonto(
     funcionarioId, 
@@ -46,7 +55,7 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
     }
 
     if (!data || !data.dados.length) {
-      const funcionarioNome = funcionarios.find(f => f.id === funcionarioId)?.nome_completo || 'funcionário selecionado';
+      const funcionarioNome = listaFuncionarios.find(f => f.id === funcionarioId)?.nome_completo || 'funcionário selecionado';
       toast({
         variant: "destructive",
         title: "Nenhum registro de ponto encontrado",
@@ -81,7 +90,7 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
     }
 
     if (!data || !data.dados.length) {
-      const funcionarioNome = funcionarios.find(f => f.id === funcionarioId)?.nome_completo || 'funcionário selecionado';
+      const funcionarioNome = listaFuncionarios.find(f => f.id === funcionarioId)?.nome_completo || 'funcionário selecionado';
       toast({
         variant: "destructive",
         title: "Nenhum registro de ponto encontrado",
@@ -131,6 +140,27 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
         </DialogHeader>
         
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="incluir-inativos"
+                checked={incluirInativos}
+                onCheckedChange={(checked) => {
+                  setIncluirInativos(checked);
+                  setFuncionarioId(""); // Reset seleção ao mudar
+                }}
+              />
+              <Label htmlFor="incluir-inativos" className="text-sm cursor-pointer">
+                Incluir funcionários desligados
+              </Label>
+            </div>
+            {incluirInativos && funcionariosInativos.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {funcionariosInativos.length} desligado(s)
+              </span>
+            )}
+          </div>
+
           <div>
             <Label htmlFor="funcionario">Funcionário</Label>
             <Select value={funcionarioId} onValueChange={setFuncionarioId}>
@@ -138,9 +168,12 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios }: Mo
                 <SelectValue placeholder="Selecione um funcionário" />
               </SelectTrigger>
               <SelectContent>
-                {funcionarios.map((func) => (
+                {listaFuncionarios.map((func) => (
                   <SelectItem key={func.id} value={func.id}>
                     {func.nome_completo}
+                    {func.ativo === false && (
+                      <span className="ml-2 text-muted-foreground">(desligado)</span>
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>
