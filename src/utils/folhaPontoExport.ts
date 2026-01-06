@@ -299,6 +299,7 @@ async function addFuncionarioPageToPDF(
 }
 
 // Nova função para exportação geral com múltiplos funcionários
+// PRIMEIRA PÁGINA: Resumo geral de todos os funcionários
 export async function exportMultipleFuncionariosToPDF(
   funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }>,
   resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }>,
@@ -310,20 +311,9 @@ export async function exportMultipleFuncionariosToPDF(
   if (funcionariosDados.length === 0) return;
 
   const dadosEmpresa = await buscarDadosEmpresa();
-
-  // Gerar página para cada funcionário
-  for (let index = 0; index < funcionariosDados.length; index++) {
-    const funcionarioData = funcionariosDados[index];
-    if (funcionarioData.dados.length > 0) {
-      await addFuncionarioPageToPDF(doc, funcionarioData.dados, funcionarioData.totais, mes, ano, index === 0, dadosEmpresa);
-    }
-  }
-
-  // Adicionar página de resumo
-  doc.addPage();
-  
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   
+  // ========== PRIMEIRA PÁGINA: RESUMO GERAL ==========
   let currentY = 10;
 
   // Cabeçalho da empresa na página de resumo
@@ -336,6 +326,12 @@ export async function exportMultipleFuncionariosToPDF(
       doc.setFontSize(10);
       doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 105, currentY, { align: 'center' });
       currentY += 5;
+    }
+    
+    if (dadosEmpresa.endereco) {
+      doc.setFontSize(8);
+      doc.text(dadosEmpresa.endereco, 105, currentY, { align: 'center' });
+      currentY += 8;
     }
     
     // Linha separadora
@@ -388,6 +384,15 @@ export async function exportMultipleFuncionariosToPDF(
       5: { halign: 'center', cellWidth: 15 }  // Faltas
     }
   });
+
+  // ========== PÁGINAS SEGUINTES: FOLHAS INDIVIDUAIS ==========
+  for (let index = 0; index < funcionariosDados.length; index++) {
+    const funcionarioData = funcionariosDados[index];
+    if (funcionarioData.dados.length > 0) {
+      // Sempre adiciona nova página (resumo está na primeira)
+      await addFuncionarioPageToPDF(doc, funcionarioData.dados, funcionarioData.totais, mes, ano, false, dadosEmpresa);
+    }
+  }
 
   // Download
   doc.save(`folhas-ponto-geral-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
@@ -460,6 +465,7 @@ export async function exportToExcel(
 }
 
 // Nova função para exportação geral com múltiplos funcionários para Excel
+// PRIMEIRA ABA: Resumo geral de todos os funcionários
 export async function exportMultipleFuncionariosToExcel(
   funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }>,
   resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }>,
@@ -472,7 +478,37 @@ export async function exportMultipleFuncionariosToExcel(
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const dadosEmpresa = await buscarDadosEmpresa();
 
-  // Criar aba para cada funcionário
+  // ========== PRIMEIRA ABA: RESUMO GERAL ==========
+  const resumoWorksheetData: any[] = [];
+
+  // Cabeçalho da empresa no resumo
+  if (dadosEmpresa) {
+    resumoWorksheetData.push([dadosEmpresa.nome_empresa]);
+    if (dadosEmpresa.cnpj) {
+      resumoWorksheetData.push([`CNPJ: ${dadosEmpresa.cnpj}`]);
+    }
+    resumoWorksheetData.push([]);
+  }
+
+  resumoWorksheetData.push(
+    ['RELATÓRIO GERAL DE FUNCIONÁRIOS'],
+    [`Período: ${mesNome}`],
+    [],
+    ['Funcionário', 'CPF', 'H. Trabalhadas', 'H. Extras', 'H. Noturnas', 'Faltas'],
+    ...resumoGeral.map(funcionario => [
+      funcionario.nome,
+      funcionario.cpf,
+      formatInterval(funcionario.horas_trabalhadas),
+      formatInterval(funcionario.horas_extras),
+      formatInterval(funcionario.horas_noturnas),
+      funcionario.faltas
+    ])
+  );
+
+  const resumoWorksheet = XLSX.utils.aoa_to_sheet(resumoWorksheetData);
+  XLSX.utils.book_append_sheet(workbook, resumoWorksheet, 'Resumo Geral');
+
+  // ========== ABAS SEGUINTES: FOLHAS INDIVIDUAIS ==========
   funcionariosDados.forEach((funcionarioData, index) => {
     if (funcionarioData.dados.length > 0) {
       const funcionario = funcionarioData.dados[0];
@@ -527,36 +563,6 @@ export async function exportMultipleFuncionariosToExcel(
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     }
   });
-
-  // Criar aba de resumo geral
-  const resumoWorksheetData: any[] = [];
-
-  // Cabeçalho da empresa no resumo
-  if (dadosEmpresa) {
-    resumoWorksheetData.push([dadosEmpresa.nome_empresa]);
-    if (dadosEmpresa.cnpj) {
-      resumoWorksheetData.push([`CNPJ: ${dadosEmpresa.cnpj}`]);
-    }
-    resumoWorksheetData.push([]);
-  }
-
-  resumoWorksheetData.push(
-    ['RELATÓRIO GERAL DE FUNCIONÁRIOS'],
-    [`Período: ${mesNome}`],
-    [],
-    ['Funcionário', 'CPF', 'H. Trabalhadas', 'H. Extras', 'H. Noturnas', 'Faltas'],
-    ...resumoGeral.map(funcionario => [
-      funcionario.nome,
-      funcionario.cpf,
-      formatInterval(funcionario.horas_trabalhadas),
-      formatInterval(funcionario.horas_extras),
-      formatInterval(funcionario.horas_noturnas),
-      funcionario.faltas
-    ])
-  );
-
-  const resumoWorksheet = XLSX.utils.aoa_to_sheet(resumoWorksheetData);
-  XLSX.utils.book_append_sheet(workbook, resumoWorksheet, 'Resumo Geral');
 
   // Download
   XLSX.writeFile(workbook, `folhas-ponto-geral-${mes.toString().padStart(2, '0')}-${ano}.xlsx`);
