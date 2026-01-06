@@ -10,10 +10,12 @@ import ModalEscalaMensal from "@/components/relatorios/ModalEscalaMensal";
 interface Funcionario {
   id: string;
   nome_completo: string;
+  ativo?: boolean;
 }
 
 export default function Relatorios() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [funcionariosInativos, setFuncionariosInativos] = useState<Funcionario[]>([]);
   const [modalFolhaPontoOpen, setModalFolhaPontoOpen] = useState(false);
   const [modalFolhaPontoGeralOpen, setModalFolhaPontoGeralOpen] = useState(false);
   const [modalEscalaMensalOpen, setModalEscalaMensalOpen] = useState(false);
@@ -23,13 +25,20 @@ export default function Relatorios() {
   }, []);
 
   async function fetchFuncionarios() {
-    const { data } = await supabase
+    const { data: ativos } = await supabase
       .from("funcionarios")
-      .select("id, nome_completo")
+      .select("id, nome_completo, ativo")
       .eq("ativo", true)
       .order("nome_completo");
     
-    if (data) setFuncionarios(data);
+    const { data: inativos } = await supabase
+      .from("funcionarios")
+      .select("id, nome_completo, ativo")
+      .eq("ativo", false)
+      .order("nome_completo");
+    
+    if (ativos) setFuncionarios(ativos);
+    if (inativos) setFuncionariosInativos(inativos);
   }
 
   return (
@@ -125,6 +134,7 @@ export default function Relatorios() {
         open={modalFolhaPontoOpen}
         onOpenChange={setModalFolhaPontoOpen}
         funcionarios={funcionarios}
+        funcionariosInativos={funcionariosInativos}
       />
 
       <ModalFolhaPontoGeral 
