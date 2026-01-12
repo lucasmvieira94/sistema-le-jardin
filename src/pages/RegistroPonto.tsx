@@ -43,25 +43,49 @@ export default function RegistroPonto() {
     
     setAtualizando(true);
     try {
-      const hoje = formatInTimeZone(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
-      const { data, error } = await supabase
+      const agora = new Date();
+      const hoje = formatInTimeZone(agora, 'America/Sao_Paulo', 'yyyy-MM-dd');
+      const ontem = formatInTimeZone(new Date(agora.getTime() - 24*60*60*1000), 'America/Sao_Paulo', 'yyyy-MM-dd');
+      
+      // Primeiro, verifica se existe registro de HOJE
+      const { data: registroHoje, error: errorHoje } = await supabase
         .from('registros_ponto')
         .select('entrada, intervalo_inicio, intervalo_fim, saida')
         .eq('funcionario_id', funcionarioId)
         .eq('data', hoje)
         .single();
 
-      if (!error && data) {
+      if (!errorHoje && registroHoje) {
         const registros: RegistroHoje[] = [];
-        if (data.entrada) registros.push({ horario: data.entrada.slice(0, 5), tipo: 'Entrada' });
-        if (data.intervalo_inicio) registros.push({ horario: data.intervalo_inicio.slice(0, 5), tipo: 'Início Intervalo' });
-        if (data.intervalo_fim) registros.push({ horario: data.intervalo_fim.slice(0, 5), tipo: 'Fim Intervalo' });
-        if (data.saida) registros.push({ horario: data.saida.slice(0, 5), tipo: 'Saída' });
+        if (registroHoje.entrada) registros.push({ horario: registroHoje.entrada.slice(0, 5), tipo: 'Entrada' });
+        if (registroHoje.intervalo_inicio) registros.push({ horario: registroHoje.intervalo_inicio.slice(0, 5), tipo: 'Início Intervalo' });
+        if (registroHoje.intervalo_fim) registros.push({ horario: registroHoje.intervalo_fim.slice(0, 5), tipo: 'Fim Intervalo' });
+        if (registroHoje.saida) registros.push({ horario: registroHoje.saida.slice(0, 5), tipo: 'Saída' });
         
         setRegistrosHoje(registros);
-      } else {
-        setRegistrosHoje([]);
+        return;
       }
+
+      // Se não há registro hoje, verifica se há registro de ONTEM sem saída (turno noturno)
+      const { data: registroOntem, error: errorOntem } = await supabase
+        .from('registros_ponto')
+        .select('entrada, intervalo_inicio, intervalo_fim, saida')
+        .eq('funcionario_id', funcionarioId)
+        .eq('data', ontem)
+        .is('saida', null)
+        .single();
+
+      if (!errorOntem && registroOntem && registroOntem.entrada) {
+        const registros: RegistroHoje[] = [];
+        if (registroOntem.entrada) registros.push({ horario: registroOntem.entrada.slice(0, 5), tipo: 'Entrada (ontem)' });
+        if (registroOntem.intervalo_inicio) registros.push({ horario: registroOntem.intervalo_inicio.slice(0, 5), tipo: 'Início Intervalo' });
+        if (registroOntem.intervalo_fim) registros.push({ horario: registroOntem.intervalo_fim.slice(0, 5), tipo: 'Fim Intervalo' });
+        
+        setRegistrosHoje(registros);
+        return;
+      }
+
+      setRegistrosHoje([]);
     } catch (error) {
       console.error('Erro ao carregar registros:', error);
       setRegistrosHoje([]);
