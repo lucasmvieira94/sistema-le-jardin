@@ -82,32 +82,58 @@ export default function BotoesRegistroPonto({
     navigate('/funcionario-access');
   };
 
-  // Carregar status atual dos registros
+  // Carregar status atual dos registros (considera turnos noturnos que cruzam a meia-noite)
   const carregarStatus = async () => {
     try {
-      const hoje = formatInTimeZone(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
-      const { data } = await supabase
+      const agora = new Date();
+      const hoje = formatInTimeZone(agora, 'America/Sao_Paulo', 'yyyy-MM-dd');
+      const ontem = formatInTimeZone(new Date(agora.getTime() - 24*60*60*1000), 'America/Sao_Paulo', 'yyyy-MM-dd');
+      
+      // Primeiro, verifica se existe registro de HOJE
+      const { data: registroHoje } = await supabase
         .from('registros_ponto')
         .select('entrada, intervalo_inicio, intervalo_fim, saida')
         .eq('funcionario_id', funcionarioId)
         .eq('data', hoje)
         .single();
 
-      if (data) {
+      if (registroHoje) {
         setStatus({
-          temEntrada: !!data.entrada,
-          temIntervaloInicio: !!data.intervalo_inicio,
-          temIntervaloFim: !!data.intervalo_fim,
-          temSaida: !!data.saida
+          temEntrada: !!registroHoje.entrada,
+          temIntervaloInicio: !!registroHoje.intervalo_inicio,
+          temIntervaloFim: !!registroHoje.intervalo_fim,
+          temSaida: !!registroHoje.saida
         });
-      } else {
+        return;
+      }
+
+      // Se não há registro hoje, verifica se há registro de ONTEM sem saída (turno noturno)
+      const { data: registroOntem } = await supabase
+        .from('registros_ponto')
+        .select('entrada, intervalo_inicio, intervalo_fim, saida')
+        .eq('funcionario_id', funcionarioId)
+        .eq('data', ontem)
+        .is('saida', null)
+        .single();
+
+      if (registroOntem && registroOntem.entrada) {
+        // Existe um turno aberto de ontem - mostrar como se tivesse entrada
         setStatus({
-          temEntrada: false,
-          temIntervaloInicio: false,
-          temIntervaloFim: false,
+          temEntrada: true,
+          temIntervaloInicio: !!registroOntem.intervalo_inicio,
+          temIntervaloFim: !!registroOntem.intervalo_fim,
           temSaida: false
         });
+        return;
       }
+
+      // Não há registro aberto
+      setStatus({
+        temEntrada: false,
+        temIntervaloInicio: false,
+        temIntervaloFim: false,
+        temSaida: false
+      });
     } catch (error) {
       console.error('Erro ao carregar status:', error);
     }
