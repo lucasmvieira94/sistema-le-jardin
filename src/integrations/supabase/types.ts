@@ -2040,6 +2040,8 @@ export type Database = {
       calcular_horas_extras_noturnas: {
         Args: {
           p_entrada: string
+          p_escala_entrada?: string
+          p_escala_saida?: string
           p_intervalo_fim: string
           p_intervalo_inicio: string
           p_saida: string
