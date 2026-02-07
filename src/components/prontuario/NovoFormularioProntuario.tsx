@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle, Shield, Lock, Save } from "lucide-react";
 import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
+import AssistenteProntuarioIA from "./AssistenteProntuarioIA";
 
 interface FormularioData {
   // Identificação do Idoso
@@ -1144,6 +1145,12 @@ export default function NovoFormularioProntuario({
         </DialogContent>
       </Dialog>
 
+      {/* Assistente IA */}
+      <AssistenteProntuarioIA
+        residenteId={residenteId}
+        funcionarioId={funcionarioId}
+        residenteNome={residenteData?.nome_completo}
+      />
     </div>
   );
 }
