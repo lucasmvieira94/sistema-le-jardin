@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.assistente-prontuario]
 verify_jwt = false
+
+[functions.assistente-supervisora]
+verify_jwt = false

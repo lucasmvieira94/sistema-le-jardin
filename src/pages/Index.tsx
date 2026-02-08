@@ -6,6 +6,7 @@ import AlertasProntuariosAtraso from "@/components/dashboard/AlertasProntuariosA
 import AlertasMedicamentos from "@/components/dashboard/AlertasMedicamentos";
 import { AlertasFraldas } from "@/components/dashboard/AlertasFraldas";
 import AcoesRapidas from "@/components/dashboard/AcoesRapidas";
+import AssistenteSupervisoraIA from "@/components/dashboard/AssistenteSupervisoraIA";
 
 export default function Index() {
   return (
@@ -29,6 +30,7 @@ export default function Index() {
       </div>
       
       <AcoesRapidas />
+      <AssistenteSupervisoraIA />
     </div>
   );
 }
