@@ -12,8 +12,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Auth check - only allow service role key
+    const authHeader = req.headers.get('Authorization');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const token = authHeader?.replace('Bearer ', '');
+    if (token !== supabaseServiceKey) {
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
