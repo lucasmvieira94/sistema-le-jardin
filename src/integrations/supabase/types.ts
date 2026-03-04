@@ -2035,7 +2035,7 @@ export type Database = {
           p_intervalo_inicio: string
           p_saida: string
         }
-        Returns: unknown
+        Returns: string
       }
       calcular_horas_extras_noturnas: {
         Args: {
@@ -2046,7 +2046,7 @@ export type Database = {
           p_intervalo_inicio: string
           p_saida: string
         }
-        Returns: unknown
+        Returns: string
       }
       calcular_horas_noturnas: {
         Args: {
@@ -2055,7 +2055,7 @@ export type Database = {
           p_intervalo_inicio?: string
           p_saida: string
         }
-        Returns: unknown
+        Returns: string
       }
       calcular_horas_trabalhadas: {
         Args: {
@@ -2064,7 +2064,7 @@ export type Database = {
           p_intervalo_inicio?: string
           p_saida: string
         }
-        Returns: unknown
+        Returns: string
       }
       calcular_horas_trabalhadas_turno_noturno: {
         Args: {
@@ -2073,7 +2073,7 @@ export type Database = {
           p_intervalo_inicio?: string
           p_saida: string
         }
-        Returns: unknown
+        Returns: string
       }
       calcular_proxima_execucao: {
         Args: {
