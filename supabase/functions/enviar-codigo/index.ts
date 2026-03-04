@@ -65,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Enviar SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     
-    const authHeader = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    const twilioAuthHeader = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
     
     const formData = new URLSearchParams();
     formData.append("To", telefone);
@@ -75,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
     const resp = await fetch(twilioUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Basic ${authHeader}`,
+        "Authorization": `Basic ${twilioAuthHeader}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData.toString(),
