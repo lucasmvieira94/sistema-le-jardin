@@ -75,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
     const resp = await fetch(twilioUrl, {
       method: "POST",
       headers: {
-        "Authorization": `Basic ${authHeader}`,
+        "Authorization": `Basic ${twilioAuthHeader}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData.toString(),
