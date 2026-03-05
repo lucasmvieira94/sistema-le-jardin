@@ -10,6 +10,8 @@ import { TenantGuard } from "@/components/TenantGuard";
 import Index from "./pages/Index";
 import FuncionarioAccess from "./pages/FuncionarioAccess";
 import RegistroPonto from "./pages/RegistroPonto";
+import MinhaEscala from "./pages/MinhaEscala";
+import MeusPontos from "./pages/MeusPontos";
 import Escalas from "./pages/Escalas";
 import Relatorios from "./pages/Relatorios";
 import Faltas from "./pages/Faltas";
@@ -54,7 +56,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const location = useLocation();
   const isPublicRoute = (pathname: string) => {
-    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos', '/controle-fraldas-publico'];
+    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos', '/controle-fraldas-publico', '/minha-escala', '/meus-pontos'];
     return publicRoutes.includes(pathname);
   };
 
@@ -263,6 +265,8 @@ const AppContent = () => {
             <Route path="/prontuario" element={<Prontuario />} />
             <Route path="/temperatura-medicamentos" element={<ControleTemperaturaPublico />} />
             <Route path="/controle-fraldas-publico" element={<ControleFraldasPublico />} />
+            <Route path="/minha-escala" element={<MinhaEscala />} />
+            <Route path="/meus-pontos" element={<MeusPontos />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,6 +98,14 @@ export default function FuncionarioAccess() {
 
   const navigateToFraldas = () => {
     navigate(`/controle-fraldas-publico?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToMinhaEscala = () => {
+    navigate(`/minha-escala?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToMeusPontos = () => {
+    navigate(`/meus-pontos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
@@ -317,6 +325,56 @@ export default function FuncionarioAccess() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Minha Escala */}
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
+              onClick={navigateToMinhaEscala}
+            >
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <CalendarDays className="w-6 h-6 sm:w-8 sm:h-8 text-teal-700" />
+                </div>
+                <CardTitle className="text-teal-800 text-base sm:text-lg">Minha Escala</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                  Veja seus dias escalados no mês corrente
+                </p>
+                <Button 
+                  className="w-full bg-teal-700 hover:bg-teal-800 text-sm sm:text-base py-2 sm:py-3"
+                  onClick={navigateToMinhaEscala}
+                >
+                  Ver Escala
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Meus Pontos */}
+            {funcionarioRegistraPonto && (
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
+                onClick={navigateToMeusPontos}
+              >
+                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <ClipboardList className="w-6 h-6 sm:w-8 sm:h-8 text-blue-700" />
+                  </div>
+                  <CardTitle className="text-blue-800 text-base sm:text-lg">Meus Pontos</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center p-4 sm:p-6 pt-0">
+                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                    Consulte seus registros de ponto do mês anterior
+                  </p>
+                  <Button 
+                    className="w-full bg-blue-700 hover:bg-blue-800 text-sm sm:text-base py-2 sm:py-3"
+                    onClick={navigateToMeusPontos}
+                  >
+                    Ver Registros
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Botão de logout */}
