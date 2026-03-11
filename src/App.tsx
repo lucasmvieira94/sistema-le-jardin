@@ -57,7 +57,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const location = useLocation();
   const isPublicRoute = (pathname: string) => {
-    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos', '/controle-fraldas-publico', '/minha-escala', '/meus-pontos'];
+    const publicRoutes = ['/auth', '/', '/funcionario-access', '/registro-ponto', '/prontuario', '/temperatura-medicamentos', '/controle-fraldas-publico', '/minha-escala', '/meus-pontos', '/feedback-sistema'];
     return publicRoutes.includes(pathname);
   };
 
