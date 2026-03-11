@@ -268,6 +268,7 @@ const AppContent = () => {
             <Route path="/controle-fraldas-publico" element={<ControleFraldasPublico />} />
             <Route path="/minha-escala" element={<MinhaEscala />} />
             <Route path="/meus-pontos" element={<MeusPontos />} />
+            <Route path="/feedback-sistema" element={<FeedbackSistema />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
