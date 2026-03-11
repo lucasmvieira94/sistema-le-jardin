@@ -12,6 +12,7 @@ import FuncionarioAccess from "./pages/FuncionarioAccess";
 import RegistroPonto from "./pages/RegistroPonto";
 import MinhaEscala from "./pages/MinhaEscala";
 import MeusPontos from "./pages/MeusPontos";
+import FeedbackSistema from "./pages/FeedbackSistema";
 import Escalas from "./pages/Escalas";
 import Relatorios from "./pages/Relatorios";
 import Faltas from "./pages/Faltas";
