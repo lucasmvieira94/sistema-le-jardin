@@ -4,8 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { TenantProvider } from "@/contexts/TenantContext";
-import { TenantGuard } from "@/components/TenantGuard";
 
 import Index from "./pages/Index";
 import FuncionarioAccess from "./pages/FuncionarioAccess";
@@ -280,18 +278,14 @@ const AppContent = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TenantProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <PWAInstallPrompt />
-          <BrowserRouter>
-            <TenantGuard>
-              <AppContent />
-            </TenantGuard>
-          </BrowserRouter>
-        </TooltipProvider>
-      </TenantProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <PWAInstallPrompt />
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };
