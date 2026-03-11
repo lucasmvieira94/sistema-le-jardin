@@ -33,6 +33,7 @@ import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import ConfiguracoesAlertas from "./pages/ConfiguracoesAlertas";
 import RelatoriosIA from "./pages/RelatoriosIA";
+import AnaliseFeedback from "./pages/AnaliseFeedback";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import Auth from "./pages/Auth";
 import { AppSidebar } from "./components/AppSidebar";
