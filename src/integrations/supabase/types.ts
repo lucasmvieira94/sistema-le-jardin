@@ -1094,6 +1094,77 @@ export type Database = {
           },
         ]
       }
+      feedback_sistema: {
+        Row: {
+          created_at: string
+          criticas: string | null
+          dificuldade_ferramentas_digitais: string
+          elogios: string | null
+          facilidade_uso: string
+          funcionalidades_desejadas: string | null
+          funcionario_id: string
+          funcionario_nome: string
+          id: string
+          melhorias_sugeridas: string | null
+          observacoes_gerais: string | null
+          processos_manuais: string | null
+          satisfacao_controle_fraldas: string | null
+          satisfacao_controle_temperatura: string | null
+          satisfacao_escala: string | null
+          satisfacao_prontuario: string | null
+          satisfacao_registro_ponto: string | null
+          sugestoes: string | null
+        }
+        Insert: {
+          created_at?: string
+          criticas?: string | null
+          dificuldade_ferramentas_digitais: string
+          elogios?: string | null
+          facilidade_uso: string
+          funcionalidades_desejadas?: string | null
+          funcionario_id: string
+          funcionario_nome: string
+          id?: string
+          melhorias_sugeridas?: string | null
+          observacoes_gerais?: string | null
+          processos_manuais?: string | null
+          satisfacao_controle_fraldas?: string | null
+          satisfacao_controle_temperatura?: string | null
+          satisfacao_escala?: string | null
+          satisfacao_prontuario?: string | null
+          satisfacao_registro_ponto?: string | null
+          sugestoes?: string | null
+        }
+        Update: {
+          created_at?: string
+          criticas?: string | null
+          dificuldade_ferramentas_digitais?: string
+          elogios?: string | null
+          facilidade_uso?: string
+          funcionalidades_desejadas?: string | null
+          funcionario_id?: string
+          funcionario_nome?: string
+          id?: string
+          melhorias_sugeridas?: string | null
+          observacoes_gerais?: string | null
+          processos_manuais?: string | null
+          satisfacao_controle_fraldas?: string | null
+          satisfacao_controle_temperatura?: string | null
+          satisfacao_escala?: string | null
+          satisfacao_prontuario?: string | null
+          satisfacao_registro_ponto?: string | null
+          sugestoes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_sistema_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formulario_campos_config: {
         Row: {
           ativo: boolean

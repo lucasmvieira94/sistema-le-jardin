@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +106,10 @@ export default function FuncionarioAccess() {
 
   const navigateToMeusPontos = () => {
     navigate(`/meus-pontos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToFeedback = () => {
+    navigate(`/feedback-sistema?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
@@ -375,6 +379,30 @@ export default function FuncionarioAccess() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Feedback do Sistema */}
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
+              onClick={navigateToFeedback}
+            >
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <MessageSquareHeart className="w-6 h-6 sm:w-8 sm:h-8 text-amber-700" />
+                </div>
+                <CardTitle className="text-amber-800 text-base sm:text-lg">Feedback do Sistema</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                  Avalie e sugira melhorias para o SENEXCARE
+                </p>
+                <Button 
+                  className="w-full bg-amber-700 hover:bg-amber-800 text-sm sm:text-base py-2 sm:py-3"
+                  onClick={navigateToFeedback}
+                >
+                  Avaliar Sistema
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Botão de logout */}
