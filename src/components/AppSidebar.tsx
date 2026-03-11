@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Baby,
   Bell,
-  Brain
+  Brain,
+  BarChart3
 } from "lucide-react";
 import {
   Sidebar,
@@ -75,6 +76,7 @@ export function AppSidebar() {
     { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
     { path: "/relatorios-ia", icon: Brain, label: "Relatórios com IA", adminOnly: true },
     { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações", adminOnly: true },
+    { path: "/analise-feedback", icon: BarChart3, label: "Análise de Feedback", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 
