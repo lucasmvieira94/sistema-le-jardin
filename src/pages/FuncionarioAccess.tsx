@@ -108,6 +108,10 @@ export default function FuncionarioAccess() {
     navigate(`/meus-pontos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
+  const navigateToFeedback = () => {
+    navigate(`/feedback-sistema?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
   const navigateToAuth = () => {
     window.open('/auth', '_blank');
   };
