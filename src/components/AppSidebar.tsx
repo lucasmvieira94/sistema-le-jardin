@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Baby,
   Bell,
-  Brain
+  Brain,
+  BarChart3
 } from "lucide-react";
 import {
   Sidebar,
