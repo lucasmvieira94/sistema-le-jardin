@@ -248,6 +248,14 @@ const AppContent = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/analise-feedback"
+                    element={
+                      <ProtectedRoute>
+                        <AnaliseFeedback />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
