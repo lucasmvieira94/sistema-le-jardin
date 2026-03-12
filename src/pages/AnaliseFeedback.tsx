@@ -299,7 +299,7 @@ export default function AnaliseFeedback() {
         <DialogContent className="max-w-4xl max-h-[85vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
-              <FileText className="w-5 h-5 text-violet-600" />
+              <FileText className="w-5 h-5 text-primary" />
               Relatório Consolidado por IA
             </DialogTitle>
           </DialogHeader>
