@@ -368,18 +368,32 @@ export default function AnaliseFeedback() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={gerarRelatorioIA}
-          disabled={gerandoRelatorio || data.length === 0}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-        >
-          {gerandoRelatorio ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4 mr-2" />
-          )}
-          Gerar Relatório com IA
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={exportarDashboardPDF}
+            disabled={exportandoPDF || data.length === 0}
+            variant="outline"
+          >
+            {exportandoPDF ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            Exportar PDF
+          </Button>
+          <Button
+            onClick={gerarRelatorioIA}
+            disabled={gerandoRelatorio || data.length === 0}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+          >
+            {gerandoRelatorio ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            Gerar Relatório com IA
+          </Button>
+        </div>
       </div>
 
       {/* AI Report Dialog */}
