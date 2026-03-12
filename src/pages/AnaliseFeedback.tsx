@@ -421,8 +421,9 @@ export default function AnaliseFeedback() {
         </DialogContent>
       </Dialog>
 
+      <div ref={dashboardRef}>
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon={Users} label="Total de Respostas" value={total} color="bg-primary" />
         <StatCard icon={ThumbsUp} label="Acham fácil de usar" value={`${taxaPositiva}%`} color="bg-green-600" />
         <StatCard icon={AlertTriangle} label="Com dificuldade digital" value={comDificuldade} color="bg-amber-500" />
