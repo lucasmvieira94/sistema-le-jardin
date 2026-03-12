@@ -182,8 +182,93 @@ export default function AnaliseFeedback() {
   const [data, setData] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
+  const [exportandoPDF, setExportandoPDF] = useState(false);
   const [relatorioIA, setRelatorioIA] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const relatorioRef = useRef<HTMLDivElement>(null);
+
+  const exportarDashboardPDF = async () => {
+    if (!dashboardRef.current) return;
+    setExportandoPDF(true);
+    try {
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.text("Análise de Feedback - Dashboard", 10, 15);
+      pdf.setFontSize(9);
+      pdf.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 10, 22);
+
+      let yOffset = 28;
+      let remainingHeight = imgHeight;
+      let sourceY = 0;
+
+      while (remainingHeight > 0) {
+        const availableHeight = yOffset === 28 ? pageHeight - 28 - 10 : pageHeight - 20;
+        const sliceHeight = Math.min(remainingHeight, availableHeight);
+        const sliceCanvasHeight = (sliceHeight / imgHeight) * canvas.height;
+
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceCanvasHeight;
+        const ctx = sliceCanvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(canvas, 0, sourceY, canvas.width, sliceCanvasHeight, 0, 0, canvas.width, sliceCanvasHeight);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+          pdf.addImage(sliceData, "PNG", 10, yOffset, imgWidth, sliceHeight);
+        }
+
+        remainingHeight -= sliceHeight;
+        sourceY += sliceCanvasHeight;
+
+        if (remainingHeight > 0) {
+          pdf.addPage();
+          yOffset = 10;
+        }
+      }
+
+      // If AI report exists, add it
+      if (relatorioIA) {
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.text("Relatório Consolidado por IA", 10, 15);
+        pdf.setFontSize(9);
+        pdf.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 10, 22);
+        
+        pdf.setFontSize(10);
+        const lines = pdf.splitTextToSize(relatorioIA.replace(/[#*]/g, "").replace(/\n{3,}/g, "\n\n"), pageWidth - 20);
+        let y = 30;
+        for (const line of lines) {
+          if (y > pageHeight - 15) {
+            pdf.addPage();
+            y = 15;
+          }
+          pdf.text(line, 10, y);
+          y += 5;
+        }
+      }
+
+      pdf.save(`analise-feedback-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success("PDF exportado com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao exportar PDF:", e);
+      toast.error("Erro ao exportar PDF");
+    } finally {
+      setExportandoPDF(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
