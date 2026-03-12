@@ -244,15 +244,54 @@ export default function AnaliseFeedback() {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <MessageSquareHeart className="w-8 h-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">Análise de Feedback</h1>
-          <p className="text-sm text-muted-foreground">
-            Dashboard estatístico das respostas coletadas
-          </p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <MessageSquareHeart className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Análise de Feedback</h1>
+            <p className="text-sm text-muted-foreground">
+              Dashboard estatístico das respostas coletadas
+            </p>
+          </div>
         </div>
+        <Button
+          onClick={gerarRelatorioIA}
+          disabled={gerandoRelatorio || data.length === 0}
+          className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg"
+        >
+          {gerandoRelatorio ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
+          Gerar Relatório com IA
+        </Button>
       </div>
+
+      {/* AI Report Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <FileText className="w-5 h-5 text-violet-600" />
+              Relatório Consolidado por IA
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            {gerandoRelatorio ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <Loader2 className="w-10 h-10 animate-spin text-violet-600" />
+                <p className="text-muted-foreground">Analisando {data.length} respostas com IA...</p>
+                <p className="text-xs text-muted-foreground">Isso pode levar alguns segundos</p>
+              </div>
+            ) : relatorioIA ? (
+              <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
+                <MarkdownRenderer content={relatorioIA} />
+              </div>
+            ) : null}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
