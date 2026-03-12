@@ -3,6 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   BarChart,
   Bar,
@@ -31,10 +38,40 @@ import {
   ThumbsUp,
   ThumbsDown,
   AlertTriangle,
+  Sparkles,
+  Loader2,
+  FileText,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+
+// Simple markdown renderer
+function MarkdownRenderer({ content }: { content: string }) {
+  const lines = content.split("\n");
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        if (line.startsWith("# ")) return <h1 key={i} className="text-xl font-bold mt-4">{line.slice(2)}</h1>;
+        if (line.startsWith("## ")) return <h2 key={i} className="text-lg font-bold mt-4 text-primary">{line.slice(3)}</h2>;
+        if (line.startsWith("### ")) return <h3 key={i} className="text-base font-semibold mt-3">{line.slice(4)}</h3>;
+        if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-bold mt-2">{line.slice(2, -2)}</p>;
+        if (line.startsWith("- ") || line.startsWith("* ")) return <li key={i} className="ml-4 text-sm list-disc">{formatBold(line.slice(2))}</li>;
+        if (line.match(/^\d+\.\s/)) return <li key={i} className="ml-4 text-sm list-decimal">{formatBold(line.replace(/^\d+\.\s/, ""))}</li>;
+        if (line.startsWith("| ")) return <p key={i} className="text-sm font-mono bg-muted/50 px-2 py-1 rounded">{line}</p>;
+        if (line.startsWith("---")) return <hr key={i} className="my-3" />;
+        if (line.trim() === "") return <br key={i} />;
+        return <p key={i} className="text-sm">{formatBold(line)}</p>;
+      })}
+    </div>
+  );
+}
+
+function formatBold(text: string) {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part);
+}
 
 // -- Label maps for display --
 const facilidadeLabels: Record<string, string> = {
@@ -141,6 +178,9 @@ function TextResponsesList({ data, field, title }: { data: FeedbackRow[]; field:
 export default function AnaliseFeedback() {
   const [data, setData] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
+  const [relatorioIA, setRelatorioIA] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -152,6 +192,25 @@ export default function AnaliseFeedback() {
       setLoading(false);
     })();
   }, []);
+
+  const gerarRelatorioIA = async () => {
+    setGerandoRelatorio(true);
+    setDialogOpen(true);
+    setRelatorioIA(null);
+    try {
+      const { data: result, error } = await supabase.functions.invoke("analisar-feedback");
+      if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      setRelatorioIA(result.relatorio);
+      toast.success("Relatório gerado com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao gerar relatório:", e);
+      toast.error(e.message || "Erro ao gerar relatório de IA");
+      setDialogOpen(false);
+    } finally {
+      setGerandoRelatorio(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -211,15 +270,54 @@ export default function AnaliseFeedback() {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <MessageSquareHeart className="w-8 h-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">Análise de Feedback</h1>
-          <p className="text-sm text-muted-foreground">
-            Dashboard estatístico das respostas coletadas
-          </p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <MessageSquareHeart className="w-8 h-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Análise de Feedback</h1>
+            <p className="text-sm text-muted-foreground">
+              Dashboard estatístico das respostas coletadas
+            </p>
+          </div>
         </div>
+        <Button
+          onClick={gerarRelatorioIA}
+          disabled={gerandoRelatorio || data.length === 0}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+        >
+          {gerandoRelatorio ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
+          Gerar Relatório com IA
+        </Button>
       </div>
+
+      {/* AI Report Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <FileText className="w-5 h-5 text-primary" />
+              Relatório Consolidado por IA
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            {gerandoRelatorio ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="text-muted-foreground">Analisando {data.length} respostas com IA...</p>
+                <p className="text-xs text-muted-foreground">Isso pode levar alguns segundos</p>
+              </div>
+            ) : relatorioIA ? (
+              <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
+                <MarkdownRenderer content={relatorioIA} />
+              </div>
+            ) : null}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

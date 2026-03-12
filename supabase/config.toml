@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.assistente-supervisora]
 verify_jwt = false
+
+[functions.analisar-feedback]
+verify_jwt = false
