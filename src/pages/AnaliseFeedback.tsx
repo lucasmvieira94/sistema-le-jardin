@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,7 @@ import {
   Sparkles,
   Loader2,
   FileText,
+  Download,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -179,8 +182,93 @@ export default function AnaliseFeedback() {
   const [data, setData] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
+  const [exportandoPDF, setExportandoPDF] = useState(false);
   const [relatorioIA, setRelatorioIA] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const relatorioRef = useRef<HTMLDivElement>(null);
+
+  const exportarDashboardPDF = async () => {
+    if (!dashboardRef.current) return;
+    setExportandoPDF(true);
+    try {
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.text("Análise de Feedback - Dashboard", 10, 15);
+      pdf.setFontSize(9);
+      pdf.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 10, 22);
+
+      let yOffset = 28;
+      let remainingHeight = imgHeight;
+      let sourceY = 0;
+
+      while (remainingHeight > 0) {
+        const availableHeight = yOffset === 28 ? pageHeight - 28 - 10 : pageHeight - 20;
+        const sliceHeight = Math.min(remainingHeight, availableHeight);
+        const sliceCanvasHeight = (sliceHeight / imgHeight) * canvas.height;
+
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceCanvasHeight;
+        const ctx = sliceCanvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(canvas, 0, sourceY, canvas.width, sliceCanvasHeight, 0, 0, canvas.width, sliceCanvasHeight);
+          const sliceData = sliceCanvas.toDataURL("image/png");
+          pdf.addImage(sliceData, "PNG", 10, yOffset, imgWidth, sliceHeight);
+        }
+
+        remainingHeight -= sliceHeight;
+        sourceY += sliceCanvasHeight;
+
+        if (remainingHeight > 0) {
+          pdf.addPage();
+          yOffset = 10;
+        }
+      }
+
+      // If AI report exists, add it
+      if (relatorioIA) {
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.text("Relatório Consolidado por IA", 10, 15);
+        pdf.setFontSize(9);
+        pdf.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 10, 22);
+        
+        pdf.setFontSize(10);
+        const lines = pdf.splitTextToSize(relatorioIA.replace(/[#*]/g, "").replace(/\n{3,}/g, "\n\n"), pageWidth - 20);
+        let y = 30;
+        for (const line of lines) {
+          if (y > pageHeight - 15) {
+            pdf.addPage();
+            y = 15;
+          }
+          pdf.text(line, 10, y);
+          y += 5;
+        }
+      }
+
+      pdf.save(`analise-feedback-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success("PDF exportado com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao exportar PDF:", e);
+      toast.error("Erro ao exportar PDF");
+    } finally {
+      setExportandoPDF(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -280,18 +368,32 @@ export default function AnaliseFeedback() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={gerarRelatorioIA}
-          disabled={gerandoRelatorio || data.length === 0}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-        >
-          {gerandoRelatorio ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4 mr-2" />
-          )}
-          Gerar Relatório com IA
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={exportarDashboardPDF}
+            disabled={exportandoPDF || data.length === 0}
+            variant="outline"
+          >
+            {exportandoPDF ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            Exportar PDF
+          </Button>
+          <Button
+            onClick={gerarRelatorioIA}
+            disabled={gerandoRelatorio || data.length === 0}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+          >
+            {gerandoRelatorio ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            Gerar Relatório com IA
+          </Button>
+        </div>
       </div>
 
       {/* AI Report Dialog */}
@@ -319,8 +421,9 @@ export default function AnaliseFeedback() {
         </DialogContent>
       </Dialog>
 
+      <div ref={dashboardRef}>
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard icon={Users} label="Total de Respostas" value={total} color="bg-primary" />
         <StatCard icon={ThumbsUp} label="Acham fácil de usar" value={`${taxaPositiva}%`} color="bg-green-600" />
         <StatCard icon={AlertTriangle} label="Com dificuldade digital" value={comDificuldade} color="bg-amber-500" />
@@ -451,6 +554,8 @@ export default function AnaliseFeedback() {
           </Table>
         </CardContent>
       </Card>
+
+      </div>{/* end dashboardRef */}
 
       {/* Text responses tabs */}
       <Card>
