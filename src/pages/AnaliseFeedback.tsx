@@ -555,6 +555,8 @@ export default function AnaliseFeedback() {
         </CardContent>
       </Card>
 
+      </div>{/* end dashboardRef */}
+
       {/* Text responses tabs */}
       <Card>
         <CardHeader>
