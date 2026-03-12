@@ -306,7 +306,7 @@ export default function AnaliseFeedback() {
           <ScrollArea className="max-h-[70vh] pr-4">
             {gerandoRelatorio ? (
               <div className="flex flex-col items-center justify-center py-16 gap-4">
-                <Loader2 className="w-10 h-10 animate-spin text-violet-600" />
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
                 <p className="text-muted-foreground">Analisando {data.length} respostas com IA...</p>
                 <p className="text-xs text-muted-foreground">Isso pode levar alguns segundos</p>
               </div>
