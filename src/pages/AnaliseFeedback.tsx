@@ -152,6 +152,9 @@ function TextResponsesList({ data, field, title }: { data: FeedbackRow[]; field:
 export default function AnaliseFeedback() {
   const [data, setData] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
+  const [relatorioIA, setRelatorioIA] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -163,6 +166,25 @@ export default function AnaliseFeedback() {
       setLoading(false);
     })();
   }, []);
+
+  const gerarRelatorioIA = async () => {
+    setGerandoRelatorio(true);
+    setDialogOpen(true);
+    setRelatorioIA(null);
+    try {
+      const { data: result, error } = await supabase.functions.invoke("analisar-feedback");
+      if (error) throw error;
+      if (result?.error) throw new Error(result.error);
+      setRelatorioIA(result.relatorio);
+      toast.success("Relatório gerado com sucesso!");
+    } catch (e: any) {
+      console.error("Erro ao gerar relatório:", e);
+      toast.error(e.message || "Erro ao gerar relatório de IA");
+      setDialogOpen(false);
+    } finally {
+      setGerandoRelatorio(false);
+    }
+  };
 
   if (loading) {
     return (
