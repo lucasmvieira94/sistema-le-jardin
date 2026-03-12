@@ -47,6 +47,32 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
+// Simple markdown renderer
+function MarkdownRenderer({ content }: { content: string }) {
+  const lines = content.split("\n");
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        if (line.startsWith("# ")) return <h1 key={i} className="text-xl font-bold mt-4">{line.slice(2)}</h1>;
+        if (line.startsWith("## ")) return <h2 key={i} className="text-lg font-bold mt-4 text-primary">{line.slice(3)}</h2>;
+        if (line.startsWith("### ")) return <h3 key={i} className="text-base font-semibold mt-3">{line.slice(4)}</h3>;
+        if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-bold mt-2">{line.slice(2, -2)}</p>;
+        if (line.startsWith("- ") || line.startsWith("* ")) return <li key={i} className="ml-4 text-sm list-disc">{formatBold(line.slice(2))}</li>;
+        if (line.match(/^\d+\.\s/)) return <li key={i} className="ml-4 text-sm list-decimal">{formatBold(line.replace(/^\d+\.\s/, ""))}</li>;
+        if (line.startsWith("| ")) return <p key={i} className="text-sm font-mono bg-muted/50 px-2 py-1 rounded">{line}</p>;
+        if (line.startsWith("---")) return <hr key={i} className="my-3" />;
+        if (line.trim() === "") return <br key={i} />;
+        return <p key={i} className="text-sm">{formatBold(line)}</p>;
+      })}
+    </div>
+  );
+}
+
+function formatBold(text: string) {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part);
+}
+
 // -- Label maps for display --
 const facilidadeLabels: Record<string, string> = {
   concordo_totalmente: "Concordo totalmente",
