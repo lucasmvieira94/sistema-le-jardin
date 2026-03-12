@@ -283,7 +283,7 @@ export default function AnaliseFeedback() {
         <Button
           onClick={gerarRelatorioIA}
           disabled={gerandoRelatorio || data.length === 0}
-          className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white shadow-lg"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
         >
           {gerandoRelatorio ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
