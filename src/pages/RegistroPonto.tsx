@@ -7,6 +7,7 @@ import BotoesRegistroPonto from "@/components/BotoesRegistroPonto";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { formatInTimeZone } from "date-fns-tz";
+import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
 
 interface RegistroHoje {
   horario: string;
