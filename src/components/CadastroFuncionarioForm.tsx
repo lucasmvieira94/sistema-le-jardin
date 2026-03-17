@@ -41,6 +41,7 @@ type FormData = {
   funcao: string;
   escala_id: string;
   registra_ponto: boolean;
+  acesso_supervisor: boolean;
 };
 
 interface Props {
