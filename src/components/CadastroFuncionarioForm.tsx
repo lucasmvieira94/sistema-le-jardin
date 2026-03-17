@@ -67,8 +67,10 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       funcao: funcionarioData.funcao || '',
       escala_id: funcionarioData.escala_id?.toString() || '',
       registra_ponto: funcionarioData.registra_ponto ?? true,
+      acesso_supervisor: funcionarioData.acesso_supervisor ?? false,
     } : {
       registra_ponto: true,
+      acesso_supervisor: false,
     }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
