@@ -417,7 +417,7 @@ export default function FuncionarioAccess() {
                   </Button>
                 </CardContent>
               </Card>
-            )
+            )}
 
             {/* Meus Prontuários */}
             <Card 
