@@ -32,6 +32,7 @@ export default function MeusProntuarios() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  useFuncionarioSession();
 
   const funcionarioId = searchParams.get("funcionario_id");
   const funcionarioNome = searchParams.get("funcionario_nome") || "";
