@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, Search, ClipboardList, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
+import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
 import CicloDetalhado from "@/components/prontuario/CicloDetalhado";
 
 interface MeuRegistro {
