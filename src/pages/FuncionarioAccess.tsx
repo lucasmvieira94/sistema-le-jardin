@@ -45,13 +45,28 @@ function clearSession() {
 
 export default function FuncionarioAccess() {
   const navigate = useNavigate();
-  const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
-  const [funcionarioNome, setFuncionarioNome] = useState<string>('');
-  const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(true);
-  const [funcionarioAcessoSupervisor, setFuncionarioAcessoSupervisor] = useState<boolean>(false);
+  const [funcionarioId, setFuncionarioId] = useState<string | null>(() => loadSession()?.id ?? null);
+  const [funcionarioNome, setFuncionarioNome] = useState<string>(() => loadSession()?.nome ?? '');
+  const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(() => loadSession()?.registraPonto ?? true);
+  const [funcionarioAcessoSupervisor, setFuncionarioAcessoSupervisor] = useState<boolean>(() => loadSession()?.acessoSupervisor ?? false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
   const [companyLogo, setCompanyLogo] = useState<string>('');
+
+  // Auto-expire session every minute
+  useEffect(() => {
+    const checkExpiry = setInterval(() => {
+      const session = loadSession();
+      if (!session && funcionarioId) {
+        // Session expired
+        setFuncionarioId(null);
+        setFuncionarioNome('');
+        setFuncionarioRegistraPonto(true);
+        setFuncionarioAcessoSupervisor(false);
+      }
+    }, 60 * 1000); // check every minute
+    return () => clearInterval(checkExpiry);
+  }, [funcionarioId]);
 
   // Update current time every second
   useEffect(() => {
