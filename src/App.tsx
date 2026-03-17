@@ -19,6 +19,8 @@ import ControleFraldasPublico from "./pages/ControleFraldasPublico";
 import MinhaEscala from "./pages/MinhaEscala";
 import MeusPontos from "./pages/MeusPontos";
 import FeedbackSistema from "./pages/FeedbackSistema";
+import SupervisorProntuarios from "./pages/SupervisorProntuarios";
+import MeusProntuarios from "./pages/MeusProntuarios";
 import NotFound from "./pages/NotFound";
 
 // Páginas protegidas (admin)
@@ -66,6 +68,8 @@ const App = () => {
               <Route path="/minha-escala" element={<MinhaEscala />} />
               <Route path="/meus-pontos" element={<MeusPontos />} />
               <Route path="/feedback-sistema" element={<FeedbackSistema />} />
+              <Route path="/supervisor-prontuarios" element={<SupervisorProntuarios />} />
+              <Route path="/meus-prontuarios" element={<MeusProntuarios />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
