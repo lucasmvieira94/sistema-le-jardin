@@ -68,6 +68,8 @@ const App = () => {
               <Route path="/minha-escala" element={<MinhaEscala />} />
               <Route path="/meus-pontos" element={<MeusPontos />} />
               <Route path="/feedback-sistema" element={<FeedbackSistema />} />
+              <Route path="/supervisor-prontuarios" element={<SupervisorProntuarios />} />
+              <Route path="/meus-prontuarios" element={<MeusProntuarios />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
