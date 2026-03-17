@@ -1,0 +1,1 @@
+ALTER TABLE public.funcionarios ADD COLUMN acesso_supervisor boolean NOT NULL DEFAULT false;
