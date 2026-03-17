@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
 import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import ResidentesList from "@/components/prontuario/ResidentesList";
 export default function Prontuario() {
   const location = useLocation();
   const navigate = useNavigate();
+  useFuncionarioSession();
   const { toast } = useToast();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");

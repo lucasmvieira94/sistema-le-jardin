@@ -7,6 +7,7 @@ import BotoesRegistroPonto from "@/components/BotoesRegistroPonto";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { formatInTimeZone } from "date-fns-tz";
+import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
 
 interface RegistroHoje {
   horario: string;
@@ -16,6 +17,7 @@ interface RegistroHoje {
 export default function RegistroPonto() {
   const location = useLocation();
   const navigate = useNavigate();
+  useFuncionarioSession();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [registrosHoje, setRegistrosHoje] = useState<RegistroHoje[]>([]);

@@ -8,15 +8,65 @@ import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import careLogo from "@/assets/logo-senex-care-new.png";
 
+const SESSION_KEY = 'funcionario_session';
+const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas em ms
+
+interface FuncionarioSession {
+  id: string;
+  nome: string;
+  registraPonto: boolean;
+  acessoSupervisor: boolean;
+  timestamp: number;
+}
+
+function saveSession(session: FuncionarioSession) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+function loadSession(): FuncionarioSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const session: FuncionarioSession = JSON.parse(raw);
+    if (Date.now() - session.timestamp > SESSION_DURATION) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session;
+  } catch {
+    sessionStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+}
+
+function clearSession() {
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
 export default function FuncionarioAccess() {
   const navigate = useNavigate();
-  const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
-  const [funcionarioNome, setFuncionarioNome] = useState<string>('');
-  const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(true);
-  const [funcionarioAcessoSupervisor, setFuncionarioAcessoSupervisor] = useState<boolean>(false);
+  const [funcionarioId, setFuncionarioId] = useState<string | null>(() => loadSession()?.id ?? null);
+  const [funcionarioNome, setFuncionarioNome] = useState<string>(() => loadSession()?.nome ?? '');
+  const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(() => loadSession()?.registraPonto ?? true);
+  const [funcionarioAcessoSupervisor, setFuncionarioAcessoSupervisor] = useState<boolean>(() => loadSession()?.acessoSupervisor ?? false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
   const [companyLogo, setCompanyLogo] = useState<string>('');
+
+  // Auto-expire session every minute
+  useEffect(() => {
+    const checkExpiry = setInterval(() => {
+      const session = loadSession();
+      if (!session && funcionarioId) {
+        // Session expired
+        setFuncionarioId(null);
+        setFuncionarioNome('');
+        setFuncionarioRegistraPonto(true);
+        setFuncionarioAcessoSupervisor(false);
+      }
+    }, 60 * 1000); // check every minute
+    return () => clearInterval(checkExpiry);
+  }, [funcionarioId]);
 
   // Update current time every second
   useEffect(() => {
@@ -59,7 +109,9 @@ export default function FuncionarioAccess() {
     setFuncionarioId(id);
     setFuncionarioNome(nome);
     
-    // Buscar se o funcionário registra ponto
+    let registraPonto = true;
+    let acessoSupervisor = false;
+
     try {
       const { data, error } = await supabase
         .from('funcionarios')
@@ -69,20 +121,29 @@ export default function FuncionarioAccess() {
       
       if (error) {
         console.error('Erro ao buscar dados do funcionário:', error);
-        setFuncionarioRegistraPonto(true);
-        setFuncionarioAcessoSupervisor(false);
       } else {
-        setFuncionarioRegistraPonto(data.registra_ponto);
-        setFuncionarioAcessoSupervisor((data as any).acesso_supervisor ?? false);
+        registraPonto = data.registra_ponto;
+        acessoSupervisor = (data as any).acesso_supervisor ?? false;
       }
     } catch (error) {
       console.error('Erro ao buscar funcionário:', error);
-      setFuncionarioRegistraPonto(true);
-      setFuncionarioAcessoSupervisor(false);
     }
+
+    setFuncionarioRegistraPonto(registraPonto);
+    setFuncionarioAcessoSupervisor(acessoSupervisor);
+
+    // Salvar sessão com timestamp
+    saveSession({
+      id,
+      nome,
+      registraPonto,
+      acessoSupervisor,
+      timestamp: Date.now(),
+    });
   };
 
   const handleLogout = () => {
+    clearSession();
     setFuncionarioId(null);
     setFuncionarioNome('');
     setFuncionarioRegistraPonto(true);

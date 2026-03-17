@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, Search, FileText, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
+import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
 import CicloDetalhado from "@/components/prontuario/CicloDetalhado";
 
 interface CicloResumo {
@@ -34,6 +35,7 @@ export default function SupervisorProntuarios() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  useFuncionarioSession();
 
   const funcionarioId = searchParams.get("funcionario_id");
   const funcionarioNome = searchParams.get("funcionario_nome") || "";
