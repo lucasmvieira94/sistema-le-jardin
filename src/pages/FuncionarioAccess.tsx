@@ -13,6 +13,7 @@ export default function FuncionarioAccess() {
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(true);
+  const [funcionarioAcessoSupervisor, setFuncionarioAcessoSupervisor] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
   const [companyLogo, setCompanyLogo] = useState<string>('');
