@@ -302,7 +302,7 @@ export default function MeusProntuarios() {
               <DialogTitle>Detalhes do Prontuário</DialogTitle>
             </DialogHeader>
             {selectedCicloId && (
-              <ProntuarioDetalhado cicloId={selectedCicloId} />
+              <CicloDetalhado cicloId={selectedCicloId} />
             )}
           </DialogContent>
         </Dialog>

@@ -332,7 +332,7 @@ export default function SupervisorProntuarios() {
               <DialogTitle>Detalhes do Prontuário</DialogTitle>
             </DialogHeader>
             {selectedCicloId && (
-              <ProntuarioDetalhado cicloId={selectedCicloId} />
+              <CicloDetalhado cicloId={selectedCicloId} />
             )}
           </DialogContent>
         </Dialog>
