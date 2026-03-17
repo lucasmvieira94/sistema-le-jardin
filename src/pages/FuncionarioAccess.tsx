@@ -112,6 +112,14 @@ export default function FuncionarioAccess() {
     navigate(`/feedback-sistema?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
+  const navigateToSupervisor = () => {
+    navigate(`/supervisor-prontuarios?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToMeusProntuarios = () => {
+    navigate(`/meus-prontuarios?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
   const navigateToAuth = () => {
     window.open('/auth', '_blank');
   };
