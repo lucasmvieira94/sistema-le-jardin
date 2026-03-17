@@ -19,6 +19,8 @@ import ControleFraldasPublico from "./pages/ControleFraldasPublico";
 import MinhaEscala from "./pages/MinhaEscala";
 import MeusPontos from "./pages/MeusPontos";
 import FeedbackSistema from "./pages/FeedbackSistema";
+import SupervisorProntuarios from "./pages/SupervisorProntuarios";
+import MeusProntuarios from "./pages/MeusProntuarios";
 import NotFound from "./pages/NotFound";
 
 // Páginas protegidas (admin)
