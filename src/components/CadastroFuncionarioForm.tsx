@@ -364,6 +364,28 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         </div>
         <FuncaoInput control={form.control} />
         <RegistraPontoSwitch control={form.control} />
+        <FormField
+          control={form.control}
+          name="acesso_supervisor"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Acesso ao Painel do Supervisor
+                </FormLabel>
+                <div className="text-sm text-muted-foreground">
+                  Permite visualizar todos os prontuários preenchidos e em aberto
+                </div>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
           {form.watch("registra_ponto") && (
