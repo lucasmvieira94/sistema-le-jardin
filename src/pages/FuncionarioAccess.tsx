@@ -86,6 +86,7 @@ export default function FuncionarioAccess() {
     setFuncionarioId(null);
     setFuncionarioNome('');
     setFuncionarioRegistraPonto(true);
+    setFuncionarioAcessoSupervisor(false);
   };
 
   const navigateToRegistroPonto = () => {
