@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Send, Key } from "lucide-react";
@@ -41,6 +42,7 @@ type FormData = {
   funcao: string;
   escala_id: string;
   registra_ponto: boolean;
+  acesso_supervisor: boolean;
 };
 
 interface Props {
@@ -66,8 +68,10 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       funcao: funcionarioData.funcao || '',
       escala_id: funcionarioData.escala_id?.toString() || '',
       registra_ponto: funcionarioData.registra_ponto ?? true,
+      acesso_supervisor: funcionarioData.acesso_supervisor ?? false,
     } : {
       registra_ponto: true,
+      acesso_supervisor: false,
     }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,6 +240,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           registra_ponto: sanitizedValues.registra_ponto,
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
+          acesso_supervisor: sanitizedValues.acesso_supervisor,
         };
 
         const { error } = await supabase
@@ -267,6 +272,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           registra_ponto: sanitizedValues.registra_ponto,
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
+          acesso_supervisor: sanitizedValues.acesso_supervisor,
           codigo_4_digitos: codigo,
         };
 
@@ -359,6 +365,28 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         </div>
         <FuncaoInput control={form.control} />
         <RegistraPontoSwitch control={form.control} />
+        <FormField
+          control={form.control}
+          name="acesso_supervisor"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">
+                  Acesso ao Painel do Supervisor
+                </FormLabel>
+                <div className="text-sm text-muted-foreground">
+                  Permite visualizar todos os prontuários preenchidos e em aberto
+                </div>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
           {form.watch("registra_ponto") && (

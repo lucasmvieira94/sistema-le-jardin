@@ -1212,6 +1212,7 @@ export type Database = {
       }
       funcionarios: {
         Row: {
+          acesso_supervisor: boolean
           ativo: boolean
           codigo_4_digitos: string
           cpf: string
@@ -1229,6 +1230,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          acesso_supervisor?: boolean
           ativo?: boolean
           codigo_4_digitos: string
           cpf: string
@@ -1246,6 +1248,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          acesso_supervisor?: boolean
           ativo?: boolean
           codigo_4_digitos?: string
           cpf?: string

@@ -13,6 +13,7 @@ export default function FuncionarioAccess() {
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [funcionarioRegistraPonto, setFuncionarioRegistraPonto] = useState<boolean>(true);
+  const [funcionarioAcessoSupervisor, setFuncionarioAcessoSupervisor] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
   const [companyLogo, setCompanyLogo] = useState<string>('');
@@ -62,19 +63,22 @@ export default function FuncionarioAccess() {
     try {
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('registra_ponto')
+        .select('registra_ponto, acesso_supervisor')
         .eq('id', id)
         .single();
       
       if (error) {
         console.error('Erro ao buscar dados do funcionário:', error);
-        setFuncionarioRegistraPonto(true); // default
+        setFuncionarioRegistraPonto(true);
+        setFuncionarioAcessoSupervisor(false);
       } else {
         setFuncionarioRegistraPonto(data.registra_ponto);
+        setFuncionarioAcessoSupervisor((data as any).acesso_supervisor ?? false);
       }
     } catch (error) {
       console.error('Erro ao buscar funcionário:', error);
-      setFuncionarioRegistraPonto(true); // default
+      setFuncionarioRegistraPonto(true);
+      setFuncionarioAcessoSupervisor(false);
     }
   };
 
@@ -82,6 +86,7 @@ export default function FuncionarioAccess() {
     setFuncionarioId(null);
     setFuncionarioNome('');
     setFuncionarioRegistraPonto(true);
+    setFuncionarioAcessoSupervisor(false);
   };
 
   const navigateToRegistroPonto = () => {
@@ -388,29 +393,31 @@ export default function FuncionarioAccess() {
               </Card>
             )}
 
-            {/* Painel do Supervisor */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-indigo-400"
-              onClick={navigateToSupervisor}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-700" />
-                </div>
-                <CardTitle className="text-indigo-800 text-base sm:text-lg">Painel do Supervisor</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Visualize todos os prontuários preenchidos e em aberto
-                </p>
-                <Button 
-                  className="w-full bg-indigo-700 hover:bg-indigo-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToSupervisor}
-                >
-                  Acessar Painel
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Painel do Supervisor - só mostra se tem acesso */}
+            {funcionarioAcessoSupervisor && (
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-indigo-400"
+                onClick={navigateToSupervisor}
+              >
+                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-700" />
+                  </div>
+                  <CardTitle className="text-indigo-800 text-base sm:text-lg">Painel do Supervisor</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center p-4 sm:p-6 pt-0">
+                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                    Visualize todos os prontuários preenchidos e em aberto
+                  </p>
+                  <Button 
+                    className="w-full bg-indigo-700 hover:bg-indigo-800 text-sm sm:text-base py-2 sm:py-3"
+                    onClick={navigateToSupervisor}
+                  >
+                    Acessar Painel
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Meus Prontuários */}
             <Card 
