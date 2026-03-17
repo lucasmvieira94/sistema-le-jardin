@@ -14,6 +14,7 @@ import ResidentesList from "@/components/prontuario/ResidentesList";
 export default function Prontuario() {
   const location = useLocation();
   const navigate = useNavigate();
+  useFuncionarioSession();
   const { toast } = useToast();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
