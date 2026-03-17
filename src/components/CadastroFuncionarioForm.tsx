@@ -239,6 +239,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           registra_ponto: sanitizedValues.registra_ponto,
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
+          acesso_supervisor: sanitizedValues.acesso_supervisor,
         };
 
         const { error } = await supabase
