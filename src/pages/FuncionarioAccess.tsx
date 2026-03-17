@@ -109,7 +109,9 @@ export default function FuncionarioAccess() {
     setFuncionarioId(id);
     setFuncionarioNome(nome);
     
-    // Buscar se o funcionário registra ponto
+    let registraPonto = true;
+    let acessoSupervisor = false;
+
     try {
       const { data, error } = await supabase
         .from('funcionarios')
@@ -119,20 +121,29 @@ export default function FuncionarioAccess() {
       
       if (error) {
         console.error('Erro ao buscar dados do funcionário:', error);
-        setFuncionarioRegistraPonto(true);
-        setFuncionarioAcessoSupervisor(false);
       } else {
-        setFuncionarioRegistraPonto(data.registra_ponto);
-        setFuncionarioAcessoSupervisor((data as any).acesso_supervisor ?? false);
+        registraPonto = data.registra_ponto;
+        acessoSupervisor = (data as any).acesso_supervisor ?? false;
       }
     } catch (error) {
       console.error('Erro ao buscar funcionário:', error);
-      setFuncionarioRegistraPonto(true);
-      setFuncionarioAcessoSupervisor(false);
     }
+
+    setFuncionarioRegistraPonto(registraPonto);
+    setFuncionarioAcessoSupervisor(acessoSupervisor);
+
+    // Salvar sessão com timestamp
+    saveSession({
+      id,
+      nome,
+      registraPonto,
+      acessoSupervisor,
+      timestamp: Date.now(),
+    });
   };
 
   const handleLogout = () => {
+    clearSession();
     setFuncionarioId(null);
     setFuncionarioNome('');
     setFuncionarioRegistraPonto(true);
