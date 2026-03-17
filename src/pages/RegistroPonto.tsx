@@ -17,6 +17,7 @@ interface RegistroHoje {
 export default function RegistroPonto() {
   const location = useLocation();
   const navigate = useNavigate();
+  useFuncionarioSession();
   const [funcionarioId, setFuncionarioId] = useState<string | null>(null);
   const [funcionarioNome, setFuncionarioNome] = useState<string>('');
   const [registrosHoje, setRegistrosHoje] = useState<RegistroHoje[]>([]);
