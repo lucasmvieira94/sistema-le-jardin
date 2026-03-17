@@ -63,19 +63,22 @@ export default function FuncionarioAccess() {
     try {
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('registra_ponto')
+        .select('registra_ponto, acesso_supervisor')
         .eq('id', id)
         .single();
       
       if (error) {
         console.error('Erro ao buscar dados do funcionário:', error);
-        setFuncionarioRegistraPonto(true); // default
+        setFuncionarioRegistraPonto(true);
+        setFuncionarioAcessoSupervisor(false);
       } else {
         setFuncionarioRegistraPonto(data.registra_ponto);
+        setFuncionarioAcessoSupervisor((data as any).acesso_supervisor ?? false);
       }
     } catch (error) {
       console.error('Erro ao buscar funcionário:', error);
-      setFuncionarioRegistraPonto(true); // default
+      setFuncionarioRegistraPonto(true);
+      setFuncionarioAcessoSupervisor(false);
     }
   };
 
