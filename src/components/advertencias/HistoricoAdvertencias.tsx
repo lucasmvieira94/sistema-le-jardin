@@ -100,7 +100,7 @@ export default function HistoricoAdvertencias({ funcionarioId, funcionarioNome }
                     <Badge variant={cfg.variant}>{cfg.label}</Badge>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {format(new Date(reg.data_ocorrencia), "dd/MM/yyyy", { locale: ptBR })}
+                    {format(new Date(reg.data_ocorrencia + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                   </span>
                 </div>
 
@@ -110,8 +110,8 @@ export default function HistoricoAdvertencias({ funcionarioId, funcionarioNome }
                 {reg.tipo === "suspensao" && reg.dias_suspensao && (
                   <p className="text-sm">
                     <strong>Suspensão:</strong> {reg.dias_suspensao} dia(s)
-                    {reg.data_inicio_suspensao && ` — de ${format(new Date(reg.data_inicio_suspensao), "dd/MM/yyyy")}`}
-                    {reg.data_fim_suspensao && ` até ${format(new Date(reg.data_fim_suspensao), "dd/MM/yyyy")}`}
+                    {reg.data_inicio_suspensao && ` — de ${format(new Date(reg.data_inicio_suspensao + "T00:00:00"), "dd/MM/yyyy")}`}
+                    {reg.data_fim_suspensao && ` até ${format(new Date(reg.data_fim_suspensao + "T00:00:00"), "dd/MM/yyyy")}`}
                   </p>
                 )}
 

@@ -229,7 +229,7 @@ export default function AdvertenciasSuspensoes() {
                 return (
                   <tr key={reg.id} className="border-b last:border-b-0">
                     <td className="py-2 px-3 text-sm">
-                      {format(new Date(reg.data_ocorrencia), "dd/MM/yyyy", { locale: ptBR })}
+                      {format(new Date(reg.data_ocorrencia + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                     </td>
                     <td className="py-2 px-3">
                       <div>
