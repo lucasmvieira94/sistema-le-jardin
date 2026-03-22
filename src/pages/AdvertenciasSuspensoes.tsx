@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer } from "lucide-react";
+import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer, PenLine } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUserRole } from "@/hooks/useUserRole";
 import AdvertenciaForm from "@/components/advertencias/AdvertenciaForm";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
 import ImpressaoAdvertencia, { type AdvertenciaImpressao } from "@/components/advertencias/ImpressaoAdvertencia";
+import AssinaturaAdvertenciaForm from "@/components/advertencias/AssinaturaAdvertenciaForm";
 
 type AdvertenciaRow = {
   funcionario_id: string;
@@ -24,7 +25,9 @@ type AdvertenciaRow = {
   data_inicio_suspensao: string | null;
   data_fim_suspensao: string | null;
   testemunha_1: string | null;
+  cpf_testemunha_1: string | null;
   testemunha_2: string | null;
+  cpf_testemunha_2: string | null;
   funcionario_recusou_assinar: boolean;
   observacoes: string | null;
   hash_verificacao: string | null;
@@ -50,13 +53,14 @@ export default function AdvertenciasSuspensoes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [historicoFunc, setHistoricoFunc] = useState<{ id: string; nome: string } | null>(null);
   const [impressaoReg, setImpressaoReg] = useState<AdvertenciaRow | null>(null);
+  const [assinaturaReg, setAssinaturaReg] = useState<AdvertenciaRow | null>(null);
   const { isAdmin, loading: roleLoading } = useUserRole();
 
   async function fetchRegistros() {
     setLoading(true);
     const { data } = await supabase
       .from("advertencias_suspensoes")
-      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, data_inicio_suspensao, data_fim_suspensao, testemunha_1, testemunha_2, funcionario_recusou_assinar, observacoes, hash_verificacao, created_at, funcionarios(nome_completo, funcao)")
+      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, data_inicio_suspensao, data_fim_suspensao, testemunha_1, cpf_testemunha_1, testemunha_2, cpf_testemunha_2, funcionario_recusou_assinar, observacoes, hash_verificacao, created_at, funcionarios(nome_completo, funcao)")
       .order("data_ocorrencia", { ascending: false });
     setRegistros((data as AdvertenciaRow[] | null) || []);
     setLoading(false);
