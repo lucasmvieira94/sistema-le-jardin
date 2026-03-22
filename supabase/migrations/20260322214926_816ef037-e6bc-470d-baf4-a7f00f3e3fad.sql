@@ -1,0 +1,1 @@
+ALTER TABLE public.configuracoes_empresa ADD COLUMN cidade text NULL;
