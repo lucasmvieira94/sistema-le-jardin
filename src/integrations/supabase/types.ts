@@ -91,6 +91,74 @@ export type Database = {
           },
         ]
       }
+      advertencias_suspensoes: {
+        Row: {
+          created_at: string
+          data_fim_suspensao: string | null
+          data_inicio_suspensao: string | null
+          data_ocorrencia: string
+          data_registro: string
+          descricao: string
+          dias_suspensao: number | null
+          funcionario_id: string
+          funcionario_recusou_assinar: boolean
+          id: string
+          motivo: string
+          observacoes: string | null
+          registrado_por: string | null
+          testemunha_1: string | null
+          testemunha_2: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim_suspensao?: string | null
+          data_inicio_suspensao?: string | null
+          data_ocorrencia: string
+          data_registro?: string
+          descricao: string
+          dias_suspensao?: number | null
+          funcionario_id: string
+          funcionario_recusou_assinar?: boolean
+          id?: string
+          motivo: string
+          observacoes?: string | null
+          registrado_por?: string | null
+          testemunha_1?: string | null
+          testemunha_2?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim_suspensao?: string | null
+          data_inicio_suspensao?: string | null
+          data_ocorrencia?: string
+          data_registro?: string
+          descricao?: string
+          dias_suspensao?: number | null
+          funcionario_id?: string
+          funcionario_recusou_assinar?: boolean
+          id?: string
+          motivo?: string
+          observacoes?: string | null
+          registrado_por?: string | null
+          testemunha_1?: string | null
+          testemunha_2?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertencias_suspensoes_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       afastamentos: {
         Row: {
           created_at: string
