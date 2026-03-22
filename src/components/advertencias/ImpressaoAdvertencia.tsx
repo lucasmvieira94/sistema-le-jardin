@@ -21,7 +21,9 @@ export interface AdvertenciaImpressao {
   data_inicio_suspensao: string | null;
   data_fim_suspensao: string | null;
   testemunha_1: string | null;
+  cpf_testemunha_1: string | null;
   testemunha_2: string | null;
+  cpf_testemunha_2: string | null;
   funcionario_recusou_assinar: boolean;
   observacoes: string | null;
   created_at: string;
