@@ -132,7 +132,7 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
           {/* Cabeçalho */}
           <div className="header">
             {empresa?.logo_url && (
-              <img src={empresa.logo_url} alt="Logotipo" style={{ maxHeight: '80px', margin: '0 auto 10px', display: 'block' }} />
+              <img src={empresa.logo_url} alt="Logotipo" style={{ maxHeight: '50px', margin: '0 auto 6px', display: 'block' }} />
             )}
             <h1>{empresa?.nome_empresa || "EMPRESA"}</h1>
             {empresa?.cnpj && <p style={{ fontSize: '10pt', margin: '3px 0 0' }}>CNPJ: {empresa.cnpj}</p>}
