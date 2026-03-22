@@ -72,29 +72,29 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
         <title>${TIPO_LABELS[advertencia.tipo] || "DOCUMENTO DISCIPLINAR"}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4; color: #000; padding: 20px 50px; }
+          body { font-family: 'Times New Roman', Times, serif; font-size: 13.2pt; line-height: 1.4; color: #000; padding: 20px 50px; }
           .header { text-align: center; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 6px; }
-          .header h1 { font-size: 13pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
-          .header h2 { font-size: 10pt; font-weight: normal; color: #333; }
-          .tipo-doc { text-align: center; font-size: 12pt; font-weight: bold; margin: 8px 0; text-decoration: underline; letter-spacing: 1px; }
+          .header h1 { font-size: 15.6pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
+          .header h2 { font-size: 12pt; font-weight: normal; color: #333; }
+          .tipo-doc { text-align: center; font-size: 14.4pt; font-weight: bold; margin: 8px 0; text-decoration: underline; letter-spacing: 1px; }
           .info-box { border: 1px solid #333; padding: 8px 12px; margin: 8px 0; }
           .info-row { display: flex; margin-bottom: 3px; }
-          .info-label { font-weight: bold; min-width: 160px; }
+          .info-label { font-weight: bold; min-width: 180px; }
           .info-value { flex: 1; }
           .descricao { margin: 10px 0; text-align: justify; }
-          .descricao h3 { font-weight: bold; margin-bottom: 4px; font-size: 11pt; }
+          .descricao h3 { font-weight: bold; margin-bottom: 4px; font-size: 13.2pt; }
           .descricao p { text-indent: 2em; }
           .suspensao-box { border: 1px solid #333; padding: 8px; margin: 8px 0; background: #f9f9f9; }
-          .legal-text { margin: 12px 0; font-size: 9pt; text-align: justify; border-top: 1px solid #ccc; padding-top: 8px; }
+          .legal-text { margin: 12px 0; font-size: 10.8pt; text-align: justify; border-top: 1px solid #ccc; padding-top: 8px; }
           .legal-text p { margin-bottom: 4px; }
           .assinaturas { margin-top: 25px; }
           .assinatura-row { display: flex; justify-content: space-between; margin-bottom: 30px; }
           .assinatura-item { text-align: center; width: 45%; }
-          .assinatura-linha { border-top: 1px solid #000; padding-top: 3px; margin-top: 25px; font-size: 9pt; }
-          .recusa-box { border: 1px dashed #666; padding: 6px; margin: 8px 0; font-size: 9pt; }
-          .hash-box { margin-top: 12px; padding: 6px; border: 1px solid #ccc; font-size: 7pt; color: #666; text-align: center; }
+          .assinatura-linha { border-top: 1px solid #000; padding-top: 3px; margin-top: 25px; font-size: 10.8pt; }
+          .recusa-box { border: 1px dashed #666; padding: 6px; margin: 8px 0; font-size: 10.8pt; }
+          .hash-box { margin-top: 12px; padding: 6px; border: 1px solid #ccc; font-size: 8.4pt; color: #666; text-align: center; }
           .hash-box p { margin-bottom: 2px; }
-          .data-local { text-align: right; margin: 10px 0; font-size: 10pt; }
+          .data-local { text-align: right; margin: 10px 0; font-size: 12pt; }
           @media print { body { padding: 15px 40px; } }
         </style>
       </head>
