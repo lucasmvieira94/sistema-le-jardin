@@ -13,6 +13,7 @@ import AdvertenciaForm from "@/components/advertencias/AdvertenciaForm";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
 
 type AdvertenciaRow = {
+  funcionario_id: string;
   id: string;
   tipo: string;
   motivo: string;
@@ -47,7 +48,7 @@ export default function AdvertenciasSuspensoes() {
     setLoading(true);
     const { data } = await supabase
       .from("advertencias_suspensoes")
-      .select("id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, funcionario_recusou_assinar, created_at, funcionarios(nome_completo, funcao)")
+      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, funcionario_recusou_assinar, created_at, funcionarios(nome_completo, funcao)")
       .order("data_ocorrencia", { ascending: false });
     setRegistros((data as AdvertenciaRow[] | null) || []);
     setLoading(false);
@@ -206,7 +207,7 @@ export default function AdvertenciasSuspensoes() {
                         className="w-8 h-8"
                         title="Ver histórico do funcionário"
                         onClick={() => setHistoricoFunc({
-                          id: (reg as any).funcionario_id || reg.id,
+                          id: reg.funcionario_id,
                           nome: reg.funcionarios?.nome_completo || "",
                         })}
                       >
