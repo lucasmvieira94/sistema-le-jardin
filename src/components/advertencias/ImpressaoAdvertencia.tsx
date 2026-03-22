@@ -72,33 +72,30 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
         <title>${TIPO_LABELS[advertencia.tipo] || "DOCUMENTO DISCIPLINAR"}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          @page { size: A4; margin: 15mm 20mm; }
-          body { font-family: 'Times New Roman', Times, serif; font-size: 10pt; line-height: 1.4; color: #000; }
-          .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
-          .header img { max-height: 50px; margin-bottom: 5px; }
-          .header h1 { font-size: 13pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
-          .header h2 { font-size: 10pt; font-weight: normal; color: #333; }
-          .header p { margin: 1px 0; }
-          .tipo-doc { text-align: center; font-size: 12pt; font-weight: bold; margin: 10px 0; text-decoration: underline; letter-spacing: 1px; }
-          .info-box { border: 1px solid #333; padding: 8px 10px; margin: 8px 0; }
-          .info-row { display: flex; margin-bottom: 3px; }
-          .info-label { font-weight: bold; min-width: 160px; }
+          body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.6; color: #000; padding: 40px 60px; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+          .header h1 { font-size: 16pt; font-weight: bold; margin-bottom: 5px; letter-spacing: 2px; }
+          .header h2 { font-size: 12pt; font-weight: normal; color: #333; }
+          .tipo-doc { text-align: center; font-size: 14pt; font-weight: bold; margin: 20px 0; text-decoration: underline; letter-spacing: 1px; }
+          .info-box { border: 1px solid #333; padding: 15px; margin: 15px 0; }
+          .info-row { display: flex; margin-bottom: 8px; }
+          .info-label { font-weight: bold; min-width: 180px; }
           .info-value { flex: 1; }
-          .descricao { margin: 10px 0; text-align: justify; }
-          .descricao h3 { font-weight: bold; margin-bottom: 4px; font-size: 10pt; }
+          .descricao { margin: 20px 0; text-align: justify; }
+          .descricao h3 { font-weight: bold; margin-bottom: 8px; font-size: 12pt; }
           .descricao p { text-indent: 2em; }
-          .suspensao-box { border: 1px solid #333; padding: 6px 10px; margin: 8px 0; background: #f9f9f9; }
-          .legal-text { margin: 12px 0; font-size: 9pt; text-align: justify; border-top: 1px solid #ccc; padding-top: 8px; }
-          .legal-text p { margin-bottom: 4px; }
-          .assinaturas { margin-top: 25px; }
-          .assinatura-row { display: flex; justify-content: space-between; margin-bottom: 30px; }
+          .suspensao-box { border: 1px solid #333; padding: 12px; margin: 15px 0; background: #f9f9f9; }
+          .legal-text { margin: 25px 0; font-size: 10pt; text-align: justify; border-top: 1px solid #ccc; padding-top: 15px; }
+          .legal-text p { margin-bottom: 8px; }
+          .assinaturas { margin-top: 60px; }
+          .assinatura-row { display: flex; justify-content: space-between; margin-bottom: 50px; }
           .assinatura-item { text-align: center; width: 45%; }
-          .assinatura-linha { border-top: 1px solid #000; padding-top: 3px; margin-top: 25px; font-size: 9pt; }
-          .recusa-box { border: 1px dashed #666; padding: 6px; margin: 8px 0; font-size: 9pt; }
-          .hash-box { margin-top: 10px; padding: 6px; border: 1px solid #ccc; font-size: 7pt; color: #666; text-align: center; }
-          .hash-box p { margin-bottom: 1px; }
-          .data-local { text-align: right; margin: 12px 0; font-size: 10pt; }
-          @media print { body { padding: 0; } }
+          .assinatura-linha { border-top: 1px solid #000; padding-top: 5px; margin-top: 40px; font-size: 10pt; }
+          .recusa-box { border: 1px dashed #666; padding: 10px; margin: 15px 0; font-size: 10pt; }
+          .hash-box { margin-top: 30px; padding: 10px; border: 1px solid #ccc; font-size: 8pt; color: #666; text-align: center; }
+          .hash-box p { margin-bottom: 3px; }
+          .data-local { text-align: right; margin: 25px 0; }
+          @media print { body { padding: 20px 40px; } }
         </style>
       </head>
       <body>
