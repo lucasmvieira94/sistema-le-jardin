@@ -95,7 +95,7 @@ export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose
     setTimeout(() => printWindow.print(), 300);
   };
 
-  const dataOcorrencia = format(new Date(advertencia.data_ocorrencia), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const dataOcorrencia = format(new Date(advertencia.data_ocorrencia + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const dataRegistro = format(new Date(advertencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 

@@ -100,7 +100,7 @@ export default function HistoricoAdvertencias({ funcionarioId, funcionarioNome }
                     <Badge variant={cfg.variant}>{cfg.label}</Badge>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {format(new Date(reg.data_ocorrencia), "dd/MM/yyyy", { locale: ptBR })}
+                    {format(new Date(reg.data_ocorrencia + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                   </span>
                 </div>
 
