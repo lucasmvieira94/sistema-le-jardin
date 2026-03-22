@@ -93,6 +93,8 @@ export type Database = {
       }
       advertencias_suspensoes: {
         Row: {
+          cpf_testemunha_1: string | null
+          cpf_testemunha_2: string | null
           created_at: string
           data_fim_suspensao: string | null
           data_inicio_suspensao: string | null
@@ -113,6 +115,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cpf_testemunha_1?: string | null
+          cpf_testemunha_2?: string | null
           created_at?: string
           data_fim_suspensao?: string | null
           data_inicio_suspensao?: string | null
@@ -133,6 +137,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cpf_testemunha_1?: string | null
+          cpf_testemunha_2?: string | null
           created_at?: string
           data_fim_suspensao?: string | null
           data_inicio_suspensao?: string | null
