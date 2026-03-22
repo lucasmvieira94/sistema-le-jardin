@@ -209,6 +209,7 @@ export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose
                   <div className="assinatura-item">
                     <div className="assinatura-linha">
                       <p><strong>{advertencia.testemunha_1}</strong></p>
+                      {advertencia.cpf_testemunha_1 && <p>CPF: {advertencia.cpf_testemunha_1}</p>}
                       <p>Testemunha 1</p>
                     </div>
                   </div>
@@ -217,6 +218,7 @@ export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose
                   <div className="assinatura-item">
                     <div className="assinatura-linha">
                       <p><strong>{advertencia.testemunha_2}</strong></p>
+                      {advertencia.cpf_testemunha_2 && <p>CPF: {advertencia.cpf_testemunha_2}</p>}
                       <p>Testemunha 2</p>
                     </div>
                   </div>
