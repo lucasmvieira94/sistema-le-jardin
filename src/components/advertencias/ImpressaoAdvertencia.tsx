@@ -131,7 +131,11 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
         <div ref={printRef}>
           {/* Cabeçalho */}
           <div className="header">
-            <h1>{nomeEmpresa || "EMPRESA"}</h1>
+            {empresa?.logo_url && (
+              <img src={empresa.logo_url} alt="Logotipo" style={{ maxHeight: '80px', margin: '0 auto 10px', display: 'block' }} />
+            )}
+            <h1>{empresa?.nome_empresa || "EMPRESA"}</h1>
+            {empresa?.cnpj && <p style={{ fontSize: '10pt', margin: '3px 0 0' }}>CNPJ: {empresa.cnpj}</p>}
             <h2>Documento Disciplinar</h2>
           </div>
 
