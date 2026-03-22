@@ -1,7 +1,9 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { Printer, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Printer, X } from "lucide-react";
 
 const TIPO_LABELS: Record<string, string> = {
@@ -37,12 +39,24 @@ export interface AdvertenciaImpressao {
 
 interface ImpressaoAdvertenciaProps {
   advertencia: AdvertenciaImpressao;
-  nomeEmpresa?: string;
   onClose: () => void;
 }
 
-export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose }: ImpressaoAdvertenciaProps) {
+export default function ImpressaoAdvertencia({ advertencia, onClose }: ImpressaoAdvertenciaProps) {
   const printRef = useRef<HTMLDivElement>(null);
+  const [empresa, setEmpresa] = useState<{ nome_empresa: string; cnpj: string | null; logo_url: string | null } | null>(null);
+
+  useEffect(() => {
+    async function fetchEmpresa() {
+      const { data } = await supabase
+        .from("configuracoes_empresa")
+        .select("nome_empresa, cnpj, logo_url")
+        .limit(1)
+        .single();
+      if (data) setEmpresa(data);
+    }
+    fetchEmpresa();
+  }, []);
 
   const handlePrint = () => {
     const content = printRef.current;
