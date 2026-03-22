@@ -18,6 +18,7 @@ export default function Configuracoes() {
     nome_empresa: "",
     cnpj: "",
     endereco: "",
+    cidade: "",
     dominio_email: "",
     adicional_noturno: 20,
     adicional_hora_extra_50: 50,
@@ -50,6 +51,7 @@ export default function Configuracoes() {
           nome_empresa: data.nome_empresa || "",
           cnpj: data.cnpj || "",
           endereco: data.endereco || "",
+          cidade: (data as any).cidade || "",
           dominio_email: data.dominio_email || "",
           adicional_noturno: data.adicional_noturno || 20,
           adicional_hora_extra_50: data.adicional_hora_extra_50 || 50,
@@ -167,6 +169,18 @@ export default function Configuracoes() {
                 onChange={(e) => setConfig({...config, endereco: e.target.value})}
                 placeholder="Endereço completo"
               />
+            </div>
+            <div>
+              <Label htmlFor="cidade">Cidade / UF</Label>
+              <Input
+                id="cidade"
+                value={config.cidade}
+                onChange={(e) => setConfig({...config, cidade: e.target.value})}
+                placeholder="Ex: São Paulo - SP"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Utilizada nos documentos disciplinares (advertências, suspensões)
+              </p>
             </div>
             <div>
               <Label htmlFor="dominio_email">Domínio de Email</Label>

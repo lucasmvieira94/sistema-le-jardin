@@ -595,6 +595,7 @@ export type Database = {
           adicional_hora_extra_100: number | null
           adicional_hora_extra_50: number | null
           adicional_noturno: number | null
+          cidade: string | null
           cnpj: string | null
           created_at: string | null
           dominio_email: string | null
@@ -611,6 +612,7 @@ export type Database = {
           adicional_hora_extra_100?: number | null
           adicional_hora_extra_50?: number | null
           adicional_noturno?: number | null
+          cidade?: string | null
           cnpj?: string | null
           created_at?: string | null
           dominio_email?: string | null
@@ -627,6 +629,7 @@ export type Database = {
           adicional_hora_extra_100?: number | null
           adicional_hora_extra_50?: number | null
           adicional_noturno?: number | null
+          cidade?: string | null
           cnpj?: string | null
           created_at?: string | null
           dominio_email?: string | null

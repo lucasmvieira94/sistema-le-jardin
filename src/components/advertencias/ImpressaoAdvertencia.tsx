@@ -43,13 +43,13 @@ interface ImpressaoAdvertenciaProps {
 
 export default function ImpressaoAdvertencia({ advertencia, onClose }: ImpressaoAdvertenciaProps) {
   const printRef = useRef<HTMLDivElement>(null);
-  const [empresa, setEmpresa] = useState<{ nome_empresa: string; cnpj: string | null; logo_url: string | null } | null>(null);
+  const [empresa, setEmpresa] = useState<{ nome_empresa: string; cnpj: string | null; logo_url: string | null; cidade: string | null } | null>(null);
 
   useEffect(() => {
     async function fetchEmpresa() {
       const { data } = await supabase
         .from("configuracoes_empresa")
-        .select("nome_empresa, cnpj, logo_url")
+        .select("nome_empresa, cnpj, logo_url, cidade")
         .limit(1)
         .single();
       if (data) setEmpresa(data);
@@ -200,7 +200,7 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
 
           {/* Data e local */}
           <div className="data-local">
-            <p>_________________, {hoje}</p>
+            <p>{empresa?.cidade || "_________________"}, {hoje}</p>
           </div>
 
           {/* Assinaturas */}
