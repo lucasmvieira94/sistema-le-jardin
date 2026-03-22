@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
@@ -58,9 +57,6 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
   const [diasSuspensao, setDiasSuspensao] = useState<number>(1);
   const [dataInicioSuspensao, setDataInicioSuspensao] = useState("");
   const [dataFimSuspensao, setDataFimSuspensao] = useState("");
-  const [testemunha1, setTestemunha1] = useState("");
-  const [testemunha2, setTestemunha2] = useState("");
-  const [recusouAssinar, setRecusouAssinar] = useState(false);
   const [observacoes, setObservacoes] = useState("");
 
   useEffect(() => {
@@ -106,9 +102,6 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
       dias_suspensao: tipo === "suspensao" ? diasSuspensao : null,
       data_inicio_suspensao: tipo === "suspensao" ? dataInicioSuspensao : null,
       data_fim_suspensao: tipo === "suspensao" ? dataFimSuspensao : null,
-      testemunha_1: testemunha1 || null,
-      testemunha_2: testemunha2 || null,
-      funcionario_recusou_assinar: recusouAssinar,
       observacoes: observacoes || null,
       registrado_por: userData?.user?.id || null,
     });
@@ -206,23 +199,6 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
         </div>
       )}
 
-      {/* Testemunhas */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label>Testemunha 1</Label>
-          <Input value={testemunha1} onChange={e => setTestemunha1(e.target.value)} placeholder="Nome completo" />
-        </div>
-        <div className="space-y-1">
-          <Label>Testemunha 2</Label>
-          <Input value={testemunha2} onChange={e => setTestemunha2(e.target.value)} placeholder="Nome completo" />
-        </div>
-      </div>
-
-      {/* Recusa */}
-      <div className="flex items-center gap-3">
-        <Switch checked={recusouAssinar} onCheckedChange={setRecusouAssinar} />
-        <Label>Funcionário recusou-se a assinar</Label>
-      </div>
 
       {/* Observações */}
       <div className="space-y-1">
