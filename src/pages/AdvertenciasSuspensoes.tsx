@@ -186,6 +186,26 @@ export default function AdvertenciasSuspensoes() {
         </DialogContent>
       </Dialog>
 
+      {/* Assinatura/Testemunhas (modal) */}
+      <Dialog open={!!assinaturaReg} onOpenChange={() => setAssinaturaReg(null)}>
+        <DialogContent className="max-w-2xl">
+          {assinaturaReg && (
+            <AssinaturaAdvertenciaForm
+              advertenciaId={assinaturaReg.id}
+              currentData={{
+                testemunha_1: assinaturaReg.testemunha_1,
+                cpf_testemunha_1: assinaturaReg.cpf_testemunha_1,
+                testemunha_2: assinaturaReg.testemunha_2,
+                cpf_testemunha_2: assinaturaReg.cpf_testemunha_2,
+                funcionario_recusou_assinar: assinaturaReg.funcionario_recusou_assinar,
+              }}
+              onSuccess={() => { setAssinaturaReg(null); fetchRegistros(); }}
+              onCancel={() => setAssinaturaReg(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Lista */}
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -226,6 +246,15 @@ export default function AdvertenciasSuspensoes() {
                     <td className="py-2 px-3 text-sm max-w-xs truncate">{reg.motivo}</td>
                     <td className="py-2 px-3 text-center">
                       <div className="flex items-center justify-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8"
+                          title="Testemunhas e assinatura"
+                          onClick={() => setAssinaturaReg(reg)}
+                        >
+                          <PenLine className="w-4 h-4" />
+                        </Button>
                         <Button
                           size="icon"
                           variant="outline"
