@@ -170,6 +170,18 @@ export default function AdvertenciasSuspensoes() {
         </DialogContent>
       </Dialog>
 
+      {/* Impressão (modal) */}
+      <Dialog open={!!impressaoReg} onOpenChange={() => setImpressaoReg(null)}>
+        <DialogContent className="max-w-3xl">
+          {impressaoReg && (
+            <ImpressaoAdvertencia
+              advertencia={impressaoReg as AdvertenciaImpressao}
+              onClose={() => setImpressaoReg(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Lista */}
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -209,18 +221,29 @@ export default function AdvertenciasSuspensoes() {
                     </td>
                     <td className="py-2 px-3 text-sm max-w-xs truncate">{reg.motivo}</td>
                     <td className="py-2 px-3 text-center">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="w-8 h-8"
-                        title="Ver histórico do funcionário"
-                        onClick={() => setHistoricoFunc({
-                          id: reg.funcionario_id,
-                          nome: reg.funcionarios?.nome_completo || "",
-                        })}
-                      >
-                        <History className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8"
+                          title="Imprimir documento"
+                          onClick={() => setImpressaoReg(reg)}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8"
+                          title="Ver histórico do funcionário"
+                          onClick={() => setHistoricoFunc({
+                            id: reg.funcionario_id,
+                            nome: reg.funcionarios?.nome_completo || "",
+                          })}
+                        >
+                          <History className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );
