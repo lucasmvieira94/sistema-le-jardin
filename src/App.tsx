@@ -44,6 +44,7 @@ import ControleFraldas from "./pages/ControleFraldas";
 import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import AnaliseFeedback from "./pages/AnaliseFeedback";
+import AdvertenciasSuspensoes from "./pages/AdvertenciasSuspensoes";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => {
               <Route path="/notificacoes-whatsapp" element={<ProtectedRoute><NotificacoesWhatsApp /></ProtectedRoute>} />
               <Route path="/gerenciamento-whatsapp" element={<ProtectedRoute><GerenciamentoWhatsApp /></ProtectedRoute>} />
               <Route path="/analise-feedback" element={<ProtectedRoute><AnaliseFeedback /></ProtectedRoute>} />
+              <Route path="/advertencias-suspensoes" element={<ProtectedRoute><AdvertenciasSuspensoes /></ProtectedRoute>} />
             </Route>
 
             {/* Fallback 404 */}

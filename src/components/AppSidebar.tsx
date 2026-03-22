@@ -20,7 +20,8 @@ import {
   Baby,
   Bell,
   Brain,
-  BarChart3
+  BarChart3,
+  ShieldAlert
 } from "lucide-react";
 import {
   Sidebar,
@@ -63,6 +64,7 @@ export function AppSidebar() {
     { path: "/apropriacao", icon: Clock, label: "Apropriação", adminOnly: true },
     { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
     { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
+    { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
   ];
 
   const sistemaMenuItems = [
