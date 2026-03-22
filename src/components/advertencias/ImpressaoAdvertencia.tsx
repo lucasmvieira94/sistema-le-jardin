@@ -159,8 +159,8 @@ export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose
               <p><strong>DADOS DA SUSPENSÃO (Art. 474, CLT — máx. 30 dias):</strong></p>
               <p>Dias de suspensão: <strong>{advertencia.dias_suspensao}</strong></p>
               {advertencia.data_inicio_suspensao && (
-                <p>Período: de <strong>{format(new Date(advertencia.data_inicio_suspensao), "dd/MM/yyyy")}</strong>
-                  {advertencia.data_fim_suspensao && <> até <strong>{format(new Date(advertencia.data_fim_suspensao), "dd/MM/yyyy")}</strong></>}
+                <p>Período: de <strong>{format(new Date(advertencia.data_inicio_suspensao + "T00:00:00"), "dd/MM/yyyy")}</strong>
+                  {advertencia.data_fim_suspensao && <> até <strong>{format(new Date(advertencia.data_fim_suspensao + "T00:00:00"), "dd/MM/yyyy")}</strong></>}
                 </p>
               )}
             </div>
