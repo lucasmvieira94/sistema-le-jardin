@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History } from "lucide-react";
+import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUserRole } from "@/hooks/useUserRole";
 import AdvertenciaForm from "@/components/advertencias/AdvertenciaForm";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
+import ImpressaoAdvertencia, { type AdvertenciaImpressao } from "@/components/advertencias/ImpressaoAdvertencia";
 
 type AdvertenciaRow = {
   funcionario_id: string;
@@ -20,7 +21,13 @@ type AdvertenciaRow = {
   descricao: string;
   data_ocorrencia: string;
   dias_suspensao: number | null;
+  data_inicio_suspensao: string | null;
+  data_fim_suspensao: string | null;
+  testemunha_1: string | null;
+  testemunha_2: string | null;
   funcionario_recusou_assinar: boolean;
+  observacoes: string | null;
+  hash_verificacao: string | null;
   created_at: string;
   funcionarios: {
     nome_completo: string;
@@ -42,13 +49,14 @@ export default function AdvertenciasSuspensoes() {
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [historicoFunc, setHistoricoFunc] = useState<{ id: string; nome: string } | null>(null);
+  const [impressaoReg, setImpressaoReg] = useState<AdvertenciaRow | null>(null);
   const { isAdmin, loading: roleLoading } = useUserRole();
 
   async function fetchRegistros() {
     setLoading(true);
     const { data } = await supabase
       .from("advertencias_suspensoes")
-      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, funcionario_recusou_assinar, created_at, funcionarios(nome_completo, funcao)")
+      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, data_inicio_suspensao, data_fim_suspensao, testemunha_1, testemunha_2, funcionario_recusou_assinar, observacoes, hash_verificacao, created_at, funcionarios(nome_completo, funcao)")
       .order("data_ocorrencia", { ascending: false });
     setRegistros((data as AdvertenciaRow[] | null) || []);
     setLoading(false);
@@ -162,6 +170,18 @@ export default function AdvertenciasSuspensoes() {
         </DialogContent>
       </Dialog>
 
+      {/* Impressão (modal) */}
+      <Dialog open={!!impressaoReg} onOpenChange={() => setImpressaoReg(null)}>
+        <DialogContent className="max-w-3xl">
+          {impressaoReg && (
+            <ImpressaoAdvertencia
+              advertencia={impressaoReg as AdvertenciaImpressao}
+              onClose={() => setImpressaoReg(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Lista */}
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -201,18 +221,29 @@ export default function AdvertenciasSuspensoes() {
                     </td>
                     <td className="py-2 px-3 text-sm max-w-xs truncate">{reg.motivo}</td>
                     <td className="py-2 px-3 text-center">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="w-8 h-8"
-                        title="Ver histórico do funcionário"
-                        onClick={() => setHistoricoFunc({
-                          id: reg.funcionario_id,
-                          nome: reg.funcionarios?.nome_completo || "",
-                        })}
-                      >
-                        <History className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8"
+                          title="Imprimir documento"
+                          onClick={() => setImpressaoReg(reg)}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8"
+                          title="Ver histórico do funcionário"
+                          onClick={() => setHistoricoFunc({
+                            id: reg.funcionario_id,
+                            nome: reg.funcionarios?.nome_completo || "",
+                          })}
+                        >
+                          <History className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );
