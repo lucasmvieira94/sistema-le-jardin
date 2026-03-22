@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const TIPO_LABELS: Record<string, string> = {
   advertencia_verbal: "ADVERTÊNCIA VERBAL",
@@ -37,12 +38,24 @@ export interface AdvertenciaImpressao {
 
 interface ImpressaoAdvertenciaProps {
   advertencia: AdvertenciaImpressao;
-  nomeEmpresa?: string;
   onClose: () => void;
 }
 
-export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose }: ImpressaoAdvertenciaProps) {
+export default function ImpressaoAdvertencia({ advertencia, onClose }: ImpressaoAdvertenciaProps) {
   const printRef = useRef<HTMLDivElement>(null);
+  const [empresa, setEmpresa] = useState<{ nome_empresa: string; cnpj: string | null; logo_url: string | null } | null>(null);
+
+  useEffect(() => {
+    async function fetchEmpresa() {
+      const { data } = await supabase
+        .from("configuracoes_empresa")
+        .select("nome_empresa, cnpj, logo_url")
+        .limit(1)
+        .single();
+      if (data) setEmpresa(data);
+    }
+    fetchEmpresa();
+  }, []);
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -118,7 +131,11 @@ export default function ImpressaoAdvertencia({ advertencia, nomeEmpresa, onClose
         <div ref={printRef}>
           {/* Cabeçalho */}
           <div className="header">
-            <h1>{nomeEmpresa || "EMPRESA"}</h1>
+            {empresa?.logo_url && (
+              <img src={empresa.logo_url} alt="Logotipo" style={{ maxHeight: '80px', margin: '0 auto 10px', display: 'block' }} />
+            )}
+            <h1>{empresa?.nome_empresa || "EMPRESA"}</h1>
+            {empresa?.cnpj && <p style={{ fontSize: '10pt', margin: '3px 0 0' }}>CNPJ: {empresa.cnpj}</p>}
             <h2>Documento Disciplinar</h2>
           </div>
 
