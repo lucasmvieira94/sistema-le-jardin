@@ -11,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { useUserRole } from "@/hooks/useUserRole";
 import AdvertenciaForm from "@/components/advertencias/AdvertenciaForm";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
+import ImpressaoAdvertencia, { type AdvertenciaImpressao } from "@/components/advertencias/ImpressaoAdvertencia";
 
 type AdvertenciaRow = {
   funcionario_id: string;
@@ -20,7 +21,13 @@ type AdvertenciaRow = {
   descricao: string;
   data_ocorrencia: string;
   dias_suspensao: number | null;
+  data_inicio_suspensao: string | null;
+  data_fim_suspensao: string | null;
+  testemunha_1: string | null;
+  testemunha_2: string | null;
   funcionario_recusou_assinar: boolean;
+  observacoes: string | null;
+  hash_verificacao: string | null;
   created_at: string;
   funcionarios: {
     nome_completo: string;
