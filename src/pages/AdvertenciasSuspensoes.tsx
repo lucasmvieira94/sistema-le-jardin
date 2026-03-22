@@ -49,13 +49,15 @@ export default function AdvertenciasSuspensoes() {
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [historicoFunc, setHistoricoFunc] = useState<{ id: string; nome: string } | null>(null);
+  const [impressaoReg, setImpressaoReg] = useState<AdvertenciaRow | null>(null);
   const { isAdmin, loading: roleLoading } = useUserRole();
 
   async function fetchRegistros() {
     setLoading(true);
     const { data } = await supabase
       .from("advertencias_suspensoes")
-      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, funcionario_recusou_assinar, created_at, funcionarios(nome_completo, funcao)")
+      .select("id, funcionario_id, tipo, motivo, descricao, data_ocorrencia, dias_suspensao, data_inicio_suspensao, data_fim_suspensao, testemunha_1, testemunha_2, funcionario_recusou_assinar, observacoes, hash_verificacao, created_at, funcionarios(nome_completo, funcao)")
+      .order("data_ocorrencia", { ascending: false });
       .order("data_ocorrencia", { ascending: false });
     setRegistros((data as AdvertenciaRow[] | null) || []);
     setLoading(false);
