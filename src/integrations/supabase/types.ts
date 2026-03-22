@@ -102,6 +102,7 @@ export type Database = {
           dias_suspensao: number | null
           funcionario_id: string
           funcionario_recusou_assinar: boolean
+          hash_verificacao: string | null
           id: string
           motivo: string
           observacoes: string | null
@@ -121,6 +122,7 @@ export type Database = {
           dias_suspensao?: number | null
           funcionario_id: string
           funcionario_recusou_assinar?: boolean
+          hash_verificacao?: string | null
           id?: string
           motivo: string
           observacoes?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           dias_suspensao?: number | null
           funcionario_id?: string
           funcionario_recusou_assinar?: boolean
+          hash_verificacao?: string | null
           id?: string
           motivo?: string
           observacoes?: string | null
