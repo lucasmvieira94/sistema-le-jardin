@@ -1412,6 +1412,120 @@ export type Database = {
           },
         ]
       }
+      intercorrencias: {
+        Row: {
+          categoria: Database["public"]["Enums"]["intercorrencia_categoria"]
+          created_at: string
+          data_resolucao: string | null
+          descricao: string
+          feedback_data: string | null
+          feedback_gestor: string | null
+          feedback_por: string | null
+          funcionario_id: string
+          id: string
+          prazo_resolucao: string | null
+          prioridade: Database["public"]["Enums"]["intercorrencia_prioridade"]
+          residente_id: string | null
+          status: Database["public"]["Enums"]["intercorrencia_status"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: Database["public"]["Enums"]["intercorrencia_categoria"]
+          created_at?: string
+          data_resolucao?: string | null
+          descricao: string
+          feedback_data?: string | null
+          feedback_gestor?: string | null
+          feedback_por?: string | null
+          funcionario_id: string
+          id?: string
+          prazo_resolucao?: string | null
+          prioridade?: Database["public"]["Enums"]["intercorrencia_prioridade"]
+          residente_id?: string | null
+          status?: Database["public"]["Enums"]["intercorrencia_status"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: Database["public"]["Enums"]["intercorrencia_categoria"]
+          created_at?: string
+          data_resolucao?: string | null
+          descricao?: string
+          feedback_data?: string | null
+          feedback_gestor?: string | null
+          feedback_por?: string | null
+          funcionario_id?: string
+          id?: string
+          prazo_resolucao?: string | null
+          prioridade?: Database["public"]["Enums"]["intercorrencia_prioridade"]
+          residente_id?: string | null
+          status?: Database["public"]["Enums"]["intercorrencia_status"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intercorrencias_feedback_por_fkey"
+            columns: ["feedback_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intercorrencias_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intercorrencias_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intercorrencias_logs: {
+        Row: {
+          acao: string
+          created_at: string
+          descricao: string | null
+          id: string
+          intercorrencia_id: string
+          usuario_nome: string
+          usuario_tipo: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          intercorrencia_id: string
+          usuario_nome: string
+          usuario_tipo?: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          intercorrencia_id?: string
+          usuario_nome?: string
+          usuario_tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intercorrencias_logs_intercorrencia_id_fkey"
+            columns: ["intercorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "intercorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medicamentos: {
         Row: {
           ativo: boolean | null
@@ -2482,6 +2596,18 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "employee"
+      intercorrencia_categoria:
+        | "saude_residente"
+        | "infraestrutura"
+        | "comportamental"
+        | "medicacao"
+      intercorrencia_prioridade: "baixa" | "media" | "alta" | "critica"
+      intercorrencia_status:
+        | "aberta"
+        | "em_analise"
+        | "em_andamento"
+        | "resolvida"
+        | "encerrada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2610,6 +2736,20 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "employee"],
+      intercorrencia_categoria: [
+        "saude_residente",
+        "infraestrutura",
+        "comportamental",
+        "medicacao",
+      ],
+      intercorrencia_prioridade: ["baixa", "media", "alta", "critica"],
+      intercorrencia_status: [
+        "aberta",
+        "em_analise",
+        "em_andamento",
+        "resolvida",
+        "encerrada",
+      ],
     },
   },
 } as const
