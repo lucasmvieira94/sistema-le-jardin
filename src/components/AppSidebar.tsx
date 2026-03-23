@@ -21,7 +21,8 @@ import {
   Bell,
   Brain,
   BarChart3,
-  ShieldAlert
+  ShieldAlert,
+  AlertTriangle
 } from "lucide-react";
 import {
   Sidebar,
@@ -79,6 +80,7 @@ export function AppSidebar() {
     { path: "/relatorios-ia", icon: Brain, label: "Relatórios com IA", adminOnly: true },
     { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações", adminOnly: true },
     { path: "/analise-feedback", icon: BarChart3, label: "Análise de Feedback", adminOnly: true },
+    { path: "/gestao-intercorrencias", icon: AlertTriangle, label: "Intercorrências", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 
