@@ -21,6 +21,8 @@ import MeusPontos from "./pages/MeusPontos";
 import FeedbackSistema from "./pages/FeedbackSistema";
 import SupervisorProntuarios from "./pages/SupervisorProntuarios";
 import MeusProntuarios from "./pages/MeusProntuarios";
+import IntercorrenciasPublico from "./pages/IntercorrenciasPublico";
+import PainelIntercorrencias from "./pages/PainelIntercorrencias";
 import NotFound from "./pages/NotFound";
 
 // Páginas protegidas (admin)
@@ -45,6 +47,7 @@ import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import AnaliseFeedback from "./pages/AnaliseFeedback";
 import AdvertenciasSuspensoes from "./pages/AdvertenciasSuspensoes";
+import GestaoIntercorrencias from "./pages/GestaoIntercorrencias";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +74,8 @@ const App = () => {
               <Route path="/feedback-sistema" element={<FeedbackSistema />} />
               <Route path="/supervisor-prontuarios" element={<SupervisorProntuarios />} />
               <Route path="/meus-prontuarios" element={<MeusProntuarios />} />
+              <Route path="/intercorrencias" element={<IntercorrenciasPublico />} />
+              <Route path="/painel-intercorrencias" element={<PainelIntercorrencias />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
@@ -96,6 +101,7 @@ const App = () => {
               <Route path="/gerenciamento-whatsapp" element={<ProtectedRoute><GerenciamentoWhatsApp /></ProtectedRoute>} />
               <Route path="/analise-feedback" element={<ProtectedRoute><AnaliseFeedback /></ProtectedRoute>} />
               <Route path="/advertencias-suspensoes" element={<ProtectedRoute><AdvertenciasSuspensoes /></ProtectedRoute>} />
+              <Route path="/gestao-intercorrencias" element={<ProtectedRoute><GestaoIntercorrencias /></ProtectedRoute>} />
             </Route>
 
             {/* Fallback 404 */}
