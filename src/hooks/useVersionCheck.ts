@@ -1,15 +1,18 @@
 import { useEffect, useCallback } from 'react';
 
-const CHECK_INTERVAL = 60 * 1000; // Verificar a cada 60 segundos
+const CHECK_INTERVAL = 30 * 1000; // Verificar a cada 30 segundos
 
 export function useVersionCheck() {
   const checkForUpdates = useCallback(async () => {
     try {
-      // Verifica se o SW tem update pendente
       if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
           await registration.update();
+          // Se há um SW esperando, forçar ativação
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
         }
       }
     } catch {
@@ -22,13 +25,12 @@ export function useVersionCheck() {
 
     const setupSW = async () => {
       try {
-        // Importação dinâmica para evitar crash se o módulo não existir
         const { registerSW } = await import('virtual:pwa-register');
 
-        registerSW({
+        const updateSW = registerSW({
           immediate: true,
           onNeedRefresh() {
-            // Recarrega automaticamente
+            // Recarrega automaticamente quando nova versão disponível
             window.location.reload();
           },
           onOfflineReady() {
@@ -36,9 +38,22 @@ export function useVersionCheck() {
           },
           onRegisteredSW(_swUrl: string, registration?: ServiceWorkerRegistration) {
             if (registration) {
+              // Verifica atualizações periodicamente
               intervalId = setInterval(() => {
                 registration.update();
               }, CHECK_INTERVAL);
+
+              // Listener para quando novo SW está pronto
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'activated') {
+                      window.location.reload();
+                    }
+                  });
+                }
+              });
             }
           },
         });

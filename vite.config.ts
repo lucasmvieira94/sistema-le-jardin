@@ -41,6 +41,8 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^\/(?!api\/).*/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/kvjgmqicictxxfnvhuwl\.supabase\.co\/.*/i,
@@ -49,7 +51,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'supabase-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutos
+                maxAgeSeconds: 60 * 5
               },
               networkTimeoutSeconds: 5,
             }
