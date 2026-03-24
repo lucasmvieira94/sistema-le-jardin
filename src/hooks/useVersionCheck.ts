@@ -1,24 +1,16 @@
-import { useEffect, useCallback, useRef } from 'react';
-import { registerSW } from 'virtual:pwa-register';
+import { useEffect, useCallback } from 'react';
 
 const CHECK_INTERVAL = 60 * 1000; // Verificar a cada 60 segundos
 
 export function useVersionCheck() {
-  const updateSWRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
-
   const checkForUpdates = useCallback(async () => {
     try {
-      // Força re-fetch do index.html para detectar novos builds
-      const response = await fetch(window.location.origin + '/', {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-      if (!response.ok) return;
-
       // Verifica se o SW tem update pendente
-      const registration = await navigator.serviceWorker?.getRegistration();
-      if (registration) {
-        await registration.update();
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          await registration.update();
+        }
       }
     } catch {
       // Silenciar erros de rede
@@ -26,27 +18,36 @@ export function useVersionCheck() {
   }, []);
 
   useEffect(() => {
-    // Registra o SW com auto-update imediato
-    const updateSW = registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        // Atualiza automaticamente sem perguntar
-        updateSW(true);
-      },
-      onOfflineReady() {
-        console.log('[PWA] Pronto para uso offline');
-      },
-      onRegisteredSW(swUrl, registration) {
-        if (registration) {
-          // Checa periodicamente por atualizações
-          setInterval(() => {
-            registration.update();
-          }, CHECK_INTERVAL);
-        }
-      },
-    });
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
-    updateSWRef.current = updateSW;
+    const setupSW = async () => {
+      try {
+        // Importação dinâmica para evitar crash se o módulo não existir
+        const { registerSW } = await import('virtual:pwa-register');
+
+        registerSW({
+          immediate: true,
+          onNeedRefresh() {
+            // Recarrega automaticamente
+            window.location.reload();
+          },
+          onOfflineReady() {
+            console.log('[PWA] Pronto para uso offline');
+          },
+          onRegisteredSW(_swUrl: string, registration?: ServiceWorkerRegistration) {
+            if (registration) {
+              intervalId = setInterval(() => {
+                registration.update();
+              }, CHECK_INTERVAL);
+            }
+          },
+        });
+      } catch (err) {
+        console.warn('[PWA] Service Worker não disponível:', err);
+      }
+    };
+
+    setupSW();
 
     // Verifica ao voltar para a aba
     const handleVisibility = () => {
@@ -66,6 +67,7 @@ export function useVersionCheck() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleOnline);
+      if (intervalId) clearInterval(intervalId);
     };
   }, [checkForUpdates]);
 }
