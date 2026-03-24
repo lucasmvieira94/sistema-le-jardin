@@ -8,6 +8,7 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
 
 // Páginas públicas
 import Auth from "./pages/Auth";
@@ -52,6 +53,8 @@ import GestaoIntercorrencias from "./pages/GestaoIntercorrencias";
 const queryClient = new QueryClient();
 
 const App = () => {
+  useVersionCheck();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
