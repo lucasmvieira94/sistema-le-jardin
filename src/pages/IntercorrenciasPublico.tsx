@@ -9,6 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Checkbox } from '@/components/ui/checkbox';
+import { X, ChevronsUpDown } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useIntercorrencias, IntercorrenciaLog } from '@/hooks/useIntercorrencias';
@@ -50,7 +54,8 @@ export default function IntercorrenciasPublico() {
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState('');
   const [prioridade, setPrioridade] = useState('media');
-  const [residenteId, setResidenteId] = useState('');
+  const [residenteIds, setResidenteIds] = useState<string[]>([]);
+  const [residentePopoverOpen, setResidentePopoverOpen] = useState(false);
   const [residentes, setResidentes] = useState<{ id: string; nome: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [selectedLogs, setSelectedLogs] = useState<IntercorrenciaLog[]>([]);
@@ -65,20 +70,25 @@ export default function IntercorrenciasPublico() {
   const handleSubmit = async () => {
     if (!titulo.trim() || !descricao.trim() || !categoria) return;
     setSubmitting(true);
-    const result = await criarIntercorrencia({
-      titulo: titulo.trim(),
-      descricao: descricao.trim(),
-      categoria,
-      prioridade,
-      funcionario_id: funcionarioId,
-      ...(residenteId ? { residente_id: residenteId } : {}),
-    }, funcionarioNome);
-    if (result) {
+    const idsToUse = residenteIds.length > 0 ? residenteIds : [null];
+    let success = true;
+    for (const rid of idsToUse) {
+      const result = await criarIntercorrencia({
+        titulo: titulo.trim(),
+        descricao: descricao.trim(),
+        categoria,
+        prioridade,
+        funcionario_id: funcionarioId,
+        ...(rid ? { residente_id: rid } : {}),
+      }, funcionarioNome);
+      if (!result) success = false;
+    }
+    if (success) {
       setTitulo('');
       setDescricao('');
       setCategoria('');
       setPrioridade('media');
-      setResidenteId('');
+      setResidenteIds([]);
       setShowForm(false);
     }
     setSubmitting(false);
@@ -157,15 +167,58 @@ export default function IntercorrenciasPublico() {
                       </div>
                     </div>
                     <div>
-                      <Label>Residente (opcional)</Label>
-                      <Select value={residenteId} onValueChange={setResidenteId}>
-                        <SelectTrigger><SelectValue placeholder="Selecione um residente" /></SelectTrigger>
-                        <SelectContent>
-                          {residentes.map(r => (
-                            <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Residentes (opcional)</Label>
+                      <Popover open={residentePopoverOpen} onOpenChange={setResidentePopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" role="combobox" className="w-full justify-between font-normal h-auto min-h-10">
+                            {residenteIds.length === 0 ? (
+                              <span className="text-muted-foreground">Selecione residentes...</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {residenteIds.map(id => {
+                                  const r = residentes.find(res => res.id === id);
+                                  return r ? (
+                                    <Badge key={id} variant="secondary" className="text-xs">
+                                      {r.nome}
+                                      <button
+                                        className="ml-1 hover:text-destructive"
+                                        onClick={e => { e.stopPropagation(); setResidenteIds(prev => prev.filter(x => x !== id)); }}
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </Badge>
+                                  ) : null;
+                                })}
+                              </div>
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar residente..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhum residente encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {residentes.map(r => (
+                                  <CommandItem
+                                    key={r.id}
+                                    value={r.nome}
+                                    onSelect={() => {
+                                      setResidenteIds(prev =>
+                                        prev.includes(r.id) ? prev.filter(x => x !== r.id) : [...prev, r.id]
+                                      );
+                                    }}
+                                  >
+                                    <Checkbox checked={residenteIds.includes(r.id)} className="mr-2" />
+                                    {r.nome}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={handleSubmit} disabled={submitting || !titulo.trim() || !descricao.trim() || !categoria} className="flex-1 bg-red-600 hover:bg-red-700">
