@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import { TenantProvider } from "@/contexts/TenantContext";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -62,6 +63,7 @@ const App = () => {
         <Sonner />
         <PWAInstallPrompt />
         <BrowserRouter>
+        <TenantProvider>
           <Routes>
             {/* Rotas públicas - layout simples sem sidebar */}
             <Route element={<PublicLayout />}>
@@ -110,6 +112,7 @@ const App = () => {
             {/* Fallback 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+        </TenantProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
