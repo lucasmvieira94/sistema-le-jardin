@@ -82,6 +82,7 @@ const App = () => {
               <Route path="/meus-prontuarios" element={<MeusProntuarios />} />
               <Route path="/intercorrencias" element={<IntercorrenciasPublico />} />
               <Route path="/painel-intercorrencias" element={<PainelIntercorrencias />} />
+              <Route path="/contrato-temporario/:token" element={<ContratoTemporarioPublico />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
