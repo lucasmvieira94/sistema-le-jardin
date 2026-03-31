@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
 import ContratosLista from "@/components/residentes/ContratosLista";
+import ContratosTemporarios from "@/components/residentes/ContratosTemporarios";
 
 interface Residente {
   id: string;
