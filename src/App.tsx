@@ -25,6 +25,7 @@ import SupervisorProntuarios from "./pages/SupervisorProntuarios";
 import MeusProntuarios from "./pages/MeusProntuarios";
 import IntercorrenciasPublico from "./pages/IntercorrenciasPublico";
 import PainelIntercorrencias from "./pages/PainelIntercorrencias";
+import ContratoTemporarioPublico from "./pages/ContratoTemporarioPublico";
 import NotFound from "./pages/NotFound";
 
 // Páginas protegidas (admin)
@@ -81,6 +82,7 @@ const App = () => {
               <Route path="/meus-prontuarios" element={<MeusProntuarios />} />
               <Route path="/intercorrencias" element={<IntercorrenciasPublico />} />
               <Route path="/painel-intercorrencias" element={<PainelIntercorrencias />} />
+              <Route path="/contrato-temporario/:token" element={<ContratoTemporarioPublico />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}

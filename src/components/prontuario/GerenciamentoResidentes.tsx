@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
 import ContratosLista from "@/components/residentes/ContratosLista";
+import ContratosTemporarios from "@/components/residentes/ContratosTemporarios";
 
 interface Residente {
   id: string;
@@ -599,6 +601,17 @@ export default function GerenciamentoResidentes() {
   }
 
   return (
+    <Tabs defaultValue="residentes" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="residentes">Residentes Fixos</TabsTrigger>
+        <TabsTrigger value="temporarios">Contratos Temporários</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="temporarios">
+        <ContratosTemporarios />
+      </TabsContent>
+
+      <TabsContent value="residentes">
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -941,5 +954,7 @@ export default function GerenciamentoResidentes() {
         </DialogContent>
       </Dialog>
     </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
