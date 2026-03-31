@@ -2066,6 +2066,101 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_contrato_temporario: {
+        Row: {
+          contratante_cep: string | null
+          contratante_cidade: string | null
+          contratante_cpf: string | null
+          contratante_email: string | null
+          contratante_endereco: string | null
+          contratante_estado: string | null
+          contratante_nome: string | null
+          contratante_rg: string | null
+          contratante_telefone: string | null
+          contrato_gerado_id: string | null
+          created_at: string
+          criado_por: string | null
+          data_fim_contrato: string | null
+          data_inicio_contrato: string | null
+          dia_vencimento: number | null
+          forma_pagamento: string | null
+          id: string
+          observacoes_empresa: string | null
+          residente_cpf: string | null
+          residente_data_nascimento: string | null
+          residente_nome: string | null
+          residente_observacoes: string | null
+          status: string
+          token: string
+          updated_at: string
+          valor_mensalidade: number | null
+        }
+        Insert: {
+          contratante_cep?: string | null
+          contratante_cidade?: string | null
+          contratante_cpf?: string | null
+          contratante_email?: string | null
+          contratante_endereco?: string | null
+          contratante_estado?: string | null
+          contratante_nome?: string | null
+          contratante_rg?: string | null
+          contratante_telefone?: string | null
+          contrato_gerado_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim_contrato?: string | null
+          data_inicio_contrato?: string | null
+          dia_vencimento?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          observacoes_empresa?: string | null
+          residente_cpf?: string | null
+          residente_data_nascimento?: string | null
+          residente_nome?: string | null
+          residente_observacoes?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+          valor_mensalidade?: number | null
+        }
+        Update: {
+          contratante_cep?: string | null
+          contratante_cidade?: string | null
+          contratante_cpf?: string | null
+          contratante_email?: string | null
+          contratante_endereco?: string | null
+          contratante_estado?: string | null
+          contratante_nome?: string | null
+          contratante_rg?: string | null
+          contratante_telefone?: string | null
+          contrato_gerado_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          data_fim_contrato?: string | null
+          data_inicio_contrato?: string | null
+          dia_vencimento?: number | null
+          forma_pagamento?: string | null
+          id?: string
+          observacoes_empresa?: string | null
+          residente_cpf?: string | null
+          residente_data_nascimento?: string | null
+          residente_nome?: string | null
+          residente_observacoes?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+          valor_mensalidade?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_contrato_temporario_contrato_gerado_id_fkey"
+            columns: ["contrato_gerado_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_rotation_tokens: {
         Row: {
           created_at: string
