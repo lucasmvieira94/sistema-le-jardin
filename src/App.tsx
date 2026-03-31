@@ -25,6 +25,7 @@ import SupervisorProntuarios from "./pages/SupervisorProntuarios";
 import MeusProntuarios from "./pages/MeusProntuarios";
 import IntercorrenciasPublico from "./pages/IntercorrenciasPublico";
 import PainelIntercorrencias from "./pages/PainelIntercorrencias";
+import ContratoTemporarioPublico from "./pages/ContratoTemporarioPublico";
 import NotFound from "./pages/NotFound";
 
 // Páginas protegidas (admin)

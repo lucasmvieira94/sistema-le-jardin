@@ -954,5 +954,7 @@ export default function GerenciamentoResidentes() {
         </DialogContent>
       </Dialog>
     </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
