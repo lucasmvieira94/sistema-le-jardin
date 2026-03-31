@@ -601,6 +601,17 @@ export default function GerenciamentoResidentes() {
   }
 
   return (
+    <Tabs defaultValue="residentes" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="residentes">Residentes Fixos</TabsTrigger>
+        <TabsTrigger value="temporarios">Contratos Temporários</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="temporarios">
+        <ContratosTemporarios />
+      </TabsContent>
+
+      <TabsContent value="residentes">
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
