@@ -6,21 +6,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Copy, ExternalLink, Check, Clock, FileText, Loader2, Trash2 } from "lucide-react";
+import { Plus, Copy, Check, FileText, Loader2, Trash2, Printer } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Solicitacao {
   id: string;
   token: string;
   contratante_nome: string | null;
   contratante_cpf: string | null;
+  contratante_rg: string | null;
+  contratante_endereco: string | null;
   contratante_telefone: string | null;
   contratante_email: string | null;
   residente_nome: string | null;
+  residente_cpf: string | null;
   residente_data_nascimento: string | null;
   residente_observacoes: string | null;
   valor_mensalidade: number | null;
@@ -40,6 +44,199 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   cancelado: { label: "Cancelado", variant: "destructive" },
 };
 
+function valorPorExtenso(valor: number): string {
+  const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+  const dezADezenove = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+  const dezenas = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+  const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+  const parteInteira = Math.floor(valor);
+  const centavos = Math.round((valor - parteInteira) * 100);
+  const converterCentena = (num: number): string => {
+    if (num === 0) return '';
+    if (num === 100) return 'cem';
+    const c = Math.floor(num / 100), d = Math.floor((num % 100) / 10), u = num % 10;
+    let r = centenas[c];
+    if (d === 1) { r += (r ? ' e ' : '') + dezADezenove[u]; }
+    else { if (d > 0) r += (r ? ' e ' : '') + dezenas[d]; if (u > 0) r += (r ? ' e ' : '') + unidades[u]; }
+    return r;
+  };
+  const converterMilhar = (num: number): string => {
+    if (num === 0) return 'zero';
+    if (num < 1000) return converterCentena(num);
+    const milhares = Math.floor(num / 1000), resto = num % 1000;
+    let r = milhares === 1 ? 'mil' : converterCentena(milhares) + ' mil';
+    if (resto > 0) r += ' e ' + converterCentena(resto);
+    return r;
+  };
+  let extenso = converterMilhar(parteInteira) + (parteInteira === 1 ? ' real' : ' reais');
+  if (centavos > 0) extenso += ' e ' + converterCentena(centavos) + (centavos === 1 ? ' centavo' : ' centavos');
+  return extenso;
+}
+
+function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
+  const formatarMoeda = (valor: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  const formatarData = (data: string) =>
+    format(new Date(data + "T12:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const getFormaPagamentoLabel = (forma: string) => {
+    const labels: Record<string, string> = {
+      boleto: "Boleto Bancário", pix: "PIX", transferencia: "Transferência Bancária",
+      dinheiro: "Dinheiro", cartao: "Cartão de Crédito"
+    };
+    return labels[forma] || forma;
+  };
+
+  const nomeEmpresa = empresaConfig?.nome_empresa || "LE JARDIN RESIDENCIAL SÊNIOR LTDA ME";
+  const cnpj = empresaConfig?.cnpj || "48.897.411/0001-58";
+  const endereco = empresaConfig?.endereco || "Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE";
+  const cidade = empresaConfig?.cidade || "Aracaju";
+  const logoUrl = empresaConfig?.logo_url || "";
+  const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+
+  return `
+    <div class="header">
+      ${logoUrl ? `<img src="${logoUrl}" alt="Logotipo" style="max-height:60px;margin:0 auto 8px;display:block;" />` : ''}
+      <h1>${nomeEmpresa}</h1>
+      ${cnpj ? `<p style="font-size:10pt;margin:3px 0 0">CNPJ: ${cnpj}</p>` : ''}
+      <h2>Contrato de Prestação de Serviços – Curta Temporada</h2>
+    </div>
+
+    <div class="tipo-doc">CONTRATO DE HOSPEDAGEM TEMPORÁRIA<br/>Instituição de Longa Permanência para Idosos</div>
+
+    <p class="justify">Pelo presente instrumento particular de Contrato de Prestação de Serviços de Hospedagem Temporária, de um lado:</p>
+
+    <div class="info-box">
+      <p class="justify"><strong>CONTRATADA:</strong> <strong>${nomeEmpresa}</strong>, pessoa jurídica de direito privado, com sede em ${endereco}, inscrita no CNPJ sob o nº ${cnpj}.</p>
+    </div>
+
+    <div class="info-box">
+      <p class="justify"><strong>CONTRATANTE:</strong> <strong>${s.contratante_nome || "_______________"}</strong>${s.contratante_cpf ? `, CPF nº ${s.contratante_cpf}` : ''}${s.contratante_rg ? `, RG nº ${s.contratante_rg}` : ''}${s.contratante_endereco ? `, residente em ${s.contratante_endereco}` : ''}${s.contratante_telefone ? `, Tel: ${s.contratante_telefone}` : ''}${s.contratante_email ? `, E-mail: ${s.contratante_email}` : ''}.</p>
+    </div>
+
+    <div class="info-box">
+      <p class="justify"><strong>RESIDENTE (Hóspede):</strong> <strong>${s.residente_nome || "_______________"}</strong>${s.residente_cpf ? `, CPF nº ${s.residente_cpf}` : ''}${s.residente_data_nascimento ? `, nascido(a) em ${formatarData(s.residente_data_nascimento)}` : ''}.</p>
+    </div>
+
+    <p class="justify" style="margin-top:12px">Têm entre si, justo e contratado, o presente Contrato de Hospedagem Temporária que se regerá pelas cláusulas e condições seguintes:</p>
+
+    <h3 class="clausula">CLÁUSULA PRIMEIRA: DO OBJETO</h3>
+    <p class="justify"><strong>1.</strong> O objeto do presente contrato consiste na prestação de serviços de hospedagem temporária em Instituição de Longa Permanência para Idosos, pelo período determinado neste instrumento.</p>
+    <p class="justify"><strong>1.1.</strong> Serviços inclusos durante a hospedagem:</p>
+    <div class="lista">
+      <p><strong>I –</strong> Acomodação em quarto;</p>
+      <p><strong>II –</strong> Fornecimento de refeições diárias;</p>
+      <p><strong>III –</strong> Serviços de limpeza e higienização;</p>
+      <p><strong>IV –</strong> Roupa de cama e banho;</p>
+      <p><strong>V –</strong> Acompanhamento por cuidadores capacitados;</p>
+      <p><strong>VI –</strong> Participação em atividades recreativas e de lazer.</p>
+    </div>
+    <p class="justify"><strong>1.2.</strong> Não estão incluídos: fraldas descartáveis, medicamentos de uso pessoal, materiais de higiene pessoal, transporte externo, consultas médicas e exames.</p>
+
+    <h3 class="clausula">CLÁUSULA SEGUNDA: DO VALOR E PAGAMENTO</h3>
+    <p class="justify"><strong>2.</strong> Pelos serviços descritos, o CONTRATANTE pagará à CONTRATADA o valor de <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade)})` : ''} mensal.</p>
+    <p class="justify"><strong>2.1.</strong> Pagamento até o <strong>dia ${s.dia_vencimento || "___"}</strong> de cada mês, via <strong>${s.forma_pagamento ? getFormaPagamentoLabel(s.forma_pagamento) : "_______________"}</strong>.</p>
+    <p class="justify small"><strong>2.2.</strong> Atraso no pagamento: multa de 2% e juros de 1% ao mês.</p>
+    <p class="justify small"><strong>2.3.</strong> Inadimplência superior a 15 dias implica rescisão imediata e retirada do residente.</p>
+
+    <h3 class="clausula">CLÁUSULA TERCEIRA: DA VIGÊNCIA</h3>
+    <p class="justify"><strong>3.</strong> O presente contrato tem vigência determinada, com início em <strong>${s.data_inicio_contrato ? formatarData(s.data_inicio_contrato) : "_______________"}</strong> e término em <strong>${s.data_fim_contrato ? formatarData(s.data_fim_contrato) : "_______________"}</strong>.</p>
+    <p class="justify small"><strong>3.1.</strong> A renovação ou prorrogação dependerá de acordo expresso entre as partes.</p>
+    <p class="justify small"><strong>3.2.</strong> A permanência além do período contratado sem novo acordo será cobrada proporcionalmente com acréscimo de 20%.</p>
+
+    <h3 class="clausula">CLÁUSULA QUARTA: DAS OBRIGAÇÕES DO CONTRATANTE</h3>
+    <p class="justify small"><strong>4.</strong> Informar dados de saúde, medicamentos em uso, alergias e restrições alimentares.</p>
+    <p class="justify small"><strong>4.1.</strong> Realizar pagamentos nos prazos estabelecidos.</p>
+    <p class="justify small"><strong>4.2.</strong> Respeitar normas e regulamentos da Instituição.</p>
+    <p class="justify small"><strong>4.3.</strong> Manter contato atualizado para emergências.</p>
+
+    <h3 class="clausula">CLÁUSULA QUINTA: DAS OBRIGAÇÕES DA CONTRATADA</h3>
+    <p class="justify small"><strong>5.</strong> Prestar serviços conforme descrito na Cláusula Primeira.</p>
+    <p class="justify small"><strong>5.1.</strong> Comunicar imediatamente ao CONTRATANTE qualquer ocorrência relevante.</p>
+    <p class="justify small"><strong>5.2.</strong> Em caso de urgência/emergência, encaminhar ao hospital mais próximo com aviso imediato.</p>
+
+    <h3 class="clausula">CLÁUSULA SEXTA: DA RESCISÃO</h3>
+    <p class="justify small"><strong>6.</strong> Rescisão antecipada mediante aviso prévio de 7 (sete) dias.</p>
+    <p class="justify small"><strong>6.1.</strong> Não haverá restituição proporcional para períodos inferiores a 15 dias já iniciados.</p>
+    <p class="justify small"><strong>6.2.</strong> Descumprimento de cláusulas autoriza rescisão imediata sem ônus para a parte prejudicada.</p>
+
+    <h3 class="clausula">CLÁUSULA SÉTIMA: DAS DISPOSIÇÕES GERAIS</h3>
+    <p class="justify small"><strong>7.</strong> Tolerância não constitui novação ou renúncia de direitos.</p>
+    <p class="justify small"><strong>7.1.</strong> Foro da Comarca de ${cidade} para dirimir quaisquer dúvidas.</p>
+
+    ${s.observacoes_empresa ? `
+      <h3 class="clausula">OBSERVAÇÕES DA EMPRESA</h3>
+      <p class="justify small">${s.observacoes_empresa.replace(/\n/g, '<br/>')}</p>
+    ` : ''}
+
+    ${s.residente_observacoes ? `
+      <h3 class="clausula">OBSERVAÇÕES DO CONTRATANTE</h3>
+      <p class="justify small">${s.residente_observacoes.replace(/\n/g, '<br/>')}</p>
+    ` : ''}
+
+    <p class="justify" style="margin-top:15px">E assim, por estarem justas e contratadas, as PARTES firmam o presente instrumento em duas vias de igual teor, na presença de 02 (duas) testemunhas.</p>
+
+    <div class="data-local">
+      <p>${cidade}, ${hoje}</p>
+    </div>
+
+    <div class="assinaturas">
+      <div class="assinatura-row">
+        <div class="assinatura-item">
+          <div class="assinatura-linha">
+            <p><strong>${nomeEmpresa}</strong></p>
+            <p>CONTRATADA</p>
+          </div>
+        </div>
+        <div class="assinatura-item">
+          <div class="assinatura-linha">
+            <p><strong>${s.contratante_nome || "_______________"}</strong></p>
+            <p>CONTRATANTE</p>
+          </div>
+        </div>
+      </div>
+      <div class="assinatura-row">
+        <div class="assinatura-item">
+          <div class="assinatura-linha">
+            <p><strong>Testemunha 1</strong></p>
+            <p>Nome: _______________________</p>
+            <p>CPF: _______________________</p>
+          </div>
+        </div>
+        <div class="assinatura-item">
+          <div class="assinatura-linha">
+            <p><strong>Testemunha 2</strong></p>
+            <p>Nome: _______________________</p>
+            <p>CPF: _______________________</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function getContractStyleSheet() {
+  return `
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; padding: 20px 50px; }
+    .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .header h1 { font-size: 15pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
+    .header h2 { font-size: 12pt; font-weight: normal; color: #333; }
+    .tipo-doc { text-align: center; font-size: 13pt; font-weight: bold; margin: 12px 0; text-decoration: underline; letter-spacing: 1px; }
+    .info-box { border: 1px solid #333; padding: 8px 12px; margin: 8px 0; }
+    .clausula { font-weight: bold; font-size: 12pt; margin: 14px 0 6px; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .justify { text-align: justify; margin-bottom: 4px; }
+    .small { font-size: 10.5pt; }
+    .lista { margin-left: 20px; margin-bottom: 6px; }
+    .lista p { margin-bottom: 2px; }
+    .data-local { text-align: right; margin: 20px 0; font-size: 12pt; }
+    .assinaturas { margin-top: 30px; }
+    .assinatura-row { display: flex; justify-content: space-between; margin-bottom: 35px; }
+    .assinatura-item { text-align: center; width: 45%; }
+    .assinatura-linha { border-top: 1px solid #000; padding-top: 4px; margin-top: 30px; font-size: 10.5pt; }
+    @media print { body { padding: 15px 40px; } }
+  `;
+}
+
 export default function ContratosTemporarios() {
   const { toast } = useToast();
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
@@ -48,8 +245,8 @@ export default function ContratosTemporarios() {
   const [selectedSolicitacao, setSelectedSolicitacao] = useState<Solicitacao | null>(null);
   const [showFinalizarDialog, setShowFinalizarDialog] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [empresaConfig, setEmpresaConfig] = useState<any>(null);
 
-  // Form state for finalizar
   const [valorMensalidade, setValorMensalidade] = useState("");
   const [diaVencimento, setDiaVencimento] = useState("10");
   const [formaPagamento, setFormaPagamento] = useState("boleto");
@@ -73,6 +270,18 @@ export default function ContratosTemporarios() {
   useEffect(() => {
     fetchSolicitacoes();
   }, [fetchSolicitacoes]);
+
+  useEffect(() => {
+    async function fetchEmpresa() {
+      const { data } = await supabase
+        .from("configuracoes_empresa")
+        .select("nome_empresa, cnpj, logo_url, cidade, endereco")
+        .limit(1)
+        .single();
+      if (data) setEmpresaConfig(data);
+    }
+    fetchEmpresa();
+  }, []);
 
   const criarNovaSolicitacao = async () => {
     setCreating(true);
@@ -117,7 +326,6 @@ export default function ContratosTemporarios() {
 
     setFinalizando(true);
 
-    // Update the solicitacao with financial data
     const { error } = await supabase
       .from("solicitacoes_contrato_temporario" as any)
       .update({
@@ -152,6 +360,30 @@ export default function ContratosTemporarios() {
       toast({ title: "Solicitação cancelada" });
       fetchSolicitacoes();
     }
+  };
+
+  const imprimirContrato = (s: Solicitacao) => {
+    const htmlContent = generateTemporaryContractHTML(s, empresaConfig);
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast({ title: "Erro", description: "Não foi possível abrir a janela de impressão. Verifique se popups estão permitidos.", variant: "destructive" });
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <title>Contrato Temporário - ${s.contratante_nome || "Sem nome"}</title>
+        <style>${getContractStyleSheet()}</style>
+      </head>
+      <body>${htmlContent}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 500);
   };
 
   const formatarMoeda = (v: number) =>
@@ -229,6 +461,11 @@ export default function ContratosTemporarios() {
                           {s.status === "aguardando_empresa" && (
                             <Button size="sm" onClick={() => abrirFinalizar(s)}>
                               <Check className="w-3.5 h-3.5 mr-1" /> Finalizar
+                            </Button>
+                          )}
+                          {s.status === "contrato_gerado" && (
+                            <Button size="sm" variant="outline" onClick={() => imprimirContrato(s)} title="Imprimir contrato">
+                              <Printer className="w-3.5 h-3.5 mr-1" /> Imprimir
                             </Button>
                           )}
                           {(s.status === "aguardando_contratante" || s.status === "aguardando_empresa") && (
