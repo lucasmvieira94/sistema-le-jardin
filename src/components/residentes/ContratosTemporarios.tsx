@@ -160,9 +160,10 @@ function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
     <p class="justify small"><strong>5.2.</strong> Em caso de urgência/emergência, encaminhar ao hospital mais próximo com aviso imediato.</p>
 
     <h3 class="clausula">CLÁUSULA SEXTA: DA RESCISÃO</h3>
-    <p class="justify small"><strong>6.</strong> Rescisão antecipada mediante aviso prévio de 7 (sete) dias.</p>
-    <p class="justify small"><strong>6.1.</strong> Não haverá restituição proporcional para períodos inferiores a 15 dias já iniciados.</p>
-    <p class="justify small"><strong>6.2.</strong> Descumprimento de cláusulas autoriza rescisão imediata sem ônus para a parte prejudicada.</p>
+    <p class="justify small"><strong>6.</strong> Em caso de desistência pelo CONTRATANTE antes do início da hospedagem, o sinal de 30% (trinta por cento) <strong>não será restituído</strong>, a título de indenização pela reserva.</p>
+    <p class="justify small"><strong>6.1.</strong> Em caso de desistência após o início da hospedagem, não haverá restituição de valores já pagos, podendo haver cobrança proporcional de dias utilizados caso o saldo restante não tenha sido quitado integralmente.</p>
+    <p class="justify small"><strong>6.2.</strong> Rescisão por iniciativa da CONTRATADA, sem justa causa, obriga a devolução integral dos valores pagos.</p>
+    <p class="justify small"><strong>6.3.</strong> Descumprimento de cláusulas autoriza rescisão imediata sem ônus para a parte prejudicada.</p>
 
     <h3 class="clausula">CLÁUSULA SÉTIMA: DAS DISPOSIÇÕES GERAIS</h3>
     <p class="justify small"><strong>7.</strong> Tolerância não constitui novação ou renúncia de direitos.</p>
