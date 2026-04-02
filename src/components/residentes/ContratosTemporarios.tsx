@@ -429,7 +429,7 @@ export default function ContratosTemporarios() {
                   <TableHead>Contratante</TableHead>
                   <TableHead>Residente</TableHead>
                   <TableHead>Período</TableHead>
-                  <TableHead>Valor</TableHead>
+                  <TableHead>Valor Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
