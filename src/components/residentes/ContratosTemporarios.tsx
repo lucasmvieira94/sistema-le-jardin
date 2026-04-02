@@ -133,10 +133,15 @@ function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
     <p class="justify"><strong>1.2.</strong> Não estão incluídos: fraldas descartáveis, medicamentos de uso pessoal, materiais de higiene pessoal, transporte externo, consultas médicas e exames.</p>
 
     <h3 class="clausula">CLÁUSULA SEGUNDA: DO VALOR E PAGAMENTO</h3>
-    <p class="justify"><strong>2.</strong> Pelos serviços descritos, o CONTRATANTE pagará à CONTRATADA o valor de <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade)})` : ''} mensal.</p>
-    <p class="justify"><strong>2.1.</strong> Pagamento até o <strong>dia ${s.dia_vencimento || "___"}</strong> de cada mês, via <strong>${s.forma_pagamento ? getFormaPagamentoLabel(s.forma_pagamento) : "_______________"}</strong>.</p>
-    <p class="justify small"><strong>2.2.</strong> Atraso no pagamento: multa de 2% e juros de 1% ao mês.</p>
-    <p class="justify small"><strong>2.3.</strong> Inadimplência superior a 15 dias implica rescisão imediata e retirada do residente.</p>
+    <p class="justify"><strong>2.</strong> Pelos serviços descritos, o CONTRATANTE pagará à CONTRATADA o valor total de <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade)})` : ''}, referente a todo o período de hospedagem estabelecido neste contrato.</p>
+    <p class="justify"><strong>2.1.</strong> O pagamento será realizado da seguinte forma:</p>
+    <div class="lista">
+      <p><strong>I –</strong> <strong>Sinal de reserva:</strong> 30% (trinta por cento) do valor total, correspondente a <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade * 0.3) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade * 0.3)})` : ''}, a ser pago no ato da contratação para garantia da reserva. <strong>Este valor não é reembolsável</strong> em caso de desistência por parte do CONTRATANTE.</p>
+      <p><strong>II –</strong> <strong>Saldo restante:</strong> 70% (setenta por cento) do valor total, correspondente a <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade * 0.7) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade * 0.7)})` : ''}, a ser pago na data de entrada (hospedagem) do residente na instituição.</p>
+    </div>
+    <p class="justify"><strong>2.2.</strong> A forma de pagamento será via <strong>${s.forma_pagamento ? getFormaPagamentoLabel(s.forma_pagamento) : "_______________"}</strong>.</p>
+    <p class="justify small"><strong>2.3.</strong> Atraso no pagamento do saldo restante: multa de 2% e juros de 1% ao mês.</p>
+    <p class="justify small"><strong>2.4.</strong> O não pagamento do saldo restante até a data de entrada autoriza o cancelamento da reserva sem restituição do sinal.</p>
 
     <h3 class="clausula">CLÁUSULA TERCEIRA: DA VIGÊNCIA</h3>
     <p class="justify"><strong>3.</strong> O presente contrato tem vigência determinada, com início em <strong>${s.data_inicio_contrato ? formatarData(s.data_inicio_contrato) : "_______________"}</strong> e término em <strong>${s.data_fim_contrato ? formatarData(s.data_fim_contrato) : "_______________"}</strong>.</p>
