@@ -505,15 +505,23 @@ export default function ContratosTemporarios() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Valor da Mensalidade (R$) *</Label>
-                <Input type="number" step="0.01" value={valorMensalidade} onChange={(e) => setValorMensalidade(e.target.value)} placeholder="0,00" />
-              </div>
-              <div>
-                <Label>Dia do Vencimento</Label>
-                <Input type="number" min="1" max="31" value={diaVencimento} onChange={(e) => setDiaVencimento(e.target.value)} />
-              </div>
+            <div>
+              <Label>Valor Total do Período (R$) *</Label>
+              <Input type="number" step="0.01" value={valorMensalidade} onChange={(e) => setValorMensalidade(e.target.value)} placeholder="0,00" />
+              {valorMensalidade && parseFloat(valorMensalidade) > 0 && (
+                <div className="mt-2 p-3 rounded-md bg-muted text-sm space-y-1">
+                  <p className="text-muted-foreground">
+                    <strong>Sinal (30%):</strong>{" "}
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(parseFloat(valorMensalidade) * 0.3)}
+                    <span className="text-xs ml-1">(não reembolsável)</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Restante (70%):</strong>{" "}
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(parseFloat(valorMensalidade) * 0.7)}
+                    <span className="text-xs ml-1">(na hospedagem)</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
