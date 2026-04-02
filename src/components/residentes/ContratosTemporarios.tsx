@@ -133,10 +133,15 @@ function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
     <p class="justify"><strong>1.2.</strong> Não estão incluídos: fraldas descartáveis, medicamentos de uso pessoal, materiais de higiene pessoal, transporte externo, consultas médicas e exames.</p>
 
     <h3 class="clausula">CLÁUSULA SEGUNDA: DO VALOR E PAGAMENTO</h3>
-    <p class="justify"><strong>2.</strong> Pelos serviços descritos, o CONTRATANTE pagará à CONTRATADA o valor de <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade)})` : ''} mensal.</p>
-    <p class="justify"><strong>2.1.</strong> Pagamento até o <strong>dia ${s.dia_vencimento || "___"}</strong> de cada mês, via <strong>${s.forma_pagamento ? getFormaPagamentoLabel(s.forma_pagamento) : "_______________"}</strong>.</p>
-    <p class="justify small"><strong>2.2.</strong> Atraso no pagamento: multa de 2% e juros de 1% ao mês.</p>
-    <p class="justify small"><strong>2.3.</strong> Inadimplência superior a 15 dias implica rescisão imediata e retirada do residente.</p>
+    <p class="justify"><strong>2.</strong> Pelos serviços descritos, o CONTRATANTE pagará à CONTRATADA o valor total de <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade)})` : ''}, referente a todo o período de hospedagem estabelecido neste contrato.</p>
+    <p class="justify"><strong>2.1.</strong> O pagamento será realizado da seguinte forma:</p>
+    <div class="lista">
+      <p><strong>I –</strong> <strong>Sinal de reserva:</strong> 30% (trinta por cento) do valor total, correspondente a <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade * 0.3) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade * 0.3)})` : ''}, a ser pago no ato da contratação para garantia da reserva. <strong>Este valor não é reembolsável</strong> em caso de desistência por parte do CONTRATANTE.</p>
+      <p><strong>II –</strong> <strong>Saldo restante:</strong> 70% (setenta por cento) do valor total, correspondente a <strong>${s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade * 0.7) : "_______________"}</strong>${s.valor_mensalidade ? ` (${valorPorExtenso(s.valor_mensalidade * 0.7)})` : ''}, a ser pago na data de entrada (hospedagem) do residente na instituição.</p>
+    </div>
+    <p class="justify"><strong>2.2.</strong> A forma de pagamento será via <strong>${s.forma_pagamento ? getFormaPagamentoLabel(s.forma_pagamento) : "_______________"}</strong>.</p>
+    <p class="justify small"><strong>2.3.</strong> Atraso no pagamento do saldo restante: multa de 2% e juros de 1% ao mês.</p>
+    <p class="justify small"><strong>2.4.</strong> O não pagamento do saldo restante até a data de entrada autoriza o cancelamento da reserva sem restituição do sinal.</p>
 
     <h3 class="clausula">CLÁUSULA TERCEIRA: DA VIGÊNCIA</h3>
     <p class="justify"><strong>3.</strong> O presente contrato tem vigência determinada, com início em <strong>${s.data_inicio_contrato ? formatarData(s.data_inicio_contrato) : "_______________"}</strong> e término em <strong>${s.data_fim_contrato ? formatarData(s.data_fim_contrato) : "_______________"}</strong>.</p>
@@ -155,9 +160,10 @@ function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
     <p class="justify small"><strong>5.2.</strong> Em caso de urgência/emergência, encaminhar ao hospital mais próximo com aviso imediato.</p>
 
     <h3 class="clausula">CLÁUSULA SEXTA: DA RESCISÃO</h3>
-    <p class="justify small"><strong>6.</strong> Rescisão antecipada mediante aviso prévio de 7 (sete) dias.</p>
-    <p class="justify small"><strong>6.1.</strong> Não haverá restituição proporcional para períodos inferiores a 15 dias já iniciados.</p>
-    <p class="justify small"><strong>6.2.</strong> Descumprimento de cláusulas autoriza rescisão imediata sem ônus para a parte prejudicada.</p>
+    <p class="justify small"><strong>6.</strong> Em caso de desistência pelo CONTRATANTE antes do início da hospedagem, o sinal de 30% (trinta por cento) <strong>não será restituído</strong>, a título de indenização pela reserva.</p>
+    <p class="justify small"><strong>6.1.</strong> Em caso de desistência após o início da hospedagem, não haverá restituição de valores já pagos, podendo haver cobrança proporcional de dias utilizados caso o saldo restante não tenha sido quitado integralmente.</p>
+    <p class="justify small"><strong>6.2.</strong> Rescisão por iniciativa da CONTRATADA, sem justa causa, obriga a devolução integral dos valores pagos.</p>
+    <p class="justify small"><strong>6.3.</strong> Descumprimento de cláusulas autoriza rescisão imediata sem ônus para a parte prejudicada.</p>
 
     <h3 class="clausula">CLÁUSULA SÉTIMA: DAS DISPOSIÇÕES GERAIS</h3>
     <p class="justify small"><strong>7.</strong> Tolerância não constitui novação ou renúncia de direitos.</p>
@@ -423,7 +429,7 @@ export default function ContratosTemporarios() {
                   <TableHead>Contratante</TableHead>
                   <TableHead>Residente</TableHead>
                   <TableHead>Período</TableHead>
-                  <TableHead>Valor</TableHead>
+                  <TableHead>Valor Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -447,7 +453,14 @@ export default function ContratosTemporarios() {
                           ? `${format(new Date(s.data_inicio_contrato + "T12:00:00"), "dd/MM/yy")} - ${format(new Date(s.data_fim_contrato + "T12:00:00"), "dd/MM/yy")}`
                           : "—"}
                       </TableCell>
-                      <TableCell>{s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "—"}</TableCell>
+                      <TableCell>
+                        {s.valor_mensalidade ? (
+                          <div>
+                            <span className="font-medium">{formatarMoeda(s.valor_mensalidade)}</span>
+                            <p className="text-xs text-muted-foreground">Sinal: {formatarMoeda(s.valor_mensalidade * 0.3)}</p>
+                          </div>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={st.variant}>{st.label}</Badge>
                       </TableCell>
@@ -500,15 +513,23 @@ export default function ContratosTemporarios() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Valor da Mensalidade (R$) *</Label>
-                <Input type="number" step="0.01" value={valorMensalidade} onChange={(e) => setValorMensalidade(e.target.value)} placeholder="0,00" />
-              </div>
-              <div>
-                <Label>Dia do Vencimento</Label>
-                <Input type="number" min="1" max="31" value={diaVencimento} onChange={(e) => setDiaVencimento(e.target.value)} />
-              </div>
+            <div>
+              <Label>Valor Total do Período (R$) *</Label>
+              <Input type="number" step="0.01" value={valorMensalidade} onChange={(e) => setValorMensalidade(e.target.value)} placeholder="0,00" />
+              {valorMensalidade && parseFloat(valorMensalidade) > 0 && (
+                <div className="mt-2 p-3 rounded-md bg-muted text-sm space-y-1">
+                  <p className="text-muted-foreground">
+                    <strong>Sinal (30%):</strong>{" "}
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(parseFloat(valorMensalidade) * 0.3)}
+                    <span className="text-xs ml-1">(não reembolsável)</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Restante (70%):</strong>{" "}
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(parseFloat(valorMensalidade) * 0.7)}
+                    <span className="text-xs ml-1">(na hospedagem)</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
