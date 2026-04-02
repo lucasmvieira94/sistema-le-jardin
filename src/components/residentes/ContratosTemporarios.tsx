@@ -452,7 +452,14 @@ export default function ContratosTemporarios() {
                           ? `${format(new Date(s.data_inicio_contrato + "T12:00:00"), "dd/MM/yy")} - ${format(new Date(s.data_fim_contrato + "T12:00:00"), "dd/MM/yy")}`
                           : "—"}
                       </TableCell>
-                      <TableCell>{s.valor_mensalidade ? formatarMoeda(s.valor_mensalidade) : "—"}</TableCell>
+                      <TableCell>
+                        {s.valor_mensalidade ? (
+                          <div>
+                            <span className="font-medium">{formatarMoeda(s.valor_mensalidade)}</span>
+                            <p className="text-xs text-muted-foreground">Sinal: {formatarMoeda(s.valor_mensalidade * 0.3)}</p>
+                          </div>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={st.variant}>{st.label}</Badge>
                       </TableCell>
