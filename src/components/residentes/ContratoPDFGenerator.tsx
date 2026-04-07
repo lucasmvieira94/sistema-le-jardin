@@ -62,8 +62,6 @@ export default function ContratoPDFGenerator({
       return labels[forma] || forma;
     };
 
-    const valorAdicionalNatalino = contrato.valor_mensalidade;
-    const parcelaAdicionalNatalino = valorAdicionalNatalino / 12;
     const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const nomeEmpresa = empresaConfig?.nome_empresa || empresa?.nome_empresa || "EMPRESA";
     const cnpj = empresaConfig?.cnpj || empresa?.cnpj || "";
@@ -147,7 +145,7 @@ export default function ContratoPDFGenerator({
       <p class="justify small"><strong>2.10.</strong> No caso de rescisão contratual sem aviso prévio ou unilateral por quebra de cláusula contratual não haverá reembolso da garantia, a fim de verba indenizatória por quebra de contrato, prevista em contrato.</p>
       <p class="justify small"><strong>2.11.</strong> É dado ao CONTRATANTE 10 (dez) dias de carência ao ingressar no residencial, para fins de adaptação. No caso de desistência, será descontado o valor da diária da respectiva garantia, no valor de R$250,00 (duzentos e cinquenta reais) por dia.</p>
       <p class="justify small"><strong>2.12.</strong> O CONTRATANTE deverá no ato do pagamento dos valores descritos nas cláusulas anteriores ressarcir a CONTRATADA de todos os gastos e despesas extras que pela CONTRATADA excepcionalmente venham a ser antecipados, tais como materiais de higiene, medicamentos, fraldas, manicure, cabeleireiro ou similares, utilizados pelo CONTRATANTE durante o mês imediatamente anterior, devendo a CONTRATADA comprovar tais despesas através da apresentação de notas fiscais e/ou recibos.</p>
-      <p class="justify small"><strong>2.13. ADICIONAL NATALINO:</strong> Taxa adicional de 100% sobre o valor da mensalidade, cobrada de forma parcelada em 12 (doze) vezes de ${formatarMoeda(parcelaAdicionalNatalino)}, para custear despesas de 13º salário e férias da equipe.</p>
+      
 
       <!-- CLÁUSULA TERCEIRA: DAS OBRIGAÇÕES DO CONTRATANTE -->
       <h3 class="clausula">CLÁUSULA TERCEIRA: DAS OBRIGAÇÕES DO CONTRATANTE E/OU RESPONSÁVEL ANUENTE</h3>
@@ -281,22 +279,22 @@ export default function ContratoPDFGenerator({
 
   const getStyleSheet = () => `
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; padding: 20px 50px; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.5; color: #000; padding: 20px 50px; }
     .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
-    .header h1 { font-size: 15pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
-    .header h2 { font-size: 12pt; font-weight: normal; color: #333; }
+    .header h1 { font-size: 13pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
+    .header h2 { font-size: 11pt; font-weight: normal; color: #333; }
     .tipo-doc { text-align: center; font-size: 13pt; font-weight: bold; margin: 12px 0; text-decoration: underline; letter-spacing: 1px; }
     .info-box { border: 1px solid #333; padding: 8px 12px; margin: 8px 0; }
-    .clausula { font-weight: bold; font-size: 12pt; margin: 14px 0 6px; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    .clausula { font-weight: bold; font-size: 11pt; margin: 14px 0 6px; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
     .justify { text-align: justify; margin-bottom: 4px; }
-    .small { font-size: 10.5pt; }
+    .small { font-size: 10pt; }
     .lista { margin-left: 20px; margin-bottom: 6px; }
     .lista p { margin-bottom: 2px; }
-    .data-local { text-align: right; margin: 20px 0; font-size: 12pt; }
+    .data-local { text-align: right; margin: 20px 0; font-size: 11pt; }
     .assinaturas { margin-top: 30px; }
     .assinatura-row { display: flex; justify-content: space-between; margin-bottom: 35px; }
     .assinatura-item { text-align: center; width: 45%; }
-    .assinatura-linha { border-top: 1px solid #000; padding-top: 4px; margin-top: 30px; font-size: 10.5pt; }
+    .assinatura-linha { border-top: 1px solid #000; padding-top: 4px; margin-top: 30px; font-size: 10pt; }
     @media print { body { padding: 15px 40px; } }
   `;
 
@@ -335,7 +333,7 @@ export default function ContratoPDFGenerator({
       tempContainer.style.width = '210mm';
       tempContainer.style.backgroundColor = '#ffffff';
       tempContainer.style.fontFamily = "'Times New Roman', Times, serif";
-      tempContainer.style.fontSize = '12pt';
+      tempContainer.style.fontSize = '11pt';
       tempContainer.style.lineHeight = '1.5';
       tempContainer.style.padding = '20px 50px';
       tempContainer.style.color = '#000';
@@ -420,7 +418,7 @@ export default function ContratoPDFGenerator({
           <div
             ref={printRef}
             className="bg-white text-black p-8 max-w-4xl mx-auto border rounded shadow-sm"
-            style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '12pt', lineHeight: '1.5' }}
+            style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '11pt', lineHeight: '1.5' }}
             dangerouslySetInnerHTML={{ __html: generateContractHTML() }}
           />
         </div>
