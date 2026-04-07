@@ -62,20 +62,13 @@ export default function ContratoPDFGenerator({
       return labels[forma] || forma;
     };
 
-    const calcularIdade = (dataNascimento: string) => {
-      const hoje = new Date();
-      const nascimento = new Date(dataNascimento);
-      let idade = hoje.getFullYear() - nascimento.getFullYear();
-      if (hoje.getMonth() < nascimento.getMonth() || (hoje.getMonth() === nascimento.getMonth() && hoje.getDate() < nascimento.getDate())) idade--;
-      return idade;
-    };
-
     const valorAdicionalNatalino = contrato.valor_mensalidade;
     const parcelaAdicionalNatalino = valorAdicionalNatalino / 12;
     const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const nomeEmpresa = empresaConfig?.nome_empresa || empresa?.nome_empresa || "EMPRESA";
     const cnpj = empresaConfig?.cnpj || empresa?.cnpj || "";
     const cidade = empresaConfig?.cidade || "";
+    const endereco = empresaConfig?.endereco || "";
     const logoUrl = empresaConfig?.logo_url || "";
 
     return `
@@ -83,165 +76,164 @@ export default function ContratoPDFGenerator({
         ${logoUrl ? `<img src="${logoUrl}" alt="Logotipo" style="max-height:60px;margin:0 auto 8px;display:block;" />` : ''}
         <h1>${nomeEmpresa}</h1>
         ${cnpj ? `<p style="font-size:10pt;margin:3px 0 0">CNPJ: ${cnpj}</p>` : ''}
-        <h2>Contrato de Prestação de Serviços</h2>
-        <p style="font-size:9pt;margin-top:4px;color:#555">Contrato nº ${contrato.numero_contrato}</p>
+        ${endereco ? `<p style="font-size:9pt;margin:2px 0 0">${endereco}</p>` : ''}
       </div>
 
       <div class="tipo-doc">CONTRATO DE PRESTAÇÃO DE SERVIÇOS<br/>Instituição de Longa Permanência para Idosos</div>
 
-      <p class="justify">Pelo presente instrumento particular de Contrato de Prestação de Serviços, de um lado:</p>
-
+      <!-- QUALIFICAÇÃO DAS PARTES -->
       <div class="info-box">
-        <p class="justify"><strong>CONTRATADA:</strong> <strong>LE JARDIN RESIDENCIAL SÊNIOR LTDA ME</strong>, pessoa jurídica de direito privado, com sede na Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE, inscrita no CNPJ sob o nº 48.897.411/0001-58, neste ato representado pela sócia Rosângela Moraes Sobral.</p>
+        <p class="justify"><strong>CONTRATADA:</strong> <strong>LE JARDIN RESIDENCIAL SÊNIOR LTDA ME</strong>, pessoa jurídica de direito privado, com sede na Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE, inscrita no CNPJ sob o nº 48.897.411/0001-58, neste ato representada pela sócia <strong>Rosângela Moraes Sobral</strong>, Divorciada, Brasileira, Naturalidade Aracaju/SE, portadora da Cédula de Identidade R.G. nº 905.849 SSP/SE e CPF nº 532.193.685-49.</p>
       </div>
 
       <div class="info-box">
-        <p class="justify"><strong>CONTRATANTE:</strong> <strong>${contrato.contratante_nome}</strong>${contrato.contratante_cpf ? `, CPF nº ${contrato.contratante_cpf}` : ''}${contrato.contratante_rg ? `, RG nº ${contrato.contratante_rg}` : ''}${contrato.contratante_endereco ? `, residente em ${contrato.contratante_endereco}` : ''}${contrato.contratante_cidade && contrato.contratante_estado ? `, ${contrato.contratante_cidade}/${contrato.contratante_estado}` : ''}${contrato.contratante_cep ? `, CEP ${contrato.contratante_cep}` : ''}${contrato.contratante_telefone ? `, Tel: ${contrato.contratante_telefone}` : ''}.</p>
+        <p class="justify"><strong>CONTRATANTE:</strong> <strong>${contrato.contratante_nome}</strong>, BRASILEIRO(A)${contrato.contratante_cpf ? `, portador(a) do CPF: ${contrato.contratante_cpf}` : ''}${contrato.contratante_rg ? `, RG: ${contrato.contratante_rg}` : ''}${contrato.contratante_endereco ? `, residente e domiciliado(a) na ${contrato.contratante_endereco}` : ''}${contrato.contratante_cidade && contrato.contratante_estado ? `, ${contrato.contratante_cidade}/${contrato.contratante_estado}` : ''}${contrato.contratante_cep ? `, CEP: ${contrato.contratante_cep}` : ''}, juntamente com o seu <strong>ANUENTE</strong>: <strong>${residente.nome_completo}</strong>${residente.cpf ? `, CPF: ${residente.cpf}` : ''}, DATA DE NASCIMENTO: ${formatarData(residente.data_nascimento)}.</p>
       </div>
 
-      <div class="info-box">
-        <p class="justify"><strong>ANUENTE (Residente):</strong> <strong>${residente.nome_completo}</strong>${residente.cpf ? `, CPF nº ${residente.cpf}` : ''}, nascido(a) em ${formatarData(residente.data_nascimento)}, ${calcularIdade(residente.data_nascimento)} anos, prontuário nº ${residente.numero_prontuario}${residente.quarto ? `, quarto ${residente.quarto}` : ''}.</p>
-      </div>
+      <p class="justify" style="margin-top:12px">Pelo presente instrumento particular, as partes acima qualificadas, doravante denominadas CONTRATANTE e CONTRATADA, na melhor forma de direito, ajustam e contratam a prestação de serviços profissionais destinados a moradia definitiva, temporária e/ou provisória de idosos nos termos da Lei 10.741/2003 (Estatuto do Idoso), segundo as cláusulas e condições adiante arroladas.</p>
 
-      <p class="justify" style="margin-top:12px">Têm entre si, justo e contratado, o presente Contrato que se regerá pelas cláusulas e condições seguintes:</p>
-
-      <!-- CLÁUSULA PRIMEIRA -->
+      <!-- CLÁUSULA PRIMEIRA: DO OBJETO -->
       <h3 class="clausula">CLÁUSULA PRIMEIRA: DO OBJETO</h3>
       <p class="justify"><strong>1.</strong> O objeto do presente contrato consiste na prestação de serviços de Instituição de Longa Permanência, destinada ao domicílio coletivo de pessoas com idade igual ou superior a 60 (sessenta) anos.</p>
-      <p class="justify"><strong>1.1.</strong> Serviços inclusos:</p>
+      <p class="justify"><strong>1.1.</strong> Faz parte integrante do objeto do presente instrumento a prestação dos seguintes serviços pela CONTRATADA ao CONTRATANTE:</p>
       <div class="lista">
-        <p><strong>I –</strong> Acomodação em ${residente.quarto ? `QUARTO ${residente.quarto.toUpperCase()}` : 'QUARTO'}, sala coletiva de TV, sala de atendimento de enfermagem, recreação e lazer;</p>
-        <p><strong>II –</strong> Fornecimento mínimo de 05 (cinco) refeições diárias;</p>
-        <p><strong>III –</strong> Serviços de limpeza diária;</p>
+        <p><strong>I –</strong> Acomodação em ${residente.quarto ? `QUARTO ${residente.quarto.toUpperCase()}` : 'QUARTO'}, sala coletiva de TV, sala de atendimento de enfermagem, sala de atividades, recreação e lazer, sala de jantar, conforme opção do CONTRATANTE e/ou disponibilidade da CONTRATADA;</p>
+        <p><strong>II –</strong> Fornecimento mínimo de 05 (cinco) refeições diárias, conforme cardápio devidamente elaborado por um nutricionista;</p>
+        <p><strong>III –</strong> Serviços de limpeza diária dos quartos, banheiros e ambientes comuns da Instituição;</p>
         <p><strong>IV –</strong> Roupa de cama e banho;</p>
         <p><strong>V –</strong> Serviços de lavanderia;</p>
-        <p><strong>VI –</strong> Atividades coordenadas por profissionais capacitados;</p>
-        <p><strong>VII –</strong> Atividades de preservação do vínculo familiar.</p>
+        <p><strong>VI –</strong> Atividades coordenadas por profissionais devidamente capacitados visando à preservação da saúde física e mental e do aperfeiçoamento moral, intelectual, espiritual e social do CONTRATANTE;</p>
+        <p><strong>VII –</strong> Atividades que buscam a preservação do vínculo familiar.</p>
       </div>
-      <p class="justify"><strong>1.2.</strong> Não estão incluídos:</p>
+      <p class="justify"><strong>1.2.</strong> Não estão incluídos no objeto deste Contrato os seguintes serviços:</p>
       <div class="lista small">
-        <p><strong>I –</strong> Profissionais para serviços externos (consultas, acompanhamento hospitalar, etc.);</p>
-        <p><strong>II –</strong> Fraldas descartáveis, materiais de higiene pessoal;</p>
-        <p><strong>III –</strong> Materiais para curativos e sondas;</p>
-        <p><strong>IV –</strong> Medicação e suplementos de uso particular;</p>
+        <p><strong>I –</strong> Disponibilização de profissionais para serviços externos do CONTRATANTE como, consultas médicas, acompanhamento hospitalar, internação hospitalar, exames, dentre outros similares;</p>
+        <p><strong>II –</strong> Fornecimento de fraldas descartáveis, lenços de higiene íntima, materiais de higiene pessoal em geral;</p>
+        <p><strong>III –</strong> Fornecimento de materiais para curativos, material para tratar úlceras por pressão, úlcera arterial, úlcera venosa e escaras em geral, sondas e similares;</p>
+        <p><strong>IV –</strong> Fornecimento de medicação e suplementos vitamínicos de uso particular;</p>
         <p><strong>V –</strong> Vestuário pessoal;</p>
         <p><strong>VI –</strong> Fisioterapia de reabilitação;</p>
-        <p><strong>VII –</strong> Exames complementares;</p>
+        <p><strong>VII –</strong> Exames complementares de diagnóstico;</p>
         <p><strong>VIII –</strong> Consultas médicas de urgência;</p>
         <p><strong>IX –</strong> Aluguel de aparelhos hospitalares;</p>
         <p><strong>X –</strong> Oxigênio;</p>
-        <p><strong>XI –</strong> Transporte a consultas e exames;</p>
-        <p><strong>XII –</strong> Transporte em ambulância/táxi;</p>
+        <p><strong>XI –</strong> Transporte a consultas externas de rotina e realização de exames;</p>
+        <p><strong>XII –</strong> Transporte em ambulância e/ou táxi;</p>
         <p><strong>XIII –</strong> Tratamentos de beleza e estética;</p>
-        <p><strong>XIV –</strong> Outros extras de caráter pessoal;</p>
-        <p><strong>XV –</strong> Extras faturados juntamente com a mensalidade;</p>
+        <p><strong>XIV –</strong> Outros extras, de caráter pessoal, solicitados pelo cliente;</p>
+        <p><strong>XV –</strong> Quando prestado qualquer um dos serviços enumerados, serão faturados juntamente com a mensalidade de Prestação de Serviços, especificado cada despesa como extra no final de cada mês;</p>
         <p><strong>XVI –</strong> Alimentos de uso pessoal e específico.</p>
       </div>
 
-      <!-- CLÁUSULA SEGUNDA -->
+      <!-- CLÁUSULA SEGUNDA: DO VALOR -->
       <h3 class="clausula">CLÁUSULA SEGUNDA: DO VALOR</h3>
-      <p class="justify"><strong>2.</strong> Pelos serviços descritos, o CONTRATANTE pagará à CONTRATADA conforme o Grau de Dependência do Idoso:</p>
+      <p class="justify"><strong>2.</strong> Pelos serviços descritos nas cláusulas anteriores, o CONTRATANTE pagará à CONTRATADA o valor mensal equivalente ao Grau de Dependência do Idoso:</p>
       <div class="lista small">
-        <p><strong>A)</strong> Indivíduo Autônomo – detém poder decisório e controle sobre a sua vida.</p>
-        <p><strong>B)</strong> Grau I – independentes, mesmo com equipamentos de autoajuda;</p>
-        <p><strong>C)</strong> Grau II – dependência em até três atividades de autocuidado;</p>
-        <p><strong>D)</strong> Grau III – dependência que requer assistência em todas as atividades.</p>
+        <p><strong>A)</strong> Indivíduo Autônomo – é aquele que detém poder decisório e controle sobre a sua vida.</p>
+        <p><strong>B)</strong> Grau de Dependência I – idosos independentes, mesmo que requeiram uso de equipamentos de autoajuda;</p>
+        <p><strong>C)</strong> Grau de Dependência II – idosos com dependência em até três atividades de autocuidado para a vida diária tais como: alimentação, mobilidade, higiene; sem comprometimento cognitivo ou com alteração cognitiva controlada;</p>
+        <p><strong>D)</strong> Grau de Dependência III – idosos com dependência que requeiram assistência em todas as atividades de autocuidado para a vida diária e/ou com comprometimento cognitivo.</p>
       </div>
-      <p class="justify small"><strong>Parágrafo Único:</strong> A Avaliação de Grau de Dependência ocorrerá no acolhimento e poderá ser revista a qualquer momento.</p>
-      <p class="justify"><strong>2.1.</strong> Valor mensal: <strong>${formatarMoeda(contrato.valor_mensalidade)}</strong> (${valorPorExtenso(contrato.valor_mensalidade)}).</p>
-      <p class="justify small"><strong>2.2.</strong> Alteração do Grau de Dependência acarreta atualização do valor.</p>
-      <p class="justify small"><strong>2.3.</strong> Correção anual conforme tabela vigente.</p>
-      <p class="justify"><strong>2.4.</strong> Pagamento até o <strong>dia ${contrato.dia_vencimento}</strong> de cada mês, via <strong>${getFormaPagamentoLabel(contrato.forma_pagamento)}</strong>.</p>
-      <p class="justify small"><strong>2.5.</strong> Atraso: multa de 2% e juros de 1% ao mês (Art. 52, §1º, CDC).</p>
-      <p class="justify small"><strong>2.6.</strong> Inadimplência superior a 30 dias implica retirada imediata do residente.</p>
-      <p class="justify small"><strong>2.7.</strong> Não haverá restituição de importâncias já pagas.</p>
-      <p class="justify small"><strong>2.8.</strong> Acolhimento condicionado ao pagamento de uma mensalidade de garantia.</p>
-      <p class="justify small"><strong>2.9.</strong> Garantia devolvida ao final do contrato, com possíveis descontos para reparos.</p>
-      <p class="justify small"><strong>2.10.</strong> Rescisão sem aviso prévio não gera reembolso da garantia.</p>
-      <p class="justify small"><strong>2.11.</strong> Carência de 10 dias para adaptação.</p>
-      <p class="justify small"><strong>2.12.</strong> Despesas extras comprovadas serão cobradas junto à mensalidade.</p>
-      <p class="justify small"><strong>2.13. ADICIONAL NATALINO:</strong> Taxa de 100% sobre a mensalidade, em 12x de ${formatarMoeda(parcelaAdicionalNatalino)}.</p>
+      <p class="justify small"><strong>Parágrafo Único:</strong> A AVALIAÇÃO DE GRAU DE DEPENDÊNCIA DO IDOSO (AGDI) ocorrerá no ato do acolhimento, através da avaliação física em conjunto com as informações contidas na FICHA DE ACOLHIMENTO. A AGDI também poderá ocorrer a qualquer momento que a CONTRATANTE julgue necessário, em virtude de adequar os serviços prestados a fim de atender todas as demandas da CONTRATADA e sua ANUENTE.</p>
+      <p class="justify"><strong>2.1.</strong> Valor mensal a ser pago pela prestação de serviços: no valor de <strong>${formatarMoeda(contrato.valor_mensalidade)}</strong> (${valorPorExtenso(contrato.valor_mensalidade)}) mensais até o final da vigência deste contrato, incluso todos os custos necessários para o perfeito cumprimento do presente contrato.</p>
+      <p class="justify small"><strong>2.2.</strong> Sempre que o idoso tiver o seu Grau de Dependência alterado, o valor da mensalidade será atualizado conforme tabela de valores vigente.</p>
+      <p class="justify small"><strong>2.3.</strong> O valor mensal descrito na CLÁUSULA SEGUNDA será corrigido ao término da vigência desse contrato conforme tabela de valores vigente.</p>
+      <p class="justify"><strong>2.4.</strong> O valor descrito na CLÁUSULA SEGUNDA deverá ser pago pelo CONTRATANTE até o <strong>dia ${contrato.dia_vencimento}</strong> de cada mês, que deverá ser realizado via <strong>${getFormaPagamentoLabel(contrato.forma_pagamento)}</strong> na chave: <strong>lejardinresidencial.senior@gmail.com</strong>, em nome de LE JARDIN RESIDENCIAL SENIOR LTDA, CNPJ: 48.897.411/0001-58.</p>
+      <p class="justify small"><strong>2.5.</strong> Havendo atraso no pagamento dos valores descritos na CLÁUSULA SEGUNDA, haverá incidência de multa moratória de até 2% (dois por cento) e juros de 1% ao mês do seu valor em conformidade com o disposto no §1º do artigo 52 da Lei 8.078/90 (Código de Defesa do Consumidor).</p>
+      <p class="justify small"><strong>2.6.</strong> O não cumprimento do pagamento da mensalidade por período igual ou superior a 30 (trinta) dias após o seu vencimento, implica na retirada imediata do residente. Sendo por conta do residente e/ou do seu responsável, todas as despesas inerentes à sua deslocação do residencial para outro destino.</p>
+      <p class="justify small"><strong>2.7.</strong> Não será restituído, em caso algum, importâncias já pagas como por exemplo em situação de falecimento, internamento hospitalar, férias, ausências temporárias, rescisão de contrato sem aviso prévio ou abandono do Le Jardin Residencial Sênior.</p>
+      <p class="justify small"><strong>2.8.</strong> O acolhimento do residente fica condicionado ao pagamento de uma mensalidade por parte do CONTRATANTE, a título de garantia. A CONTRATADA se reserva ao direito de recusar a entrada do residente na falta do pagamento da garantia estipulada neste artigo.</p>
+      <p class="justify small"><strong>2.9.</strong> A garantia, estipulada no artigo anterior, será integralmente devolvida ao final do contrato, podendo ser abatido o valor da última mensalidade no caso de não renovação deste contrato. A devolução integral fica condicionada à análise dos bens móveis e imóveis utilizados pelo residente ao decorrer dos 12 meses. Caso estes necessitem de manutenção para acomodação de outro residente, será descontado o valor necessário para os reparos, mediante apresentação de comprovação por parte da CONTRATADA.</p>
+      <p class="justify small"><strong>2.10.</strong> No caso de rescisão contratual sem aviso prévio ou unilateral por quebra de cláusula contratual não haverá reembolso da garantia, a fim de verba indenizatória por quebra de contrato, prevista em contrato.</p>
+      <p class="justify small"><strong>2.11.</strong> É dado ao CONTRATANTE 10 (dez) dias de carência ao ingressar no residencial, para fins de adaptação. No caso de desistência, será descontado o valor da diária da respectiva garantia, no valor de R$250,00 (duzentos e cinquenta reais) por dia.</p>
+      <p class="justify small"><strong>2.12.</strong> O CONTRATANTE deverá no ato do pagamento dos valores descritos nas cláusulas anteriores ressarcir a CONTRATADA de todos os gastos e despesas extras que pela CONTRATADA excepcionalmente venham a ser antecipados, tais como materiais de higiene, medicamentos, fraldas, manicure, cabeleireiro ou similares, utilizados pelo CONTRATANTE durante o mês imediatamente anterior, devendo a CONTRATADA comprovar tais despesas através da apresentação de notas fiscais e/ou recibos.</p>
+      <p class="justify small"><strong>2.13. ADICIONAL NATALINO:</strong> Taxa adicional de 100% sobre o valor da mensalidade, cobrada de forma parcelada em 12 (doze) vezes de ${formatarMoeda(parcelaAdicionalNatalino)}, para custear despesas de 13º salário e férias da equipe.</p>
 
-      <!-- CLÁUSULA TERCEIRA -->
-      <h3 class="clausula">CLÁUSULA TERCEIRA: DAS OBRIGAÇÕES DO CONTRATANTE</h3>
-      <p class="justify small"><strong>3.</strong> Indicar dados de profissionais de saúde em até 48h.</p>
-      <p class="justify small"><strong>3.1.</strong> Informar medicamentos, alergias, patologias e receituários.</p>
-      <p class="justify small"><strong>3.2.</strong> Realizar pagamentos nos prazos estabelecidos.</p>
-      <p class="justify small"><strong>3.3.</strong> Fornecer relação de bens e pertences pessoais.</p>
-      <p class="justify small"><strong>3.4.</strong> Respeitar normas e regulamentos da Instituição.</p>
+      <!-- CLÁUSULA TERCEIRA: DAS OBRIGAÇÕES DO CONTRATANTE -->
+      <h3 class="clausula">CLÁUSULA TERCEIRA: DAS OBRIGAÇÕES DO CONTRATANTE E/OU RESPONSÁVEL ANUENTE</h3>
+      <p class="justify"><strong>3.</strong> Indicar para a CONTRATADA, no prazo máximo de 48 (quarenta e oito) horas a contar do início da vigência deste instrumento, todos os dados cadastrais e telefones de contatos de profissionais que atendam às necessidades particulares do CONTRATANTE, tais como médicos, fisioterapeutas, dentistas, nutricionistas, dentre outros profissionais de forma a permitir que, em caso de necessidade, a CONTRATADA possa entrar em contato com estes profissionais.</p>
+      <p class="justify"><strong>3.1.</strong> Indicar para a CONTRATADA, no ato de assinatura deste instrumento, a relação de medicamentos controlados que faça uso o CONTRATANTE, bem como informações pessoais (como alergias, patologias, tipo sanguíneo, etc.) e os respectivos receituários médicos com a descrição dos medicamentos, dosagem e posologia.</p>
+      <p class="justify small"><strong>PARÁGRAFO ÚNICO:</strong> É DE RESPONSABILIDADE DO CONTRATANTE O FORNECIMENTO DE MEDICAMENTOS E MATERIAIS DE HIGIENE PESSOAL PREVISTOS POR MÉDICO OU NECESSIDADE DO RESIDENTE NA SEDE DA CONTRATADA EM TEMPO HÁBIL PARA UTILIZAÇÃO. PODERÁ A CONTRATANTE, A SEU CRITÉRIO, SOLICITAR A COMPRA DESTES ITENS À CONTRATADA, MEDIANTE ACRÉSCIMO DE TAXA DE SERVIÇO DE COMPRA.</p>
+      <div class="lista small">
+        <p><strong>1.</strong> O SERVIÇO DE COMPRA de quaisquer medicamentos ou materiais de higiene pessoal previamente autorizados pelo CONTRATANTE implica uma taxa de 20% a ser paga à CONTRATADA sobre o valor da nota fiscal emitida pelo estabelecimento comercial onde foram adquiridos os itens. Este estabelecimento será de livre escolha da CONTRATADA.</p>
+        <p><strong>2.</strong> Os VALORES – valor expresso na nota fiscal mais taxa de serviço – devem ser ressarcidos em até 02 (dois) dias úteis da data de efetiva compra, comunicada pela CONTRATADA via WhatsApp. Após esse período será cobrada multa de 10% do valor total, e juros de 1% ao mês.</p>
+      </div>
+      <p class="justify"><strong>3.2.</strong> Promover o pagamento dos valores devidos à CONTRATADA descritos na CLÁUSULA SEGUNDA e demais cláusulas deste instrumento, na forma e prazos estabelecidos.</p>
+      <p class="justify"><strong>3.3.</strong> Fornecer à CONTRATADA no ato de assinatura do presente Instrumento, uma relação com os bens e pertences pessoais do CONTRATANTE, atualizando a relação com a entrada e/ou retirada destes itens, com entrega de recibo de depósito dos bens confiados à CONTRATADA.</p>
+      <p class="justify"><strong>3.4.</strong> O CONTRATANTE deverá respeitar as normas e regulamentos da Instituição.</p>
 
-      <!-- CLÁUSULA QUARTA -->
+      <!-- CLÁUSULA QUARTA: DAS OBRIGAÇÕES DA CONTRATADA -->
       <h3 class="clausula">CLÁUSULA QUARTA: DAS OBRIGAÇÕES DA CONTRATADA</h3>
-      <p class="justify small"><strong>4.</strong> Manter padrões de habitação conforme RDC 283 e Estatuto do Idoso.</p>
-      <p class="justify small"><strong>4.1.</strong> Atender aos princípios dos Art. 49 e 50 do Estatuto do Idoso:</p>
+      <p class="justify"><strong>4.</strong> Manter padrões de habitação compatíveis com as necessidades dos idosos atendidos, bem como provê-los com alimentação regular e higiene, indispensáveis às normas sanitárias e com estas condizentes, conforme estabelecido na RDC 283, bem como na Lei nº 10.741/2003 (Estatuto do Idoso).</p>
+      <p class="justify"><strong>4.1.</strong> Estabelecer atendimento de moradia digna adotando os seguintes princípios estabelecidos nos artigos 49 e 50 da Lei nº 10.741 de 1º de outubro de 2003 (Estatuto do Idoso):</p>
       <div class="lista small">
         <p><strong>I –</strong> Preservação dos vínculos familiares;</p>
-        <p><strong>II –</strong> Atendimento personalizado;</p>
-        <p><strong>III –</strong> Manutenção do idoso na mesma instituição;</p>
-        <p><strong>IV –</strong> Participação em atividades comunitárias;</p>
-        <p><strong>V –</strong> Observância dos direitos dos idosos;</p>
-        <p><strong>VI –</strong> Preservação da identidade e dignidade;</p>
-        <p><strong>VII –</strong> Acomodações para visitas;</p>
-        <p><strong>VIII –</strong> Cuidados à saúde;</p>
-        <p><strong>IX –</strong> Atividades educacionais, culturais e de lazer;</p>
-        <p><strong>X –</strong> Assistência religiosa;</p>
-        <p><strong>XI –</strong> Estudo social de cada caso;</p>
-        <p><strong>XII –</strong> Comunicação de doenças infectocontagiosas;</p>
-        <p><strong>XIII –</strong> Documentos de cidadania;</p>
-        <p><strong>XIV –</strong> Arquivo de anotações;</p>
-        <p><strong>XV –</strong> Comunicação ao MP em caso de abandono.</p>
+        <p><strong>II –</strong> Atendimento personalizado e em pequenos grupos;</p>
+        <p><strong>III –</strong> Manutenção do idoso na mesma instituição, salvo em caso de força maior;</p>
+        <p><strong>IV –</strong> Participação do idoso nas atividades comunitárias, de caráter interno e externo;</p>
+        <p><strong>V –</strong> Observância dos direitos e garantias dos idosos;</p>
+        <p><strong>VI –</strong> Preservação da identidade do idoso e oferecimento de ambiente de respeito e dignidade;</p>
+        <p><strong>VII –</strong> Oferecer acomodações apropriadas para recebimento de visitas;</p>
+        <p><strong>VIII –</strong> Propiciar cuidados à saúde, conforme necessidade do idoso;</p>
+        <p><strong>IX –</strong> Promover atividades educacionais, esportivas, culturais e de lazer;</p>
+        <p><strong>X –</strong> Propiciar assistência religiosa àqueles que desejarem, de acordo com as suas crenças;</p>
+        <p><strong>XI –</strong> Proceder ao estudo social e pessoal de cada caso;</p>
+        <p><strong>XII –</strong> Comunicar à autoridade competente de saúde toda ocorrência de idoso portador de doenças infectocontagiosas;</p>
+        <p><strong>XIII –</strong> Providenciar ou solicitar que o Ministério Público requisite os documentos necessários ao exercício da cidadania àqueles que não os tiverem, na forma da lei;</p>
+        <p><strong>XIV –</strong> Manter arquivo de anotações onde constem data e circunstâncias do atendimento, nome do idoso, responsável, parentes, endereços, cidade e relação de seus pertences, bem como o valor de contribuições, e suas alterações, se houver, e demais dados que possibilitem sua identificação e a individualização do atendimento;</p>
+        <p><strong>XV –</strong> Comunicar ao Ministério Público, para as providências cabíveis, a situação de abandono moral ou material por parte dos familiares.</p>
       </div>
-      <p class="justify small"><strong>4.2.</strong> Preservar identidade e privacidade, agindo com boa-fé.</p>
-      <p class="justify small"><strong>4.3.</strong> Quadro de profissionais: Assistente Social, Nutricionista, Fisioterapeuta, Educador Físico, Terapeuta Ocupacional e Cuidadores.</p>
-      <p class="justify small"><strong>4.4.</strong> Em urgência/emergência, encaminhamento ao hospital autorizado com aviso imediato.</p>
+      <p class="justify"><strong>4.2.</strong> A CONTRATADA se compromete a envidar todos os esforços necessários para cumprir com o exposto no presente contrato, preservando identidade e privacidade do CONTRATANTE e do seu ANUENTE, agindo sempre em consonância com os ditames legais, éticos e de boa-fé aplicáveis, respeitando todos os direitos da pessoa idosa.</p>
+      <p class="justify"><strong>4.3.</strong> A CONTRATADA conta com o seguinte quadro de profissionais com formação específica a fim de atender ao CONTRATANTE: Assistente Social; Nutricionista; Fisioterapeuta; Educador Físico; Terapeuta Ocupacional; e Cuidadores de Idosos.</p>
+      <p class="justify"><strong>4.4.</strong> A qualquer momento quando surgir uma urgência ou emergência, a CONTRATADA encaminhará o ANUENTE ao hospital sugerido e autorizado pelo CONTRATANTE no ato da assinatura do contrato e de imediato entrará em contato com o responsável para avisar.</p>
 
-      <!-- CLÁUSULA QUINTA -->
-      <h3 class="clausula">CLÁUSULA QUINTA: DA VIGÊNCIA</h3>
-      <p class="justify"><strong>5.</strong> Vigência de 12 meses a partir de <strong>${formatarData(contrato.data_inicio_contrato)}</strong>${contrato.data_fim_contrato ? `, com término em <strong>${formatarData(contrato.data_fim_contrato)}</strong>` : ''}.</p>
+      <!-- CLÁUSULA QUINTA: DA VIGÊNCIA -->
+      <h3 class="clausula">CLÁUSULA QUINTA: DA VIGÊNCIA DO CONTRATO</h3>
+      <p class="justify"><strong>5.</strong> O contrato terá validade de 12 (doze) meses a contar da data de assinatura deste contrato${contrato.data_inicio_contrato ? `, com início em <strong>${formatarData(contrato.data_inicio_contrato)}</strong>` : ''}${contrato.data_fim_contrato ? ` e término em <strong>${formatarData(contrato.data_fim_contrato)}</strong>` : ''}.</p>
 
-      <!-- CLÁUSULA SEXTA -->
+      <!-- CLÁUSULA SEXTA: DA RESCISÃO -->
       <h3 class="clausula">CLÁUSULA SEXTA: DA RESCISÃO</h3>
-      <p class="justify"><strong>6.</strong> Rescisão mediante aviso prévio de 30 dias.</p>
-      <p class="justify small"><strong>6.1.</strong> Descumprimento do aviso prévio: indenização de uma mensalidade.</p>
-      <p class="justify small"><strong>6.2.</strong> Rescisão unilateral imediata nos casos:</p>
+      <p class="justify"><strong>6. Rescisão por qualquer das partes:</strong> As partes contratantes reservam o direito de rescindir este contrato a qualquer momento, mediante o fornecimento de um aviso prévio de 30 (trinta) dias.</p>
+      <p class="justify"><strong>6.1. Indenização por Descumprimento do Aviso Prévio:</strong> Caso uma das partes não cumpra o aviso prévio estipulado na Cláusula 6, a parte infratora concorda em indenizar a outra parte com o valor equivalente a uma mensalidade, conforme estabelecido neste contrato.</p>
+      <p class="justify"><strong>6.2.</strong> Caberá a rescisão unilateral imediata nos seguintes casos:</p>
       <div class="lista small">
-        <p><strong>I –</strong> Atraso superior a 30 dias;</p>
-        <p><strong>II –</strong> Descumprimento de cláusulas;</p>
-        <p><strong>III –</strong> Mudança de grau de dependência.</p>
+        <p><strong>I –</strong> Atraso pelo CONTRATANTE no pagamento das parcelas ajustadas na CLÁUSULA SEGUNDA deste instrumento no prazo superior a 30 (trinta) dias;</p>
+        <p><strong>II –</strong> Descumprimento de quaisquer cláusulas contratuais por quaisquer das partes;</p>
+        <p><strong>III –</strong> Após necessidade de nova AGDI e mudança no grau de dependência, o atual contrato será extinto automaticamente, ficando a CONTRATADA desobrigada em renovar o contrato.</p>
       </div>
-      <p class="justify small"><strong>6.3.</strong> Falecimento: pagamento do mês do falecimento.</p>
+      <p class="justify"><strong>6.3.</strong> O presente contrato será ainda rescindido de pleno direito no caso de falecimento do CONTRATANTE, ficando acordado entre as partes o pagamento do mês relativo ao falecimento deste, referente aos serviços prestados no período.</p>
 
-      <!-- CLÁUSULA SÉTIMA -->
+      <!-- CLÁUSULA SÉTIMA: DISPOSIÇÕES GERAIS -->
       <h3 class="clausula">CLÁUSULA SÉTIMA: DAS DISPOSIÇÕES GERAIS</h3>
-      <p class="justify small"><strong>7.</strong> Cláusulas válidas até rescisão conforme Cláusula Sexta.</p>
-      <p class="justify small"><strong>7.1.</strong> Tolerância não constitui novação ou renúncia.</p>
-      <p class="justify small"><strong>7.2.</strong> Instalações monitoradas com vídeo vigilância.</p>
-      <p class="justify small"><strong>7.3.</strong> Fotos/filmagens para uso exclusivo em redes sociais e grupos de familiares.</p>
-      <p class="justify small"><strong>7.4.</strong> Ausência de subordinação entre as partes.</p>
-      <p class="justify small"><strong>7.5.</strong> Obrigação de fornecer cópia do contrato ao CONTRATANTE.</p>
-      <p class="justify small"><strong>7.6.</strong> Foro da Comarca da CONTRATADA.</p>
+      <p class="justify"><strong>7.</strong> O CONTRATANTE declara-se ciente de que as cláusulas e disposições presentes neste instrumento de prestação de serviços perdurarão até que se opere a rescisão do presente por uma das formas previstas na CLÁUSULA SEXTA.</p>
+      <p class="justify"><strong>7.1.</strong> Qualquer tolerância por quaisquer das partes em relação a obrigações que devam ser cumpridas pela outra não deverá ser interpretada como precedente, novação ou renúncia aos direitos que a lei e o presente contrato assegurem.</p>
+      <p class="justify"><strong>7.2.</strong> Por questões de vigilância e segurança, nossas instalações, sala de estar, quartos, sala de jantar, sala de enfermagem e áreas externas, encontram-se monitoradas com vídeo vigilância e gravação interna, somente para uso da Instituição.</p>
+      <p class="justify"><strong>7.3.</strong> As fotos e filmagens tiradas de nossos clientes serão de uso exclusivo de divulgação em redes sociais e em grupos de familiares do WhatsApp, não serão usadas para outros fins.</p>
+      <p class="justify"><strong>7.4.</strong> Fica pactuada entre a CONTRATADA e a CONTRATANTE a ausência de qualquer tipo de relação de subordinação.</p>
+      <p class="justify"><strong>7.5.</strong> É obrigação da CONTRATADA oferecer ao CONTRATANTE cópia do presente instrumento, contendo todas as especificidades da prestação de serviços da CONTRATADA.</p>
+      <p class="justify"><strong>7.6.</strong> Fica eleito o foro da Comarca de Aracaju – SE para dirimir quaisquer questões oriundas deste contrato, renunciando as PARTES a qualquer outro, por mais privilegiado que seja.</p>
 
       ${contrato.clausulas_especiais ? `
         <h3 class="clausula">CLÁUSULA OITAVA: CLÁUSULAS ESPECIAIS</h3>
-        <p class="justify small">${contrato.clausulas_especiais.replace(/\n/g, '<br/>')}</p>
+        <p class="justify">${contrato.clausulas_especiais.replace(/\n/g, '<br/>')}</p>
       ` : ''}
 
       ${contrato.observacoes ? `
         <h3 class="clausula">OBSERVAÇÕES</h3>
-        <p class="justify small">${contrato.observacoes.replace(/\n/g, '<br/>')}</p>
+        <p class="justify">${contrato.observacoes.replace(/\n/g, '<br/>')}</p>
       ` : ''}
 
-      <p class="justify" style="margin-top:15px">E assim, por estarem justas e contratadas, as PARTES firmam o presente instrumento em duas vias de igual teor, na presença de 02 (duas) testemunhas.</p>
+      <p class="justify" style="margin-top:15px">E assim, por estarem justas e contratadas as PARTES firmam o presente instrumento, em duas vias de igual teor e forma, na presença de 02 (duas) testemunhas abaixo qualificadas, obrigando-se ao seu fiel cumprimento, por si e seus sucessores.</p>
 
       <div class="data-local">
-        <p>${cidade || "_________________"}, ${hoje}</p>
+        <p>${cidade || "Aracaju/SE"}, ${hoje}</p>
       </div>
 
       <div class="assinaturas">
         <div class="assinatura-row">
           <div class="assinatura-item">
             <div class="assinatura-linha">
-              <p><strong>${nomeEmpresa}</strong></p>
+              <p><strong>ROSÂNGELA MORAES SOBRAL</strong></p>
               <p>CONTRATADA</p>
             </div>
           </div>
@@ -278,6 +270,11 @@ export default function ContratoPDFGenerator({
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="rodape-contrato" style="margin-top:20px;text-align:center;font-size:9pt;color:#555;border-top:1px solid #ccc;padding-top:8px;">
+        <p>CNPJ: 48.897.411/0001-58 – Rua Promotor Arquibaldo Mendonça, 660, Suíssa, Aracaju/SE</p>
+        <p>E-mail: lejardinresidencial.senior@gmail.com – Fone: (79) 99133-9098</p>
       </div>
     `;
   };
