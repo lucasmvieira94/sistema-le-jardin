@@ -24,7 +24,7 @@ export default function ContratoPDFGenerator({
   onOpenChange,
   contrato,
   residente,
-  empresa
+  empresa,
 }: ContratoPDFGeneratorProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -50,15 +50,17 @@ export default function ContratoPDFGenerator({
 
   const generateContractHTML = () => {
     const formatarMoeda = (valor: number) =>
-      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+      new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 
-    const formatarData = (data: string) =>
-      format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const formatarData = (data: string) => format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
     const getFormaPagamentoLabel = (forma: string) => {
       const labels: Record<string, string> = {
-        boleto: "Boleto Bancário", pix: "PIX", transferencia: "Transferência Bancária",
-        dinheiro: "Dinheiro", cartao: "Cartão de Crédito"
+        boleto: "Boleto Bancário",
+        pix: "PIX",
+        transferencia: "Transferência Bancária",
+        dinheiro: "Dinheiro",
+        cartao: "Cartão de Crédito",
       };
       return labels[forma] || forma;
     };
@@ -72,10 +74,10 @@ export default function ContratoPDFGenerator({
 
     return `
       <div class="header">
-        ${logoUrl ? `<img src="${logoUrl}" alt="Logotipo" style="max-height:60px;margin:0 auto 8px;display:block;" />` : ''}
+        ${logoUrl ? `<img src="${logoUrl}" alt="Logotipo" style="max-height:60px;margin:0 auto 8px;display:block;" />` : ""}
         <h1>${nomeEmpresa}</h1>
-        ${cnpj ? `<p style="font-size:10pt;margin:3px 0 0">CNPJ: ${cnpj}</p>` : ''}
-        ${endereco ? `<p style="font-size:9pt;margin:2px 0 0">${endereco}</p>` : ''}
+        ${cnpj ? `<p style="font-size:10pt;margin:3px 0 0">CNPJ: ${cnpj}</p>` : ""}
+        ${endereco ? `<p style="font-size:9pt;margin:2px 0 0">${endereco}</p>` : ""}
       </div>
 
       <div class="tipo-doc">CONTRATO DE PRESTAÇÃO DE SERVIÇOS<br/>Instituição de Longa Permanência para Idosos</div>
@@ -86,7 +88,7 @@ export default function ContratoPDFGenerator({
       </div>
 
       <div class="info-box">
-        <p class="justify"><strong>CONTRATANTE:</strong> <strong>${contrato.contratante_nome}</strong>, BRASILEIRO(A)${contrato.contratante_cpf ? `, portador(a) do CPF: ${contrato.contratante_cpf}` : ''}${contrato.contratante_rg ? `, RG: ${contrato.contratante_rg}` : ''}${contrato.contratante_endereco ? `, residente e domiciliado(a) na ${contrato.contratante_endereco}` : ''}${contrato.contratante_cidade && contrato.contratante_estado ? `, ${contrato.contratante_cidade}/${contrato.contratante_estado}` : ''}${contrato.contratante_cep ? `, CEP: ${contrato.contratante_cep}` : ''}, juntamente com o seu <strong>ANUENTE</strong>: <strong>${residente.nome_completo}</strong>${residente.cpf ? `, CPF: ${residente.cpf}` : ''}, DATA DE NASCIMENTO: ${formatarData(residente.data_nascimento)}.</p>
+        <p class="justify"><strong>CONTRATANTE:</strong> <strong>${contrato.contratante_nome}</strong>, BRASILEIRO(A)${contrato.contratante_cpf ? `, portador(a) do CPF: ${contrato.contratante_cpf}` : ""}${contrato.contratante_rg ? `, RG: ${contrato.contratante_rg}` : ""}${contrato.contratante_endereco ? `, residente e domiciliado(a) na ${contrato.contratante_endereco}` : ""}${contrato.contratante_cidade && contrato.contratante_estado ? `, ${contrato.contratante_cidade}/${contrato.contratante_estado}` : ""}${contrato.contratante_cep ? `, CEP: ${contrato.contratante_cep}` : ""}, juntamente com o seu <strong>ANUENTE</strong>: <strong>${residente.nome_completo}</strong>${residente.cpf ? `, CPF: ${residente.cpf}` : ""}, DATA DE NASCIMENTO: ${formatarData(residente.data_nascimento)}.</p>
       </div>
 
       <p class="justify" style="margin-top:12px">Pelo presente instrumento particular, as partes acima qualificadas, doravante denominadas CONTRATANTE e CONTRATADA, na melhor forma de direito, ajustam e contratam a prestação de serviços profissionais destinados a moradia definitiva, temporária e/ou provisória de idosos nos termos da Lei 10.741/2003 (Estatuto do Idoso), segundo as cláusulas e condições adiante arroladas.</p>
@@ -96,7 +98,7 @@ export default function ContratoPDFGenerator({
       <p class="justify"><strong>1.</strong> O objeto do presente contrato consiste na prestação de serviços de Instituição de Longa Permanência, destinada ao domicílio coletivo de pessoas com idade igual ou superior a 60 (sessenta) anos.</p>
       <p class="justify"><strong>1.1.</strong> Faz parte integrante do objeto do presente instrumento a prestação dos seguintes serviços pela CONTRATADA ao CONTRATANTE:</p>
       <div class="lista">
-        <p><strong>I –</strong> Acomodação em ${residente.quarto ? `QUARTO ${residente.quarto.toUpperCase()}` : 'QUARTO'}, sala coletiva de TV, sala de atendimento de enfermagem, sala de atividades, recreação e lazer, sala de jantar, conforme opção do CONTRATANTE e/ou disponibilidade da CONTRATADA;</p>
+        <p><strong>I –</strong> Acomodação em ${residente.quarto ? `QUARTO ${residente.quarto.toUpperCase()}` : "QUARTO"}, sala coletiva de TV, sala de atendimento de enfermagem, sala de atividades, recreação e lazer, sala de jantar, conforme opção do CONTRATANTE e/ou disponibilidade da CONTRATADA;</p>
         <p><strong>II –</strong> Fornecimento mínimo de 05 (cinco) refeições diárias, conforme cardápio devidamente elaborado por um nutricionista;</p>
         <p><strong>III –</strong> Serviços de limpeza diária dos quartos, banheiros e ambientes comuns da Instituição;</p>
         <p><strong>IV –</strong> Roupa de cama e banho;</p>
@@ -137,7 +139,7 @@ export default function ContratoPDFGenerator({
       <p class="justify"><strong>2.1.</strong> Valor mensal a ser pago pela prestação de serviços: no valor de <strong>${formatarMoeda(contrato.valor_mensalidade)}</strong> (${valorPorExtenso(contrato.valor_mensalidade)}) mensais até o final da vigência deste contrato, incluso todos os custos necessários para o perfeito cumprimento do presente contrato.</p>
       <p class="justify small"><strong>2.2.</strong> Sempre que o idoso tiver o seu Grau de Dependência alterado, o valor da mensalidade será atualizado conforme tabela de valores vigente.</p>
       <p class="justify small"><strong>2.3.</strong> O valor mensal descrito na CLÁUSULA SEGUNDA será corrigido ao término da vigência desse contrato conforme tabela de valores vigente.</p>
-      <p class="justify"><strong>2.4.</strong> O valor descrito na CLÁUSULA SEGUNDA deverá ser pago pelo CONTRATANTE até o <strong>dia ${contrato.dia_vencimento}</strong> de cada mês, que deverá ser realizado via <strong>${getFormaPagamentoLabel(contrato.forma_pagamento)}</strong> na chave: <strong>lejardinresidencial.senior@gmail.com</strong>, em nome de LE JARDIN RESIDENCIAL SENIOR LTDA, CNPJ: 48.897.411/0001-58.</p>
+      <p class="justify"><strong>2.4.</strong> O valor descrito na CLÁUSULA SEGUNDA deverá ser pago pelo CONTRATANTE até o <strong>dia ${contrato.dia_vencimento}</strong> de cada mês, que deverá ser realizado via <strong>${getFormaPagamentoLabel(contrato.forma_pagamento)}</strong> na chave: <strong>48.897.411/0001-58</strong>, em nome de LE JARDIN RESIDENCIAL SENIOR LTDA, CNPJ: 48.897.411/0001-58.</p>
       <p class="justify small"><strong>2.5.</strong> Havendo atraso no pagamento dos valores descritos na CLÁUSULA SEGUNDA, haverá incidência de multa moratória de até 2% (dois por cento) e juros de 1% ao mês do seu valor em conformidade com o disposto no §1º do artigo 52 da Lei 8.078/90 (Código de Defesa do Consumidor).</p>
       <p class="justify small"><strong>2.6.</strong> O não cumprimento do pagamento da mensalidade por período igual ou superior a 30 (trinta) dias após o seu vencimento, implica na retirada imediata do residente. Sendo por conta do residente e/ou do seu responsável, todas as despesas inerentes à sua deslocação do residencial para outro destino.</p>
       <p class="justify small"><strong>2.7.</strong> Não será restituído, em caso algum, importâncias já pagas como por exemplo em situação de falecimento, internamento hospitalar, férias, ausências temporárias, rescisão de contrato sem aviso prévio ou abandono do Le Jardin Residencial Sênior.</p>
@@ -189,7 +191,7 @@ export default function ContratoPDFGenerator({
 
       <!-- CLÁUSULA QUINTA: DA VIGÊNCIA -->
       <h3 class="clausula">CLÁUSULA QUINTA: DA VIGÊNCIA DO CONTRATO</h3>
-      <p class="justify"><strong>5.</strong> O contrato terá validade de 12 (doze) meses a contar da data de assinatura deste contrato${contrato.data_inicio_contrato ? `, com início em <strong>${formatarData(contrato.data_inicio_contrato)}</strong>` : ''}${contrato.data_fim_contrato ? ` e término em <strong>${formatarData(contrato.data_fim_contrato)}</strong>` : ''}.</p>
+      <p class="justify"><strong>5.</strong> O contrato terá validade de 12 (doze) meses a contar da data de assinatura deste contrato${contrato.data_inicio_contrato ? `, com início em <strong>${formatarData(contrato.data_inicio_contrato)}</strong>` : ""}${contrato.data_fim_contrato ? ` e término em <strong>${formatarData(contrato.data_fim_contrato)}</strong>` : ""}.</p>
 
       <!-- CLÁUSULA SEXTA: DA RESCISÃO -->
       <h3 class="clausula">CLÁUSULA SEXTA: DA RESCISÃO</h3>
@@ -213,15 +215,23 @@ export default function ContratoPDFGenerator({
       <p class="justify"><strong>7.5.</strong> É obrigação da CONTRATADA oferecer ao CONTRATANTE cópia do presente instrumento, contendo todas as especificidades da prestação de serviços da CONTRATADA.</p>
       <p class="justify"><strong>7.6.</strong> Fica eleito o foro da Comarca de Aracaju – SE para dirimir quaisquer questões oriundas deste contrato, renunciando as PARTES a qualquer outro, por mais privilegiado que seja.</p>
 
-      ${contrato.clausulas_especiais ? `
+      ${
+        contrato.clausulas_especiais
+          ? `
         <h3 class="clausula">CLÁUSULA OITAVA: CLÁUSULAS ESPECIAIS</h3>
-        <p class="justify">${contrato.clausulas_especiais.replace(/\n/g, '<br/>')}</p>
-      ` : ''}
+        <p class="justify">${contrato.clausulas_especiais.replace(/\n/g, "<br/>")}</p>
+      `
+          : ""
+      }
 
-      ${contrato.observacoes ? `
+      ${
+        contrato.observacoes
+          ? `
         <h3 class="clausula">OBSERVAÇÕES</h3>
-        <p class="justify">${contrato.observacoes.replace(/\n/g, '<br/>')}</p>
-      ` : ''}
+        <p class="justify">${contrato.observacoes.replace(/\n/g, "<br/>")}</p>
+      `
+          : ""
+      }
 
       <p class="justify" style="margin-top:15px">E assim, por estarem justas e contratadas as PARTES firmam o presente instrumento, em duas vias de igual teor e forma, na presença de 02 (duas) testemunhas abaixo qualificadas, obrigando-se ao seu fiel cumprimento, por si e seus sucessores.</p>
 
@@ -328,21 +338,21 @@ export default function ContratoPDFGenerator({
       toast({ title: "Gerando PDF...", description: "Aguarde enquanto o documento é gerado." });
 
       // Create a temporary hidden container with print styles
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '210mm';
-      tempContainer.style.backgroundColor = '#ffffff';
+      const tempContainer = document.createElement("div");
+      tempContainer.style.position = "absolute";
+      tempContainer.style.left = "-9999px";
+      tempContainer.style.top = "0";
+      tempContainer.style.width = "210mm";
+      tempContainer.style.backgroundColor = "#ffffff";
       tempContainer.style.fontFamily = "'Times New Roman', Times, serif";
-      tempContainer.style.fontSize = '11pt';
-      tempContainer.style.lineHeight = '1.5';
-      tempContainer.style.padding = '20px 50px';
-      tempContainer.style.color = '#000';
+      tempContainer.style.fontSize = "11pt";
+      tempContainer.style.lineHeight = "1.5";
+      tempContainer.style.padding = "20px 50px";
+      tempContainer.style.color = "#000";
       tempContainer.innerHTML = generateContractHTML();
 
       // Apply inline styles for rendering
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = getStyleSheet();
       tempContainer.prepend(style);
 
@@ -352,15 +362,15 @@ export default function ContratoPDFGenerator({
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         width: tempContainer.scrollWidth,
         height: tempContainer.scrollHeight,
       });
 
       document.body.removeChild(tempContainer);
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
@@ -375,17 +385,17 @@ export default function ContratoPDFGenerator({
 
       while (position < scaledHeight) {
         if (page > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, scaledHeight);
+        pdf.addImage(imgData, "PNG", 0, -position, pdfWidth, scaledHeight);
         position += pageHeight;
         page++;
       }
 
-      const fileName = `Contrato_${contrato.numero_contrato.replace(/\//g, '-')}_${residente.nome_completo.split(' ')[0]}.pdf`;
+      const fileName = `Contrato_${contrato.numero_contrato.replace(/\//g, "-")}_${residente.nome_completo.split(" ")[0]}.pdf`;
       pdf.save(fileName);
 
       toast({ title: "PDF gerado com sucesso!", description: "O download foi iniciado." });
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
+      console.error("Erro ao gerar PDF:", error);
       toast({
         title: "Erro ao gerar PDF",
         description: "Use a opção Imprimir para salvar como PDF.",
@@ -411,16 +421,14 @@ export default function ContratoPDFGenerator({
               </Button>
             </div>
           </DialogTitle>
-          <DialogDescription>
-            Visualize, imprima ou baixe o contrato em PDF.
-          </DialogDescription>
+          <DialogDescription>Visualize, imprima ou baixe o contrato em PDF.</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto border rounded-lg bg-gray-100 p-4">
           <div
             ref={printRef}
             className="bg-white text-black p-8 max-w-4xl mx-auto border rounded shadow-sm"
-            style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '11pt', lineHeight: '1.5' }}
+            style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "11pt", lineHeight: "1.5" }}
             dangerouslySetInnerHTML={{ __html: generateContractHTML() }}
           />
         </div>
@@ -431,34 +439,63 @@ export default function ContratoPDFGenerator({
 
 // Função auxiliar para converter valor em extenso
 function valorPorExtenso(valor: number): string {
-  const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
-  const dezADezenove = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
-  const dezenas = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
-  const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+  const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+  const dezADezenove = [
+    "dez",
+    "onze",
+    "doze",
+    "treze",
+    "quatorze",
+    "quinze",
+    "dezesseis",
+    "dezessete",
+    "dezoito",
+    "dezenove",
+  ];
+  const dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  const centenas = [
+    "",
+    "cento",
+    "duzentos",
+    "trezentos",
+    "quatrocentos",
+    "quinhentos",
+    "seiscentos",
+    "setecentos",
+    "oitocentos",
+    "novecentos",
+  ];
 
   const parteInteira = Math.floor(valor);
   const centavos = Math.round((valor - parteInteira) * 100);
 
   const converterCentena = (num: number): string => {
-    if (num === 0) return '';
-    if (num === 100) return 'cem';
-    const c = Math.floor(num / 100), d = Math.floor((num % 100) / 10), u = num % 10;
+    if (num === 0) return "";
+    if (num === 100) return "cem";
+    const c = Math.floor(num / 100),
+      d = Math.floor((num % 100) / 10),
+      u = num % 10;
     let r = centenas[c];
-    if (d === 1) { r += (r ? ' e ' : '') + dezADezenove[u]; }
-    else { if (d > 0) r += (r ? ' e ' : '') + dezenas[d]; if (u > 0) r += (r ? ' e ' : '') + unidades[u]; }
+    if (d === 1) {
+      r += (r ? " e " : "") + dezADezenove[u];
+    } else {
+      if (d > 0) r += (r ? " e " : "") + dezenas[d];
+      if (u > 0) r += (r ? " e " : "") + unidades[u];
+    }
     return r;
   };
 
   const converterMilhar = (num: number): string => {
-    if (num === 0) return 'zero';
+    if (num === 0) return "zero";
     if (num < 1000) return converterCentena(num);
-    const milhares = Math.floor(num / 1000), resto = num % 1000;
-    let r = milhares === 1 ? 'mil' : converterCentena(milhares) + ' mil';
-    if (resto > 0) r += ' e ' + converterCentena(resto);
+    const milhares = Math.floor(num / 1000),
+      resto = num % 1000;
+    let r = milhares === 1 ? "mil" : converterCentena(milhares) + " mil";
+    if (resto > 0) r += " e " + converterCentena(resto);
     return r;
   };
 
-  let extenso = converterMilhar(parteInteira) + (parteInteira === 1 ? ' real' : ' reais');
-  if (centavos > 0) extenso += ' e ' + converterCentena(centavos) + (centavos === 1 ? ' centavo' : ' centavos');
+  let extenso = converterMilhar(parteInteira) + (parteInteira === 1 ? " real" : " reais");
+  if (centavos > 0) extenso += " e " + converterCentena(centavos) + (centavos === 1 ? " centavo" : " centavos");
   return extenso;
 }
