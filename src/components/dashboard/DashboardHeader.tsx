@@ -25,12 +25,7 @@ export default function DashboardHeader() {
   });
   const [loading, setLoading] = useState(true);
 
-  const hoje = new Date().toLocaleDateString('pt-BR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  const hoje = formatarDataCompleta(hojeISO());
 
   useEffect(() => {
     const carregarStats = async () => {
