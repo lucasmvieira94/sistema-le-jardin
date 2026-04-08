@@ -197,7 +197,7 @@ export default function RegistrosProntuario({
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar className="w-4 h-4" />
-        <span>Registros de hoje - {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+        <span>Registros de hoje - {formatarDataExtenso(hojeISO())}</span>
       </div>
 
       {loading ? (
@@ -276,7 +276,7 @@ export default function RegistrosProntuario({
                   
                   <div className="flex justify-between items-center text-xs text-muted-foreground">
                     <span>Registrado por: {registro.funcionarios?.nome_completo}</span>
-                    <span>{format(new Date(registro.data_registro + 'T12:00:00'), "dd/MM/yyyy")}</span>
+                    <span>{formatarData(registro.data_registro)}</span>
                   </div>
                 </div>
               </CardContent>

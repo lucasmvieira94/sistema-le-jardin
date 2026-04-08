@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Clock, CheckCircle, Lock, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { format } from "date-fns";
 import { hojeISO, formatarData as formatarDataUtil } from "@/utils/dateUtils";
 import ProntuarioRegistrosForm from "./ProntuarioRegistrosForm";
 
@@ -265,7 +266,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(ciclo.data_ciclo + 'T12:00:00'), "dd/MM/yyyy")}
+                        {formatarDataUtil(ciclo.data_ciclo)}
                       </div>
                     </div>
                   </CardHeader>
@@ -346,7 +347,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(ciclo.data_ciclo + 'T12:00:00'), "dd/MM/yyyy")}
+                        {formatarDataUtil(ciclo.data_ciclo)}
                       </div>
                     </div>
                   </CardHeader>
