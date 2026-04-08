@@ -6,8 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Clock, CheckCircle, Lock, Eye } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { hojeISO, formatarData as formatarDataUtil } from "@/utils/dateUtils";
 import ProntuarioRegistrosForm from "./ProntuarioRegistrosForm";
 
 interface Ciclo {
@@ -216,7 +215,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
   }
 
   // Separar ciclos em atraso (em andamento de dias anteriores) e atuais
-  const hoje = format(new Date(), 'yyyy-MM-dd');
+  const hoje = hojeISO();
   const ciclosAtrasados = ciclos.filter(c => 
     c.status === 'em_andamento' && c.data_ciclo < hoje
   );

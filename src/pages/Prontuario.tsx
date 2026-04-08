@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { hojeISO, formatarDataCompleta } from "@/utils/dateUtils";
 import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioProntuario";
 import ResidentesList from "@/components/prontuario/ResidentesList";
 
@@ -130,7 +131,7 @@ export default function Prontuario() {
           .from('prontuario_ciclos')
           .select('id, status, data_inicio_efetivo')
           .eq('residente_id', residente.id)
-          .eq('data_ciclo', new Date().toISOString().split('T')[0])
+          .eq('data_ciclo', hojeISO())
           .single();
 
         if (!error && ciclo) {
@@ -334,12 +335,7 @@ export default function Prontuario() {
                 {residentes.map((residente) => {
                   const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null, progresso: 0 };
                   const isDisabled = isButtonDisabled(statusInfo.status);
-                  const hoje = new Date().toLocaleDateString('pt-BR', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  });
+                  const hoje = formatarDataCompleta(hojeISO());
                   
                   return (
                     <div

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { hojeISO, inicioMesAtualISO } from "@/utils/dateUtils";
 import { Clock, Search, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -69,8 +70,8 @@ export default function ApropriacaoHoras() {
     setCarregando(false);
   };
 
-  const hoje = new Date().toISOString().split('T')[0];
-  const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  const hoje = hojeISO();
+  const inicioMes = inicioMesAtualISO();
 
   return (
     <div className="container mx-auto max-w-6xl pt-12 font-heebo">

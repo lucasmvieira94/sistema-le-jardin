@@ -3,8 +3,8 @@ import { Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { format, differenceInDays, getDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { differenceInDays, getDay } from "date-fns";
+import { hojeISO } from "@/utils/dateUtils";
 
 interface RegistroHoje {
   funcionario_nome: string;
@@ -57,7 +57,7 @@ export default function RegistrosHoje() {
   useEffect(() => {
     const carregarRegistrosHoje = async () => {
       try {
-        const hoje = format(new Date(), 'yyyy-MM-dd');
+        const hoje = hojeISO();
         
         // Buscar funcionários ativos com suas escalas
         const { data: funcionarios } = await supabase

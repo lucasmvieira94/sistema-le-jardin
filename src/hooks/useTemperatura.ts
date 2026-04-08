@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { hojeISO } from '@/utils/dateUtils';
 
 interface RegistroTemperatura {
   id: string;
@@ -63,7 +64,7 @@ export function useTemperatura() {
   const { data: estatisticas } = useQuery({
     queryKey: ['estatisticas-temperatura', registrosTemperatura],
     queryFn: async (): Promise<EstatisticasTemperatura> => {
-      const hoje = new Date().toISOString().split('T')[0];
+      const hoje = hojeISO();
       
       const registrosHoje = registrosTemperatura.filter(
         registro => registro.data_registro === hoje
@@ -104,7 +105,7 @@ export function useTemperatura() {
         .insert({
           ...novoRegistro,
           periodo_dia: 'geral', // valor padrão já que removemos o campo
-          data_registro: new Date().toISOString().split('T')[0]
+          data_registro: hojeISO()
         })
         .select()
         .single();

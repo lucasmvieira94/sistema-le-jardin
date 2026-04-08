@@ -3,6 +3,7 @@ import { AlertTriangle, Calendar, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { hojeISO } from "@/utils/dateUtils";
 
 interface Alerta {
   tipo: 'escala' | 'funcionario' | 'afastamento';
@@ -59,7 +60,7 @@ export default function AlertasEscalas() {
         }
 
         // Verificar afastamentos ativos hoje
-        const hoje = new Date().toISOString().split('T')[0];
+        const hoje = hojeISO();
         const { data: afastamentosHoje } = await supabase
           .from('afastamentos')
           .select('funcionario_id, tipo_periodo, quantidade_dias')

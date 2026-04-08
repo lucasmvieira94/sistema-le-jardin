@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { hojeISO } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +54,7 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
   const [funcionarioId, setFuncionarioId] = useState(funcionarioIdPrefixado || "");
   const [motivo, setMotivo] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [dataOcorrencia, setDataOcorrencia] = useState(new Date().toISOString().split("T")[0]);
+  const [dataOcorrencia, setDataOcorrencia] = useState(hojeISO());
   const [diasSuspensao, setDiasSuspensao] = useState<number>(1);
   const [dataInicioSuspensao, setDataInicioSuspensao] = useState("");
   const [dataFimSuspensao, setDataFimSuspensao] = useState("");

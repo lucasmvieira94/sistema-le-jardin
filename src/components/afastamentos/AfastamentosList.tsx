@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { formatarData } from "@/utils/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -150,9 +151,9 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    <div>Início: {new Date(afastamento.data_inicio).toLocaleDateString()}</div>
+                    <div>Início: {formatarData(afastamento.data_inicio)}</div>
                     {afastamento.data_fim && (
-                      <div>Fim: {new Date(afastamento.data_fim).toLocaleDateString()}</div>
+                      <div>Fim: {formatarData(afastamento.data_fim)}</div>
                     )}
                     {afastamento.hora_inicio && (
                       <div>Horário: {afastamento.hora_inicio} - {afastamento.hora_fim}</div>

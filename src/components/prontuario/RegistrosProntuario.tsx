@@ -6,8 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Calendar, Clock, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { hojeISO, formatarData, formatarDataExtenso } from "@/utils/dateUtils";
 import NovoRegistroForm from "./NovoRegistroForm";
 
 interface Residente {
@@ -77,7 +76,7 @@ export default function RegistrosProntuario({
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const hoje = format(new Date(), 'yyyy-MM-dd');
+      const hoje = hojeISO();
       
       let query = supabase
         .from('prontuario_registros')
