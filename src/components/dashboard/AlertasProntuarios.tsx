@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, FileHeart, ExternalLink } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { hojeISO, formatarData } from "@/utils/dateUtils";
 import { useNavigate } from "react-router-dom";
 
 interface ProntuarioAtrasado {
@@ -30,7 +29,7 @@ export default function AlertasProntuarios() {
       setLoading(true);
       
       // Buscar ciclos em andamento de hoje e dias anteriores
-      const hoje = format(new Date(), 'yyyy-MM-dd');
+      const hoje = hojeISO();
       
       const { data: ciclos, error } = await supabase
         .from('prontuario_ciclos')
@@ -134,7 +133,7 @@ export default function AlertasProntuarios() {
     );
   }
 
-  const hoje = format(new Date(), 'yyyy-MM-dd');
+  const hoje = hojeISO();
 
   return (
     <Card>
