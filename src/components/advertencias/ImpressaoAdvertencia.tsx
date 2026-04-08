@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatarDataExtenso, formatarDataHora, hojeExtenso } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,9 +107,9 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
     setTimeout(() => printWindow.print(), 300);
   };
 
-  const dataOcorrencia = format(new Date(advertencia.data_ocorrencia + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-  const dataRegistro = format(new Date(advertencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-  const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const dataOcorrencia = formatarDataExtenso(advertencia.data_ocorrencia);
+  const dataRegistro = formatarDataHora(advertencia.created_at);
+  const hoje = hojeExtenso();
 
   return (
     <div className="space-y-4">

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { hojeExtenso, formatarDataExtenso } from "@/utils/dateUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
@@ -62,7 +63,7 @@ export default function ContratoPDFGenerator({
       return labels[forma] || forma;
     };
 
-    const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const hoje = hojeExtenso();
     const nomeEmpresa = empresaConfig?.nome_empresa || empresa?.nome_empresa || "EMPRESA";
     const cnpj = empresaConfig?.cnpj || empresa?.cnpj || "";
     const cidade = empresaConfig?.cidade || "";

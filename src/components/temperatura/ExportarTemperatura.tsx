@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatarDataHora, hojeISO } from "@/utils/dateUtils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -149,10 +150,10 @@ export function ExportarTemperatura() {
       // Rodapé
       const pageHeight = doc.internal.pageSize.height;
       doc.setFontSize(8);
-      doc.text(`Relatório gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, pageHeight - 10);
+      doc.text(`Relatório gerado em: ${formatarDataHora(new Date().toISOString())}`, 14, pageHeight - 10);
 
       // Salvar arquivo
-      doc.save(`controle-temperatura-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`controle-temperatura-${hojeISO()}.pdf`);
       toast.success("Relatório PDF exportado com sucesso!");
       
     } catch (error) {
@@ -214,7 +215,7 @@ export function ExportarTemperatura() {
       ws['!cols'] = colWidths;
 
       // Salvar arquivo
-      XLSX.writeFile(wb, `controle-temperatura-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      XLSX.writeFile(wb, `controle-temperatura-${hojeISO()}.xlsx`);
       toast.success("Relatório Excel exportado com sucesso!");
       
     } catch (error) {

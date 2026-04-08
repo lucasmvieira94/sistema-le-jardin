@@ -91,7 +91,7 @@ function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
   const endereco = empresaConfig?.endereco || "Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE";
   const cidade = empresaConfig?.cidade || "Aracaju";
   const logoUrl = empresaConfig?.logo_url || "";
-  const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const hoje = hojeExtenso();
 
   return `
     <div class="header">
