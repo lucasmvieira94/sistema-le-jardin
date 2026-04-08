@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { formatarDataExtenso, formatarDataHora, hojeExtenso } from "@/utils/dateUtils";
+import { formatarDataExtenso, formatarDataHora, formatarData, hojeExtenso } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -175,8 +175,8 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
               <p><strong>DADOS DA SUSPENSÃO (Art. 474, CLT — máx. 30 dias):</strong></p>
               <p>Dias de suspensão: <strong>{advertencia.dias_suspensao}</strong></p>
               {advertencia.data_inicio_suspensao && (
-                <p>Período: de <strong>{formatarDataExtenso(advertencia.data_inicio_suspensao).split(' de ').slice(0,1).join('')}/{formatarDataExtenso(advertencia.data_inicio_suspensao).split(' de ')[1]?.substring(0,2)}/{formatarDataExtenso(advertencia.data_inicio_suspensao).split(' de ')[2]}</strong>
-                  {advertencia.data_fim_suspensao && <> até <strong>{(() => { const { formatarData } = require('@/utils/dateUtils'); return formatarData(advertencia.data_fim_suspensao); })()}</strong></>}
+                <p>Período: de <strong>{formatarData(advertencia.data_inicio_suspensao)}</strong>
+                  {advertencia.data_fim_suspensao && <> até <strong>{formatarData(advertencia.data_fim_suspensao)}</strong></>}
                 </p>
               )}
             </div>

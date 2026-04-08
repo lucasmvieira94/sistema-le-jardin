@@ -18,8 +18,8 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
       }).format(valor);
     };
 
-    const formatarData = (data: string) => {
-      return format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const formatarDataLocal = (data: string) => {
+      return formatarDataExtenso(data);
     };
 
     const getFormaPagamentoLabel = (forma: string) => {

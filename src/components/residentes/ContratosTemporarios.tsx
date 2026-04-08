@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Copy, Check, FileText, Loader2, Trash2, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { hojeExtenso, formatarData as formatarDataBR } from "@/utils/dateUtils";
 
 interface Solicitacao {
   id: string;
