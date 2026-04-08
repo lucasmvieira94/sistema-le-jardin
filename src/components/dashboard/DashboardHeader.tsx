@@ -1,6 +1,7 @@
 import { Calendar, Users, AlertTriangle, Clock, Activity, Clipboard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { hojeISO } from "@/utils/dateUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -41,7 +42,7 @@ export default function DashboardHeader() {
           .eq('ativo', true);
 
         // Registros de hoje
-        const hoje = new Date().toISOString().split('T')[0];
+        const hoje = hojeISO();
         const { count: registrosHoje } = await supabase
           .from('registros_ponto')
           .select('*', { count: 'exact', head: true })

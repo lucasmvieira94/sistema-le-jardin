@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { hojeISO, horarioAtualCurto } from "@/utils/dateUtils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -127,8 +128,8 @@ export const RegistroUsoFraldaPublico = ({
         residente_id: residenteId,
         estoque_fralda_id: estoqueId,
         funcionario_id: funcionarioId,
-        data_uso: new Date().toISOString().split("T")[0],
-        horario_uso: new Date().toTimeString().split(" ")[0].substring(0, 5),
+        data_uso: hojeISO(),
+        horario_uso: horarioAtualCurto(),
         quantidade_usada: quantidade,
         tipo_troca: tipoTroca,
         observacoes: observacoes || null,

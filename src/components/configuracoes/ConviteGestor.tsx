@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { hojeISO } from '@/utils/dateUtils';
 import { UserPlus, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -145,9 +146,9 @@ export function ConviteGestor({ onConviteEnviado }: ConviteGestorProps) {
           email: formData.email,
           cpf: formData.cpf,
           funcao: formData.funcao,
-          data_nascimento: new Date().toISOString().split('T')[0],
-          data_admissao: new Date().toISOString().split('T')[0],
-          data_inicio_vigencia: new Date().toISOString().split('T')[0],
+          data_nascimento: hojeISO(),
+          data_admissao: hojeISO(),
+          data_inicio_vigencia: hojeISO(),
           escala_id: escalaDisponivel.id,
           codigo_4_digitos: codigoUnico,
           ativo: false

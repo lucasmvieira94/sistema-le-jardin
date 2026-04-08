@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { hojeISO } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,7 +53,7 @@ export default function ContratoForm({
     valor_mensalidade: initialData?.valor_mensalidade || "",
     dia_vencimento: initialData?.dia_vencimento || "10",
     forma_pagamento: initialData?.forma_pagamento || "boleto",
-    data_inicio_contrato: initialData?.data_inicio_contrato || new Date().toISOString().split('T')[0],
+    data_inicio_contrato: initialData?.data_inicio_contrato || hojeISO(),
     data_fim_contrato: initialData?.data_fim_contrato || "",
     contratante_nome: initialData?.contratante_nome || responsavelNome || "",
     contratante_cpf: initialData?.contratante_cpf || "",
