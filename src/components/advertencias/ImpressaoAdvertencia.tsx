@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatarDataExtenso, formatarDataHora, formatarData, hojeExtenso } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Printer, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,9 +107,9 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
     setTimeout(() => printWindow.print(), 300);
   };
 
-  const dataOcorrencia = format(new Date(advertencia.data_ocorrencia + "T00:00:00"), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-  const dataRegistro = format(new Date(advertencia.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-  const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const dataOcorrencia = formatarDataExtenso(advertencia.data_ocorrencia);
+  const dataRegistro = formatarDataHora(advertencia.created_at);
+  const hoje = hojeExtenso();
 
   return (
     <div className="space-y-4">
@@ -176,8 +175,8 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
               <p><strong>DADOS DA SUSPENSÃO (Art. 474, CLT — máx. 30 dias):</strong></p>
               <p>Dias de suspensão: <strong>{advertencia.dias_suspensao}</strong></p>
               {advertencia.data_inicio_suspensao && (
-                <p>Período: de <strong>{format(new Date(advertencia.data_inicio_suspensao + "T00:00:00"), "dd/MM/yyyy")}</strong>
-                  {advertencia.data_fim_suspensao && <> até <strong>{format(new Date(advertencia.data_fim_suspensao + "T00:00:00"), "dd/MM/yyyy")}</strong></>}
+                <p>Período: de <strong>{formatarData(advertencia.data_inicio_suspensao)}</strong>
+                  {advertencia.data_fim_suspensao && <> até <strong>{formatarData(advertencia.data_fim_suspensao)}</strong></>}
                 </p>
               )}
             </div>

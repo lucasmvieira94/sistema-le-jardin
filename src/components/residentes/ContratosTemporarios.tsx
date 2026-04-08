@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Copy, Check, FileText, Loader2, Trash2, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { hojeExtenso, formatarData as formatarDataBR } from "@/utils/dateUtils";
 
 interface Solicitacao {
   id: string;
@@ -91,7 +92,7 @@ function generateTemporaryContractHTML(s: Solicitacao, empresaConfig: any) {
   const endereco = empresaConfig?.endereco || "Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE";
   const cidade = empresaConfig?.cidade || "Aracaju";
   const logoUrl = empresaConfig?.logo_url || "";
-  const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const hoje = hojeExtenso();
 
   return `
     <div class="header">

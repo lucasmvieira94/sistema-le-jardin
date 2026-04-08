@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { mesAnoAtual, formatarDataCurta, hojeISO } from "@/utils/dateUtils";
 
 interface HorarioEscala {
   data: string;
@@ -27,7 +28,7 @@ export default function MinhaEscala() {
   const [escalaNome, setEscalaNome] = useState("");
 
   const hoje = new Date();
-  const mesAtual = hoje.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const mesAtual = mesAnoAtual();
 
   useEffect(() => {
     if (!funcionarioId) return;
@@ -75,14 +76,13 @@ export default function MinhaEscala() {
     }
   };
 
-  const formatarData = (data: string) => {
-    const d = new Date(data + "T12:00:00");
-    return d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
+  const formatarDataLocal = (data: string) => {
+    return formatarDataCurta(data);
   };
 
   const formatarHora = (h: string | null) => (h ? h.slice(0, 5) : "--:--");
 
-  const isHoje = (data: string) => data === hoje.toISOString().split("T")[0];
+  const isHoje = (data: string) => data === hojeISO();
 
   const diasTrabalhados = horarios.filter((h) => h.deve_trabalhar).length;
   const diasFolga = horarios.filter((h) => !h.deve_trabalhar).length;
@@ -164,7 +164,7 @@ export default function MinhaEscala() {
                       className={`${isHoje(h.data) ? "bg-green-50 font-semibold" : ""} ${!h.deve_trabalhar ? "opacity-60" : ""}`}
                     >
                       <TableCell className="text-sm whitespace-nowrap">
-                        {formatarData(h.data)}
+                        {formatarDataLocal(h.data)}
                         {isHoje(h.data) && (
                           <Badge className="ml-2 bg-green-600 text-white text-[10px]">Hoje</Badge>
                         )}

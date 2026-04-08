@@ -8,8 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Save, Lock, AlertTriangle, Shield } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { horarioAtual, formatarDataExtenso, agoraISO } from "@/utils/dateUtils";
 import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
 import {
   AlertDialog,
@@ -207,8 +206,8 @@ export default function ProntuarioRegistrosForm({
           descricao,
           observacoes,
           funcionario_id: funcionarioId,
-          horario_registro: format(new Date(), 'HH:mm:ss'),
-          updated_at: new Date().toISOString()
+          horario_registro: horarioAtual(),
+          updated_at: agoraISO()
         })
         .eq('id', registroId);
 
@@ -308,7 +307,7 @@ export default function ProntuarioRegistrosForm({
               Prontuário - {ciclo.residente.nome_completo}
             </h2>
             <p className="text-muted-foreground">
-              {format(new Date(ciclo.data_ciclo + 'T12:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} •
+              {formatarDataExtenso(ciclo.data_ciclo)} •
               Prontuário: {ciclo.residente.numero_prontuario}
               {ciclo.residente.quarto && ` • Quarto: ${ciclo.residente.quarto}`}
             </p>

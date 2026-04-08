@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { hojeExtenso, formatarDataExtenso, formatarData } from "@/utils/dateUtils";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
 import logoLeJardin from "@/assets/logo-le-jardin.png";
 
@@ -19,8 +18,8 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
       }).format(valor);
     };
 
-    const formatarData = (data: string) => {
-      return format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const formatarDataLocal = (data: string) => {
+      return formatarDataExtenso(data);
     };
 
     const getFormaPagamentoLabel = (forma: string) => {
@@ -394,7 +393,7 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
         {/* Data e Local */}
         <div className="text-center my-8">
           <p>
-            _________________, {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            _________________, {hojeExtenso()}
           </p>
         </div>
 

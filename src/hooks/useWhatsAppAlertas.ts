@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { agoraISO } from '@/utils/dateUtils';
 
 export interface AlertaWhatsApp {
   id: string;
@@ -186,7 +187,7 @@ export function useWhatsAppAlertas() {
       const novoAlerta = {
         ...alertaOriginal,
         nome: `${alertaOriginal.nome} (Cópia)`,
-        data_inicio: new Date().toISOString(),
+        data_inicio: agoraISO(),
       };
       
       // Remover campos que não devem ser duplicados

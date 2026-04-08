@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatarData, formatarDataHora } from '@/utils/dateUtils';
 import { AlertTriangle, Clock, MessageSquare, CheckCircle, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -181,13 +182,13 @@ export default function GestaoIntercorrencias() {
                       {item.prazo_resolucao && (
                         <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-semibold' : ''}`}>
                           <Clock className="w-3 h-3" />
-                          {isOverdue ? 'ATRASADA — ' : ''}Prazo: {new Date(item.prazo_resolucao).toLocaleDateString('pt-BR')}
+                          {isOverdue ? 'ATRASADA — ' : ''}Prazo: {formatarData(item.prazo_resolucao)}
                         </span>
                       )}
                       {item.feedback_gestor && <MessageSquare className="w-3 h-3 text-blue-500" />}
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                      {formatarData(item.created_at)}
                     </span>
                   </div>
                 </CardContent>
@@ -213,7 +214,7 @@ export default function GestaoIntercorrencias() {
                   <Badge className={STATUS_MAP[selectedItem.status]?.color}>{STATUS_MAP[selectedItem.status]?.label}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Registrada por: {(selectedItem.funcionarios as any)?.nome_completo} em {new Date(selectedItem.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  Registrada por: {(selectedItem.funcionarios as any)?.nome_completo} em {formatarDataHora(selectedItem.created_at)}
                 </p>
               </div>
 
@@ -267,7 +268,7 @@ export default function GestaoIntercorrencias() {
                         <div key={log.id} className="border-l-2 border-primary pl-3 py-1">
                           <p className="text-sm">{log.descricao}</p>
                           <p className="text-xs text-muted-foreground">
-                            {log.usuario_nome} ({log.usuario_tipo === 'funcionario' ? 'Funcionário' : 'Gestor'}) — {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {log.usuario_nome} ({log.usuario_tipo === 'funcionario' ? 'Funcionário' : 'Gestor'}) — {formatarDataHora(log.created_at)}
                           </p>
                         </div>
                       ))

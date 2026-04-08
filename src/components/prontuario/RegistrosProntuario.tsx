@@ -6,8 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Calendar, Clock, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { hojeISO, formatarData, formatarDataExtenso } from "@/utils/dateUtils";
 import NovoRegistroForm from "./NovoRegistroForm";
 
 interface Residente {
@@ -77,7 +76,7 @@ export default function RegistrosProntuario({
   const fetchRegistros = async () => {
     try {
       setLoading(true);
-      const hoje = format(new Date(), 'yyyy-MM-dd');
+      const hoje = hojeISO();
       
       let query = supabase
         .from('prontuario_registros')
@@ -198,7 +197,7 @@ export default function RegistrosProntuario({
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar className="w-4 h-4" />
-        <span>Registros de hoje - {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+        <span>Registros de hoje - {formatarDataExtenso(hojeISO())}</span>
       </div>
 
       {loading ? (
@@ -277,7 +276,7 @@ export default function RegistrosProntuario({
                   
                   <div className="flex justify-between items-center text-xs text-muted-foreground">
                     <span>Registrado por: {registro.funcionarios?.nome_completo}</span>
-                    <span>{format(new Date(registro.data_registro + 'T12:00:00'), "dd/MM/yyyy")}</span>
+                    <span>{formatarData(registro.data_registro)}</span>
                   </div>
                 </div>
               </CardContent>
