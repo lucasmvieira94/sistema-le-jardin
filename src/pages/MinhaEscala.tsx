@@ -164,7 +164,7 @@ export default function MinhaEscala() {
                       className={`${isHoje(h.data) ? "bg-green-50 font-semibold" : ""} ${!h.deve_trabalhar ? "opacity-60" : ""}`}
                     >
                       <TableCell className="text-sm whitespace-nowrap">
-                        {formatarData(h.data)}
+                        {formatarDataLocal(h.data)}
                         {isHoje(h.data) && (
                           <Badge className="ml-2 bg-green-600 text-white text-[10px]">Hoje</Badge>
                         )}
