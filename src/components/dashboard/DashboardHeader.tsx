@@ -1,7 +1,7 @@
 import { Calendar, Users, AlertTriangle, Clock, Activity, Clipboard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { hojeISO } from "@/utils/dateUtils";
+import { hojeISO, formatarDataCompleta } from "@/utils/dateUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
