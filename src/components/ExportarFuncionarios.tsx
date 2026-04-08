@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { hojeISO } from '@/utils/dateUtils';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Download, Loader2 } from 'lucide-react';
@@ -52,7 +53,7 @@ const ExportarFuncionarios = () => {
       
       // Extract filename from Content-Disposition header
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `funcionarios_${filtro}_${new Date().toISOString().split('T')[0]}.csv`;
+      let filename = `funcionarios_${filtro}_${hojeISO()}.csv`;
       
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);

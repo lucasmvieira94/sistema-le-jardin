@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { agoraDatetimeLocal } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,7 @@ export function AlertaWhatsAppForm({ alerta, onSalvar, onCancelar }: AlertaWhats
     frequencia_tipo: 'dias',
     frequencia_valor: 1,
     horario_especifico: '09:00',
-    data_inicio: new Date().toISOString().slice(0, 16),
+    data_inicio: agoraDatetimeLocal(),
     ativo: true,
     mensagem_dinamica: false,
     timezone: 'America/Sao_Paulo'
