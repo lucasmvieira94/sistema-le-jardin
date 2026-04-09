@@ -22,8 +22,8 @@ import {
   Brain,
   BarChart3,
   ShieldAlert,
-  AlertTriangle
-} from "lucide-react";
+  AlertTriangle,
+  Trophy
 import {
   Sidebar,
   SidebarContent,
@@ -66,7 +66,7 @@ export function AppSidebar() {
     { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
     { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
     { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
-  ];
+    { path: "/gestao-gamificacao", icon: Trophy, label: "Gamificação", adminOnly: true },
 
   const sistemaMenuItems = [
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
