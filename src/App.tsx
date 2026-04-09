@@ -51,6 +51,8 @@ import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import AnaliseFeedback from "./pages/AnaliseFeedback";
 import AdvertenciasSuspensoes from "./pages/AdvertenciasSuspensoes";
 import GestaoIntercorrencias from "./pages/GestaoIntercorrencias";
+import Gamificacao from "./pages/Gamificacao";
+import GestaoGamificacao from "./pages/GestaoGamificacao";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +85,7 @@ const App = () => {
               <Route path="/intercorrencias" element={<IntercorrenciasPublico />} />
               <Route path="/painel-intercorrencias" element={<PainelIntercorrencias />} />
               <Route path="/contrato-temporario/:token" element={<ContratoTemporarioPublico />} />
+              <Route path="/gamificacao" element={<Gamificacao />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
@@ -109,6 +112,7 @@ const App = () => {
               <Route path="/analise-feedback" element={<ProtectedRoute><AnaliseFeedback /></ProtectedRoute>} />
               <Route path="/advertencias-suspensoes" element={<ProtectedRoute><AdvertenciasSuspensoes /></ProtectedRoute>} />
               <Route path="/gestao-intercorrencias" element={<ProtectedRoute><GestaoIntercorrencias /></ProtectedRoute>} />
+              <Route path="/gestao-gamificacao" element={<ProtectedRoute><GestaoGamificacao /></ProtectedRoute>} />
             </Route>
 
             {/* Fallback 404 */}
