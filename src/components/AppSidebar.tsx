@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   AlertTriangle,
   Trophy
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
