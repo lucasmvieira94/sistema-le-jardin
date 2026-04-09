@@ -22,7 +22,8 @@ import {
   Brain,
   BarChart3,
   ShieldAlert,
-  AlertTriangle
+  AlertTriangle,
+  Trophy
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,8 +67,8 @@ export function AppSidebar() {
     { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
     { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
     { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
+    { path: "/gestao-gamificacao", icon: Trophy, label: "Gamificação", adminOnly: true },
   ];
-
   const sistemaMenuItems = [
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },

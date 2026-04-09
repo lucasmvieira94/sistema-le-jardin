@@ -1355,6 +1355,172 @@ export type Database = {
           },
         ]
       }
+      gamification_profiles: {
+        Row: {
+          created_at: string
+          funcionario_id: string
+          id: string
+          moedas: number
+          streak_plantoes: number
+          ultimo_plantao_data: string | null
+          updated_at: string
+          xp_total: number
+        }
+        Insert: {
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          moedas?: number
+          streak_plantoes?: number
+          ultimo_plantao_data?: string | null
+          updated_at?: string
+          xp_total?: number
+        }
+        Update: {
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          moedas?: number
+          streak_plantoes?: number
+          ultimo_plantao_data?: string | null
+          updated_at?: string
+          xp_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamification_profiles_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: true
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gamification_resgates: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string
+          funcionario_id: string
+          id: string
+          observacoes: string | null
+          reward_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          observacoes?: string | null
+          reward_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          observacoes?: string | null
+          reward_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamification_resgates_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gamification_resgates_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "gamification_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gamification_rewards: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_moedas: number
+          descricao: string | null
+          id: string
+          nivel_minimo: Database["public"]["Enums"]["gamification_nivel"]
+          nome: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_moedas: number
+          descricao?: string | null
+          id?: string
+          nivel_minimo?: Database["public"]["Enums"]["gamification_nivel"]
+          nome: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_moedas?: number
+          descricao?: string | null
+          id?: string
+          nivel_minimo?: Database["public"]["Enums"]["gamification_nivel"]
+          nome?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gamification_transactions: {
+        Row: {
+          created_at: string
+          descricao: string
+          funcionario_id: string
+          id: string
+          moedas_delta: number
+          referencia_id: string | null
+          tipo: Database["public"]["Enums"]["gamification_transaction_tipo"]
+          xp_delta: number
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          funcionario_id: string
+          id?: string
+          moedas_delta?: number
+          referencia_id?: string | null
+          tipo: Database["public"]["Enums"]["gamification_transaction_tipo"]
+          xp_delta?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          funcionario_id?: string
+          id?: string
+          moedas_delta?: number
+          referencia_id?: string | null
+          tipo?: Database["public"]["Enums"]["gamification_transaction_tipo"]
+          xp_delta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamification_transactions_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       historico_notificacoes_whatsapp: {
         Row: {
           agendamento_id: string | null
@@ -2438,6 +2604,10 @@ export type Database = {
         }
         Returns: string
       }
+      calcular_nivel_gamificacao: {
+        Args: { p_xp: number }
+        Returns: Database["public"]["Enums"]["gamification_nivel"]
+      }
       calcular_proxima_execucao: {
         Args: {
           p_data_base?: string
@@ -2691,6 +2861,18 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "employee"
+      gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
+      gamification_transaction_tipo:
+        | "plantao"
+        | "micro_tarefa_ponto"
+        | "micro_tarefa_prontuario"
+        | "falta_injustificada"
+        | "advertencia_verbal"
+        | "advertencia_escrita"
+        | "suspensao"
+        | "resgate"
+        | "bonus_manual"
+        | "penalidade_manual"
       intercorrencia_categoria:
         | "saude_residente"
         | "infraestrutura"
@@ -2831,6 +3013,19 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "employee"],
+      gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
+      gamification_transaction_tipo: [
+        "plantao",
+        "micro_tarefa_ponto",
+        "micro_tarefa_prontuario",
+        "falta_injustificada",
+        "advertencia_verbal",
+        "advertencia_escrita",
+        "suspensao",
+        "resgate",
+        "bonus_manual",
+        "penalidade_manual",
+      ],
       intercorrencia_categoria: [
         "saude_residente",
         "infraestrutura",
