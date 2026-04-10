@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.analisar-feedback]
 verify_jwt = false
+
+[functions.processar-gamificacao]
+verify_jwt = false
