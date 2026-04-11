@@ -2873,6 +2873,7 @@ export type Database = {
         | "resgate"
         | "bonus_manual"
         | "penalidade_manual"
+        | "congelamento"
       intercorrencia_categoria:
         | "saude_residente"
         | "infraestrutura"
@@ -3025,6 +3026,7 @@ export const Constants = {
         "resgate",
         "bonus_manual",
         "penalidade_manual",
+        "congelamento",
       ],
       intercorrencia_categoria: [
         "saude_residente",
