@@ -54,6 +54,7 @@ serve(async (req) => {
       { data: prontuariosRecentes },
       { data: medicamentosAdminHoje },
       { data: usoFraldasRecente },
+      { data: intercorrenciasAbertas },
     ] = await Promise.all([
       // Funcionários ativos com escala
       supabase.from('funcionarios')
