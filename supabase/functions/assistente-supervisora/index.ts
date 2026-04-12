@@ -268,9 +268,9 @@ ${intercorrenciasAbertas && intercorrenciasAbertas.length > 0
     const funcNome = ic.funcionarios?.nome_completo || 'N/A';
     const resNome = ic.residentes?.nome_completo || '';
     const prazo = ic.prazo_resolucao ? new Date(ic.prazo_resolucao).toLocaleDateString('pt-BR') : 'Sem prazo';
-    const atrasada = ic.prazo_resolucao && new Date(ic.prazo_resolucao) < new Date() ? ' ⏰ ATRASADA' : '';
-    return \`• [\${ic.prioridade.toUpperCase()}] \${ic.titulo} - Status: \${ic.status} - Por: \${funcNome}\${resNome ? \` | Residente: \${resNome}\` : ''} - Prazo: \${prazo}\${atrasada}\\n  Desc: \${ic.descricao.substring(0, 120)}\`;
-  }).join('\\n')
+    const atrasada = ic.prazo_resolucao && new Date(ic.prazo_resolucao) < new Date() ? ' ATRASADA' : '';
+    return '• [' + ic.prioridade.toUpperCase() + '] ' + ic.titulo + ' - Status: ' + ic.status + ' - Por: ' + funcNome + (resNome ? ' | Residente: ' + resNome : '') + ' - Prazo: ' + prazo + atrasada + '\n  Desc: ' + ic.descricao.substring(0, 120);
+  }).join('\n')
   : 'Nenhuma intercorrência em aberto'}
 `;
 
