@@ -129,6 +129,13 @@ serve(async (req) => {
         .select('id, residente_id, data_uso, quantidade')
         .gte('data_uso', dataLimite7d)
         .limit(200),
+
+      // Intercorrências em aberto
+      supabase.from('intercorrencias')
+        .select('id, titulo, descricao, categoria, prioridade, status, prazo_resolucao, created_at, funcionarios!intercorrencias_funcionario_id_fkey(nome_completo), residentes(nome_completo)')
+        .in('status', ['aberta', 'em_analise', 'em_andamento'])
+        .order('created_at', { ascending: false })
+        .limit(30),
     ]);
 
     // Mapear nomes de residentes
