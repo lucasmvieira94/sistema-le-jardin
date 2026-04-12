@@ -20,8 +20,10 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    if (token !== supabaseKey) {
-      const authClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', { global: { headers: { Authorization: authHeader } } });
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    // Accept service role key or anon key (public supervisor access) or valid user JWT
+    if (token !== supabaseKey && token !== anonKey) {
+      const authClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
       const { data: { user }, error: authError } = await authClient.auth.getUser();
       if (authError || !user) {
         return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
