@@ -19,7 +19,7 @@ export interface Intercorrencia {
   created_at: string;
   updated_at: string;
   funcionarios?: { nome_completo: string } | null;
-  residentes?: { nome: string } | null;
+  residentes?: { nome_completo: string } | null;
 }
 
 export interface IntercorrenciaLog {
@@ -42,7 +42,7 @@ export function useIntercorrencias(funcionarioId?: string) {
     try {
       let query = supabase
         .from('intercorrencias')
-        .select('*, funcionarios!intercorrencias_funcionario_id_fkey(nome_completo), residentes(nome)')
+        .select('*, funcionarios!intercorrencias_funcionario_id_fkey(nome_completo), residentes(nome_completo)')
         .order('created_at', { ascending: false });
 
       if (funcionarioId) {
@@ -93,6 +93,7 @@ export function useIntercorrencias(funcionarioId?: string) {
       await fetchIntercorrencias();
       return data;
     } catch (error: any) {
+      console.error('Erro ao registrar intercorrência:', error);
       toast({ title: 'Erro ao registrar intercorrência', description: error.message, variant: 'destructive' });
       return null;
     }
