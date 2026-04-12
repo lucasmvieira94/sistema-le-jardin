@@ -54,6 +54,7 @@ serve(async (req) => {
       { data: prontuariosRecentes },
       { data: medicamentosAdminHoje },
       { data: usoFraldasRecente },
+      { data: intercorrenciasAbertas },
     ] = await Promise.all([
       // Funcionários ativos com escala
       supabase.from('funcionarios')
@@ -128,6 +129,13 @@ serve(async (req) => {
         .select('id, residente_id, data_uso, quantidade')
         .gte('data_uso', dataLimite7d)
         .limit(200),
+
+      // Intercorrências em aberto
+      supabase.from('intercorrencias')
+        .select('id, titulo, descricao, categoria, prioridade, status, prazo_resolucao, created_at, funcionarios!intercorrencias_funcionario_id_fkey(nome_completo), residentes(nome_completo)')
+        .in('status', ['aberta', 'em_analise', 'em_andamento'])
+        .order('created_at', { ascending: false })
+        .limit(30),
     ]);
 
     // Mapear nomes de residentes
@@ -253,6 +261,17 @@ ${alertasPendentes.length > 0
 - Prontuários preenchidos: ${prontuariosRecentes?.length || 0}
 - Medicamentos administrados hoje: ${medicamentosAdminHoje?.length || 0}
 - Registros de uso de fraldas (7 dias): ${usoFraldasRecente?.length || 0}
+
+═══ INTERCORRÊNCIAS EM ABERTO ═══
+${intercorrenciasAbertas && intercorrenciasAbertas.length > 0
+  ? intercorrenciasAbertas.map((ic: any) => {
+    const funcNome = ic.funcionarios?.nome_completo || 'N/A';
+    const resNome = ic.residentes?.nome_completo || '';
+    const prazo = ic.prazo_resolucao ? new Date(ic.prazo_resolucao).toLocaleDateString('pt-BR') : 'Sem prazo';
+    const atrasada = ic.prazo_resolucao && new Date(ic.prazo_resolucao) < new Date() ? ' ATRASADA' : '';
+    return '• [' + ic.prioridade.toUpperCase() + '] ' + ic.titulo + ' - Status: ' + ic.status + ' - Por: ' + funcNome + (resNome ? ' | Residente: ' + resNome : '') + ' - Prazo: ' + prazo + atrasada + '\n  Desc: ' + ic.descricao.substring(0, 120);
+  }).join('\n')
+  : 'Nenhuma intercorrência em aberto'}
 `;
 
     const systemPrompt = `Você é a ASSISTENTE DE SUPERVISÃO da Senex Care, uma Instituição de Longa Permanência para Idosos (ILPI). Seu papel é auxiliar a supervisora nas suas funções diárias, fornecendo informações claras, alertas e recomendações.
