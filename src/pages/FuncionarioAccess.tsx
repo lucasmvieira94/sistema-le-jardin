@@ -564,7 +564,7 @@ export default function FuncionarioAccess() {
               </CardContent>
               </Card>
 
-            {/* Painel Intercorrências - só mostra se tem acesso supervisor */}
+            {/* Dashboard do Supervisor - só mostra se tem acesso supervisor */}
             {funcionarioAcessoSupervisor && (
               <Card 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-rose-400"
@@ -574,17 +574,17 @@ export default function FuncionarioAccess() {
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                     <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-rose-700" />
                   </div>
-                  <CardTitle className="text-rose-800 text-base sm:text-lg">Painel Intercorrências</CardTitle>
+                  <CardTitle className="text-rose-800 text-base sm:text-lg">Dashboard Supervisão</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center p-4 sm:p-6 pt-0">
                   <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    Gerencie intercorrências registradas pela equipe
+                    Estoques, intercorrências e assistente IA
                   </p>
                   <Button 
                     className="w-full bg-rose-700 hover:bg-rose-800 text-sm sm:text-base py-2 sm:py-3"
                     onClick={navigateToPainelIntercorrencias}
                   >
-                    Acessar Painel
+                    Acessar Dashboard
                   </Button>
                 </CardContent>
               </Card>
