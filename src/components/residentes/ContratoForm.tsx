@@ -13,6 +13,8 @@ interface ContratoFormProps {
   initialData?: Partial<ContratoFormData>;
   residenteNome: string;
   responsavelNome?: string;
+  responsavelCpf?: string;
+  responsavelEndereco?: string;
   responsavelTelefone?: string;
   responsavelEmail?: string;
   onSubmit: (data: ContratoFormData) => void;
@@ -43,6 +45,8 @@ export default function ContratoForm({
   initialData,
   residenteNome,
   responsavelNome,
+  responsavelCpf,
+  responsavelEndereco,
   responsavelTelefone,
   responsavelEmail,
   onSubmit,
@@ -56,9 +60,9 @@ export default function ContratoForm({
     data_inicio_contrato: initialData?.data_inicio_contrato || hojeISO(),
     data_fim_contrato: initialData?.data_fim_contrato || "",
     contratante_nome: initialData?.contratante_nome || responsavelNome || "",
-    contratante_cpf: initialData?.contratante_cpf || "",
+    contratante_cpf: initialData?.contratante_cpf || responsavelCpf || "",
     contratante_rg: initialData?.contratante_rg || "",
-    contratante_endereco: initialData?.contratante_endereco || "",
+    contratante_endereco: initialData?.contratante_endereco || responsavelEndereco || "",
     contratante_cidade: initialData?.contratante_cidade || "",
     contratante_estado: initialData?.contratante_estado || "SP",
     contratante_cep: initialData?.contratante_cep || "",
