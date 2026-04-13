@@ -2667,6 +2667,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      finalizar_todos_prontuarios_abertos: {
+        Args: { p_justificativa: string }
+        Returns: Json
+      }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
       gerar_folha_ponto_mensal: {
