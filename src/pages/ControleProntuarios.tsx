@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
 import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X, Settings, Download } from "lucide-react";
+import FinalizarTodosProntuarios from "@/components/prontuario/FinalizarTodosProntuarios";
 import ConfiguracoesProntuario from "@/components/prontuario/ConfiguracoesProntuario";
 import ProntuarioDetalhado from "@/components/prontuario/ProntuarioDetalhado";
 import { format } from "date-fns";
