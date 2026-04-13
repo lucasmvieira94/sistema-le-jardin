@@ -945,6 +945,8 @@ export default function GerenciamentoResidentes() {
                 numero_prontuario: selectedResidente.numero_prontuario,
                 quarto: selectedResidente.quarto,
                 responsavel_nome: selectedResidente.responsavel_nome,
+                responsavel_cpf: selectedResidente.responsavel_cpf,
+                responsavel_endereco: selectedResidente.responsavel_endereco,
                 responsavel_telefone: selectedResidente.responsavel_telefone,
                 responsavel_email: selectedResidente.responsavel_email,
               }}
