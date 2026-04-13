@@ -285,6 +285,8 @@ export default function ContratosLista({
           <ContratoForm
             residenteNome={residenteData.nome_completo}
             responsavelNome={residenteData.responsavel_nome}
+            responsavelCpf={residenteData.responsavel_cpf}
+            responsavelEndereco={residenteData.responsavel_endereco}
             responsavelTelefone={residenteData.responsavel_telefone}
             responsavelEmail={residenteData.responsavel_email}
             onSubmit={handleCriarContrato}
@@ -307,6 +309,8 @@ export default function ContratosLista({
               initialData={contratoToFormData(selectedContrato)}
               residenteNome={residenteData.nome_completo}
               responsavelNome={residenteData.responsavel_nome}
+              responsavelCpf={residenteData.responsavel_cpf}
+              responsavelEndereco={residenteData.responsavel_endereco}
               responsavelTelefone={residenteData.responsavel_telefone}
               responsavelEmail={residenteData.responsavel_email}
               onSubmit={handleEditarContrato}
