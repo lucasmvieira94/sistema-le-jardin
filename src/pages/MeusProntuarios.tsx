@@ -74,8 +74,7 @@ export default function MeusProntuarios() {
   const fetchCiclosFinalizados = async () => {
     setLoading(true);
     try {
-      // Buscar ciclos encerrados que tenham registros deste funcionário
-      // OU que tenham sido encerrados por este funcionário
+      // Buscar todos os ciclos encerrados
       let query = supabase
         .from("prontuario_ciclos")
         .select(`
@@ -91,29 +90,7 @@ export default function MeusProntuarios() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filtrar apenas ciclos onde este funcionário participou
-      const cicloIds = (data || []).map((c: any) => c.id);
-      
-      let ciclosDoFuncionario = new Set<string>();
-      
-      if (cicloIds.length > 0) {
-        // Buscar em lotes para evitar limite
-        const batchSize = 50;
-        for (let i = 0; i < cicloIds.length; i += batchSize) {
-          const batch = cicloIds.slice(i, i + batchSize);
-          const { data: registros } = await supabase
-            .from("prontuario_registros")
-            .select("ciclo_id")
-            .eq("funcionario_id", funcionarioId!)
-            .in("ciclo_id", batch);
-          
-          (registros || []).forEach((r: any) => ciclosDoFuncionario.add(r.ciclo_id));
-        }
-      }
-
-      const ciclosFiltrados: CicloFinalizado[] = (data || [])
-        .filter((c: any) => ciclosDoFuncionario.has(c.id))
-        .map((c: any) => ({
+      const ciclosFiltrados: CicloFinalizado[] = (data || []).map((c: any) => ({
           id: c.id,
           data_ciclo: c.data_ciclo,
           status: c.status,
