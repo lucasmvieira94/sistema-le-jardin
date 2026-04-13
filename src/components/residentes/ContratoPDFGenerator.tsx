@@ -4,9 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { FileDown, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { hojeExtenso, formatarDataExtenso } from "@/utils/dateUtils";
+import { hojeExtenso, formatarDataExtenso, formatarData } from "@/utils/dateUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
@@ -52,7 +50,7 @@ export default function ContratoPDFGenerator({
     const formatarMoeda = (valor: number) =>
       new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 
-    const formatarData = (data: string) => format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const formatarDataLocal = (data: string) => formatarDataExtenso(data);
 
     const getFormaPagamentoLabel = (forma: string) => {
       const labels: Record<string, string> = {

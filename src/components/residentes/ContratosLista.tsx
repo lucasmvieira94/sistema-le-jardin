@@ -32,8 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Eye, MoreHorizontal, FileText, Plus, Edit, Ban, CheckCircle, XCircle } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatarData } from "@/utils/dateUtils";
 import { useContratos } from "./useContratos";
 import ContratoForm from "./ContratoForm";
 import ContratoPDFGenerator from "./ContratoPDFGenerator";
@@ -41,7 +40,7 @@ import type { ContratoData, ContratoFormData, ResidenteData } from "./types";
 
 interface ContratosListaProps {
   residenteId: string;
-  residenteData: ResidenteData & { responsavel_nome?: string; responsavel_telefone?: string; responsavel_email?: string };
+  residenteData: ResidenteData & { responsavel_nome?: string; responsavel_cpf?: string; responsavel_endereco?: string; responsavel_telefone?: string; responsavel_email?: string };
   onClose: () => void;
 }
 
@@ -214,9 +213,7 @@ export default function ContratosLista({
                   </TableCell>
                   <TableCell>Dia {contrato.dia_vencimento}</TableCell>
                   <TableCell>
-                    {format(new Date(contrato.data_inicio_contrato), "dd/MM/yyyy", {
-                      locale: ptBR,
-                    })}
+                    {formatarData(contrato.data_inicio_contrato)}
                   </TableCell>
                   <TableCell>{getStatusBadge(contrato.status)}</TableCell>
                   <TableCell className="text-right">
@@ -288,6 +285,8 @@ export default function ContratosLista({
           <ContratoForm
             residenteNome={residenteData.nome_completo}
             responsavelNome={residenteData.responsavel_nome}
+            responsavelCpf={residenteData.responsavel_cpf}
+            responsavelEndereco={residenteData.responsavel_endereco}
             responsavelTelefone={residenteData.responsavel_telefone}
             responsavelEmail={residenteData.responsavel_email}
             onSubmit={handleCriarContrato}
@@ -310,6 +309,8 @@ export default function ContratosLista({
               initialData={contratoToFormData(selectedContrato)}
               residenteNome={residenteData.nome_completo}
               responsavelNome={residenteData.responsavel_nome}
+              responsavelCpf={residenteData.responsavel_cpf}
+              responsavelEndereco={residenteData.responsavel_endereco}
               responsavelTelefone={residenteData.responsavel_telefone}
               responsavelEmail={residenteData.responsavel_email}
               onSubmit={handleEditarContrato}

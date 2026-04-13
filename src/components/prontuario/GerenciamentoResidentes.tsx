@@ -868,7 +868,13 @@ export default function GerenciamentoResidentes() {
                   <TableCell>{residente.numero_prontuario}</TableCell>
                   <TableCell>{residente.quarto || "-"}</TableCell>
                   <TableCell>
-                    {format(new Date().getFullYear() - new Date(residente.data_nascimento).getFullYear(), '0')} anos
+                    {(() => {
+                      const hoje = new Date();
+                      const nasc = new Date(residente.data_nascimento + 'T12:00:00');
+                      let idade = hoje.getFullYear() - nasc.getFullYear();
+                      if (hoje.getMonth() < nasc.getMonth() || (hoje.getMonth() === nasc.getMonth() && hoje.getDate() < nasc.getDate())) idade--;
+                      return `${idade} anos`;
+                    })()}
                   </TableCell>
                   <TableCell>
                     <Badge 
@@ -945,6 +951,8 @@ export default function GerenciamentoResidentes() {
                 numero_prontuario: selectedResidente.numero_prontuario,
                 quarto: selectedResidente.quarto,
                 responsavel_nome: selectedResidente.responsavel_nome,
+                responsavel_cpf: selectedResidente.responsavel_cpf,
+                responsavel_endereco: selectedResidente.responsavel_endereco,
                 responsavel_telefone: selectedResidente.responsavel_telefone,
                 responsavel_email: selectedResidente.responsavel_email,
               }}
