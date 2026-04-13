@@ -589,6 +589,7 @@ export default function ControleProntuarios() {
             </div>
             
             <div className="flex items-center gap-2">
+              <FinalizarTodosProntuarios onSuccess={fetchProntuarios} />
               <Button
                 variant="outline"
                 size="sm"
