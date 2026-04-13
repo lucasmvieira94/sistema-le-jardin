@@ -5,27 +5,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Eye, Search, ClipboardList, CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { formatInTimeZone } from "date-fns-tz";
+import { ArrowLeft, Eye, Search, ClipboardList, CheckCircle, Calendar, ChevronRight, User } from "lucide-react";
 import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
 import CicloDetalhado from "@/components/prontuario/CicloDetalhado";
+import { hojeISO, formatarData, formatarDataCompleta } from "@/utils/dateUtils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-interface MeuRegistro {
+interface CicloFinalizado {
   id: string;
-  ciclo_id: string | null;
-  data_registro: string;
-  horario_registro: string;
-  tipo_registro: string;
-  titulo: string;
+  data_ciclo: string;
+  status: string;
+  data_encerramento: string | null;
   residente_nome: string;
-  residente_quarto: string;
-  status_ciclo: string | null;
+  residente_quarto: string | null;
+}
+
+interface DiaAgrupado {
+  data: string;
+  diaSemana: string;
+  dataFormatada: string;
+  ciclos: CicloFinalizado[];
 }
 
 export default function MeusProntuarios() {
@@ -37,16 +41,23 @@ export default function MeusProntuarios() {
   const funcionarioId = searchParams.get("funcionario_id");
   const funcionarioNome = searchParams.get("funcionario_nome") || "";
 
-  const [registros, setRegistros] = useState<MeuRegistro[]>([]);
+  const [diasAgrupados, setDiasAgrupados] = useState<DiaAgrupado[]>([]);
   const [loading, setLoading] = useState(true);
-  const [residentes, setResidentes] = useState<any[]>([]);
+  const [selectedDia, setSelectedDia] = useState<DiaAgrupado | null>(null);
   const [selectedCicloId, setSelectedCicloId] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogCicloOpen, setDialogCicloOpen] = useState(false);
+
+  // Filtros: últimos 7 dias por padrão
+  const hoje = hojeISO();
+  const seteDiasAtras = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return format(d, 'yyyy-MM-dd');
+  })();
 
   const [filtros, setFiltros] = useState({
-    dataInicio: formatInTimeZone(new Date(), "America/Sao_Paulo", "yyyy-MM-dd"),
-    dataFim: "",
-    residente: "todos",
+    dataInicio: seteDiasAtras,
+    dataFim: hoje,
   });
 
   useEffect(() => {
@@ -54,100 +65,93 @@ export default function MeusProntuarios() {
       navigate("/");
       return;
     }
-    fetchResidentes();
   }, [funcionarioId]);
 
   useEffect(() => {
-    if (funcionarioId) fetchRegistros();
+    if (funcionarioId) fetchCiclosFinalizados();
   }, [funcionarioId, filtros]);
 
-  const fetchResidentes = async () => {
-    const { data } = await supabase
-      .from("residentes")
-      .select("id, nome_completo")
-      .eq("ativo", true)
-      .order("nome_completo");
-    setResidentes(data || []);
-  };
-
-  const fetchRegistros = async () => {
+  const fetchCiclosFinalizados = async () => {
     setLoading(true);
     try {
+      // Buscar ciclos encerrados que tenham registros deste funcionário
+      // OU que tenham sido encerrados por este funcionário
       let query = supabase
-        .from("prontuario_registros")
+        .from("prontuario_ciclos")
         .select(`
-          id, ciclo_id, data_registro, horario_registro, tipo_registro, titulo,
-          residentes!inner(nome_completo, quarto),
-          prontuario_ciclos(status)
+          id, data_ciclo, status, data_encerramento,
+          residente:residentes!inner(nome_completo, quarto)
         `)
-        .eq("funcionario_id", funcionarioId)
-        .order("data_registro", { ascending: false })
-        .order("horario_registro", { ascending: false });
+        .eq("status", "encerrado")
+        .order("data_ciclo", { ascending: false });
 
-      if (filtros.dataInicio) query = query.gte("data_registro", filtros.dataInicio);
-      if (filtros.dataFim) query = query.lte("data_registro", filtros.dataFim);
-      if (filtros.residente !== "todos") query = query.eq("residente_id", filtros.residente);
+      if (filtros.dataInicio) query = query.gte("data_ciclo", filtros.dataInicio);
+      if (filtros.dataFim) query = query.lte("data_ciclo", filtros.dataFim);
 
       const { data, error } = await query;
       if (error) throw error;
 
-      const mapped: MeuRegistro[] = (data || []).map((r: any) => ({
-        id: r.id,
-        ciclo_id: r.ciclo_id,
-        data_registro: r.data_registro,
-        horario_registro: r.horario_registro,
-        tipo_registro: r.tipo_registro,
-        titulo: r.titulo,
-        residente_nome: r.residentes?.nome_completo || "N/A",
-        residente_quarto: r.residentes?.quarto || "-",
-        status_ciclo: r.prontuario_ciclos?.status || null,
-      }));
+      // Filtrar apenas ciclos onde este funcionário participou
+      const cicloIds = (data || []).map((c: any) => c.id);
+      
+      let ciclosDoFuncionario = new Set<string>();
+      
+      if (cicloIds.length > 0) {
+        // Buscar em lotes para evitar limite
+        const batchSize = 50;
+        for (let i = 0; i < cicloIds.length; i += batchSize) {
+          const batch = cicloIds.slice(i, i + batchSize);
+          const { data: registros } = await supabase
+            .from("prontuario_registros")
+            .select("ciclo_id")
+            .eq("funcionario_id", funcionarioId!)
+            .in("ciclo_id", batch);
+          
+          (registros || []).forEach((r: any) => ciclosDoFuncionario.add(r.ciclo_id));
+        }
+      }
 
-      setRegistros(mapped);
+      const ciclosFiltrados: CicloFinalizado[] = (data || [])
+        .filter((c: any) => ciclosDoFuncionario.has(c.id))
+        .map((c: any) => ({
+          id: c.id,
+          data_ciclo: c.data_ciclo,
+          status: c.status,
+          data_encerramento: c.data_encerramento,
+          residente_nome: c.residente?.nome_completo || "N/A",
+          residente_quarto: c.residente?.quarto || null,
+        }));
+
+      // Agrupar por data
+      const agrupado = new Map<string, CicloFinalizado[]>();
+      ciclosFiltrados.forEach((ciclo) => {
+        const existing = agrupado.get(ciclo.data_ciclo) || [];
+        existing.push(ciclo);
+        agrupado.set(ciclo.data_ciclo, existing);
+      });
+
+      const diasFormatados: DiaAgrupado[] = Array.from(agrupado.entries())
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([data, ciclos]) => {
+          const dateObj = new Date(data + "T12:00:00");
+          return {
+            data,
+            diaSemana: format(dateObj, "EEEE", { locale: ptBR }),
+            dataFormatada: formatarData(data),
+            ciclos,
+          };
+        });
+
+      setDiasAgrupados(diasFormatados);
     } catch (err) {
-      console.error("Erro ao buscar registros:", err);
-      toast({ title: "Erro ao carregar seus prontuários", variant: "destructive" });
+      console.error("Erro ao buscar prontuários finalizados:", err);
+      toast({ title: "Erro ao carregar prontuários", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status: string | null) => {
-    switch (status) {
-      case "encerrado":
-        return (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800">
-            <CheckCircle className="w-3 h-3 mr-1" /> Encerrado
-          </Badge>
-        );
-      case "completo":
-        return (
-          <Badge className="bg-green-100 text-green-800">
-            <CheckCircle className="w-3 h-3 mr-1" /> Completo
-          </Badge>
-        );
-      case "em_andamento":
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3 mr-1" /> Em Andamento
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">-</Badge>;
-    }
-  };
-
-  const tipoRegistroLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      prontuario_completo: "Prontuário Completo",
-      alimentacao: "Alimentação",
-      higiene: "Higiene",
-      medicacao: "Medicação",
-      atividade: "Atividade",
-      observacao: "Observação",
-    };
-    return labels[tipo] || tipo.replace(/_/g, " ");
-  };
+  const totalCiclos = diasAgrupados.reduce((acc, dia) => acc + dia.ciclos.length, 0);
 
   if (!funcionarioId) return null;
 
@@ -163,10 +167,10 @@ export default function MeusProntuarios() {
               </Button>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-green-800">
-                  Meus Prontuários
+                  Meus Prontuários Finalizados
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Registros preenchidos por {decodeURIComponent(funcionarioNome).split(" ")[0]}
+                  Prontuários encerrados por {decodeURIComponent(funcionarioNome).split(" ")[0]}
                 </p>
               </div>
             </div>
@@ -178,16 +182,14 @@ export default function MeusProntuarios() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <Card className="bg-white">
             <CardContent className="p-3 text-center">
-              <p className="text-2xl font-bold text-green-700">{registros.length}</p>
-              <p className="text-xs text-muted-foreground">Total de Registros</p>
+              <p className="text-2xl font-bold text-green-700">{totalCiclos}</p>
+              <p className="text-xs text-muted-foreground">Prontuários Finalizados</p>
             </CardContent>
           </Card>
           <Card className="bg-white">
             <CardContent className="p-3 text-center">
-              <p className="text-2xl font-bold text-blue-600">
-                {new Set(registros.map((r) => r.residente_nome)).size}
-              </p>
-              <p className="text-xs text-muted-foreground">Residentes Atendidos</p>
+              <p className="text-2xl font-bold text-blue-600">{diasAgrupados.length}</p>
+              <p className="text-xs text-muted-foreground">Dias com Registros</p>
             </CardContent>
           </Card>
         </div>
@@ -199,7 +201,7 @@ export default function MeusProntuarios() {
               <Search className="w-4 h-4" /> Filtros
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Data Início</Label>
               <Input
@@ -218,94 +220,116 @@ export default function MeusProntuarios() {
                 className="text-sm"
               />
             </div>
-            <div>
-              <Label className="text-xs">Residente</Label>
-              <Select value={filtros.residente} onValueChange={(v) => setFiltros({ ...filtros, residente: v })}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  {residentes.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.nome_completo}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </CardContent>
         </Card>
 
-        {/* Records Table */}
-        <Card className="bg-white">
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="p-8 text-center text-muted-foreground">Carregando...</div>
-            ) : registros.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-                Nenhum registro encontrado para os filtros selecionados.
+        {/* Grouped by day list OR day detail */}
+        {selectedDia ? (
+          <Card className="bg-white">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" onClick={() => setSelectedDia(null)}>
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <div>
+                  <CardTitle className="text-base capitalize">
+                    {selectedDia.diaSemana}, {selectedDia.dataFormatada}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedDia.ciclos.length} prontuário(s) finalizado(s)
+                  </p>
+                </div>
               </div>
-            ) : (
+            </CardHeader>
+            <CardContent>
               <ScrollArea className="max-h-[60vh]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Horário</TableHead>
-                      <TableHead>Residente</TableHead>
-                      <TableHead className="hidden sm:table-cell">Tipo</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {registros.map((reg) => (
-                      <TableRow key={reg.id}>
-                        <TableCell className="text-sm">
-                          {new Date(reg.data_registro + "T12:00:00").toLocaleDateString("pt-BR")}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {reg.horario_registro?.substring(0, 5) || "-"}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium">
-                          {reg.residente_nome}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell text-sm">
-                          {tipoRegistroLabel(reg.tipo_registro)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(reg.status_ciclo)}</TableCell>
-                        <TableCell className="text-right">
-                          {reg.ciclo_id && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setSelectedCicloId(reg.ciclo_id);
-                                setDialogOpen(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                <div className="space-y-2">
+                  {selectedDia.ciclos.map((ciclo) => (
+                    <div
+                      key={ciclo.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        setSelectedCicloId(ciclo.id);
+                        setDialogCicloOpen(true);
+                      }}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <User className="w-4 h-4 text-green-700" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{ciclo.residente_nome}</p>
+                          {ciclo.residente_quarto && (
+                            <p className="text-xs text-muted-foreground">Quarto: {ciclo.residente_quarto}</p>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" /> Encerrado
+                        </Badge>
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-white">
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                  Carregando...
+                </div>
+              ) : diasAgrupados.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <ClipboardList className="w-10 h-10 mx-auto mb-3 text-muted-foreground/50" />
+                  <p className="font-medium">Nenhum prontuário finalizado</p>
+                  <p className="text-xs mt-1">Ajuste os filtros de data para ver outros períodos.</p>
+                </div>
+              ) : (
+                <ScrollArea className="max-h-[60vh]">
+                  <div className="divide-y">
+                    {diasAgrupados.map((dia) => (
+                      <div
+                        key={dia.data}
+                        className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => setSelectedDia(dia)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Calendar className="w-5 h-5 text-green-700" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{dia.dataFormatada}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{dia.diaSemana}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="text-xs">
+                            {dia.ciclos.length} prontuário{dia.ciclos.length !== 1 ? 's' : ''}
+                          </Badge>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Detail Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        {/* Ciclo Detail Dialog */}
+        <Dialog open={dialogCicloOpen} onOpenChange={setDialogCicloOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Detalhes do Prontuário</DialogTitle>
             </DialogHeader>
-            {selectedCicloId && (
-              <CicloDetalhado cicloId={selectedCicloId} />
-            )}
+            {selectedCicloId && <CicloDetalhado cicloId={selectedCicloId} />}
           </DialogContent>
         </Dialog>
       </div>
