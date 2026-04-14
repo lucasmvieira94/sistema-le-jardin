@@ -85,13 +85,16 @@ export const useMedicamentos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("estoque_medicamentos")
-        .select(`*, medicamento:medicamentos(*), residente:residentes(id, nome)`)
+        .select(`*, medicamento:medicamentos(*), residente:residentes(id, nome_completo)`)
         .eq("ativo", true)
         .eq("tipo_estoque", "residente")
         .not("residente_id", "is", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as EstoqueMedicamento[];
+      return (data || []).map(d => ({
+        ...d,
+        residente: d.residente ? { id: d.residente.id, nome: d.residente.nome_completo } : undefined,
+      })) as EstoqueMedicamento[];
     },
   });
 
@@ -116,11 +119,14 @@ export const useMedicamentos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("prescricoes_medicamentos")
-        .select(`*, medicamento:medicamentos(*), residente:residentes(id, nome)`)
+        .select(`*, medicamento:medicamentos(*), residente:residentes(id, nome_completo)`)
         .eq("ativo", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as PrescricaoMedicamento[];
+      return (data || []).map(d => ({
+        ...d,
+        residente: d.residente ? { id: d.residente.id, nome: d.residente.nome_completo } : undefined,
+      })) as PrescricaoMedicamento[];
     },
   });
 
@@ -140,11 +146,11 @@ export const useMedicamentos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("residentes")
-        .select("id, nome")
+        .select("id, nome_completo")
         .eq("ativo", true)
-        .order("nome");
+        .order("nome_completo");
       if (error) throw error;
-      return data as { id: string; nome: string }[];
+      return (data || []).map(d => ({ id: d.id, nome: d.nome_completo })) as { id: string; nome: string }[];
     },
   });
 
