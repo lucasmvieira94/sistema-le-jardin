@@ -189,7 +189,7 @@ export default function ContratoPDFGenerator({
 
       <!-- CLÁUSULA QUINTA: DA VIGÊNCIA -->
       <h3 class="clausula">CLÁUSULA QUINTA: DA VIGÊNCIA DO CONTRATO</h3>
-      <p class="justify"><strong>5.</strong> O contrato terá validade de 12 (doze) meses a contar da data de assinatura deste contrato${contrato.data_inicio_contrato ? `, com início em <strong>${formatarData(contrato.data_inicio_contrato)}</strong>` : ""}${contrato.data_fim_contrato ? ` e término em <strong>${formatarData(contrato.data_fim_contrato)}</strong>` : ""}.</p>
+      <p class="justify"><strong>5.</strong> O contrato terá validade determinada a contar da data de assinatura deste contrato${contrato.data_inicio_contrato ? `, com início em <strong>${formatarData(contrato.data_inicio_contrato)}</strong>` : ""}${contrato.data_fim_contrato ? ` e término em <strong>${formatarData(contrato.data_fim_contrato)}</strong>` : ""}.</p>
 
       <!-- CLÁUSULA SEXTA: DA RESCISÃO -->
       <h3 class="clausula">CLÁUSULA SEXTA: DA RESCISÃO</h3>
