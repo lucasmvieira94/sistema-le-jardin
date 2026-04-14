@@ -955,6 +955,8 @@ export type Database = {
           preco_total: number | null
           preco_unitario: number | null
           quantidade: number
+          residente_id: string | null
+          tipo_estoque: string
         }
         Insert: {
           created_at?: string | null
@@ -969,6 +971,8 @@ export type Database = {
           preco_total?: number | null
           preco_unitario?: number | null
           quantidade: number
+          residente_id?: string | null
+          tipo_estoque?: string
         }
         Update: {
           created_at?: string | null
@@ -983,6 +987,8 @@ export type Database = {
           preco_total?: number | null
           preco_unitario?: number | null
           quantidade?: number
+          residente_id?: string | null
+          tipo_estoque?: string
         }
         Relationships: [
           {
@@ -1004,6 +1010,13 @@ export type Database = {
             columns: ["medicamento_id"]
             isOneToOne: false
             referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrada_medicamentos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
             referencedColumns: ["id"]
           },
         ]
@@ -1130,6 +1143,8 @@ export type Database = {
           quantidade_atual: number
           quantidade_maxima: number | null
           quantidade_minima: number | null
+          residente_id: string | null
+          tipo_estoque: string
           updated_at: string | null
         }
         Insert: {
@@ -1146,6 +1161,8 @@ export type Database = {
           quantidade_atual?: number
           quantidade_maxima?: number | null
           quantidade_minima?: number | null
+          residente_id?: string | null
+          tipo_estoque?: string
           updated_at?: string | null
         }
         Update: {
@@ -1162,6 +1179,8 @@ export type Database = {
           quantidade_atual?: number
           quantidade_maxima?: number | null
           quantidade_minima?: number | null
+          residente_id?: string | null
+          tipo_estoque?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -1170,6 +1189,13 @@ export type Database = {
             columns: ["medicamento_id"]
             isOneToOne: false
             referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_medicamentos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
             referencedColumns: ["id"]
           },
         ]
@@ -1822,6 +1848,81 @@ export type Database = {
             columns: ["conversa_id"]
             isOneToOne: false
             referencedRelation: "conversas_whatsapp"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prescricoes_medicamentos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          dia_semana: number | null
+          dosagem: string
+          frequencia_tipo: string
+          frequencia_valor: number | null
+          horarios: string[] | null
+          id: string
+          intervalo_dias: number | null
+          medicamento_id: string
+          observacoes: string | null
+          prescrito_por: string | null
+          residente_id: string
+          updated_at: string
+          via_administracao: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          dia_semana?: number | null
+          dosagem: string
+          frequencia_tipo?: string
+          frequencia_valor?: number | null
+          horarios?: string[] | null
+          id?: string
+          intervalo_dias?: number | null
+          medicamento_id: string
+          observacoes?: string | null
+          prescrito_por?: string | null
+          residente_id: string
+          updated_at?: string
+          via_administracao?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          dia_semana?: number | null
+          dosagem?: string
+          frequencia_tipo?: string
+          frequencia_valor?: number | null
+          horarios?: string[] | null
+          id?: string
+          intervalo_dias?: number | null
+          medicamento_id?: string
+          observacoes?: string | null
+          prescrito_por?: string | null
+          residente_id?: string
+          updated_at?: string
+          via_administracao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescricoes_medicamentos_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescricoes_medicamentos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
             referencedColumns: ["id"]
           },
         ]

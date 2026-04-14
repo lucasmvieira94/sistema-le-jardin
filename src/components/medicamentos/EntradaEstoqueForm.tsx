@@ -5,54 +5,62 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useMedicamentos } from "@/hooks/useMedicamentos";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 interface EntradaEstoqueFormData {
   medicamento_id: string;
+  residente_id?: string;
+  tipo_estoque: string;
   lote?: string;
   data_validade?: string;
   quantidade: number;
-  quantidade_minima: number;
-  quantidade_maxima: number;
-  preco_unitario?: number;
-  fornecedor?: string;
   observacoes?: string;
 }
 
 interface EntradaEstoqueFormProps {
   onSuccess?: () => void;
+  defaultTipoEstoque?: string;
+  defaultResidenteId?: string;
 }
 
-export const EntradaEstoqueForm = ({ onSuccess }: EntradaEstoqueFormProps) => {
-  const { medicamentos, adicionarEstoque } = useMedicamentos();
+export const EntradaEstoqueForm = ({ onSuccess, defaultTipoEstoque = "residente", defaultResidenteId }: EntradaEstoqueFormProps) => {
+  const { medicamentos, residentes, adicionarEstoque } = useMedicamentos();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { 
-    register, 
-    handleSubmit, 
-    setValue, 
-    reset, 
-    formState: { errors } 
-  } = useForm<EntradaEstoqueFormData>({
+  const [searchMed, setSearchMed] = useState("");
+
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<EntradaEstoqueFormData>({
     defaultValues: {
-      quantidade_minima: 10,
-      quantidade_maxima: 1000,
+      tipo_estoque: defaultTipoEstoque,
+      residente_id: defaultResidenteId,
     }
   });
 
+  const tipoEstoque = watch("tipo_estoque");
+
+  const filteredMedicamentos = medicamentos.filter(m =>
+    m.nome.toLowerCase().includes(searchMed.toLowerCase()) ||
+    m.principio_ativo?.toLowerCase().includes(searchMed.toLowerCase())
+  );
+
   const onSubmit = async (data: EntradaEstoqueFormData) => {
+    if (!data.medicamento_id) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       await adicionarEstoque.mutateAsync({
-        ...data,
+        medicamento_id: data.medicamento_id,
+        residente_id: data.tipo_estoque === "residente" ? data.residente_id : undefined,
+        tipo_estoque: data.tipo_estoque,
+        lote: data.lote,
+        data_validade: data.data_validade,
         quantidade: Number(data.quantidade),
-        quantidade_minima: Number(data.quantidade_minima),
-        quantidade_maxima: Number(data.quantidade_maxima),
-        preco_unitario: data.preco_unitario ? Number(data.preco_unitario) : undefined,
+        observacoes: data.observacoes,
       });
-      reset();
+      reset({ tipo_estoque: defaultTipoEstoque, residente_id: defaultResidenteId });
+      setSearchMed("");
       onSuccess?.();
     } finally {
       setIsSubmitting(false);
@@ -63,148 +71,105 @@ export const EntradaEstoqueForm = ({ onSuccess }: EntradaEstoqueFormProps) => {
     <Card>
       <CardHeader>
         <CardTitle>Entrada de Estoque</CardTitle>
+        <CardDescription>Registre a entrada de medicamentos no estoque</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Seleção do Medicamento */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Tipo de Estoque */}
           <div className="space-y-2">
-            <Label htmlFor="medicamento_id">Medicamento *</Label>
-            <Select onValueChange={(value) => setValue("medicamento_id", value)}>
+            <Label>Tipo de Estoque *</Label>
+            <Select
+              value={tipoEstoque}
+              onValueChange={(value) => setValue("tipo_estoque", value)}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um medicamento" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {medicamentos.map((medicamento) => (
-                  <SelectItem key={medicamento.id} value={medicamento.id}>
-                    {medicamento.nome} {medicamento.dosagem && `- ${medicamento.dosagem}`}
-                  </SelectItem>
-                ))}
+                <SelectItem value="residente">Residente (Individual)</SelectItem>
+                <SelectItem value="urgencia">Urgência (Institucional)</SelectItem>
               </SelectContent>
             </Select>
-            {errors.medicamento_id && (
-              <p className="text-sm text-red-500">Selecione um medicamento</p>
-            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Lote */}
+          {/* Residente (se tipo = residente) */}
+          {tipoEstoque === "residente" && (
             <div className="space-y-2">
-              <Label htmlFor="lote">Lote</Label>
+              <Label>Residente *</Label>
+              <Select onValueChange={(value) => setValue("residente_id", value)} defaultValue={defaultResidenteId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o residente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {residentes.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Busca de Medicamento */}
+          <div className="space-y-2">
+            <Label>Medicamento *</Label>
+            <div className="relative mb-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="lote"
-                {...register("lote")}
-                placeholder="Número do lote"
+                placeholder="Buscar no catálogo..."
+                value={searchMed}
+                onChange={(e) => setSearchMed(e.target.value)}
+                className="pl-8"
               />
             </div>
+            <Select onValueChange={(value) => setValue("medicamento_id", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o medicamento" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredMedicamentos.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.nome} {m.dosagem && `- ${m.dosagem}`} {m.forma_farmaceutica && `(${m.forma_farmaceutica})`}
+                  </SelectItem>
+                ))}
+                {filteredMedicamentos.length === 0 && (
+                  <div className="p-2 text-sm text-muted-foreground text-center">
+                    Nenhum medicamento encontrado. Cadastre primeiro no catálogo.
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
-            {/* Data de Validade */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="data_validade">Data de Validade</Label>
+              <Label>Quantidade *</Label>
               <Input
-                id="data_validade"
-                type="date"
-                {...register("data_validade")}
-              />
-            </div>
-
-            {/* Quantidade */}
-            <div className="space-y-2">
-              <Label htmlFor="quantidade">Quantidade *</Label>
-              <Input
-                id="quantidade"
                 type="number"
                 min="1"
-                step="0.01"
-                {...register("quantidade", { 
-                  required: "Quantidade é obrigatória",
-                  min: { value: 0.01, message: "Quantidade deve ser maior que 0" }
-                })}
+                {...register("quantidade", { required: "Obrigatório", min: { value: 1, message: "Mínimo 1" } })}
                 placeholder="0"
               />
-              {errors.quantidade && (
-                <p className="text-sm text-red-500">{errors.quantidade.message}</p>
-              )}
+              {errors.quantidade && <p className="text-sm text-destructive">{errors.quantidade.message}</p>}
             </div>
 
-            {/* Preço Unitário */}
             <div className="space-y-2">
-              <Label htmlFor="preco_unitario">Preço Unitário (R$)</Label>
-              <Input
-                id="preco_unitario"
-                type="number"
-                min="0"
-                step="0.01"
-                {...register("preco_unitario")}
-                placeholder="0,00"
-              />
+              <Label>Lote</Label>
+              <Input {...register("lote")} placeholder="Nº do lote" />
             </div>
 
-            {/* Quantidade Mínima */}
             <div className="space-y-2">
-              <Label htmlFor="quantidade_minima">Quantidade Mínima *</Label>
-              <Input
-                id="quantidade_minima"
-                type="number"
-                min="1"
-                {...register("quantidade_minima", { 
-                  required: "Quantidade mínima é obrigatória",
-                  min: { value: 1, message: "Deve ser pelo menos 1" }
-                })}
-                placeholder="10"
-              />
-              {errors.quantidade_minima && (
-                <p className="text-sm text-red-500">{errors.quantidade_minima.message}</p>
-              )}
-            </div>
-
-            {/* Quantidade Máxima */}
-            <div className="space-y-2">
-              <Label htmlFor="quantidade_maxima">Quantidade Máxima *</Label>
-              <Input
-                id="quantidade_maxima"
-                type="number"
-                min="1"
-                {...register("quantidade_maxima", { 
-                  required: "Quantidade máxima é obrigatória",
-                  min: { value: 1, message: "Deve ser pelo menos 1" }
-                })}
-                placeholder="1000"
-              />
-              {errors.quantidade_maxima && (
-                <p className="text-sm text-red-500">{errors.quantidade_maxima.message}</p>
-              )}
+              <Label>Validade</Label>
+              <Input type="date" {...register("data_validade")} />
             </div>
           </div>
 
-          {/* Fornecedor */}
           <div className="space-y-2">
-            <Label htmlFor="fornecedor">Fornecedor</Label>
-            <Input
-              id="fornecedor"
-              {...register("fornecedor")}
-              placeholder="Nome do fornecedor"
-            />
+            <Label>Observações</Label>
+            <Textarea {...register("observacoes")} placeholder="Informações adicionais..." rows={2} />
           </div>
 
-          {/* Observações */}
-          <div className="space-y-2">
-            <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
-              {...register("observacoes")}
-              placeholder="Informações adicionais sobre a entrada..."
-              rows={3}
-            />
-          </div>
-
-          {/* Botões */}
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => reset()}
-              disabled={isSubmitting}
-            >
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => { reset(); setSearchMed(""); }} disabled={isSubmitting}>
               Limpar
             </Button>
             <Button type="submit" disabled={isSubmitting}>
