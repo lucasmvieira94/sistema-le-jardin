@@ -6,9 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useMedicamentos } from "@/hooks/useMedicamentos";
-import { Loader2, Search, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Check, ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface PrescricaoFormData {
   residente_id: string;
@@ -33,9 +36,10 @@ interface PrescricaoFormProps {
 export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoFormProps) => {
   const { medicamentos, residentes, cadastrarPrescricao } = useMedicamentos();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [searchMed, setSearchMed] = useState("");
   const [horarios, setHorarios] = useState<string[]>([]);
   const [novoHorario, setNovoHorario] = useState("");
+  const [medOpen, setMedOpen] = useState(false);
+  const [selectedMedId, setSelectedMedId] = useState("");
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<PrescricaoFormData>({
     defaultValues: {
@@ -47,10 +51,7 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
 
   const frequenciaTipo = watch("frequencia_tipo");
 
-  const filteredMedicamentos = medicamentos.filter(m =>
-    m.nome.toLowerCase().includes(searchMed.toLowerCase()) ||
-    m.principio_ativo?.toLowerCase().includes(searchMed.toLowerCase())
-  );
+  const selectedMed = medicamentos.find(m => m.id === selectedMedId);
 
   const addHorario = () => {
     if (novoHorario && !horarios.includes(novoHorario)) {
@@ -80,19 +81,27 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
   ];
 
   const onSubmit = async (data: PrescricaoFormData) => {
-    if (!data.medicamento_id || !data.residente_id) return;
+    if (!selectedMedId || !data.residente_id) return;
     setIsSubmitting(true);
     try {
       await cadastrarPrescricao.mutateAsync({
-        ...data,
+        residente_id: data.residente_id,
+        medicamento_id: selectedMedId,
+        dosagem: data.dosagem,
+        frequencia_tipo: data.frequencia_tipo,
         horarios: horarios.length > 0 ? horarios : undefined,
         frequencia_valor: data.frequencia_valor ? Number(data.frequencia_valor) : undefined,
         dia_semana: data.dia_semana !== undefined ? Number(data.dia_semana) : undefined,
         intervalo_dias: data.intervalo_dias ? Number(data.intervalo_dias) : undefined,
+        via_administracao: data.via_administracao,
+        prescrito_por: data.prescrito_por,
+        data_inicio: data.data_inicio,
+        data_fim: data.data_fim || undefined,
+        observacoes: data.observacoes || undefined,
       });
       reset({ frequencia_tipo: "hora_fixa_diaria", data_inicio: new Date().toISOString().split("T")[0], residente_id: defaultResidenteId });
       setHorarios([]);
-      setSearchMed("");
+      setSelectedMedId("");
       onSuccess?.();
     } finally {
       setIsSubmitting(false);
@@ -123,35 +132,52 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
               </Select>
             </div>
 
-            {/* Medicamento */}
+            {/* Medicamento - Combobox com busca */}
             <div className="space-y-2">
               <Label>Medicamento *</Label>
-              <div className="relative mb-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchMed}
-                  onChange={(e) => setSearchMed(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-              <Select onValueChange={(v) => setValue("medicamento_id", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredMedicamentos.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.nome} {m.dosagem && `- ${m.dosagem}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={medOpen} onOpenChange={setMedOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={medOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {selectedMed
+                      ? `${selectedMed.nome}${selectedMed.dosagem ? ` - ${selectedMed.dosagem}` : ""}`
+                      : "Buscar medicamento..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Digite o nome do medicamento..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum medicamento encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {medicamentos.map((m) => (
+                          <CommandItem
+                            key={m.id}
+                            value={`${m.nome} ${m.principio_ativo || ""} ${m.dosagem || ""}`}
+                            onSelect={() => {
+                              setSelectedMedId(m.id);
+                              setValue("medicamento_id", m.id);
+                              setMedOpen(false);
+                            }}
+                          >
+                            <Check className={cn("mr-2 h-4 w-4", selectedMedId === m.id ? "opacity-100" : "opacity-0")} />
+                            {m.nome} {m.dosagem && <span className="text-muted-foreground ml-1">- {m.dosagem}</span>}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Dosagem prescrita */}
             <div className="space-y-2">
               <Label>Dosagem Prescrita *</Label>
               <Input
@@ -161,7 +187,6 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
               {errors.dosagem && <p className="text-sm text-destructive">{errors.dosagem.message}</p>}
             </div>
 
-            {/* Via de administração */}
             <div className="space-y-2">
               <Label>Via de Administração</Label>
               <Select onValueChange={(v) => setValue("via_administracao", v)}>
@@ -178,7 +203,6 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
               </Select>
             </div>
 
-            {/* Médico prescritor */}
             <div className="space-y-2">
               <Label>Médico Prescritor</Label>
               <Input {...register("prescrito_por")} placeholder="Nome do médico" />
@@ -207,13 +231,7 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
               {frequenciaTipo === "a_cada_x_horas" && (
                 <div className="space-y-2">
                   <Label>A cada quantas horas?</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="24"
-                    {...register("frequencia_valor")}
-                    placeholder="Ex: 8"
-                  />
+                  <Input type="number" min="1" max="24" {...register("frequencia_valor")} placeholder="Ex: 8" />
                 </div>
               )}
 
@@ -236,27 +254,16 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
               {frequenciaTipo === "intervalo_dias" && (
                 <div className="space-y-2">
                   <Label>Intervalo (dias)</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    {...register("intervalo_dias")}
-                    placeholder="Ex: 7"
-                  />
+                  <Input type="number" min="1" {...register("intervalo_dias")} placeholder="Ex: 7" />
                 </div>
               )}
             </div>
 
-            {/* Horários */}
             {(frequenciaTipo === "hora_fixa_diaria" || frequenciaTipo === "dia_especifico") && (
               <div className="space-y-2">
                 <Label>Horários</Label>
                 <div className="flex gap-2">
-                  <Input
-                    type="time"
-                    value={novoHorario}
-                    onChange={(e) => setNovoHorario(e.target.value)}
-                    className="w-36"
-                  />
+                  <Input type="time" value={novoHorario} onChange={(e) => setNovoHorario(e.target.value)} className="w-36" />
                   <Button type="button" variant="outline" size="sm" onClick={addHorario}>
                     <Plus className="h-4 w-4 mr-1" /> Adicionar
                   </Button>
@@ -294,7 +301,7 @@ export const PrescricaoForm = ({ onSuccess, defaultResidenteId }: PrescricaoForm
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => { reset(); setHorarios([]); setSearchMed(""); }} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => { reset(); setHorarios([]); setSelectedMedId(""); }} disabled={isSubmitting}>
               Limpar
             </Button>
             <Button type="submit" disabled={isSubmitting}>

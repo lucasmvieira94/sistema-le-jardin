@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMedicamentos } from "@/hooks/useMedicamentos";
 import { PrescricaoForm } from "./PrescricaoForm";
 import { Plus, Search, User, Clock, Calendar, FileText } from "lucide-react";
@@ -55,6 +55,8 @@ export const MapaMedicamentos = () => {
             <Button><Plus className="h-4 w-4 mr-2" />Nova Prescrição</Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogTitle className="sr-only">Nova Prescrição</DialogTitle>
+            <DialogDescription className="sr-only">Formulário para cadastrar nova prescrição médica</DialogDescription>
             <PrescricaoForm onSuccess={() => setDialogOpen(false)} />
           </DialogContent>
         </Dialog>
