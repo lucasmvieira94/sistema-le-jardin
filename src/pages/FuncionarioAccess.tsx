@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart, Eye, FileSearch, AlertTriangle, Trophy } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart, Eye, FileSearch, AlertTriangle, Trophy, Pill } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -196,6 +196,10 @@ export default function FuncionarioAccess() {
 
   const navigateToGamificacao = () => {
     navigate(`/gamificacao?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToAdministracaoMedicamentos = () => {
+    navigate(`/administracao-medicamentos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
@@ -416,7 +420,30 @@ export default function FuncionarioAccess() {
               </CardContent>
             </Card>
 
-            {/* Minha Escala */}
+            {/* Administração de Medicamentos */}
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-orange-400"
+              onClick={navigateToAdministracaoMedicamentos}
+            >
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Pill className="w-6 h-6 sm:w-8 sm:h-8 text-orange-700" />
+                </div>
+                <CardTitle className="text-orange-800 text-base sm:text-lg">Medicamentos</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                  Visualize e confirme a administração de medicamentos
+                </p>
+                <Button 
+                  className="w-full bg-orange-700 hover:bg-orange-800 text-sm sm:text-base py-2 sm:py-3"
+                  onClick={navigateToAdministracaoMedicamentos}
+                >
+                  Administrar Medicamentos
+                </Button>
+              </CardContent>
+            </Card>
+
             <Card 
               className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
               onClick={navigateToMinhaEscala}
