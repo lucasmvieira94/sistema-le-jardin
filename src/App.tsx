@@ -86,6 +86,7 @@ const App = () => {
               <Route path="/intercorrencias" element={<IntercorrenciasPublico />} />
               <Route path="/painel-intercorrencias" element={<PainelIntercorrencias />} />
               <Route path="/contrato-temporario/:token" element={<ContratoTemporarioPublico />} />
+              <Route path="/administracao-medicamentos" element={<AdministracaoMedicamentosPublico />} />
               <Route path="/gamificacao" element={<Gamificacao />} />
             </Route>
 
