@@ -34,6 +34,7 @@ import Index from "./pages/Index";
 import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
 import EditarFuncionario from "./pages/EditarFuncionario";
+import FichaFuncionario from "./pages/FichaFuncionario";
 import Escalas from "./pages/Escalas";
 import ApropriacaoHoras from "./pages/ApropriacaoHoras";
 import Relatorios from "./pages/Relatorios";
@@ -96,6 +97,7 @@ const App = () => {
               <Route path="/funcionarios" element={<ProtectedRoute><Funcionarios /></ProtectedRoute>} />
               <Route path="/funcionarios/novo" element={<ProtectedRoute><NovoFuncionario /></ProtectedRoute>} />
               <Route path="/funcionarios/:id/editar" element={<ProtectedRoute><EditarFuncionario /></ProtectedRoute>} />
+              <Route path="/funcionarios/:id/ficha" element={<ProtectedRoute><FichaFuncionario /></ProtectedRoute>} />
               <Route path="/escalas" element={<ProtectedRoute><Escalas /></ProtectedRoute>} />
               <Route path="/apropriacao" element={<ProtectedRoute><ApropriacaoHoras /></ProtectedRoute>} />
               <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
