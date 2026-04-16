@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet, Filter, ArrowUpDown } from "lucide-react";
+import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet, Filter, ArrowUpDown, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -311,6 +311,15 @@ export default function Funcionarios() {
                     )}
                   </td>
                   <td className="py-2 px-3 flex gap-2 justify-center">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="w-8 h-8"
+                      title="Ficha do Funcionário"
+                      onClick={() => navigate(`/funcionarios/${func.id}/ficha`)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     <Button
                       size="icon"
                       variant="outline"
