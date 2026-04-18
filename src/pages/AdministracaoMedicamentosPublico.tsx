@@ -189,7 +189,8 @@ export default function AdministracaoMedicamentosPublico() {
       }
       return hrs;
     }
-    return ["--:--"];
+    // Sem horários definidos — retorna lista vazia para tratar com aviso
+    return [];
   };
 
   if (loading) {
@@ -264,33 +265,40 @@ export default function AdministracaoMedicamentosPublico() {
                       )}
 
                       {/* Botões de horários */}
-                      <div className="flex flex-wrap gap-2">
-                        {horarios.map((horario) => {
-                          const administrado = jaAdministrado(p, horario);
-                          return (
-                            <Button
-                              key={horario}
-                              size="sm"
-                              variant={administrado ? "default" : "outline"}
-                              className={administrado
-                                ? "bg-green-600 hover:bg-green-600 text-white cursor-default text-xs"
-                                : "border-green-600 text-green-700 hover:bg-green-50 text-xs"
-                              }
-                              disabled={administrado}
-                              onClick={() => {
-                                if (!administrado) {
-                                  setConfirmDialog({ open: true, prescricao: p, horario });
-                                  setObservacoes("");
+                      {horarios.length === 0 ? (
+                        <div className="text-xs text-amber-700 bg-amber-50 rounded p-2 flex items-start gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <span>Horários não cadastrados na prescrição. Solicite ao supervisor para configurar.</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {horarios.map((horario) => {
+                            const administrado = jaAdministrado(p, horario);
+                            return (
+                              <Button
+                                key={horario}
+                                size="sm"
+                                variant={administrado ? "default" : "outline"}
+                                className={administrado
+                                  ? "bg-green-600 hover:bg-green-600 text-white cursor-default text-xs"
+                                  : "border-green-600 text-green-700 hover:bg-green-50 text-xs"
                                 }
-                              }}
-                            >
-                              <Clock className="h-3 w-3 mr-1" />
-                              {horario}
-                              {administrado && <Check className="h-3 w-3 ml-1" />}
-                            </Button>
-                          );
-                        })}
-                      </div>
+                                disabled={administrado}
+                                onClick={() => {
+                                  if (!administrado) {
+                                    setConfirmDialog({ open: true, prescricao: p, horario });
+                                    setObservacoes("");
+                                  }
+                                }}
+                              >
+                                <Clock className="h-3 w-3 mr-1" />
+                                {horario}
+                                {administrado && <Check className="h-3 w-3 ml-1" />}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -66,8 +66,8 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <PWAInstallPrompt />
         <BrowserRouter>
+        <PWAInstallPrompt />
         <TenantProvider>
           <Routes>
             {/* Rotas públicas - layout simples sem sidebar */}
