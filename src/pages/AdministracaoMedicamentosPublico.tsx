@@ -189,7 +189,8 @@ export default function AdministracaoMedicamentosPublico() {
       }
       return hrs;
     }
-    return ["--:--"];
+    // Sem horários definidos — retorna lista vazia para tratar com aviso
+    return [];
   };
 
   if (loading) {
