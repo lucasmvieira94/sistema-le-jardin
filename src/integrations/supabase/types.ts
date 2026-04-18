@@ -515,6 +515,48 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogo_vacinas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          doses_recomendadas: number
+          id: string
+          intervalo_dias: number | null
+          nome: string
+          obrigatoria_idoso: boolean
+          ordem: number
+          periodicidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          doses_recomendadas?: number
+          id?: string
+          intervalo_dias?: number | null
+          nome: string
+          obrigatoria_idoso?: boolean
+          ordem?: number
+          periodicidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          doses_recomendadas?: number
+          id?: string
+          intervalo_dias?: number | null
+          nome?: string
+          obrigatoria_idoso?: boolean
+          ordem?: number
+          periodicidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       configuracoes_alertas_fraldas: {
         Row: {
           created_at: string
@@ -2627,6 +2669,80 @@ export type Database = {
             columns: ["residente_id"]
             isOneToOne: false
             referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vacinas_residentes: {
+        Row: {
+          created_at: string
+          data_aplicacao: string
+          fabricante: string | null
+          id: string
+          local_aplicacao: string | null
+          local_aplicacao_corpo: string | null
+          lote: string | null
+          nome_vacina: string
+          numero_dose: number
+          observacoes: string | null
+          profissional_aplicador: string | null
+          proxima_dose_prevista: string | null
+          reacoes_adversas: string | null
+          registrado_por_funcionario_id: string | null
+          registrado_por_user_id: string | null
+          residente_id: string
+          updated_at: string
+          vacina_id: string | null
+          via_administracao: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_aplicacao: string
+          fabricante?: string | null
+          id?: string
+          local_aplicacao?: string | null
+          local_aplicacao_corpo?: string | null
+          lote?: string | null
+          nome_vacina: string
+          numero_dose?: number
+          observacoes?: string | null
+          profissional_aplicador?: string | null
+          proxima_dose_prevista?: string | null
+          reacoes_adversas?: string | null
+          registrado_por_funcionario_id?: string | null
+          registrado_por_user_id?: string | null
+          residente_id: string
+          updated_at?: string
+          vacina_id?: string | null
+          via_administracao?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_aplicacao?: string
+          fabricante?: string | null
+          id?: string
+          local_aplicacao?: string | null
+          local_aplicacao_corpo?: string | null
+          lote?: string | null
+          nome_vacina?: string
+          numero_dose?: number
+          observacoes?: string | null
+          profissional_aplicador?: string | null
+          proxima_dose_prevista?: string | null
+          reacoes_adversas?: string | null
+          registrado_por_funcionario_id?: string | null
+          registrado_por_user_id?: string | null
+          residente_id?: string
+          updated_at?: string
+          vacina_id?: string | null
+          via_administracao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vacinas_residentes_vacina_id_fkey"
+            columns: ["vacina_id"]
+            isOneToOne: false
+            referencedRelation: "catalogo_vacinas"
             referencedColumns: ["id"]
           },
         ]
