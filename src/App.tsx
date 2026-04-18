@@ -55,6 +55,8 @@ import AdvertenciasSuspensoes from "./pages/AdvertenciasSuspensoes";
 import GestaoIntercorrencias from "./pages/GestaoIntercorrencias";
 import Gamificacao from "./pages/Gamificacao";
 import GestaoGamificacao from "./pages/GestaoGamificacao";
+import ControleVacinas from "./pages/ControleVacinas";
+import ControleVacinasPublico from "./pages/ControleVacinasPublico";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +91,7 @@ const App = () => {
               <Route path="/contrato-temporario/:token" element={<ContratoTemporarioPublico />} />
               <Route path="/administracao-medicamentos" element={<AdministracaoMedicamentosPublico />} />
               <Route path="/gamificacao" element={<Gamificacao />} />
+              <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
@@ -117,6 +120,7 @@ const App = () => {
               <Route path="/advertencias-suspensoes" element={<ProtectedRoute><AdvertenciasSuspensoes /></ProtectedRoute>} />
               <Route path="/gestao-intercorrencias" element={<ProtectedRoute><GestaoIntercorrencias /></ProtectedRoute>} />
               <Route path="/gestao-gamificacao" element={<ProtectedRoute><GestaoGamificacao /></ProtectedRoute>} />
+              <Route path="/controle-vacinas" element={<ProtectedRoute><ControleVacinas /></ProtectedRoute>} />
             </Route>
 
             {/* Fallback 404 */}

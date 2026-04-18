@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart, Eye, FileSearch, AlertTriangle, Trophy, Pill } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart, Eye, FileSearch, AlertTriangle, Trophy, Pill, Syringe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -200,6 +200,10 @@ export default function FuncionarioAccess() {
 
   const navigateToAdministracaoMedicamentos = () => {
     navigate(`/administracao-medicamentos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToVacinas = () => {
+    navigate(`/controle-vacinas-publico?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
@@ -440,6 +444,30 @@ export default function FuncionarioAccess() {
                   onClick={navigateToAdministracaoMedicamentos}
                 >
                   Administrar Medicamentos
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Cartão Vacinal */}
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-pink-400"
+              onClick={navigateToVacinas}
+            >
+              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Syringe className="w-6 h-6 sm:w-8 sm:h-8 text-pink-700" />
+                </div>
+                <CardTitle className="text-pink-800 text-base sm:text-lg">Cartão Vacinal</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center p-4 sm:p-6 pt-0">
+                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                  Consulte e registre vacinas dos residentes
+                </p>
+                <Button 
+                  className="w-full bg-pink-700 hover:bg-pink-800 text-sm sm:text-base py-2 sm:py-3"
+                  onClick={navigateToVacinas}
+                >
+                  Acessar Vacinas
                 </Button>
               </CardContent>
             </Card>

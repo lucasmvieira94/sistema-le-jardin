@@ -23,7 +23,8 @@ import {
   BarChart3,
   ShieldAlert,
   AlertTriangle,
-  Trophy
+  Trophy,
+  Syringe
 } from "lucide-react";
 import {
   Sidebar,
@@ -75,6 +76,7 @@ export function AppSidebar() {
     { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
     { path: "/controle-fraldas", icon: Baby, label: "Controle de Fraldas", adminOnly: true },
     { path: "/controle-temperatura", icon: Thermometer, label: "Controle de Temperatura", adminOnly: true },
+    { path: "/controle-vacinas", icon: Syringe, label: "Controle de Vacinas", adminOnly: true },
     { path: "/gerenciamento-whatsapp", icon: MessageSquare, label: "WhatsApp & IA", adminOnly: true },
     { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Alertas WhatsApp", adminOnly: true },
     { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
