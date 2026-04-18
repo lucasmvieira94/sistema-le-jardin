@@ -202,6 +202,10 @@ export default function FuncionarioAccess() {
     navigate(`/administracao-medicamentos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
+  const navigateToVacinas = () => {
+    navigate(`/controle-vacinas-publico?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
   const navigateToAuth = () => {
     window.open('/auth', '_blank');
   };
