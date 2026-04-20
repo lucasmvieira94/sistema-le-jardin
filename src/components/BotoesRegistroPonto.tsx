@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check } from 'lucide-react';
+import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check, MapPinOff } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { formatInTimeZone } from 'date-fns-tz';
+import { validarGeofence, type GeofenceConfig } from '@/utils/geofence';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,6 +75,7 @@ export default function BotoesRegistroPonto({
   });
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
+  const [geofenceConfig, setGeofenceConfig] = useState<GeofenceConfig | null>(null);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
@@ -145,7 +147,40 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
+  // Carrega a configuração de geofence
+  useEffect(() => {
+    const carregarGeofence = async () => {
+      const { data } = await supabase
+        .from('configuracoes_empresa')
+        .select('geofence_ativo, geofence_latitude, geofence_longitude, geofence_raio_metros')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setGeofenceConfig({
+          geofence_ativo: (data as any).geofence_ativo ?? false,
+          geofence_latitude: (data as any).geofence_latitude ?? null,
+          geofence_longitude: (data as any).geofence_longitude ?? null,
+          geofence_raio_metros: (data as any).geofence_raio_metros ?? 150,
+        });
+      }
+    };
+    carregarGeofence();
+  }, []);
+
   const registrarPonto = async (tipo: TipoRegistro) => {
+    // Validação de geofence antes de qualquer ação
+    const validacao = validarGeofence(geofenceConfig, latitude, longitude);
+    if (!validacao.permitido) {
+      toast({
+        variant: "destructive",
+        title: "Registro bloqueado pela geofence",
+        description: validacao.mensagem,
+      });
+      return;
+    }
+
     setRegistrando(tipo);
     
     try {
@@ -297,13 +332,39 @@ export default function BotoesRegistroPonto({
   const proximoPrincipal = getProximoRegistroPrincipal();
   const mostrarIntervalos = status.temEntrada && !status.temSaida;
 
+  // Status visual da geofence
+  const validacao = validarGeofence(geofenceConfig, latitude, longitude);
+  const geofenceAtiva = geofenceConfig?.geofence_ativo === true;
+
   return (
     <div className="space-y-6">
+      {/* Indicador de geofence */}
+      {geofenceAtiva && (
+        <div
+          className={`rounded-lg p-3 text-sm flex items-start gap-2 ${
+            validacao.permitido
+              ? 'bg-primary/10 text-primary border border-primary/20'
+              : 'bg-destructive/10 text-destructive border border-destructive/20'
+          }`}
+        >
+          {validacao.permitido ? (
+            <Check className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <MapPinOff className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
+          <span className="leading-tight">
+            {validacao.permitido
+              ? validacao.mensagem || 'Localização verificada.'
+              : validacao.mensagem}
+          </span>
+        </div>
+      )}
+
       {/* Botão Principal de Entrada/Saída */}
       {proximoPrincipal && (
         <Button
           onClick={() => registrarPonto(proximoPrincipal.tipo)}
-          disabled={registrando !== null}
+          disabled={registrando !== null || (geofenceAtiva && !validacao.permitido)}
           className={`w-full h-20 text-xl font-bold shadow-lg transition-all ${
             proximoPrincipal.tipo === 'entrada' 
               ? 'bg-primary hover:bg-primary/90' 

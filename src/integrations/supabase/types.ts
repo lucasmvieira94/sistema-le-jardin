@@ -642,6 +642,10 @@ export type Database = {
           created_at: string | null
           dominio_email: string | null
           endereco: string | null
+          geofence_ativo: boolean
+          geofence_latitude: number | null
+          geofence_longitude: number | null
+          geofence_raio_metros: number
           hora_fim_noturno: string | null
           hora_inicio_noturno: string | null
           id: string
@@ -659,6 +663,10 @@ export type Database = {
           created_at?: string | null
           dominio_email?: string | null
           endereco?: string | null
+          geofence_ativo?: boolean
+          geofence_latitude?: number | null
+          geofence_longitude?: number | null
+          geofence_raio_metros?: number
           hora_fim_noturno?: string | null
           hora_inicio_noturno?: string | null
           id?: string
@@ -676,6 +684,10 @@ export type Database = {
           created_at?: string | null
           dominio_email?: string | null
           endereco?: string | null
+          geofence_ativo?: boolean
+          geofence_latitude?: number | null
+          geofence_longitude?: number | null
+          geofence_raio_metros?: number
           hora_fim_noturno?: string | null
           hora_inicio_noturno?: string | null
           id?: string

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { GestaoPermissoes } from "@/components/configuracoes/GestaoPermissoes";
 import { ConviteGestor } from "@/components/configuracoes/ConviteGestor";
 import { LogotipoEmpresa } from "@/components/configuracoes/LogotipoEmpresa";
+import { ConfiguracaoGeofence } from "@/components/configuracoes/ConfiguracaoGeofence";
 
 export default function Configuracoes() {
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,11 @@ export default function Configuracoes() {
     hora_inicio_noturno: "22:00",
     hora_fim_noturno: "05:00",
     intervalo_minimo_minutos: 60,
-    logo_url: ""
+    logo_url: "",
+    geofence_ativo: false,
+    geofence_latitude: null as number | null,
+    geofence_longitude: null as number | null,
+    geofence_raio_metros: 150,
   });
 
   useEffect(() => {
@@ -59,7 +64,11 @@ export default function Configuracoes() {
           hora_inicio_noturno: data.hora_inicio_noturno || "22:00",
           hora_fim_noturno: data.hora_fim_noturno || "05:00",
           intervalo_minimo_minutos: data.intervalo_minimo_minutos || 60,
-          logo_url: data.logo_url || ""
+          logo_url: data.logo_url || "",
+          geofence_ativo: (data as any).geofence_ativo ?? false,
+          geofence_latitude: (data as any).geofence_latitude ?? null,
+          geofence_longitude: (data as any).geofence_longitude ?? null,
+          geofence_raio_metros: (data as any).geofence_raio_metros ?? 150,
         });
       }
     } catch (error) {
@@ -281,6 +290,15 @@ export default function Configuracoes() {
         <LogotipoEmpresa
           logoUrl={config.logo_url}
           onLogoUpdate={(url) => setConfig({ ...config, logo_url: url })}
+        />
+
+        {/* Geofence (Cerca Virtual) */}
+        <ConfiguracaoGeofence
+          geofence_ativo={config.geofence_ativo}
+          geofence_latitude={config.geofence_latitude}
+          geofence_longitude={config.geofence_longitude}
+          geofence_raio_metros={config.geofence_raio_metros}
+          onChange={(campos) => setConfig({ ...config, ...campos })}
         />
 
         {/* Gestão de Permissões */}
