@@ -367,6 +367,22 @@ export default function IntercorrenciasPublico() {
 
                         <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{item.descricao}</p>
 
+                        {item.imagens && item.imagens.length > 0 && (
+                          <div className="flex gap-1.5 mb-3 overflow-x-auto">
+                            {item.imagens.map((url) => (
+                              <a
+                                key={url}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 rounded-md overflow-hidden border bg-muted w-16 h-16 hover:opacity-80 transition-opacity"
+                              >
+                                <img src={url} alt="Anexo" className="w-full h-full object-cover" loading="lazy" />
+                              </a>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {catInfo && (
                             <Badge variant="outline" className="text-xs gap-1">
