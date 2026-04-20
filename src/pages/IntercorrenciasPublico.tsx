@@ -311,6 +311,12 @@ export default function IntercorrenciasPublico() {
                     )}
                   </div>
 
+                  <UploadImagensIntercorrencia
+                    imagens={imagens}
+                    onChange={setImagens}
+                    disabled={submitting}
+                  />
+
                   <div className="flex gap-2 pt-2">
                     <Button
                       onClick={handleSubmit}
