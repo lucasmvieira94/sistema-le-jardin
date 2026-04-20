@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useIntercorrencias, IntercorrenciaLog } from '@/hooks/useIntercorrencias';
 import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
+import { UploadImagensIntercorrencia } from '@/components/intercorrencias/UploadImagensIntercorrencia';
 
 const CATEGORIAS = [
   { value: 'saude_residente', label: 'Saúde do Residente', icon: '🏥' },
@@ -64,6 +65,7 @@ export default function IntercorrenciasPublico() {
   const [residentes, setResidentes] = useState<{ id: string; nome_completo: string }[]>([]);
   const [residenteSearch, setResidenteSearch] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [imagens, setImagens] = useState<string[]>([]);
   const [selectedLogs, setSelectedLogs] = useState<IntercorrenciaLog[]>([]);
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
 
@@ -100,6 +102,7 @@ export default function IntercorrenciasPublico() {
         categoria,
         prioridade,
         funcionario_id: funcionarioId,
+        imagens,
         ...(rid ? { residente_id: rid } : {}),
       }, funcionarioNome);
       if (!result) success = false;
@@ -111,6 +114,7 @@ export default function IntercorrenciasPublico() {
       setPrioridade('media');
       setResidenteIds([]);
       setResidenteSearch('');
+      setImagens([]);
       setShowForm(false);
     }
     setSubmitting(false);
