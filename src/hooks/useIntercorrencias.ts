@@ -16,6 +16,7 @@ export interface Intercorrencia {
   feedback_gestor: string | null;
   feedback_data: string | null;
   feedback_por: string | null;
+  imagens: string[] | null;
   created_at: string;
   updated_at: string;
   funcionarios?: { nome_completo: string } | null;
@@ -70,6 +71,7 @@ export function useIntercorrencias(funcionarioId?: string) {
     prioridade: string;
     funcionario_id: string;
     residente_id?: string;
+    imagens?: string[];
   }, funcionarioNome: string) => {
     try {
       const { data, error } = await supabase
