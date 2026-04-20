@@ -1657,6 +1657,7 @@ export type Database = {
           feedback_por: string | null
           funcionario_id: string
           id: string
+          imagens: string[] | null
           prazo_resolucao: string | null
           prioridade: Database["public"]["Enums"]["intercorrencia_prioridade"]
           residente_id: string | null
@@ -1674,6 +1675,7 @@ export type Database = {
           feedback_por?: string | null
           funcionario_id: string
           id?: string
+          imagens?: string[] | null
           prazo_resolucao?: string | null
           prioridade?: Database["public"]["Enums"]["intercorrencia_prioridade"]
           residente_id?: string | null
@@ -1691,6 +1693,7 @@ export type Database = {
           feedback_por?: string | null
           funcionario_id?: string
           id?: string
+          imagens?: string[] | null
           prazo_resolucao?: string | null
           prioridade?: Database["public"]["Enums"]["intercorrencia_prioridade"]
           residente_id?: string | null

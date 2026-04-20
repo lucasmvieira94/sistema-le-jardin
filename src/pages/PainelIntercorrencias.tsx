@@ -427,6 +427,19 @@ export default function PainelIntercorrencias() {
                   </p>
                 </div>
 
+                {selectedItem.imagens && selectedItem.imagens.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Imagens anexadas</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {selectedItem.imagens.map((url: string) => (
+                        <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="rounded-lg overflow-hidden border bg-muted aspect-square hover:opacity-80 transition-opacity">
+                          <img src={url} alt="Anexo da intercorrência" className="w-full h-full object-cover" loading="lazy" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <Tabs defaultValue="acoes" className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="acoes">Ações</TabsTrigger>

@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useIntercorrencias, IntercorrenciaLog } from '@/hooks/useIntercorrencias';
 import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
+import { UploadImagensIntercorrencia } from '@/components/intercorrencias/UploadImagensIntercorrencia';
 
 const CATEGORIAS = [
   { value: 'saude_residente', label: 'Saúde do Residente', icon: '🏥' },
@@ -64,6 +65,7 @@ export default function IntercorrenciasPublico() {
   const [residentes, setResidentes] = useState<{ id: string; nome_completo: string }[]>([]);
   const [residenteSearch, setResidenteSearch] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [imagens, setImagens] = useState<string[]>([]);
   const [selectedLogs, setSelectedLogs] = useState<IntercorrenciaLog[]>([]);
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
 
@@ -100,6 +102,7 @@ export default function IntercorrenciasPublico() {
         categoria,
         prioridade,
         funcionario_id: funcionarioId,
+        imagens,
         ...(rid ? { residente_id: rid } : {}),
       }, funcionarioNome);
       if (!result) success = false;
@@ -111,6 +114,7 @@ export default function IntercorrenciasPublico() {
       setPrioridade('media');
       setResidenteIds([]);
       setResidenteSearch('');
+      setImagens([]);
       setShowForm(false);
     }
     setSubmitting(false);
@@ -307,6 +311,12 @@ export default function IntercorrenciasPublico() {
                     )}
                   </div>
 
+                  <UploadImagensIntercorrencia
+                    imagens={imagens}
+                    onChange={setImagens}
+                    disabled={submitting}
+                  />
+
                   <div className="flex gap-2 pt-2">
                     <Button
                       onClick={handleSubmit}
@@ -356,6 +366,22 @@ export default function IntercorrenciasPublico() {
                         </div>
 
                         <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{item.descricao}</p>
+
+                        {item.imagens && item.imagens.length > 0 && (
+                          <div className="flex gap-1.5 mb-3 overflow-x-auto">
+                            {item.imagens.map((url) => (
+                              <a
+                                key={url}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 rounded-md overflow-hidden border bg-muted w-16 h-16 hover:opacity-80 transition-opacity"
+                              >
+                                <img src={url} alt="Anexo" className="w-full h-full object-cover" loading="lazy" />
+                              </a>
+                            ))}
+                          </div>
+                        )}
 
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {catInfo && (
