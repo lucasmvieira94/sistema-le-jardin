@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check } from 'lucide-react';
+import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check, MapPinOff } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { formatInTimeZone } from 'date-fns-tz';
+import { validarGeofence, type GeofenceConfig } from '@/utils/geofence';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,6 +75,7 @@ export default function BotoesRegistroPonto({
   });
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
+  const [geofenceConfig, setGeofenceConfig] = useState<GeofenceConfig | null>(null);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
@@ -145,7 +147,40 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
+  // Carrega a configuração de geofence
+  useEffect(() => {
+    const carregarGeofence = async () => {
+      const { data } = await supabase
+        .from('configuracoes_empresa')
+        .select('geofence_ativo, geofence_latitude, geofence_longitude, geofence_raio_metros')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setGeofenceConfig({
+          geofence_ativo: (data as any).geofence_ativo ?? false,
+          geofence_latitude: (data as any).geofence_latitude ?? null,
+          geofence_longitude: (data as any).geofence_longitude ?? null,
+          geofence_raio_metros: (data as any).geofence_raio_metros ?? 150,
+        });
+      }
+    };
+    carregarGeofence();
+  }, []);
+
   const registrarPonto = async (tipo: TipoRegistro) => {
+    // Validação de geofence antes de qualquer ação
+    const validacao = validarGeofence(geofenceConfig, latitude, longitude);
+    if (!validacao.permitido) {
+      toast({
+        variant: "destructive",
+        title: "Registro bloqueado pela geofence",
+        description: validacao.mensagem,
+      });
+      return;
+    }
+
     setRegistrando(tipo);
     
     try {
