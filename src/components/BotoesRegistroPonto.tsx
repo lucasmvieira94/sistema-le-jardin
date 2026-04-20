@@ -332,13 +332,39 @@ export default function BotoesRegistroPonto({
   const proximoPrincipal = getProximoRegistroPrincipal();
   const mostrarIntervalos = status.temEntrada && !status.temSaida;
 
+  // Status visual da geofence
+  const validacao = validarGeofence(geofenceConfig, latitude, longitude);
+  const geofenceAtiva = geofenceConfig?.geofence_ativo === true;
+
   return (
     <div className="space-y-6">
+      {/* Indicador de geofence */}
+      {geofenceAtiva && (
+        <div
+          className={`rounded-lg p-3 text-sm flex items-start gap-2 ${
+            validacao.permitido
+              ? 'bg-primary/10 text-primary border border-primary/20'
+              : 'bg-destructive/10 text-destructive border border-destructive/20'
+          }`}
+        >
+          {validacao.permitido ? (
+            <Check className="w-4 h-4 mt-0.5 shrink-0" />
+          ) : (
+            <MapPinOff className="w-4 h-4 mt-0.5 shrink-0" />
+          )}
+          <span className="leading-tight">
+            {validacao.permitido
+              ? validacao.mensagem || 'Localização verificada.'
+              : validacao.mensagem}
+          </span>
+        </div>
+      )}
+
       {/* Botão Principal de Entrada/Saída */}
       {proximoPrincipal && (
         <Button
           onClick={() => registrarPonto(proximoPrincipal.tipo)}
-          disabled={registrando !== null}
+          disabled={registrando !== null || (geofenceAtiva && !validacao.permitido)}
           className={`w-full h-20 text-xl font-bold shadow-lg transition-all ${
             proximoPrincipal.tipo === 'entrada' 
               ? 'bg-primary hover:bg-primary/90' 
