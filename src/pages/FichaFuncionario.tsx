@@ -41,7 +41,7 @@ type Afastamento = {
   tipo_periodo: string;
   quantidade_dias: number | null;
   observacoes: string | null;
-  tipos_afastamento?: { nome: string } | null;
+  tipos_afastamento?: { descricao: string; remunerado: boolean } | null;
 };
 
 export default function FichaFuncionario() {
@@ -70,7 +70,7 @@ export default function FichaFuncionario() {
     setLoading(true);
     const [funcRes, afastRes, gamProfRes, gamTransRes] = await Promise.all([
       supabase.from("funcionarios").select("*, escalas(nome, entrada, saida, jornada_trabalho, intervalo_inicio, intervalo_fim)").eq("id", id!).single(),
-      supabase.from("afastamentos").select("*, tipos_afastamento(nome)").eq("funcionario_id", id!).order("data_inicio", { ascending: false }),
+      supabase.from("afastamentos").select("*, tipos_afastamento(descricao, remunerado)").eq("funcionario_id", id!).order("data_inicio", { ascending: false }),
       supabase.from("gamification_profiles").select("*").eq("funcionario_id", id!).maybeSingle(),
       supabase.from("gamification_transactions").select("*").eq("funcionario_id", id!).order("created_at", { ascending: false }).limit(20),
     ]);
@@ -193,7 +193,7 @@ export default function FichaFuncionario() {
                   <TableBody>
                     {afastamentos.map(a => (
                       <TableRow key={a.id}>
-                        <TableCell>{(a as any).tipos_afastamento?.nome || a.tipo_periodo}</TableCell>
+                        <TableCell>{(a as any).tipos_afastamento?.descricao || a.tipo_periodo}</TableCell>
                         <TableCell>{formatDate(a.data_inicio)}</TableCell>
                         <TableCell>{a.data_fim ? formatDate(a.data_fim) : "—"}</TableCell>
                         <TableCell>{a.quantidade_dias ?? "—"}</TableCell>
