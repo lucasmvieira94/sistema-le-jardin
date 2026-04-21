@@ -326,7 +326,17 @@ export default function FuncionarioAccess() {
 
         {/* Seleção de funcionalidade */}
         <div className="space-y-4">
-          
+          {/* Painel de lembretes do agente IA */}
+          <PainelLembretes
+            funcionarioId={funcionarioId}
+            funcionarioNome={funcionarioNome}
+            onAcaoLembrete={(tipo) => {
+              if (tipo.startsWith("ponto_")) navigateToRegistroPonto();
+              else if (tipo.startsWith("prontuario_")) navigateToProntuario();
+              else if (tipo === "medicamento_horario") navigateToAdministracaoMedicamentos();
+            }}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Registro de Ponto - só mostra se funcionário registra ponto */}
             {funcionarioRegistraPonto && (
