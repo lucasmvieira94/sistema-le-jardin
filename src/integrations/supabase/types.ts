@@ -1775,6 +1775,48 @@ export type Database = {
           },
         ]
       }
+      lembretes_funcionario: {
+        Row: {
+          concluido_em: string | null
+          created_at: string
+          data_referencia: string
+          funcionario_id: string
+          id: string
+          metadata: Json | null
+          referencia_id: string | null
+          status: string
+          tipo_lembrete: string
+          updated_at: string
+          visualizado_em: string | null
+        }
+        Insert: {
+          concluido_em?: string | null
+          created_at?: string
+          data_referencia?: string
+          funcionario_id: string
+          id?: string
+          metadata?: Json | null
+          referencia_id?: string | null
+          status?: string
+          tipo_lembrete: string
+          updated_at?: string
+          visualizado_em?: string | null
+        }
+        Update: {
+          concluido_em?: string | null
+          created_at?: string
+          data_referencia?: string
+          funcionario_id?: string
+          id?: string
+          metadata?: Json | null
+          referencia_id?: string | null
+          status?: string
+          tipo_lembrete?: string
+          updated_at?: string
+          visualizado_em?: string | null
+        }
+        Relationships: []
+      }
       medicamentos: {
         Row: {
           ativo: boolean | null
@@ -2125,6 +2167,42 @@ export type Database = {
           ordem?: number
           tipo_registro?: string
           titulo?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions_funcionario: {
+        Row: {
+          ativo: boolean
+          auth: string
+          created_at: string
+          endpoint: string
+          funcionario_id: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          auth: string
+          created_at?: string
+          endpoint: string
+          funcionario_id: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          funcionario_id?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
