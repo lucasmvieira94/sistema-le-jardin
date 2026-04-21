@@ -702,6 +702,8 @@ export default function FuncionarioAccess() {
           </div>
         </div>
       </div>
+      {/* Chat IA flutuante */}
+      <ChatLembretes funcionarioId={funcionarioId} />
     </div>
   );
 }
