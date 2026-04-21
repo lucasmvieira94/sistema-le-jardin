@@ -7,6 +7,8 @@ import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import careLogo from "@/assets/logo-senex-care-new.png";
+import PainelLembretes from "@/components/lembretes/PainelLembretes";
+import ChatLembretes from "@/components/lembretes/ChatLembretes";
 
 const SESSION_KEY = 'funcionario_session';
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas em ms
@@ -324,7 +326,17 @@ export default function FuncionarioAccess() {
 
         {/* Seleção de funcionalidade */}
         <div className="space-y-4">
-          
+          {/* Painel de lembretes do agente IA */}
+          <PainelLembretes
+            funcionarioId={funcionarioId}
+            funcionarioNome={funcionarioNome}
+            onAcaoLembrete={(tipo) => {
+              if (tipo.startsWith("ponto_")) navigateToRegistroPonto();
+              else if (tipo.startsWith("prontuario_")) navigateToProntuario();
+              else if (tipo === "medicamento_horario") navigateToAdministracaoMedicamentos();
+            }}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Registro de Ponto - só mostra se funcionário registra ponto */}
             {funcionarioRegistraPonto && (
@@ -690,6 +702,8 @@ export default function FuncionarioAccess() {
           </div>
         </div>
       </div>
+      {/* Chat IA flutuante */}
+      <ChatLembretes funcionarioId={funcionarioId} />
     </div>
   );
 }
