@@ -3174,7 +3174,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "employee"
+      app_role: "admin" | "employee" | "super_admin"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -3327,7 +3327,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "employee"],
+      app_role: ["admin", "employee", "super_admin"],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [
         "plantao",
