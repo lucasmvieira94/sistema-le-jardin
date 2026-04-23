@@ -117,7 +117,6 @@ const App = () => {
               <Route path="/faltas" element={<ProtectedRoute><Faltas /></ProtectedRoute>} />
               <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
               <Route path="/configuracoes-alertas" element={<ProtectedRoute><ConfiguracoesAlertas /></ProtectedRoute>} />
-              <Route path="/relatorios-ia" element={<ProtectedRoute><RelatoriosIA /></ProtectedRoute>} />
               <Route path="/residentes" element={<ProtectedRoute><Residentes /></ProtectedRoute>} />
               <Route path="/controle-prontuarios" element={<ProtectedRoute><ControleProntuarios /></ProtectedRoute>} />
               <Route path="/configuracao-formulario" element={<ProtectedRoute><ConfiguracaoFormulario /></ProtectedRoute>} />
