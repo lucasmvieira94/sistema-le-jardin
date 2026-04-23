@@ -1,6 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useSuperAdmin } from "@/hooks/saas/useSuperAdmin";
 import { Button } from "@/components/ui/button";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { 
@@ -24,7 +25,9 @@ import {
   ShieldAlert,
   AlertTriangle,
   Trophy,
-  Syringe
+  Syringe,
+  CreditCard,
+  Building2
 } from "lucide-react";
 import {
   Sidebar,
@@ -47,6 +50,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user } = useAuthSession();
   const { isAdmin } = useUserRole();
+  const { isSuperAdmin } = useSuperAdmin();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -84,6 +88,7 @@ export function AppSidebar() {
     { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações", adminOnly: true },
     { path: "/analise-feedback", icon: BarChart3, label: "Análise de Feedback", adminOnly: true },
     { path: "/gestao-intercorrencias", icon: AlertTriangle, label: "Intercorrências", adminOnly: true },
+    { path: "/configuracoes/assinatura", icon: CreditCard, label: "Minha Assinatura", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 
@@ -208,6 +213,25 @@ export function AppSidebar() {
                 </SidebarGroupContent>
               </CollapsibleContent>
             </Collapsible>
+          </SidebarGroup>
+        )}
+
+        {/* Plataforma SaaS - apenas super-admin */}
+        {user && isSuperAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith("/admin-saas")}>
+                    <Link to="/admin-saas">
+                      <Building2 className="w-4 h-4" />
+                      {!isCollapsed && <span>Painel SaaS</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
         )}
 
