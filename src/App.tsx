@@ -58,6 +58,15 @@ import GestaoGamificacao from "./pages/GestaoGamificacao";
 import ControleVacinas from "./pages/ControleVacinas";
 import ControleVacinasPublico from "./pages/ControleVacinasPublico";
 
+// SaaS / Plataforma
+import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
+import DashboardSaaS from "./pages/admin-saas/DashboardSaaS";
+import EmpresasSaaS from "./pages/admin-saas/EmpresasSaaS";
+import PlanosSaaS from "./pages/admin-saas/PlanosSaaS";
+import AssinaturasSaaS from "./pages/admin-saas/AssinaturasSaaS";
+import FaturasSaaS from "./pages/admin-saas/FaturasSaaS";
+import MinhaAssinatura from "./pages/MinhaAssinatura";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -121,6 +130,16 @@ const App = () => {
               <Route path="/gestao-intercorrencias" element={<ProtectedRoute><GestaoIntercorrencias /></ProtectedRoute>} />
               <Route path="/gestao-gamificacao" element={<ProtectedRoute><GestaoGamificacao /></ProtectedRoute>} />
               <Route path="/controle-vacinas" element={<ProtectedRoute><ControleVacinas /></ProtectedRoute>} />
+              <Route path="/configuracoes/assinatura" element={<ProtectedRoute><MinhaAssinatura /></ProtectedRoute>} />
+            </Route>
+
+            {/* Painel Super-Admin (operação SaaS) */}
+            <Route element={<SuperAdminLayout />}>
+              <Route path="/admin-saas" element={<DashboardSaaS />} />
+              <Route path="/admin-saas/empresas" element={<EmpresasSaaS />} />
+              <Route path="/admin-saas/planos" element={<PlanosSaaS />} />
+              <Route path="/admin-saas/assinaturas" element={<AssinaturasSaaS />} />
+              <Route path="/admin-saas/faturas" element={<FaturasSaaS />} />
             </Route>
 
             {/* Fallback 404 */}
