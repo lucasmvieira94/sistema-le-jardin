@@ -74,3 +74,10 @@ verify_jwt = false
 
 [functions.agente-lembretes-funcionario]
 verify_jwt = false
+
+[functions.atualizar-tenant-uso]
+verify_jwt = false
+
+[cron.atualizar-tenant-uso-diario]
+schedule = "0 3 * * *"
+command = "SELECT net.http_post('https://kvjgmqicictxxfnvhuwl.supabase.co/functions/v1/atualizar-tenant-uso', '{}', 'application/json', '{\"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2amdtcWljaWN0eHhmbnZodXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5NDU3NzIsImV4cCI6MjA2NTUyMTc3Mn0.gGPP76kvvjC6pKZMV9mbJawcccGKdMnLT1SLq6s56rY\"}'::jsonb);"
