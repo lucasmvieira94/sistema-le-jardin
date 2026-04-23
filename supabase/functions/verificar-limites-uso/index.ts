@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         tenant_id,
         status,
         plano:planos ( nome, limite_funcionarios, limite_residentes, limite_usuarios_admin ),
-        tenant:tenants ( id, nome, email_contato )
+        tenant:tenants ( id, nome )
       `)
       .in("status", ["ativa", "trial"]);
     if (aErr) throw aErr;
@@ -79,7 +79,17 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (jaEnviado) continue;
 
-        const destinatario = (tenant as any).email_contato;
+        // Busca o e-mail do primeiro admin do tenant (via auth.users)
+        const { data: adminRole } = await supabase
+          .from("user_roles").select("user_id")
+          .eq("tenant_id", tenantId).eq("role", "admin").limit(1).maybeSingle();
+
+        let destinatario: string | null = null;
+        if (adminRole?.user_id) {
+          const { data: userInfo } = await supabase.auth.admin.getUserById(adminRole.user_id);
+          destinatario = userInfo?.user?.email ?? null;
+        }
+
         if (!destinatario) {
           resultado.push({ tenantId, recurso: r.chave, limiarAtingido, skipped: "sem-email" });
           continue;
