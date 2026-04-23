@@ -3327,6 +3327,50 @@ export type Database = {
           },
         ]
       }
+      tenant_uso_alertas: {
+        Row: {
+          created_at: string
+          data_referencia: string
+          email_destinatario: string | null
+          enviado_em: string
+          id: string
+          percentual_atingido: number
+          recurso: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_referencia: string
+          email_destinatario?: string | null
+          enviado_em?: string
+          id?: string
+          percentual_atingido: number
+          recurso: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          data_referencia?: string
+          email_destinatario?: string | null
+          enviado_em?: string
+          id?: string
+          percentual_atingido?: number
+          recurso?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_uso_alertas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           ativo: boolean
@@ -3728,6 +3772,7 @@ export type Database = {
         Args: { p_justificativa: string }
         Returns: Json
       }
+      garantir_tenant_uso_mes: { Args: { _tenant_id: string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
       gerar_folha_ponto_mensal: {
@@ -3863,6 +3908,10 @@ export type Database = {
       processar_mensagem_dinamica: {
         Args: { p_mensagem: string; p_timezone?: string }
         Returns: string
+      }
+      recalcular_tenant_uso_contador: {
+        Args: { _coluna: string; _tenant_id: string }
+        Returns: undefined
       }
       redefinir_prontuarios_automatico: { Args: never; Returns: undefined }
       redefinir_prontuarios_com_horario: { Args: never; Returns: undefined }

@@ -66,6 +66,7 @@ import EmpresasSaaS from "./pages/admin-saas/EmpresasSaaS";
 import PlanosSaaS from "./pages/admin-saas/PlanosSaaS";
 import AssinaturasSaaS from "./pages/admin-saas/AssinaturasSaaS";
 import FaturasSaaS from "./pages/admin-saas/FaturasSaaS";
+import AuditoriaUso from "./pages/admin-saas/AuditoriaUso";
 import MinhaAssinatura from "./pages/MinhaAssinatura";
 
 const queryClient = new QueryClient();
@@ -141,6 +142,7 @@ const App = () => {
               <Route path="/admin-saas/planos" element={<PlanosSaaS />} />
               <Route path="/admin-saas/assinaturas" element={<AssinaturasSaaS />} />
               <Route path="/admin-saas/faturas" element={<FaturasSaaS />} />
+              <Route path="/admin-saas/auditoria-uso" element={<AuditoriaUso />} />
             </Route>
 
             {/* Fallback 404 */}

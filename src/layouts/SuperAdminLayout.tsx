@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useSuperAdmin } from '@/hooks/saas/useSuperAdmin';
-import { Loader2, LayoutDashboard, Building2, Package, Receipt, FileText, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { Loader2, LayoutDashboard, Building2, Package, Receipt, FileText, ArrowLeft, ShieldAlert, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,7 @@ const NAV = [
   { to: '/admin-saas/planos', label: 'Planos', icon: Package },
   { to: '/admin-saas/assinaturas', label: 'Assinaturas', icon: Receipt },
   { to: '/admin-saas/faturas', label: 'Faturas', icon: FileText },
+  { to: '/admin-saas/auditoria-uso', label: 'Auditoria de uso', icon: Activity },
 ];
 
 export function SuperAdminLayout() {
