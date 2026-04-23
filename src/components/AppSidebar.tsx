@@ -216,6 +216,25 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
+        {/* Plataforma SaaS - apenas super-admin */}
+        {user && isSuperAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname.startsWith("/admin-saas")}>
+                    <Link to="/admin-saas">
+                      <Building2 className="w-4 h-4" />
+                      {!isCollapsed && <span>Painel SaaS</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Logout Button */}
         {user && (
           <div className="mt-auto p-4 border-t">
