@@ -8,6 +8,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ModuleGuard } from "@/components/saas/ModuleGuard";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 
@@ -120,16 +121,17 @@ const App = () => {
               <Route path="/residentes" element={<ProtectedRoute><Residentes /></ProtectedRoute>} />
               <Route path="/controle-prontuarios" element={<ProtectedRoute><ControleProntuarios /></ProtectedRoute>} />
               <Route path="/configuracao-formulario" element={<ProtectedRoute><ConfiguracaoFormulario /></ProtectedRoute>} />
-              <Route path="/controle-medicamentos" element={<ProtectedRoute><ControleMedicamentos /></ProtectedRoute>} />
-              <Route path="/controle-temperatura" element={<ProtectedRoute><ControleTemperatura /></ProtectedRoute>} />
-              <Route path="/controle-fraldas" element={<ProtectedRoute><ControleFraldas /></ProtectedRoute>} />
-              <Route path="/notificacoes-whatsapp" element={<ProtectedRoute><NotificacoesWhatsApp /></ProtectedRoute>} />
-              <Route path="/gerenciamento-whatsapp" element={<ProtectedRoute><GerenciamentoWhatsApp /></ProtectedRoute>} />
+              <Route path="/controle-medicamentos" element={<ProtectedRoute><ModuleGuard modulo="medicamentos"><ControleMedicamentos /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/controle-temperatura" element={<ProtectedRoute><ModuleGuard modulo="temperatura"><ControleTemperatura /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/controle-fraldas" element={<ProtectedRoute><ModuleGuard modulo="fraldas"><ControleFraldas /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/notificacoes-whatsapp" element={<ProtectedRoute><ModuleGuard modulo="whatsapp"><NotificacoesWhatsApp /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/gerenciamento-whatsapp" element={<ProtectedRoute><ModuleGuard modulo="whatsapp"><GerenciamentoWhatsApp /></ModuleGuard></ProtectedRoute>} />
               <Route path="/analise-feedback" element={<ProtectedRoute><AnaliseFeedback /></ProtectedRoute>} />
-              <Route path="/advertencias-suspensoes" element={<ProtectedRoute><AdvertenciasSuspensoes /></ProtectedRoute>} />
-              <Route path="/gestao-intercorrencias" element={<ProtectedRoute><GestaoIntercorrencias /></ProtectedRoute>} />
-              <Route path="/gestao-gamificacao" element={<ProtectedRoute><GestaoGamificacao /></ProtectedRoute>} />
-              <Route path="/controle-vacinas" element={<ProtectedRoute><ControleVacinas /></ProtectedRoute>} />
+              <Route path="/advertencias-suspensoes" element={<ProtectedRoute><ModuleGuard modulo="advertencias"><AdvertenciasSuspensoes /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/gestao-intercorrencias" element={<ProtectedRoute><ModuleGuard modulo="intercorrencias"><GestaoIntercorrencias /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/gestao-gamificacao" element={<ProtectedRoute><ModuleGuard modulo="gamificacao"><GestaoGamificacao /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/controle-vacinas" element={<ProtectedRoute><ModuleGuard modulo="vacinas"><ControleVacinas /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/relatorios-ia" element={<ProtectedRoute><ModuleGuard modulo="relatorios_ia"><RelatoriosIA /></ModuleGuard></ProtectedRoute>} />
               <Route path="/configuracoes/assinatura" element={<ProtectedRoute><MinhaAssinatura /></ProtectedRoute>} />
             </Route>
 
