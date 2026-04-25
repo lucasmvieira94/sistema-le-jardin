@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setTenantByUserId } = useTenantContext();
+  const [searchParams] = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,9 +39,11 @@ export default function Auth() {
         // Definir tenant automaticamente após login e redirecionar
         if (session?.user) {
           setTimeout(async () => {
+            // Super-admins (área SaaS) podem não estar vinculados a um tenant.
+            const isSuperAdminTarget = redirectParam?.startsWith("/admin-saas");
             const tenantSet = await setTenantByUserId(session.user.id);
-            if (tenantSet) {
-              navigate('/dashboard');
+            if (tenantSet || isSuperAdminTarget) {
+              navigate(redirectParam || '/dashboard', { replace: true });
             } else {
               toast({
                 title: "Erro ao carregar empresa",
@@ -58,15 +62,16 @@ export default function Auth() {
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        const isSuperAdminTarget = redirectParam?.startsWith("/admin-saas");
         const tenantSet = await setTenantByUserId(session.user.id);
-        if (tenantSet) {
-          navigate('/dashboard');
+        if (tenantSet || isSuperAdminTarget) {
+          navigate(redirectParam || '/dashboard', { replace: true });
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, setTenantByUserId, toast]);
+  }, [navigate, setTenantByUserId, toast, redirectParam]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
