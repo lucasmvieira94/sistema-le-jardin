@@ -23,18 +23,17 @@ export function useSuperAdmin() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'super_admin')
-          .maybeSingle();
+        const { data, error } = await supabase.rpc('is_super_admin');
 
         if (active) {
-          setIsSuperAdmin(!error && !!data);
+          if (error) {
+            console.error('Erro ao verificar super-admin:', error);
+          }
+          setIsSuperAdmin(!error && data === true);
           setLoading(false);
         }
-      } catch {
+      } catch (error) {
+        console.error('Erro inesperado ao verificar super-admin:', error);
         if (active) {
           setIsSuperAdmin(false);
           setLoading(false);
