@@ -371,7 +371,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: "Relatório enviado com sucesso!",
-        emailId: emailResponse.id 
+        emailId: emailResponse.data?.id 
       }),
       {
         status: 200,
