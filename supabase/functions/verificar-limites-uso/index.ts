@@ -1,7 +1,7 @@
 // Edge function: verifica se algum tenant atingiu 80%/90%/100% dos limites do plano
 // e dispara e-mail ao admin do tenant. Evita reenvio via tabela tenant_uso_alertas.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "npm:resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
