@@ -1,6 +1,7 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useSuperAdmin } from '@/hooks/saas/useSuperAdmin';
+import { useAuthSession } from '@/hooks/useAuthSession';
 import { Loader2, LayoutDashboard, Building2, Package, Receipt, FileText, ArrowLeft, ShieldAlert, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,16 +16,13 @@ const NAV = [
 ];
 
 export function SuperAdminLayout() {
-  const { isSuperAdmin, loading } = useSuperAdmin();
+  const { isSuperAdmin, loading: loadingRole } = useSuperAdmin();
+  const { user, loading: loadingAuth } = useAuthSession();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (!loading && !isSuperAdmin) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isSuperAdmin, loading, navigate]);
-
-  if (loading) {
+  // Aguarda tanto a sessão quanto a verificação de papel antes de decidir.
+  if (loadingAuth || loadingRole) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -32,6 +30,13 @@ export function SuperAdminLayout() {
     );
   }
 
+  // 1) Não autenticado → vai para o login do sistema preservando o destino.
+  if (!user) {
+    const redirectTo = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/auth?redirect=${redirectTo}`} replace />;
+  }
+
+  // 2) Autenticado, mas sem o papel super_admin → tela de acesso negado.
   if (!isSuperAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
