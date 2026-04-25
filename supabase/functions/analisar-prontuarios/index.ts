@@ -272,7 +272,7 @@ REGRAS IMPORTANTES PARA SUA ANÁLISE:
     console.error('Erro na função:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Erro ao processar análise' 
+        error: (error instanceof Error ? error.message : String(error)) || 'Erro ao processar análise' 
       }),
       { 
         status: 500, 

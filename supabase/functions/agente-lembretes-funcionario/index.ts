@@ -53,7 +53,7 @@ type Pendencia = {
  * Coleta todas as pendências relevantes do funcionário no dia atual.
  */
 async function coletarPendencias(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   funcionarioId: string
 ): Promise<{ funcionario: any; pendencias: Pendencia[] }> {
   const hoje = hojeBR();
