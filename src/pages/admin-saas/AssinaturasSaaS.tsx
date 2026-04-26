@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ interface Row {
   data_inicio: string;
   data_fim_trial: string | null;
   proxima_cobranca: string | null;
+  dia_vencimento: number;
   tenant?: { nome: string };
   plano?: { nome: string };
 }
@@ -45,6 +47,16 @@ export default function AssinaturasSaaS() {
     else { toast.success('Status atualizado'); carregar(); }
   };
 
+  const mudarDiaVencimento = async (id: string, dia: number) => {
+    if (dia < 1 || dia > 28) { toast.error('Dia deve estar entre 1 e 28'); return; }
+    const { error } = await supabase
+      .from('assinaturas')
+      .update({ dia_vencimento: dia } as any)
+      .eq('id', id);
+    if (error) toast.error(error.message);
+    else toast.success('Dia de vencimento atualizado');
+  };
+
   if (loading) return <div className="p-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
 
   return (
@@ -56,7 +68,7 @@ export default function AssinaturasSaaS() {
       <Card>
         <div className="divide-y divide-border">
           {rows.map((r) => (
-            <div key={r.id} className="p-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+            <div key={r.id} className="p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-center">
               <div className="md:col-span-2">
                 <p className="font-medium">{r.tenant?.nome ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
@@ -68,6 +80,20 @@ export default function AssinaturasSaaS() {
                 {r.data_fim_trial && (
                   <><br />Trial até: {new Date(r.data_fim_trial).toLocaleDateString('pt-BR')}</>
                 )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Dia venc.</p>
+                <Input
+                  type="number"
+                  min={1}
+                  max={28}
+                  defaultValue={r.dia_vencimento}
+                  onBlur={(e) => {
+                    const v = Number(e.target.value);
+                    if (v !== r.dia_vencimento) mudarDiaVencimento(r.id, v);
+                  }}
+                  className="w-16 h-8"
+                />
               </div>
               <Badge variant={r.status === 'ativa' ? 'default' : r.status === 'inadimplente' ? 'destructive' : 'secondary'}>
                 {r.status}

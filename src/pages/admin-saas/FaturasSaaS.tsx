@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Loader2, CheckCircle2 } from 'lucide-react';
+import { Plus, Loader2, CheckCircle2, RefreshCw, AlertOctagon } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Fatura {
@@ -36,6 +36,7 @@ export default function FaturasSaaS() {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [assinaturas, setAssinaturas] = useState<AssinaturaOpt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [executando, setExecutando] = useState<'gerar' | 'inadimplencia' | null>(null);
   const [dialog, setDialog] = useState(false);
   const [form, setForm] = useState({
     assinatura_id: '', numero: '', valor: 0,
@@ -53,6 +54,26 @@ export default function FaturasSaaS() {
     setLoading(false);
   };
   useEffect(() => { carregar(); }, []);
+
+  const gerarFaturasMes = async () => {
+    setExecutando('gerar');
+    const { data, error } = await supabase.rpc('gerar_faturas_mensais' as any);
+    setExecutando(null);
+    if (error) { toast.error(error.message); return; }
+    const qtd = (data as any)?.[0]?.faturas_geradas ?? 0;
+    toast.success(`${qtd} fatura(s) gerada(s)`);
+    carregar();
+  };
+
+  const processarInadimplencia = async () => {
+    setExecutando('inadimplencia');
+    const { data, error } = await supabase.rpc('processar_inadimplencia' as any);
+    setExecutando(null);
+    if (error) { toast.error(error.message); return; }
+    const r = (data as any)?.[0];
+    toast.success(`${r?.tenants_suspensos ?? 0} tenant(s) suspenso(s) · ${r?.avisos_enviados ?? 0} aviso(s) pendente(s)`);
+    carregar();
+  };
 
   const criar = async () => {
     const ass = assinaturas.find((a) => a.id === form.assinatura_id);
@@ -89,7 +110,16 @@ export default function FaturasSaaS() {
           <h1 className="text-2xl font-semibold">Faturas</h1>
           <p className="text-sm text-muted-foreground">Cobranças geradas para as empresas</p>
         </div>
-        <Dialog open={dialog} onOpenChange={setDialog}>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={gerarFaturasMes} disabled={executando !== null}>
+            {executando === 'gerar' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Gerar faturas do mês
+          </Button>
+          <Button variant="outline" onClick={processarInadimplencia} disabled={executando !== null}>
+            {executando === 'inadimplencia' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <AlertOctagon className="w-4 h-4 mr-2" />}
+            Processar inadimplência
+          </Button>
+          <Dialog open={dialog} onOpenChange={setDialog}>
           <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nova fatura</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nova fatura</DialogTitle></DialogHeader>
@@ -142,7 +172,8 @@ export default function FaturasSaaS() {
               <Button onClick={criar}>Criar</Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
