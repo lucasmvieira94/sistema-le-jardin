@@ -507,6 +507,7 @@ export type Database = {
           data_cancelamento: string | null
           data_fim_trial: string | null
           data_inicio: string
+          dia_vencimento: number
           id: string
           motivo_cancelamento: string | null
           observacoes_admin: string | null
@@ -523,6 +524,7 @@ export type Database = {
           data_cancelamento?: string | null
           data_fim_trial?: string | null
           data_inicio?: string
+          dia_vencimento?: number
           id?: string
           motivo_cancelamento?: string | null
           observacoes_admin?: string | null
@@ -539,6 +541,7 @@ export type Database = {
           data_cancelamento?: string | null
           data_fim_trial?: string | null
           data_inicio?: string
+          dia_vencimento?: number
           id?: string
           motivo_cancelamento?: string | null
           observacoes_admin?: string | null
@@ -3377,10 +3380,12 @@ export type Database = {
           cnpj: string | null
           config: Json | null
           created_at: string
+          data_suspensao: string | null
           employer_code_hash: string
           endereco: string | null
           id: string
           logo_url: string | null
+          motivo_suspensao: string | null
           nome: string
           updated_at: string
         }
@@ -3389,10 +3394,12 @@ export type Database = {
           cnpj?: string | null
           config?: Json | null
           created_at?: string
+          data_suspensao?: string | null
           employer_code_hash: string
           endereco?: string | null
           id?: string
           logo_url?: string | null
+          motivo_suspensao?: string | null
           nome: string
           updated_at?: string
         }
@@ -3401,10 +3408,12 @@ export type Database = {
           cnpj?: string | null
           config?: Json | null
           created_at?: string
+          data_suspensao?: string | null
           employer_code_hash?: string
           endereco?: string | null
           id?: string
           logo_url?: string | null
+          motivo_suspensao?: string | null
           nome?: string
           updated_at?: string
         }
@@ -3775,6 +3784,13 @@ export type Database = {
       garantir_tenant_uso_mes: { Args: { _tenant_id: string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      gerar_faturas_mensais: {
+        Args: never
+        Returns: {
+          detalhes: Json
+          faturas_geradas: number
+        }[]
+      }
       gerar_folha_ponto_mensal: {
         Args: { p_ano: number; p_funcionario_id: string; p_mes: number }
         Returns: {
@@ -3903,6 +3919,14 @@ export type Database = {
           intervalo_fim: string
           intervalo_inicio: string
           saida: string
+        }[]
+      }
+      processar_inadimplencia: {
+        Args: never
+        Returns: {
+          avisos_enviados: number
+          detalhes: Json
+          tenants_suspensos: number
         }[]
       }
       processar_mensagem_dinamica: {
