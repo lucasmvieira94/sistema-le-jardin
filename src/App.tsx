@@ -64,6 +64,7 @@ import ControleVacinasPublico from "./pages/ControleVacinasPublico";
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
 import DashboardSaaS from "./pages/admin-saas/DashboardSaaS";
 import EmpresasSaaS from "./pages/admin-saas/EmpresasSaaS";
+import EmpresaDetalhe from "./pages/admin-saas/EmpresaDetalhe";
 import PlanosSaaS from "./pages/admin-saas/PlanosSaaS";
 import AssinaturasSaaS from "./pages/admin-saas/AssinaturasSaaS";
 import FaturasSaaS from "./pages/admin-saas/FaturasSaaS";
@@ -141,6 +142,7 @@ const App = () => {
             <Route element={<SuperAdminLayout />}>
               <Route path="/admin-saas" element={<DashboardSaaS />} />
               <Route path="/admin-saas/empresas" element={<EmpresasSaaS />} />
+              <Route path="/admin-saas/empresas/:id" element={<EmpresaDetalhe />} />
               <Route path="/admin-saas/planos" element={<PlanosSaaS />} />
               <Route path="/admin-saas/assinaturas" element={<AssinaturasSaaS />} />
               <Route path="/admin-saas/faturas" element={<FaturasSaaS />} />
