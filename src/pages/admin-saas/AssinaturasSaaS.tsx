@@ -5,8 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Gift } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 interface Row {
   id: string;
@@ -27,6 +37,9 @@ const STATUS = ['trial', 'ativa', 'inadimplente', 'suspensa', 'cancelada'];
 export default function AssinaturasSaaS() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trialOpen, setTrialOpen] = useState<string | null>(null);
+  const [trialDias, setTrialDias] = useState<number>(14);
+  const [trialSaving, setTrialSaving] = useState(false);
 
   const carregar = async () => {
     const { data } = await supabase
@@ -57,6 +70,52 @@ export default function AssinaturasSaaS() {
     else toast.success('Dia de vencimento atualizado');
   };
 
+  const liberarTrial = async (row: Row) => {
+    if (trialDias < 1 || trialDias > 365) {
+      toast.error('Período deve estar entre 1 e 365 dias');
+      return;
+    }
+    setTrialSaving(true);
+    try {
+      const fim = new Date();
+      fim.setDate(fim.getDate() + trialDias);
+      const dataFimTrial = fim.toISOString().slice(0, 10);
+
+      // Atualiza assinatura: status trial, datas e zera próxima cobrança
+      const { error: errAssin } = await supabase
+        .from('assinaturas')
+        .update({
+          status: 'trial',
+          data_fim_trial: dataFimTrial,
+          data_inicio: new Date().toISOString().slice(0, 10),
+          data_cancelamento: null,
+          motivo_cancelamento: null,
+          proxima_cobranca: null,
+        } as any)
+        .eq('id', row.id);
+      if (errAssin) throw errAssin;
+
+      // Reativa o tenant se estiver suspenso
+      const { error: errTenant } = await supabase
+        .from('tenants')
+        .update({
+          ativo: true,
+          data_suspensao: null,
+          motivo_suspensao: null,
+        } as any)
+        .eq('id', row.tenant_id);
+      if (errTenant) throw errTenant;
+
+      toast.success(`Trial liberado por ${trialDias} dias até ${fim.toLocaleDateString('pt-BR')}`);
+      setTrialOpen(null);
+      carregar();
+    } catch (err: any) {
+      toast.error(err.message ?? 'Erro ao liberar trial');
+    } finally {
+      setTrialSaving(false);
+    }
+  };
+
   if (loading) return <div className="p-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>;
 
   return (
@@ -68,7 +127,7 @@ export default function AssinaturasSaaS() {
       <Card>
         <div className="divide-y divide-border">
           {rows.map((r) => (
-            <div key={r.id} className="p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-center">
+            <div key={r.id} className="p-4 grid grid-cols-1 md:grid-cols-7 gap-3 items-center">
               <div className="md:col-span-2">
                 <p className="font-medium">{r.tenant?.nome ?? '—'}</p>
                 <p className="text-xs text-muted-foreground">
@@ -104,6 +163,61 @@ export default function AssinaturasSaaS() {
                   {STATUS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Dialog open={trialOpen === r.id} onOpenChange={(o) => { setTrialOpen(o ? r.id : null); if (o) setTrialDias(14); }}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <Gift className="w-4 h-4" /> Liberar trial
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Liberar período de teste</DialogTitle>
+                    <DialogDescription>
+                      Defina por quantos dias <strong>{r.tenant?.nome ?? 'o cliente'}</strong> terá acesso gratuito.
+                      Isso reativa o tenant (caso suspenso), zera a próxima cobrança e marca a assinatura como <em>trial</em>.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 py-2">
+                    <Label htmlFor={`dias-${r.id}`}>Dias de teste</Label>
+                    <Input
+                      id={`dias-${r.id}`}
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={trialDias}
+                      onChange={(e) => setTrialDias(Number(e.target.value))}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {[7, 14, 30, 60, 90].map((d) => (
+                        <Button
+                          key={d}
+                          type="button"
+                          variant={trialDias === d ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setTrialDias(d)}
+                        >
+                          {d} dias
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Trial encerra em:{' '}
+                      <strong>
+                        {new Date(Date.now() + trialDias * 86400000).toLocaleDateString('pt-BR')}
+                      </strong>
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="ghost" onClick={() => setTrialOpen(null)} disabled={trialSaving}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={() => liberarTrial(r)} disabled={trialSaving}>
+                      {trialSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                      Confirmar liberação
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           ))}
           {rows.length === 0 && <div className="p-8 text-center text-muted-foreground">Nenhuma assinatura.</div>}
