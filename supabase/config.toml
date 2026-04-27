@@ -88,3 +88,14 @@ verify_jwt = false
 [cron.verificar-limites-uso-diario]
 schedule = "30 3 * * *"
 command = "SELECT net.http_post('https://kvjgmqicictxxfnvhuwl.supabase.co/functions/v1/verificar-limites-uso', '{}', 'application/json', '{\"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2amdtcWljaWN0eHhmbnZodXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5NDU3NzIsImV4cCI6MjA2NTUyMTc3Mn0.gGPP76kvvjC6pKZMV9mbJawcccGKdMnLT1SLq6s56rY\"}'::jsonb);"
+[functions.send-transactional-email]
+verify_jwt = true
+
+[functions.preview-transactional-email]
+verify_jwt = false
+
+[functions.handle-email-unsubscribe]
+verify_jwt = false
+
+[functions.handle-email-suppression]
+verify_jwt = false
