@@ -29,6 +29,7 @@ import PainelIntercorrencias from "./pages/PainelIntercorrencias";
 import ContratoTemporarioPublico from "./pages/ContratoTemporarioPublico";
 import AdministracaoMedicamentosPublico from "./pages/AdministracaoMedicamentosPublico";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 
 // Páginas protegidas (admin)
 import Index from "./pages/Index";
@@ -103,6 +104,7 @@ const App = () => {
               <Route path="/administracao-medicamentos" element={<AdministracaoMedicamentosPublico />} />
               <Route path="/gamificacao" element={<Gamificacao />} />
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
