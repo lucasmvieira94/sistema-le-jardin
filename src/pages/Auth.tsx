@@ -40,10 +40,12 @@ export default function Auth() {
         if (session?.user) {
           setTimeout(async () => {
             // Super-admins (área SaaS) podem não estar vinculados a um tenant.
-            const isSuperAdminTarget = redirectParam?.startsWith("/admin-saas");
+            const { data: isSuper } = await supabase.rpc('is_super_admin');
             const tenantSet = await setTenantByUserId(session.user.id);
-            if (tenantSet || isSuperAdminTarget) {
+            if (tenantSet) {
               navigate(redirectParam || '/dashboard', { replace: true });
+            } else if (isSuper === true) {
+              navigate(redirectParam || '/admin-saas', { replace: true });
             } else {
               toast({
                 title: "Erro ao carregar empresa",
@@ -62,10 +64,12 @@ export default function Auth() {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const isSuperAdminTarget = redirectParam?.startsWith("/admin-saas");
+        const { data: isSuper } = await supabase.rpc('is_super_admin');
         const tenantSet = await setTenantByUserId(session.user.id);
-        if (tenantSet || isSuperAdminTarget) {
+        if (tenantSet) {
           navigate(redirectParam || '/dashboard', { replace: true });
+        } else if (isSuper === true) {
+          navigate(redirectParam || '/admin-saas', { replace: true });
         }
       }
     });
