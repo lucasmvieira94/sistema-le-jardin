@@ -99,3 +99,6 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.criar-admin-empresa]
+verify_jwt = true
