@@ -36,6 +36,7 @@ interface Assinatura {
 interface ModuloRow { modulo: string; habilitado: boolean; }
 
 const STATUS = ['trial', 'ativa', 'inadimplente', 'suspensa', 'cancelada'];
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function EmpresaDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,11 @@ export default function EmpresaDetalhe() {
 
   const carregar = async () => {
     if (!id) return;
+    if (!UUID_REGEX.test(id)) {
+      toast.error('Identificador da empresa inválido. Volte à lista e selecione uma empresa.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [tRes, cRes, aRes, pRes, mRes] = await Promise.all([
