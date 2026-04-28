@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Loader2, Save, Building2, Settings2, CreditCard, Boxes } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Building2, Settings2, CreditCard, Boxes, UserPlus, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { MODULOS_DISPONIVEIS, type ModuloKey } from '@/hooks/saas/useTenantModulos';
 
@@ -48,6 +48,10 @@ export default function EmpresaDetalhe() {
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [modulos, setModulos] = useState<Record<string, boolean>>({});
+
+  // ---- Admin da empresa ----
+  const [adminForm, setAdminForm] = useState({ email: '', password: '', nome: '' });
+  const [adminSaving, setAdminSaving] = useState(false);
 
   const carregar = async () => {
     if (!id) return;
@@ -153,6 +157,33 @@ export default function EmpresaDetalhe() {
     }
   };
 
+  // ---- Cadastrar / redefinir admin da empresa ----
+  const cadastrarAdmin = async () => {
+    if (!id) return;
+    const email = adminForm.email.trim().toLowerCase();
+    const password = adminForm.password;
+    if (!email || !password) { toast.error('Informe e-mail e senha'); return; }
+    if (password.length < 6) { toast.error('A senha deve ter pelo menos 6 caracteres'); return; }
+    setAdminSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('criar-admin-empresa', {
+        body: { email, password, tenant_id: id, nome: adminForm.nome.trim() || undefined },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(
+        (data as any)?.action === 'atualizado'
+          ? 'Usuário já existia — senha redefinida e vinculado como admin.'
+          : 'Admin criado com sucesso.'
+      );
+      setAdminForm({ email: '', password: '', nome: '' });
+    } catch (e: any) {
+      toast.error('Erro: ' + (e?.message ?? 'falha ao cadastrar admin'));
+    } finally {
+      setAdminSaving(false);
+    }
+  };
+
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   if (!tenant) return <div className="p-6">Empresa não encontrada.</div>;
 
@@ -172,11 +203,12 @@ export default function EmpresaDetalhe() {
       </div>
 
       <Tabs defaultValue="cadastro" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full">
           <TabsTrigger value="cadastro"><Building2 className="w-4 h-4 mr-1" /> Cadastro</TabsTrigger>
           <TabsTrigger value="operacional"><Settings2 className="w-4 h-4 mr-1" /> Operacional</TabsTrigger>
           <TabsTrigger value="assinatura"><CreditCard className="w-4 h-4 mr-1" /> Assinatura</TabsTrigger>
           <TabsTrigger value="modulos"><Boxes className="w-4 h-4 mr-1" /> Módulos</TabsTrigger>
+          <TabsTrigger value="admins"><ShieldCheck className="w-4 h-4 mr-1" /> Admins</TabsTrigger>
         </TabsList>
 
         {/* CADASTRO */}
@@ -378,6 +410,48 @@ export default function EmpresaDetalhe() {
                   <Switch checked={!!modulos[m.key]} onCheckedChange={(v) => toggleModulo(m.key, v)} />
                 </div>
               ))}
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ADMINS */}
+        <TabsContent value="admins">
+          <Card className="p-6 space-y-4">
+            <div>
+              <h3 className="font-medium flex items-center gap-2"><UserPlus className="w-4 h-4" /> Cadastrar admin da empresa</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Cria um novo usuário (ou redefine a senha de um existente) e o vincula como <strong>admin</strong> desta empresa.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>E-mail *</Label>
+                <Input type="email" autoComplete="off" value={adminForm.email}
+                  onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
+                  placeholder="admin@empresa.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Senha *</Label>
+                <Input type="text" autoComplete="new-password" value={adminForm.password}
+                  onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Nome (opcional)</Label>
+                <Input value={adminForm.nome}
+                  onChange={(e) => setAdminForm({ ...adminForm, nome: e.target.value })}
+                  placeholder="Nome do administrador" />
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              ⚠️ Se o e-mail já existir no sistema, a senha será <strong>redefinida</strong> e o usuário será vinculado como admin desta empresa.
+              Esta ação é registrada e exclusiva para super admins.
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={cadastrarAdmin} disabled={adminSaving}>
+                {adminSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                Cadastrar / atualizar admin
+              </Button>
             </div>
           </Card>
         </TabsContent>
