@@ -102,3 +102,6 @@ verify_jwt = false
 
 [functions.criar-admin-empresa]
 verify_jwt = false
+
+[functions.seed-admin-lejardin]
+verify_jwt = false
