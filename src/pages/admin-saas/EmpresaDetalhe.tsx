@@ -413,6 +413,48 @@ export default function EmpresaDetalhe() {
             </div>
           </Card>
         </TabsContent>
+
+        {/* ADMINS */}
+        <TabsContent value="admins">
+          <Card className="p-6 space-y-4">
+            <div>
+              <h3 className="font-medium flex items-center gap-2"><UserPlus className="w-4 h-4" /> Cadastrar admin da empresa</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Cria um novo usuário (ou redefine a senha de um existente) e o vincula como <strong>admin</strong> desta empresa.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>E-mail *</Label>
+                <Input type="email" autoComplete="off" value={adminForm.email}
+                  onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
+                  placeholder="admin@empresa.com" />
+              </div>
+              <div className="space-y-2">
+                <Label>Senha *</Label>
+                <Input type="text" autoComplete="new-password" value={adminForm.password}
+                  onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres" />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Nome (opcional)</Label>
+                <Input value={adminForm.nome}
+                  onChange={(e) => setAdminForm({ ...adminForm, nome: e.target.value })}
+                  placeholder="Nome do administrador" />
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              ⚠️ Se o e-mail já existir no sistema, a senha será <strong>redefinida</strong> e o usuário será vinculado como admin desta empresa.
+              Esta ação é registrada e exclusiva para super admins.
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={cadastrarAdmin} disabled={adminSaving}>
+                {adminSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                Cadastrar / atualizar admin
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
