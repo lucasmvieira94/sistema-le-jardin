@@ -1744,10 +1744,12 @@ export type Database = {
           funcao: string
           id: string
           nome_completo: string
+          recebe_vale_transporte: boolean
           registra_ponto: boolean
           telefone: string | null
           tenant_id: string | null
           user_id: string | null
+          valor_diaria_vale_transporte: number | null
         }
         Insert: {
           acesso_supervisor?: boolean
@@ -1763,10 +1765,12 @@ export type Database = {
           funcao: string
           id?: string
           nome_completo: string
+          recebe_vale_transporte?: boolean
           registra_ponto?: boolean
           telefone?: string | null
           tenant_id?: string | null
           user_id?: string | null
+          valor_diaria_vale_transporte?: number | null
         }
         Update: {
           acesso_supervisor?: boolean
@@ -1782,10 +1786,12 @@ export type Database = {
           funcao?: string
           id?: string
           nome_completo?: string
+          recebe_vale_transporte?: boolean
           registra_ponto?: boolean
           telefone?: string | null
           tenant_id?: string | null
           user_id?: string | null
+          valor_diaria_vale_transporte?: number | null
         }
         Relationships: [
           {

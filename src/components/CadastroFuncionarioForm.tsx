@@ -19,6 +19,7 @@ import FuncaoInput from "./cadastro-funcionario/FuncaoInput";
 import EscalaSelect from "./cadastro-funcionario/EscalaSelect";
 import RegistraPontoSwitch from "./cadastro-funcionario/RegistraPontoSwitch";
 import TelefoneInput from "./cadastro-funcionario/TelefoneInput";
+import ValeTransporteSwitch from "./cadastro-funcionario/ValeTransporteSwitch";
 
 type Escala = {
   id: number;
@@ -43,6 +44,8 @@ type FormData = {
   escala_id: string;
   registra_ponto: boolean;
   acesso_supervisor: boolean;
+  recebe_vale_transporte: boolean;
+  valor_diaria_vale_transporte: string;
 };
 
 interface Props {
@@ -69,9 +72,13 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       escala_id: funcionarioData.escala_id?.toString() || '',
       registra_ponto: funcionarioData.registra_ponto ?? true,
       acesso_supervisor: funcionarioData.acesso_supervisor ?? false,
+      recebe_vale_transporte: funcionarioData.recebe_vale_transporte ?? false,
+      valor_diaria_vale_transporte: funcionarioData.valor_diaria_vale_transporte?.toString() || '',
     } : {
       registra_ponto: true,
       acesso_supervisor: false,
+      recebe_vale_transporte: false,
+      valor_diaria_vale_transporte: '',
     }
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -241,6 +248,10 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
           acesso_supervisor: sanitizedValues.acesso_supervisor,
+          recebe_vale_transporte: !!sanitizedValues.recebe_vale_transporte,
+          valor_diaria_vale_transporte: sanitizedValues.valor_diaria_vale_transporte
+            ? Number(sanitizedValues.valor_diaria_vale_transporte)
+            : 0,
         };
 
         const { error } = await supabase
@@ -273,6 +284,10 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
           acesso_supervisor: sanitizedValues.acesso_supervisor,
+          recebe_vale_transporte: !!sanitizedValues.recebe_vale_transporte,
+          valor_diaria_vale_transporte: sanitizedValues.valor_diaria_vale_transporte
+            ? Number(sanitizedValues.valor_diaria_vale_transporte)
+            : 0,
           codigo_4_digitos: codigo,
         };
 
@@ -365,6 +380,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         </div>
         <FuncaoInput control={form.control} />
         <RegistraPontoSwitch control={form.control} />
+        <ValeTransporteSwitch control={form.control} />
         <FormField
           control={form.control}
           name="acesso_supervisor"

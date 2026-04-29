@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from "react";
-import { FileBarChart2, FileText, Users, Calendar } from "lucide-react";
+import { FileBarChart2, FileText, Users, Calendar, Bus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import ModalFolhaPonto from "@/components/relatorios/ModalFolhaPonto";
 import ModalFolhaPontoGeral from "@/components/relatorios/ModalFolhaPontoGeral";
 import ModalEscalaMensal from "@/components/relatorios/ModalEscalaMensal";
+import ModalValeTransporte from "@/components/relatorios/ModalValeTransporte";
 
 interface Funcionario {
   id: string;
@@ -19,6 +20,7 @@ export default function Relatorios() {
   const [modalFolhaPontoOpen, setModalFolhaPontoOpen] = useState(false);
   const [modalFolhaPontoGeralOpen, setModalFolhaPontoGeralOpen] = useState(false);
   const [modalEscalaMensalOpen, setModalEscalaMensalOpen] = useState(false);
+  const [modalValeTransporteOpen, setModalValeTransporteOpen] = useState(false);
 
   useEffect(() => {
     fetchFuncionarios();
@@ -98,6 +100,22 @@ export default function Relatorios() {
             </Button>
           </div>
 
+          <div className="border rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Bus className="w-5 h-5 text-primary" />
+              <div>
+                <h3 className="font-semibold">Vale-Transporte Mensal</h3>
+                <p className="text-sm text-muted-foreground">
+                  Total de diárias e valor a ser pago no mês seguinte, calculado pela escala vigente de cada funcionário
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => setModalValeTransporteOpen(true)} variant="secondary">
+              <Bus className="w-4 h-4 mr-2" />
+              Gerar Relatório de VT
+            </Button>
+          </div>
+
           <div className="border rounded-lg p-4 opacity-60">
             <div className="flex items-center gap-3 mb-3">
               <FileBarChart2 className="w-5 h-5 text-muted-foreground" />
@@ -147,6 +165,11 @@ export default function Relatorios() {
         open={modalEscalaMensalOpen}
         onOpenChange={setModalEscalaMensalOpen}
         funcionarios={funcionarios}
+      />
+
+      <ModalValeTransporte
+        open={modalValeTransporteOpen}
+        onOpenChange={setModalValeTransporteOpen}
       />
     </div>
   );
