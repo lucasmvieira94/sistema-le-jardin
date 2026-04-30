@@ -914,6 +914,18 @@ export default function GerenciamentoResidentes() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => {
+                          setSelectedResidente(residente);
+                          setAcolhimentoDialogOpen(true);
+                        }}
+                        title="Ficha de Acolhimento"
+                        className="text-purple-600 hover:text-purple-700"
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleStatus(residente)}
                         title={residente.ativo ? "Desativar residente" : "Ativar residente"}
                         className={residente.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
