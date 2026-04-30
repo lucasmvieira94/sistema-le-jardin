@@ -28,6 +28,7 @@ import IntercorrenciasPublico from "./pages/IntercorrenciasPublico";
 import PainelIntercorrencias from "./pages/PainelIntercorrencias";
 import ContratoTemporarioPublico from "./pages/ContratoTemporarioPublico";
 import AdministracaoMedicamentosPublico from "./pages/AdministracaoMedicamentosPublico";
+import FichaAcolhimentoPublico from "./pages/FichaAcolhimentoPublico";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 
@@ -103,6 +104,7 @@ const App = () => {
               <Route path="/painel-intercorrencias" element={<PainelIntercorrencias />} />
               <Route path="/contrato-temporario/:token" element={<ContratoTemporarioPublico />} />
               <Route path="/administracao-medicamentos" element={<AdministracaoMedicamentosPublico />} />
+              <Route path="/ficha-acolhimento/:token" element={<FichaAcolhimentoPublico />} />
               <Route path="/gamificacao" element={<Gamificacao />} />
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
