@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenantContext } from '@/contexts/TenantContext';
 
@@ -32,33 +32,26 @@ export const MODULOS_DISPONIVEIS: { key: ModuloKey; nome: string; descricao: str
  */
 export function useTenantModulos() {
   const { tenantId } = useTenantContext();
-  const [modulos, setModulos] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!tenantId) {
-      setLoading(false);
-      return;
-    }
-
-    const carregar = async () => {
+  const { data: modulos = {}, isLoading } = useQuery({
+    queryKey: ['tenant-modulos', tenantId],
+    enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000, // módulos mudam raramente
+    gcTime: 30 * 60 * 1000,
+    queryFn: async () => {
       const { data } = await supabase
         .from('tenant_modulos')
         .select('modulo, habilitado')
-        .eq('tenant_id', tenantId);
-
+        .eq('tenant_id', tenantId!);
       const map: Record<string, boolean> = {};
       (data ?? []).forEach((m: any) => {
         map[m.modulo] = !!m.habilitado;
       });
-      setModulos(map);
-      setLoading(false);
-    };
-
-    carregar();
-  }, [tenantId]);
+      return map;
+    },
+  });
 
   const isHabilitado = (key: ModuloKey) => modulos[key] === true;
 
-  return { modulos, isHabilitado, loading };
+  return { modulos, isHabilitado, loading: !!tenantId && isLoading };
 }
