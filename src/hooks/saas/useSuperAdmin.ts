@@ -1,53 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthSession } from '@/hooks/useAuthSession';
 
 /**
- * Hook que verifica se o usuário autenticado é um super-admin da plataforma SaaS.
- * Super-admins têm acesso ao painel /admin-saas e podem gerenciar todos os tenants.
+ * Verifica se o usuário autenticado é super-admin da plataforma SaaS.
+ * Cacheado com React Query — evita repetição entre componentes/navegações.
  */
 export function useSuperAdmin() {
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuthSession();
 
-  useEffect(() => {
-    let active = true;
-
-    const check = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          if (active) {
-            setIsSuperAdmin(false);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const { data, error } = await supabase.rpc('is_super_admin');
-
-        if (active) {
-          if (error) {
-            console.error('Erro ao verificar super-admin:', error);
-          }
-          setIsSuperAdmin(!error && data === true);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Erro inesperado ao verificar super-admin:', error);
-        if (active) {
-          setIsSuperAdmin(false);
-          setLoading(false);
-        }
+  const { data, isLoading } = useQuery({
+    queryKey: ['is-super-admin', user?.id],
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('is_super_admin');
+      if (error) {
+        console.error('Erro ao verificar super-admin:', error);
+        return false;
       }
-    };
+      return data === true;
+    },
+  });
 
-    check();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => check());
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  return { isSuperAdmin, loading };
+  return {
+    isSuperAdmin: data === true,
+    loading: authLoading || (!!user && isLoading),
+  };
 }

@@ -30,49 +30,43 @@ export default function Auth() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let handledUserId: string | null = null;
+
+    const handleSession = async (session: Session | null) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (!session?.user) return;
+      // Evita rodar duas vezes (getSession + onAuthStateChange) para o mesmo usuário
+      if (handledUserId === session.user.id) return;
+      handledUserId = session.user.id;
+
+      // Roda super-admin e tenant em PARALELO (antes era serial)
+      const [{ data: isSuper }, tenantSet] = await Promise.all([
+        supabase.rpc('is_super_admin'),
+        setTenantByUserId(session.user.id),
+      ]);
+
+      if (tenantSet) {
+        navigate(redirectParam || '/dashboard', { replace: true });
+      } else if (isSuper === true) {
+        navigate(redirectParam || '/admin-saas', { replace: true });
+      } else {
+        toast({
+          title: "Erro ao carregar empresa",
+          description: "Não foi possível identificar sua empresa. Contate o suporte.",
+          variant: "destructive",
+        });
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Definir tenant automaticamente após login e redirecionar
-        if (session?.user) {
-          setTimeout(async () => {
-            // Super-admins (área SaaS) podem não estar vinculados a um tenant.
-            const { data: isSuper } = await supabase.rpc('is_super_admin');
-            const tenantSet = await setTenantByUserId(session.user.id);
-            if (tenantSet) {
-              navigate(redirectParam || '/dashboard', { replace: true });
-            } else if (isSuper === true) {
-              navigate(redirectParam || '/admin-saas', { replace: true });
-            } else {
-              toast({
-                title: "Erro ao carregar empresa",
-                description: "Não foi possível identificar sua empresa. Contate o suporte.",
-                variant: "destructive"
-              });
-            }
-          }, 0);
-        }
+      (_event, session) => {
+        // Defer para não bloquear o callback do Supabase
+        setTimeout(() => handleSession(session), 0);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data: isSuper } = await supabase.rpc('is_super_admin');
-        const tenantSet = await setTenantByUserId(session.user.id);
-        if (tenantSet) {
-          navigate(redirectParam || '/dashboard', { replace: true });
-        } else if (isSuper === true) {
-          navigate(redirectParam || '/admin-saas', { replace: true });
-        }
-      }
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
 
     return () => subscription.unsubscribe();
   }, [navigate, setTenantByUserId, toast, redirectParam]);
