@@ -977,6 +977,21 @@ export default function GerenciamentoResidentes() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Ficha de Acolhimento */}
+      <Dialog open={acolhimentoDialogOpen} onOpenChange={setAcolhimentoDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ficha de Acolhimento — {selectedResidente?.nome_completo}</DialogTitle>
+          </DialogHeader>
+          {selectedResidente && (
+            <FichaAcolhimentoAdmin
+              residenteId={selectedResidente.id}
+              residenteNome={selectedResidente.nome_completo}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
       </TabsContent>
     </Tabs>
