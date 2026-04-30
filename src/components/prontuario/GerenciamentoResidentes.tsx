@@ -10,12 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown } from "lucide-react";
+import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
 import ContratosLista from "@/components/residentes/ContratosLista";
 import ContratosTemporarios from "@/components/residentes/ContratosTemporarios";
+import FichaAcolhimentoAdmin from "@/components/residentes/FichaAcolhimentoAdmin";
 
 interface Residente {
   id: string;
@@ -47,6 +48,9 @@ export default function GerenciamentoResidentes() {
   // Estados para contratos
   const [contratosDialogOpen, setContratosDialogOpen] = useState(false);
   const [selectedResidente, setSelectedResidente] = useState<Residente | null>(null);
+
+  // Estado para Ficha de Acolhimento
+  const [acolhimentoDialogOpen, setAcolhimentoDialogOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     nome_completo: "",
@@ -910,6 +914,18 @@ export default function GerenciamentoResidentes() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => {
+                          setSelectedResidente(residente);
+                          setAcolhimentoDialogOpen(true);
+                        }}
+                        title="Ficha de Acolhimento"
+                        className="text-purple-600 hover:text-purple-700"
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleStatus(residente)}
                         title={residente.ativo ? "Desativar residente" : "Ativar residente"}
                         className={residente.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
@@ -957,6 +973,21 @@ export default function GerenciamentoResidentes() {
                 responsavel_email: selectedResidente.responsavel_email,
               }}
               onClose={() => setContratosDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Ficha de Acolhimento */}
+      <Dialog open={acolhimentoDialogOpen} onOpenChange={setAcolhimentoDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ficha de Acolhimento — {selectedResidente?.nome_completo}</DialogTitle>
+          </DialogHeader>
+          {selectedResidente && (
+            <FichaAcolhimentoAdmin
+              residenteId={selectedResidente.id}
+              residenteNome={selectedResidente.nome_completo}
             />
           )}
         </DialogContent>
