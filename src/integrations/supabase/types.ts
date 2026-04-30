@@ -1673,6 +1673,78 @@ export type Database = {
           },
         ]
       }
+      fichas_acolhimento: {
+        Row: {
+          aceite_lgpd: boolean
+          aprovado_por: string | null
+          created_at: string
+          data_aceite_lgpd: string | null
+          data_aprovacao: string | null
+          data_expiracao_token: string
+          data_preenchimento: string | null
+          habitos_rotina: Json | null
+          historico_saude: Json | null
+          id: string
+          ip_aceite: string | null
+          observacoes_admin: string | null
+          preenchido_por_cpf: string | null
+          preenchido_por_nome: string | null
+          preenchido_por_parentesco: string | null
+          preenchido_por_telefone: string | null
+          residente_id: string
+          status: string
+          tenant_id: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          aceite_lgpd?: boolean
+          aprovado_por?: string | null
+          created_at?: string
+          data_aceite_lgpd?: string | null
+          data_aprovacao?: string | null
+          data_expiracao_token?: string
+          data_preenchimento?: string | null
+          habitos_rotina?: Json | null
+          historico_saude?: Json | null
+          id?: string
+          ip_aceite?: string | null
+          observacoes_admin?: string | null
+          preenchido_por_cpf?: string | null
+          preenchido_por_nome?: string | null
+          preenchido_por_parentesco?: string | null
+          preenchido_por_telefone?: string | null
+          residente_id: string
+          status?: string
+          tenant_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          aceite_lgpd?: boolean
+          aprovado_por?: string | null
+          created_at?: string
+          data_aceite_lgpd?: string | null
+          data_aprovacao?: string | null
+          data_expiracao_token?: string
+          data_preenchimento?: string | null
+          habitos_rotina?: Json | null
+          historico_saude?: Json | null
+          id?: string
+          ip_aceite?: string | null
+          observacoes_admin?: string | null
+          preenchido_por_cpf?: string | null
+          preenchido_por_nome?: string | null
+          preenchido_por_parentesco?: string | null
+          preenchido_por_telefone?: string | null
+          residente_id?: string
+          status?: string
+          tenant_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       formulario_campos_config: {
         Row: {
           ativo: boolean
