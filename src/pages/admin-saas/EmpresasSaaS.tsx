@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Loader2, Building2, Eye, Power } from 'lucide-react';
+import { Plus, Loader2, Building2, Eye, Power, RefreshCw, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -49,13 +49,53 @@ export default function EmpresasSaaS() {
 
   useEffect(() => { carregar(); }, []);
 
+  // Gera código alfanumérico único (12 chars, sem caracteres ambíguos)
+  const gerarCodigoUnico = async (): Promise<string> => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const gerar = (len = 12) =>
+      Array.from(crypto.getRandomValues(new Uint8Array(len)))
+        .map((b) => chars[b % chars.length])
+        .join('');
+
+    for (let i = 0; i < 8; i++) {
+      const candidato = gerar();
+      const hash = await sha256(candidato);
+      const { data } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('employer_code_hash', hash)
+        .maybeSingle();
+      if (!data) return candidato;
+    }
+    throw new Error('Não foi possível gerar um código único');
+  };
+
+  const abrirDialog = async () => {
+    setDialog(true);
+    try {
+      const codigo = await gerarCodigoUnico();
+      setForm((f) => ({ ...f, employer_code: codigo }));
+    } catch (e: any) {
+      toast.error(e.message ?? 'Erro ao gerar código');
+    }
+  };
+
+  const regenerarCodigo = async () => {
+    try {
+      const codigo = await gerarCodigoUnico();
+      setForm((f) => ({ ...f, employer_code: codigo }));
+    } catch (e: any) {
+      toast.error(e.message ?? 'Erro ao gerar código');
+    }
+  };
+
   const criar = async () => {
-    if (!form.nome.trim() || !form.employer_code.trim()) {
-      toast.error('Nome e código de acesso são obrigatórios');
+    if (!form.nome.trim()) {
+      toast.error('Nome da empresa é obrigatório');
       return;
     }
-    if (form.employer_code.length < 6) {
-      toast.error('O código deve ter pelo menos 6 caracteres');
+    if (!form.employer_code.trim() || form.employer_code.length < 6) {
+      toast.error('Código de acesso inválido. Gere um novo código.');
       return;
     }
     setCreating(true);
@@ -111,10 +151,8 @@ export default function EmpresasSaaS() {
           <h1 className="text-2xl font-semibold">Empresas-clientes</h1>
           <p className="text-sm text-muted-foreground">Gerencie todas as empresas que usam a plataforma</p>
         </div>
-        <Dialog open={dialog} onOpenChange={setDialog}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Nova empresa</Button>
-          </DialogTrigger>
+        <Dialog open={dialog} onOpenChange={(o) => { setDialog(o); if (!o) setForm({ nome: '', cnpj: '', employer_code: '' }); }}>
+          <Button onClick={abrirDialog}><Plus className="w-4 h-4 mr-2" />Nova empresa</Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Cadastrar nova empresa-cliente</DialogTitle>
@@ -130,13 +168,31 @@ export default function EmpresasSaaS() {
               </div>
               <div className="space-y-2">
                 <Label>Código de acesso da empresa *</Label>
-                <Input
-                  value={form.employer_code}
-                  onChange={(e) => setForm({ ...form, employer_code: e.target.value.toUpperCase() })}
-                  placeholder="AURORA2026"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={form.employer_code}
+                    readOnly
+                    className="font-mono tracking-wider"
+                    placeholder="Gerando..."
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={regenerarCodigo} title="Gerar outro código">
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(form.employer_code);
+                      toast.success('Código copiado');
+                    }}
+                    title="Copiar"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Será o código usado pelos colaboradores. Mínimo 6 caracteres. Guarde com segurança.
+                  Código alfanumérico único gerado automaticamente. Guarde com segurança — será usado pelos colaboradores para acessar o sistema.
                 </p>
               </div>
             </div>
