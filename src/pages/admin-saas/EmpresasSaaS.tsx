@@ -210,8 +210,23 @@ export default function EmpresasSaaS() {
       {novoCriado && (
         <Card className="p-4 border-primary bg-primary/5">
           <p className="text-sm font-medium">Empresa <strong>{novoCriado.nome}</strong> criada com sucesso!</p>
-          <p className="text-sm mt-2">Código de acesso: <code className="bg-background px-2 py-1 rounded">{novoCriado.codigo}</code></p>
-          <p className="text-xs text-muted-foreground mt-2">⚠️ Anote este código — não será mostrado novamente.</p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-sm">Código de acesso:</span>
+            <code className="bg-background px-2 py-1 rounded font-mono tracking-wider">{novoCriado.codigo}</code>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(novoCriado.codigo);
+                toast.success('Código copiado');
+              }}
+            >
+              <Copy className="w-3 h-3 mr-1" /> Copiar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            ⚠️ Este é o código que os colaboradores usarão para entrar no sistema. Por segurança ele só é mostrado agora — guarde em local seguro. Se for perdido, será necessário gerar um novo código (rotação).
+          </p>
           <Button size="sm" variant="ghost" className="mt-2" onClick={() => setNovoCriado(null)}>Entendi</Button>
         </Card>
       )}
