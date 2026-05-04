@@ -1,105 +1,53 @@
-import React, { useState } from 'react';
-import { hojeISO } from '@/utils/dateUtils';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Download, Loader2 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, Loader2, FileText, FileSpreadsheet } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import {
+  exportarFichaPDF,
+  exportarFichaExcel,
+  type FiltroExport,
+} from "@/utils/exportFichaFuncional";
 
-type FiltroExportacao = 'todos' | 'ativos' | 'inativos';
+interface ExportarFuncionariosProps {
+  /** IDs selecionados na lista (opcional). Quando informado, habilita exportar apenas selecionados. */
+  selecionados?: string[];
+}
 
-const ExportarFuncionarios = () => {
+const ExportarFuncionarios: React.FC<ExportarFuncionariosProps> = ({ selecionados = [] }) => {
   const [exportando, setExportando] = useState(false);
 
-  const exportarFuncionarios = async (filtro: FiltroExportacao) => {
+  async function handleExport(formato: "pdf" | "excel", filtro: FiltroExport) {
     setExportando(true);
-    
     try {
-      console.log('🚀 Iniciando exportação com filtro:', filtro);
-      
-      const { data, error } = await supabase.functions.invoke('exportar-funcionarios', {
-        body: { filtro }
-      });
-
-      if (error) {
-        console.error('❌ Erro na exportação:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro na exportação",
-          description: error.message || "Não foi possível exportar os funcionários"
-        });
-        return;
-      }
-
-      // If we get here, the function should have returned CSV data
-      // We need to handle the response as a blob for file download
-      const response = await fetch(
-        `https://kvjgmqicictxxfnvhuwl.supabase.co/functions/v1/exportar-funcionarios`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ filtro })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Falha na exportação');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Extract filename from Content-Disposition header
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `funcionarios_${filtro}_${hojeISO()}.csv`;
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Create download link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const ids = filtro === "selecionados" ? selecionados : undefined;
+      if (formato === "pdf") await exportarFichaPDF(filtro, ids);
+      else await exportarFichaExcel(filtro, ids);
 
       toast({
         title: "Exportação concluída",
-        description: `Arquivo ${filename} baixado com sucesso`
+        description: `Ficha funcional exportada em ${formato.toUpperCase()}.`,
       });
-
-    } catch (error) {
-      console.error('❌ Erro na exportação:', error);
+    } catch (err: any) {
+      console.error("Erro na exportação:", err);
       toast({
         variant: "destructive",
         title: "Erro na exportação",
-        description: "Não foi possível exportar os funcionários"
+        description: err?.message || "Não foi possível gerar o arquivo",
       });
     } finally {
       setExportando(false);
     }
-  };
+  }
 
-  const getLabelFiltro = (filtro: FiltroExportacao): string => {
-    switch (filtro) {
-      case 'todos':
-        return 'Todos os Funcionários';
-      case 'ativos':
-        return 'Funcionários Ativos';
-      case 'inativos':
-        return 'Funcionários Inativos';
-      default:
-        return 'Funcionários';
-    }
-  };
+  const temSelecao = selecionados.length > 0;
 
   return (
     <DropdownMenu>
@@ -113,33 +61,55 @@ const ExportarFuncionarios = () => {
           ) : (
             <>
               <Download className="mr-2 h-4 w-4" />
-              Exportar
+              Exportar Ficha
             </>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem 
-          onClick={() => exportarFuncionarios('todos')}
-          disabled={exportando}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {getLabelFiltro('todos')}
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="flex items-center gap-2">
+          <FileText className="h-4 w-4" /> PDF
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => handleExport("pdf", "ativos")} disabled={exportando}>
+          Ativos
         </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => exportarFuncionarios('ativos')}
-          disabled={exportando}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {getLabelFiltro('ativos')}
+        <DropdownMenuItem onClick={() => handleExport("pdf", "inativos")} disabled={exportando}>
+          Desligados
         </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => exportarFuncionarios('inativos')}
-          disabled={exportando}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          {getLabelFiltro('inativos')}
+        <DropdownMenuItem onClick={() => handleExport("pdf", "todos")} disabled={exportando}>
+          Todos
         </DropdownMenuItem>
+        {temSelecao && (
+          <DropdownMenuItem
+            onClick={() => handleExport("pdf", "selecionados")}
+            disabled={exportando}
+          >
+            Apenas selecionados ({selecionados.length})
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuLabel className="flex items-center gap-2">
+          <FileSpreadsheet className="h-4 w-4" /> Excel
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => handleExport("excel", "ativos")} disabled={exportando}>
+          Ativos
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("excel", "inativos")} disabled={exportando}>
+          Desligados
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("excel", "todos")} disabled={exportando}>
+          Todos
+        </DropdownMenuItem>
+        {temSelecao && (
+          <DropdownMenuItem
+            onClick={() => handleExport("excel", "selecionados")}
+            disabled={exportando}
+          >
+            Apenas selecionados ({selecionados.length})
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

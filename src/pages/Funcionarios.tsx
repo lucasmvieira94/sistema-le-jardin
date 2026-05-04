@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Funcionario = {
   id: string;
@@ -28,6 +29,7 @@ type Funcionario = {
 export default function Funcionarios() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [funcionariosFiltrados, setFuncionariosFiltrados] = useState<Funcionario[]>([]);
+  const [selecionados, setSelecionados] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [desligandoId, setDesligandoId] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<string>("ativo");
@@ -173,7 +175,7 @@ export default function Funcionarios() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Funcionários</h2>
         <div className="flex gap-2">
-          <ExportarFuncionarios />
+          <ExportarFuncionarios selecionados={selecionados} />
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -290,6 +292,23 @@ export default function Funcionarios() {
           <table className="min-w-full bg-white rounded">
             <thead>
               <tr className="bg-green-50 text-muted-foreground">
+                <th className="py-2 px-3 text-left w-8">
+                  <Checkbox
+                    checked={
+                      funcionariosFiltrados.length > 0 &&
+                      funcionariosFiltrados.every((f) => selecionados.includes(f.id))
+                    }
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        const novos = funcionariosFiltrados.map((f) => f.id);
+                        setSelecionados((prev) => Array.from(new Set([...prev, ...novos])));
+                      } else {
+                        const idsFiltrados = new Set(funcionariosFiltrados.map((f) => f.id));
+                        setSelecionados((prev) => prev.filter((id) => !idsFiltrados.has(id)));
+                      }
+                    }}
+                  />
+                </th>
                 <th className="py-2 px-3 text-left">Nome</th>
                 <th className="py-2 px-3 text-left">Função</th>
                 <th className="py-2 px-3 text-left">Escala</th>
@@ -300,6 +319,16 @@ export default function Funcionarios() {
             <tbody>
               {funcionariosFiltrados.map((func) => (
                 <tr key={func.id} className="border-b last:border-b-0">
+                  <td className="py-2 px-3">
+                    <Checkbox
+                      checked={selecionados.includes(func.id)}
+                      onCheckedChange={(checked) => {
+                        setSelecionados((prev) =>
+                          checked ? [...prev, func.id] : prev.filter((id) => id !== func.id),
+                        );
+                      }}
+                    />
+                  </td>
                   <td className="py-2 px-3">{func.nome_completo}</td>
                   <td className="py-2 px-3">{func.funcao}</td>
                   <td className="py-2 px-3">{func.escalas?.nome || '-'}</td>
@@ -355,14 +384,14 @@ export default function Funcionarios() {
               ))}
               {funcionariosFiltrados.length === 0 && funcionarios.length > 0 && (
                 <tr>
-                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={5}>
+                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={6}>
                     Nenhum funcionário encontrado com os filtros aplicados.
                   </td>
                 </tr>
               )}
               {funcionarios.length === 0 && (
                 <tr>
-                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={5}>
+                  <td className="py-6 px-3 text-center text-muted-foreground" colSpan={6}>
                     Nenhum funcionário cadastrado ainda.
                   </td>
                 </tr>
