@@ -93,11 +93,11 @@ export default function GerenciamentoResidentes() {
 
   const gerarNumeroProntuario = async () => {
     try {
-      // Buscar todos os números de prontuário existentes
+      // Buscar TODOS os números de prontuário existentes (ativos e inativos)
+      // pois o índice único cobre toda a tabela
       const { data, error } = await supabase
         .from('residentes')
-        .select('numero_prontuario')
-        .eq('ativo', true);
+        .select('numero_prontuario');
 
       if (error) throw error;
 
