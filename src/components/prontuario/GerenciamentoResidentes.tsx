@@ -193,10 +193,11 @@ export default function GerenciamentoResidentes() {
       setEditingResident(null);
       resetForm();
       fetchResidentes();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao salvar residente:', error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar os dados do residente.",
+        description: error?.message || "Não foi possível salvar os dados do residente.",
         variant: "destructive",
       });
     }
