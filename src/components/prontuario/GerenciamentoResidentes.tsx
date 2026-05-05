@@ -141,23 +141,48 @@ export default function GerenciamentoResidentes() {
           description: "Os dados do residente foram atualizados com sucesso.",
         });
       } else {
-        // Gerar número do prontuário automaticamente para novos residentes
-        const numeroProntuario = await gerarNumeroProntuario();
         // Converter strings vazias em null (evita colisão em UNIQUE como cpf)
         const sanitized = Object.fromEntries(
           Object.entries(formData).map(([k, v]) => [k, v === "" ? null : v])
         );
-        const dadosInsercao: any = {
-          ...sanitized,
-          numero_prontuario: numeroProntuario
-        };
-        
-        const { error } = await supabase
-          .from('residentes')
-          .insert(dadosInsercao);
-        
-        if (error) throw error;
-        
+
+        // Tenta inserir com retry caso o número de prontuário colida
+        // (corrida entre gerar e inserir, ou cache do navegador)
+        let numeroProntuario = await gerarNumeroProntuario();
+        let inseriu = false;
+        let ultimoErro: any = null;
+
+        for (let tentativa = 0; tentativa < 10 && !inseriu; tentativa++) {
+          const dadosInsercao: any = {
+            ...sanitized,
+            numero_prontuario: numeroProntuario,
+          };
+          const { error } = await supabase
+            .from('residentes')
+            .insert(dadosInsercao);
+
+          if (!error) {
+            inseriu = true;
+            break;
+          }
+
+          ultimoErro = error;
+          // Se for colisão de prontuário, incrementa e tenta de novo
+          if (
+            error.code === '23505' &&
+            String(error.message).includes('numero_prontuario')
+          ) {
+            const match = numeroProntuario.match(/P(\d+)/);
+            const proximo = (match ? parseInt(match[1]) : 0) + 1;
+            numeroProntuario = `P${proximo.toString().padStart(4, '0')}`;
+            continue;
+          }
+          // Outro erro: aborta
+          throw error;
+        }
+
+        if (!inseriu) throw ultimoErro;
+
         toast({
           title: "Residente cadastrado",
           description: `O residente foi cadastrado com sucesso. Prontuário: ${numeroProntuario}`,
