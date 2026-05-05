@@ -143,8 +143,12 @@ export default function GerenciamentoResidentes() {
       } else {
         // Gerar número do prontuário automaticamente para novos residentes
         const numeroProntuario = await gerarNumeroProntuario();
+        // Converter strings vazias em null (evita colisão em UNIQUE como cpf)
+        const sanitized = Object.fromEntries(
+          Object.entries(formData).map(([k, v]) => [k, v === "" ? null : v])
+        );
         const dadosInsercao = {
-          ...formData,
+          ...sanitized,
           numero_prontuario: numeroProntuario
         };
         
