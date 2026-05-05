@@ -147,7 +147,7 @@ export default function GerenciamentoResidentes() {
         const sanitized = Object.fromEntries(
           Object.entries(formData).map(([k, v]) => [k, v === "" ? null : v])
         );
-        const dadosInsercao = {
+        const dadosInsercao: any = {
           ...sanitized,
           numero_prontuario: numeroProntuario
         };
