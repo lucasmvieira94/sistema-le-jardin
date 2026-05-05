@@ -93,11 +93,11 @@ export default function GerenciamentoResidentes() {
 
   const gerarNumeroProntuario = async () => {
     try {
-      // Buscar todos os números de prontuário existentes
+      // Buscar TODOS os números de prontuário existentes (ativos e inativos)
+      // pois o índice único cobre toda a tabela
       const { data, error } = await supabase
         .from('residentes')
-        .select('numero_prontuario')
-        .eq('ativo', true);
+        .select('numero_prontuario');
 
       if (error) throw error;
 
@@ -143,8 +143,12 @@ export default function GerenciamentoResidentes() {
       } else {
         // Gerar número do prontuário automaticamente para novos residentes
         const numeroProntuario = await gerarNumeroProntuario();
-        const dadosInsercao = {
-          ...formData,
+        // Converter strings vazias em null (evita colisão em UNIQUE como cpf)
+        const sanitized = Object.fromEntries(
+          Object.entries(formData).map(([k, v]) => [k, v === "" ? null : v])
+        );
+        const dadosInsercao: any = {
+          ...sanitized,
           numero_prontuario: numeroProntuario
         };
         
