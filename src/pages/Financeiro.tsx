@@ -173,6 +173,7 @@ export default function Financeiro() {
     try {
       await gerarReciboPDF({
         residenteNome: residenteNome(pagDialog.m.residente_id),
+        residenteId: pagDialog.m.residente_id,
         competencia: pagDialog.m.competencia,
         dataVencimento: pagDialog.m.data_vencimento,
         dataPagamento: pagData,
@@ -196,6 +197,7 @@ export default function Financeiro() {
     try {
       await gerarReciboPDF({
         residenteNome: residenteNome(m.residente_id),
+        residenteId: m.residente_id,
         competencia: m.competencia,
         dataVencimento: m.data_vencimento,
         dataPagamento: m.data_pagamento ?? new Date().toISOString().slice(0, 10),
