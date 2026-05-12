@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type ReciboPagamento = {
   residenteNome: string;
+  residenteId?: string;
   competencia: string; // YYYY-MM-DD
   dataVencimento: string;
   dataPagamento: string;
@@ -65,6 +66,31 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
   const telefone = "";
   const emailEmp = "";
   const logo = empresa?.logo_url ? await carregarLogoDataUrl(empresa.logo_url) : null;
+
+  // ===== Dados do responsável financeiro do residente =====
+  let resp: {
+    nome?: string | null;
+    cpf?: string | null;
+    endereco?: string | null;
+    telefone?: string | null;
+    email?: string | null;
+  } | null = null;
+  if (r.residenteId) {
+    const { data: residente } = await supabase
+      .from("residentes")
+      .select("responsavel_nome, responsavel_cpf, responsavel_endereco, responsavel_telefone, responsavel_email")
+      .eq("id", r.residenteId)
+      .maybeSingle();
+    if (residente) {
+      resp = {
+        nome: residente.responsavel_nome,
+        cpf: residente.responsavel_cpf,
+        endereco: residente.responsavel_endereco,
+        telefone: residente.responsavel_telefone,
+        email: residente.responsavel_email,
+      };
+    }
+  }
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -129,11 +155,41 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
   doc.text(fmtBRL(r.valorPago), pageW - margin - 4, y + 9, { align: "right" });
   y += 20;
 
+  // ===== Pagador / Responsável Financeiro =====
+  if (resp?.nome) {
+    doc.setFont("times", "bold");
+    doc.setFontSize(11);
+    doc.text("PAGADOR / RESPONSÁVEL FINANCEIRO", margin, y);
+    y += 2;
+    doc.setDrawColor(180);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5;
+    doc.setFont("times", "normal");
+    doc.setFontSize(10);
+    const linhasResp: string[] = [];
+    linhasResp.push(`Nome: ${resp.nome}`);
+    if (resp.cpf) linhasResp.push(`CPF: ${resp.cpf}`);
+    if (resp.endereco) linhasResp.push(`Endereço: ${resp.endereco}`);
+    const contato = [resp.telefone, resp.email].filter(Boolean).join("  •  ");
+    if (contato) linhasResp.push(contato);
+    linhasResp.push(`Residente: ${r.residenteNome}`);
+    linhasResp.forEach((t) => {
+      const wrap = doc.splitTextToSize(t, pageW - margin * 2 - 4);
+      doc.text(wrap, margin + 2, y);
+      y += wrap.length * 5;
+    });
+    y += 4;
+    doc.setFontSize(11);
+  }
+
   // Corpo
   doc.setFont("times", "normal");
   doc.setFontSize(11);
+  const pagador = resp?.nome
+    ? `${resp.nome}${resp.cpf ? `, CPF ${resp.cpf}` : ""}, responsável financeiro de ${r.residenteNome}`
+    : `${r.residenteNome} (ou de seu responsável financeiro)`;
   const corpo =
-    `Recebemos de ${r.residenteNome} (ou de seu responsável financeiro) a importância de ` +
+    `Recebemos de ${pagador} a importância de ` +
     `${fmtBRL(r.valorPago)}, referente à mensalidade da competência ` +
     `${competenciaLabel(r.competencia)}, com vencimento em ${formatarData(r.dataVencimento)}, ` +
     `efetivamente paga em ${formatarData(r.dataPagamento)} por meio de ` +
