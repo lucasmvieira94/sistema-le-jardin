@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, AlertCircle, Plus, RefreshCw, Wallet, Loader2, Receipt } from "lucide-react";
 import { formatarData } from "@/utils/dateUtils";
+import { gerarReciboPDF } from "@/utils/reciboPDF";
 
 type Mensalidade = {
   id: string;
@@ -152,7 +153,8 @@ export default function Financeiro() {
 
   const registrarPagamento = async () => {
     if (!pagDialog.m) return;
-    const novoPago = Number(pagDialog.m.valor_pago) + Number(pagValor || 0);
+    const valorRecebido = Number(pagValor || 0);
+    const novoPago = Number(pagDialog.m.valor_pago) + valorRecebido;
     const { error } = await (supabase as any)
       .from("mensalidades_residentes")
       .update({
@@ -166,9 +168,49 @@ export default function Financeiro() {
       toast({ title: "Erro ao registrar pagamento", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Pagamento registrado" });
+    toast({ title: "Pagamento registrado", description: "Gerando recibo em PDF..." });
+    // Recibo desse pagamento
+    try {
+      await gerarReciboPDF({
+        residenteNome: residenteNome(pagDialog.m.residente_id),
+        competencia: pagDialog.m.competencia,
+        dataVencimento: pagDialog.m.data_vencimento,
+        dataPagamento: pagData,
+        valorMensalidade: Number(pagDialog.m.valor_mensalidade),
+        valorExtras: Number(pagDialog.m.valor_extras),
+        valorDesconto: Number(pagDialog.m.valor_desconto),
+        valorTotal: Number(pagDialog.m.valor_total),
+        valorPago: valorRecebido,
+        formaPagamento: pagForma,
+        numeroRecibo: `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`,
+        observacoes: pagObs,
+      });
+    } catch (e: any) {
+      toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
+    }
     setPagDialog({ open: false, m: null });
     carregar();
+  };
+
+  const baixarReciboMensalidade = async (m: Mensalidade) => {
+    try {
+      await gerarReciboPDF({
+        residenteNome: residenteNome(m.residente_id),
+        competencia: m.competencia,
+        dataVencimento: m.data_vencimento,
+        dataPagamento: m.data_pagamento ?? new Date().toISOString().slice(0, 10),
+        valorMensalidade: Number(m.valor_mensalidade),
+        valorExtras: Number(m.valor_extras),
+        valorDesconto: Number(m.valor_desconto),
+        valorTotal: Number(m.valor_total),
+        valorPago: Number(m.valor_pago),
+        formaPagamento: m.forma_pagamento,
+        numeroRecibo: `${m.id.slice(0, 8).toUpperCase()}-${(m.data_pagamento ?? "").replace(/-/g, "")}`,
+        observacoes: m.observacoes,
+      });
+    } catch (e: any) {
+      toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
+    }
   };
 
   const cancelarMensalidade = async (m: Mensalidade) => {
@@ -403,6 +445,11 @@ export default function Financeiro() {
                       <TableCell className="text-right space-x-1 whitespace-nowrap">
                         {m.status !== "pago" && m.status !== "cancelado" && (
                           <Button size="sm" onClick={() => abrirPagamento(m)}>Receber</Button>
+                        )}
+                        {(m.status === "pago" || m.status === "parcial") && (
+                          <Button size="sm" variant="outline" onClick={() => baixarReciboMensalidade(m)}>
+                            <Receipt className="h-3.5 w-3.5 mr-1" /> Recibo
+                          </Button>
                         )}
                         <Button size="sm" variant="outline" onClick={() => setExtraDialog({ open: true, m })}>+ Item</Button>
                         {m.status !== "cancelado" && (
