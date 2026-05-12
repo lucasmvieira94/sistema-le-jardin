@@ -2293,6 +2293,62 @@ export type Database = {
           },
         ]
       }
+      lancamentos_financeiros: {
+        Row: {
+          competencia: string
+          created_at: string
+          created_by: string | null
+          data_lancamento: string
+          descricao: string
+          id: string
+          mensalidade_id: string | null
+          observacoes: string | null
+          residente_id: string
+          tenant_id: string | null
+          tipo: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          competencia: string
+          created_at?: string
+          created_by?: string | null
+          data_lancamento?: string
+          descricao: string
+          id?: string
+          mensalidade_id?: string | null
+          observacoes?: string | null
+          residente_id: string
+          tenant_id?: string | null
+          tipo?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          competencia?: string
+          created_at?: string
+          created_by?: string | null
+          data_lancamento?: string
+          descricao?: string
+          id?: string
+          mensalidade_id?: string | null
+          observacoes?: string | null
+          residente_id?: string
+          tenant_id?: string | null
+          tipo?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_financeiros_mensalidade_id_fkey"
+            columns: ["mensalidade_id"]
+            isOneToOne: false
+            referencedRelation: "mensalidades_residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lembretes_funcionario: {
         Row: {
           concluido_em: string | null
@@ -2511,6 +2567,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mensalidades_residentes: {
+        Row: {
+          competencia: string
+          contrato_id: string | null
+          created_at: string
+          data_pagamento: string | null
+          data_vencimento: string
+          forma_pagamento: string | null
+          gerado_automaticamente: boolean
+          id: string
+          observacoes: string | null
+          residente_id: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          valor_desconto: number
+          valor_extras: number
+          valor_mensalidade: number
+          valor_pago: number
+          valor_total: number
+        }
+        Insert: {
+          competencia: string
+          contrato_id?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          forma_pagamento?: string | null
+          gerado_automaticamente?: boolean
+          id?: string
+          observacoes?: string | null
+          residente_id: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          valor_desconto?: number
+          valor_extras?: number
+          valor_mensalidade?: number
+          valor_pago?: number
+          valor_total?: number
+        }
+        Update: {
+          competencia?: string
+          contrato_id?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          forma_pagamento?: string | null
+          gerado_automaticamente?: boolean
+          id?: string
+          observacoes?: string | null
+          residente_id?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          valor_desconto?: number
+          valor_extras?: number
+          valor_mensalidade?: number
+          valor_pago?: number
+          valor_total?: number
+        }
+        Relationships: []
       }
       planos: {
         Row: {
@@ -3890,6 +4009,13 @@ export type Database = {
           intervalo_inicio: string
           observacoes: string
           saida: string
+        }[]
+      }
+      gerar_mensalidades_mes: {
+        Args: { p_competencia?: string }
+        Returns: {
+          criadas: number
+          ja_existentes: number
         }[]
       }
       gerar_token_convite: { Args: never; Returns: string }
