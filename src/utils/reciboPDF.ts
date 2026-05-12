@@ -54,7 +54,7 @@ async function carregarLogoDataUrl(url: string): Promise<{ data: string; w: numb
 export async function gerarReciboPDF(r: ReciboPagamento) {
   const { data: empresa } = await supabase
     .from("configuracoes_empresa")
-    .select("nome_empresa, cnpj, endereco, cidade, logo_url, telefone, email")
+    .select("nome_empresa, cnpj, endereco, cidade, logo_url")
     .limit(1)
     .maybeSingle();
 
@@ -62,8 +62,8 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
   const cnpj = empresa?.cnpj ?? "";
   const endereco = empresa?.endereco ?? "";
   const cidade = empresa?.cidade ?? "";
-  const telefone = (empresa as any)?.telefone ?? "";
-  const emailEmp = (empresa as any)?.email ?? "";
+  const telefone = "";
+  const emailEmp = "";
   const logo = empresa?.logo_url ? await carregarLogoDataUrl(empresa.logo_url) : null;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
