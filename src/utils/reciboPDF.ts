@@ -20,11 +20,6 @@ export type ReciboPagamento = {
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-const valorPorExtenso = (valor: number): string => {
-  // simples: emite o número formatado entre parênteses
-  return `(${fmtBRL(valor)})`;
-};
-
 const competenciaLabel = (c: string) => {
   const [y, m] = c.split("-");
   const meses = [
@@ -34,8 +29,29 @@ const competenciaLabel = (c: string) => {
   return `${meses[Number(m) - 1]}/${y}`;
 };
 
+async function carregarLogoDataUrl(url: string): Promise<{ data: string; w: number; h: number } | null> {
+  try {
+    const resp = await fetch(url, { mode: "cors" });
+    const blob = await resp.blob();
+    const dataUrl: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 1, h: 1 });
+      img.src = dataUrl;
+    });
+    return { data: dataUrl, w: dims.w, h: dims.h };
+  } catch {
+    return null;
+  }
+}
+
 export async function gerarReciboPDF(r: ReciboPagamento) {
-  // Carrega dados da empresa
   const { data: empresa } = await supabase
     .from("configuracoes_empresa")
     .select("nome_empresa, cnpj, endereco, cidade, logo_url")
@@ -46,47 +62,95 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
   const cnpj = empresa?.cnpj ?? "";
   const endereco = empresa?.endereco ?? "";
   const cidade = empresa?.cidade ?? "";
+  const telefone = "";
+  const emailEmp = "";
+  const logo = empresa?.logo_url ? await carregarLogoDataUrl(empresa.logo_url) : null;
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margin = 18;
   let y = margin;
 
-  doc.setFont("times", "bold");
-  doc.setFontSize(16);
-  doc.text("RECIBO DE PAGAMENTO", pageW / 2, y, { align: "center" });
-  y += 8;
+  // ===== Cabeçalho com logo =====
+  if (logo) {
+    const maxH = 20;
+    const ratio = logo.w / logo.h;
+    const h = maxH;
+    const w = h * ratio;
+    try {
+      doc.addImage(logo.data, "PNG", (pageW - w) / 2, y, w, h);
+    } catch {
+      try { doc.addImage(logo.data, "JPEG", (pageW - w) / 2, y, w, h); } catch {}
+    }
+    y += maxH + 4;
+  }
 
+  doc.setFont("times", "bold");
+  doc.setFontSize(14);
+  doc.text(nomeEmpresa.toUpperCase(), pageW / 2, y, { align: "center" });
+  y += 5;
   doc.setFont("times", "normal");
   doc.setFontSize(10);
-  doc.text(`Nº ${r.numeroRecibo}`, pageW - margin, y, { align: "right" });
-  doc.text(nomeEmpresa, margin, y);
-  y += 5;
-  if (cnpj) { doc.text(`CNPJ: ${cnpj}`, margin, y); y += 5; }
-  if (endereco) { doc.text(endereco, margin, y); y += 5; }
-  if (cidade) { doc.text(cidade, margin, y); y += 5; }
+  const linhaInst: string[] = [];
+  if (cnpj) linhaInst.push(`CNPJ: ${cnpj}`);
+  if (endereco) linhaInst.push(endereco);
+  if (cidade) linhaInst.push(cidade);
+  linhaInst.forEach((t) => { doc.text(t, pageW / 2, y, { align: "center" }); y += 4.5; });
+  if (telefone || emailEmp) {
+    doc.text([telefone, emailEmp].filter(Boolean).join("  •  "), pageW / 2, y, { align: "center" });
+    y += 4.5;
+  }
 
-  y += 4;
-  doc.setDrawColor(180);
+  y += 3;
+  doc.setDrawColor(120);
+  doc.setLineWidth(0.5);
   doc.line(margin, y, pageW - margin, y);
   y += 8;
 
+  // ===== Título =====
+  doc.setFont("times", "bold");
+  doc.setFontSize(15);
+  doc.text("RECIBO DE PAGAMENTO", pageW / 2, y, { align: "center" });
+  y += 6;
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  doc.text(`Nº ${r.numeroRecibo}`, pageW / 2, y, { align: "center" });
+  y += 8;
+
+  // ===== Caixa de valor em destaque =====
+  doc.setDrawColor(60);
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(margin, y, pageW - margin * 2, 14, 2, 2, "FD");
+  doc.setFont("times", "bold");
+  doc.setFontSize(12);
+  doc.text("VALOR RECEBIDO", margin + 4, y + 6);
+  doc.setFontSize(14);
+  doc.text(fmtBRL(r.valorPago), pageW - margin - 4, y + 9, { align: "right" });
+  y += 20;
+
   // Corpo
+  doc.setFont("times", "normal");
   doc.setFontSize(11);
   const corpo =
-    `Recebemos de ${r.residenteNome} (ou seu responsável financeiro) a importância de ` +
-    `${fmtBRL(r.valorPago)} ${valorPorExtenso(r.valorPago)}, referente à mensalidade ` +
-    `da competência ${competenciaLabel(r.competencia)}, com vencimento em ` +
-    `${formatarData(r.dataVencimento)}, paga em ${formatarData(r.dataPagamento)} ` +
-    `via ${(r.formaPagamento ?? "—").toUpperCase()}.`;
+    `Recebemos de ${r.residenteNome} (ou de seu responsável financeiro) a importância de ` +
+    `${fmtBRL(r.valorPago)}, referente à mensalidade da competência ` +
+    `${competenciaLabel(r.competencia)}, com vencimento em ${formatarData(r.dataVencimento)}, ` +
+    `efetivamente paga em ${formatarData(r.dataPagamento)} por meio de ` +
+    `${(r.formaPagamento ?? "—").toUpperCase()}, dando plena, geral e irrevogável quitação ` +
+    `do valor ora recebido.`;
   const linhas = doc.splitTextToSize(corpo, pageW - margin * 2);
   doc.text(linhas, margin, y);
-  y += linhas.length * 6 + 4;
+  y += linhas.length * 5.5 + 6;
 
   // Demonstrativo
   doc.setFont("times", "bold");
-  doc.text("Demonstrativo:", margin, y);
-  y += 6;
+  doc.setFontSize(11);
+  doc.text("DEMONSTRATIVO", margin, y);
+  y += 2;
+  doc.setDrawColor(180);
+  doc.line(margin, y, pageW - margin, y);
+  y += 5;
   doc.setFont("times", "normal");
 
   const linha = (label: string, valor: number, bold = false) => {
@@ -113,33 +177,45 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
 
   if (r.observacoes) {
     y += 4;
-    doc.setFont("times", "italic");
-    doc.text("Observações:", margin, y); y += 5;
+    doc.setFont("times", "bold");
+    doc.text("OBSERVAÇÕES", margin, y); y += 2;
+    doc.setDrawColor(180);
+    doc.line(margin, y, pageW - margin, y);
+    y += 5;
     doc.setFont("times", "normal");
     const obs = doc.splitTextToSize(r.observacoes, pageW - margin * 2);
     doc.text(obs, margin, y);
-    y += obs.length * 5;
+    y += obs.length * 5.5;
   }
 
   // Local e data
-  y += 14;
+  y += 16;
   const localData = `${cidade || "_______________"}, ${formatarData(r.dataPagamento)}.`;
-  doc.text(localData, pageW - margin, y, { align: "right" });
+  doc.text(localData, pageW / 2, y, { align: "center" });
 
   // Assinatura
-  y += 22;
+  y += 24;
+  doc.setDrawColor(80);
   doc.line(pageW / 2 - 45, y, pageW / 2 + 45, y);
   y += 5;
+  doc.setFont("times", "bold");
   doc.setFontSize(10);
   doc.text(nomeEmpresa, pageW / 2, y, { align: "center" });
+  if (cnpj) {
+    y += 4;
+    doc.setFont("times", "normal");
+    doc.text(`CNPJ: ${cnpj}`, pageW / 2, y, { align: "center" });
+  }
 
   // Rodapé
+  doc.setDrawColor(200);
+  doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
   doc.setFontSize(8);
   doc.setTextColor(120);
   doc.text(
     `Recibo gerado eletronicamente em ${new Date().toLocaleString("pt-BR")}.`,
     pageW / 2,
-    285,
+    pageH - 9,
     { align: "center" }
   );
 
