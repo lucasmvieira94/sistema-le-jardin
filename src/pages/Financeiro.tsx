@@ -446,7 +446,7 @@ export default function Financeiro() {
                         {m.status !== "pago" && m.status !== "cancelado" && (
                           <Button size="sm" onClick={() => abrirPagamento(m)}>Receber</Button>
                         )}
-                        {(m.status === "pago" || m.status === "parcial") && (
+                        {m.status !== "cancelado" && (
                           <Button size="sm" variant="outline" onClick={() => baixarReciboMensalidade(m)}>
                             <Receipt className="h-3.5 w-3.5 mr-1" /> Recibo
                           </Button>
