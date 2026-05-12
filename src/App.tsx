@@ -60,6 +60,7 @@ import Gamificacao from "./pages/Gamificacao";
 import GestaoGamificacao from "./pages/GestaoGamificacao";
 import ControleVacinas from "./pages/ControleVacinas";
 import ControleVacinasPublico from "./pages/ControleVacinasPublico";
+import Financeiro from "./pages/Financeiro";
 
 // SaaS / Plataforma
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
@@ -124,6 +125,7 @@ const App = () => {
               <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
               <Route path="/configuracoes-alertas" element={<ProtectedRoute><ConfiguracoesAlertas /></ProtectedRoute>} />
               <Route path="/residentes" element={<ProtectedRoute><Residentes /></ProtectedRoute>} />
+              <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
               <Route path="/controle-prontuarios" element={<ProtectedRoute><ControleProntuarios /></ProtectedRoute>} />
               <Route path="/configuracao-formulario" element={<ProtectedRoute><ConfiguracaoFormulario /></ProtectedRoute>} />
               <Route path="/controle-medicamentos" element={<ProtectedRoute><ModuleGuard modulo="medicamentos"><ControleMedicamentos /></ModuleGuard></ProtectedRoute>} />

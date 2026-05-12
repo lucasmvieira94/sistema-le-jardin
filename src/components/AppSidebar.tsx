@@ -27,7 +27,8 @@ import {
   Trophy,
   Syringe,
   CreditCard,
-  Building2
+  Building2,
+  Wallet
 } from "lucide-react";
 import {
   Sidebar,
@@ -76,6 +77,7 @@ export function AppSidebar() {
   ];
   const sistemaMenuItems = [
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
+    { path: "/financeiro", icon: Wallet, label: "Financeiro", adminOnly: true },
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
     { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
     { path: "/controle-fraldas", icon: Baby, label: "Controle de Fraldas", adminOnly: true },
