@@ -60,6 +60,7 @@ import Gamificacao from "./pages/Gamificacao";
 import GestaoGamificacao from "./pages/GestaoGamificacao";
 import ControleVacinas from "./pages/ControleVacinas";
 import ControleVacinasPublico from "./pages/ControleVacinasPublico";
+import Financeiro from "./pages/Financeiro";
 
 // SaaS / Plataforma
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
