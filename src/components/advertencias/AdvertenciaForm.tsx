@@ -94,6 +94,14 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
 
     const { data: userData } = await supabase.auth.getUser();
 
+    // Calcula data_fim a partir de data_inicio + dias se não informada
+    let dataFimCalc = dataFimSuspensao;
+    if (tipo === "suspensao" && !dataFimCalc && dataInicioSuspensao && diasSuspensao > 0) {
+      const inicio = new Date(dataInicioSuspensao + "T12:00:00");
+      inicio.setDate(inicio.getDate() + (diasSuspensao - 1));
+      dataFimCalc = inicio.toISOString().slice(0, 10);
+    }
+
     const { error } = await supabase.from("advertencias_suspensoes").insert({
       funcionario_id: funcionarioId,
       tipo,
@@ -101,8 +109,8 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
       descricao,
       data_ocorrencia: dataOcorrencia,
       dias_suspensao: tipo === "suspensao" ? diasSuspensao : null,
-      data_inicio_suspensao: tipo === "suspensao" ? dataInicioSuspensao : null,
-      data_fim_suspensao: tipo === "suspensao" ? dataFimSuspensao : null,
+      data_inicio_suspensao: tipo === "suspensao" ? (dataInicioSuspensao || null) : null,
+      data_fim_suspensao: tipo === "suspensao" ? (dataFimCalc || null) : null,
       observacoes: observacoes || null,
       registrado_por: userData?.user?.id || null,
     });
@@ -110,6 +118,7 @@ export default function AdvertenciaForm({ funcionarioIdPrefixado, onSuccess, onC
     setLoading(false);
 
     if (error) {
+      console.error("Erro ao registrar advertência:", error);
       toast({ variant: "destructive", title: "Erro ao registrar", description: error.message });
     } else {
       toast({ title: "Registro disciplinar criado com sucesso." });
