@@ -90,8 +90,7 @@ export function useTenant() {
       }
       const selectedRole = chooseTenantRole((data as UserTenantRoleRow[] | null) || []);
       if (!selectedRole?.tenant_id) return;
-      const tenants = selectedRole.tenants as any;
-      const name = tenants?.nome || 'Empresa';
+      const name = selectedRole.tenants?.nome || 'Empresa';
       const tenantData: TenantData = {
         tenantId: selectedRole.tenant_id,
         tenantName: name,
@@ -202,8 +201,7 @@ export function useTenant() {
       }
 
       // Extrair nome do tenant
-      const tenants = selectedRole.tenants as any;
-      const tenantName = tenants?.nome || 'Empresa';
+      const tenantName = selectedRole.tenants?.nome || 'Empresa';
 
       // Salvar no cache
       const tenantData: TenantData = {
