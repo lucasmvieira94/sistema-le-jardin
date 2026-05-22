@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenantContext } from '@/contexts/TenantContext';
 
+type TenantModuloRow = {
+  modulo: string;
+  habilitado: boolean | null;
+};
+
 export type ModuloKey =
   | 'ponto' | 'escala' | 'prontuario' | 'residentes'
   | 'medicamentos' | 'fraldas' | 'intercorrencias' | 'advertencias'
@@ -44,7 +49,7 @@ export function useTenantModulos() {
         .select('modulo, habilitado')
         .eq('tenant_id', tenantId!);
       const map: Record<string, boolean> = {};
-      (data ?? []).forEach((m: any) => {
+      ((data ?? []) as TenantModuloRow[]).forEach((m) => {
         map[m.modulo] = !!m.habilitado;
       });
       return map;
