@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenantContext } from '@/contexts/TenantContext';
 
+type TenantModuloRow = {
+  modulo: string;
+  habilitado: boolean | null;
+};
+
 export type ModuloKey =
   | 'ponto' | 'escala' | 'prontuario' | 'residentes'
   | 'medicamentos' | 'fraldas' | 'intercorrencias' | 'advertencias'
@@ -31,7 +36,7 @@ export const MODULOS_DISPONIVEIS: { key: ModuloKey; nome: string; descricao: str
  * e função para verificar se um módulo específico está habilitado.
  */
 export function useTenantModulos() {
-  const { tenantId } = useTenantContext();
+  const { tenantId, loading: tenantLoading } = useTenantContext();
 
   const { data: modulos = {}, isLoading } = useQuery({
     queryKey: ['tenant-modulos', tenantId],
@@ -44,7 +49,7 @@ export function useTenantModulos() {
         .select('modulo, habilitado')
         .eq('tenant_id', tenantId!);
       const map: Record<string, boolean> = {};
-      (data ?? []).forEach((m: any) => {
+      ((data ?? []) as TenantModuloRow[]).forEach((m) => {
         map[m.modulo] = !!m.habilitado;
       });
       return map;
@@ -53,5 +58,5 @@ export function useTenantModulos() {
 
   const isHabilitado = (key: ModuloKey) => modulos[key] === true;
 
-  return { modulos, isHabilitado, loading: !!tenantId && isLoading };
+  return { modulos, isHabilitado, loading: tenantLoading || (!!tenantId && isLoading) };
 }
