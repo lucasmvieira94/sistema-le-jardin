@@ -25,31 +25,61 @@ export function useTenant() {
 
   // Carregar tenant do cache ao iniciar
   useEffect(() => {
-    const loadCachedTenant = () => {
+    const loadCachedTenant = async () => {
       try {
         const cachedData = localStorage.getItem(TENANT_STORAGE_KEY);
         const expiryStr = localStorage.getItem(TENANT_EXPIRY_KEY);
-        
+
         if (cachedData && expiryStr) {
           const expiry = parseInt(expiryStr, 10);
           const now = Date.now();
-          
+
           // Verificar se cache expirou
           if (now < expiry) {
             const data: TenantData = JSON.parse(cachedData);
             setTenantId(data.tenantId);
             setTenantName(data.tenantName);
+            setLoading(false);
+            return;
           } else {
             // Cache expirado, limpar
-            clearTenant();
+            localStorage.removeItem(TENANT_STORAGE_KEY);
+            localStorage.removeItem(TENANT_EXPIRY_KEY);
           }
+        }
+
+        // Sem cache válido: tentar derivar tenant a partir da sessão autenticada
+        // (admins logam por e-mail/senha e não passam pelo employer code)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          await setTenantByUserIdInternal(session.user.id);
         }
       } catch (error) {
         console.error('Erro ao carregar tenant do cache:', error);
-        clearTenant();
       } finally {
         setLoading(false);
       }
+    };
+
+    // Função interna (sem depender do useCallback abaixo para evitar ciclo)
+    const setTenantByUserIdInternal = async (userId: string) => {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('tenant_id, tenants:tenant_id (nome)')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!data?.tenant_id) return;
+      const tenants = data.tenants as any;
+      const name = tenants?.nome || 'Empresa';
+      const tenantData: TenantData = {
+        tenantId: data.tenant_id,
+        tenantName: name,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(TENANT_STORAGE_KEY, JSON.stringify(tenantData));
+      localStorage.setItem(TENANT_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
+      setTenantId(data.tenant_id);
+      setTenantName(name);
     };
 
     loadCachedTenant();
