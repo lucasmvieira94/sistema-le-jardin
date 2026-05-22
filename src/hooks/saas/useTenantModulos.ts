@@ -31,7 +31,7 @@ export const MODULOS_DISPONIVEIS: { key: ModuloKey; nome: string; descricao: str
  * e função para verificar se um módulo específico está habilitado.
  */
 export function useTenantModulos() {
-  const { tenantId } = useTenantContext();
+  const { tenantId, loading: tenantLoading } = useTenantContext();
 
   const { data: modulos = {}, isLoading } = useQuery({
     queryKey: ['tenant-modulos', tenantId],
@@ -53,5 +53,5 @@ export function useTenantModulos() {
 
   const isHabilitado = (key: ModuloKey) => modulos[key] === true;
 
-  return { modulos, isHabilitado, loading: !!tenantId && isLoading };
+  return { modulos, isHabilitado, loading: tenantLoading || (!!tenantId && isLoading) };
 }
