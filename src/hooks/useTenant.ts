@@ -17,6 +17,21 @@ interface TenantValidationResult {
   valid: boolean;
 }
 
+type UserTenantRoleRow = {
+  tenant_id: string | null;
+  role: string;
+  tenants: { nome: string | null } | null;
+};
+
+const chooseTenantRole = (rows: UserTenantRoleRow[]) => {
+  const tenantRoles = rows.filter((row) => row.tenant_id);
+  return (
+    tenantRoles.find((row) => row.role === 'admin') ||
+    tenantRoles.find((row) => row.role !== 'super_admin') ||
+    tenantRoles[0]
+  );
+};
+
 export function useTenant() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [tenantName, setTenantName] = useState<string | null>(null);
@@ -63,22 +78,28 @@ export function useTenant() {
 
     // Função interna (sem depender do useCallback abaixo para evitar ciclo)
     const setTenantByUserIdInternal = async (userId: string) => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_roles')
-        .select('tenant_id, tenants:tenant_id (nome)')
+        .select('tenant_id, role, tenants:tenant_id (nome)')
         .eq('user_id', userId)
-        .maybeSingle();
-      if (!data?.tenant_id) return;
-      const tenants = data.tenants as any;
+        .not('tenant_id', 'is', null)
+        .order('role', { ascending: true });
+      if (error) {
+        console.error('Erro ao buscar tenant do usuário:', error);
+        return;
+      }
+      const selectedRole = chooseTenantRole((data as UserTenantRoleRow[] | null) || []);
+      if (!selectedRole?.tenant_id) return;
+      const tenants = selectedRole.tenants as any;
       const name = tenants?.nome || 'Empresa';
       const tenantData: TenantData = {
-        tenantId: data.tenant_id,
+        tenantId: selectedRole.tenant_id,
         tenantName: name,
         timestamp: Date.now(),
       };
       localStorage.setItem(TENANT_STORAGE_KEY, JSON.stringify(tenantData));
       localStorage.setItem(TENANT_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
-      setTenantId(data.tenant_id);
+      setTenantId(selectedRole.tenant_id);
       setTenantName(name);
     };
 
@@ -159,30 +180,34 @@ export function useTenant() {
         .from('user_roles')
         .select(`
           tenant_id,
+          role,
           tenants:tenant_id (
             nome
           )
         `)
         .eq('user_id', userId)
-        .maybeSingle();
+        .not('tenant_id', 'is', null)
+        .order('role', { ascending: true });
 
       if (error) {
         console.error('Erro ao buscar tenant do usuário:', error);
         return false;
       }
 
-      if (!data || !data.tenant_id) {
+      const selectedRole = chooseTenantRole((data as UserTenantRoleRow[] | null) || []);
+
+      if (!selectedRole?.tenant_id) {
         console.error('Usuário não está associado a nenhuma empresa');
         return false;
       }
 
       // Extrair nome do tenant
-      const tenants = data.tenants as any;
+      const tenants = selectedRole.tenants as any;
       const tenantName = tenants?.nome || 'Empresa';
 
       // Salvar no cache
       const tenantData: TenantData = {
-        tenantId: data.tenant_id,
+        tenantId: selectedRole.tenant_id,
         tenantName: tenantName,
         timestamp: Date.now()
       };
@@ -191,7 +216,7 @@ export function useTenant() {
       localStorage.setItem(TENANT_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
 
       // Atualizar estado
-      setTenantId(data.tenant_id);
+      setTenantId(selectedRole.tenant_id);
       setTenantName(tenantName);
 
       return true;
