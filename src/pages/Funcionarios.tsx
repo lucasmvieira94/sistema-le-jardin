@@ -6,9 +6,9 @@ import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet, Filter, Ar
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useAuditLog } from "@/hooks/useAuditLog";
 import ImportarFuncionarios from "@/components/ImportarFuncionarios";
 import ExportarFuncionarios from "@/components/ExportarFuncionarios";
+import DesligamentoDialog from "@/components/funcionarios/DesligamentoDialog";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,10 @@ type Funcionario = {
   funcao: string;
   escala_id: number;
   ativo: boolean;
+  data_admissao: string;
+  tenant_id?: string | null;
+  data_desligamento?: string | null;
+  motivo_desligamento?: string | null;
   escalas?: {
     nome: string;
   };
@@ -31,7 +35,7 @@ export default function Funcionarios() {
   const [funcionariosFiltrados, setFuncionariosFiltrados] = useState<Funcionario[]>([]);
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [desligandoId, setDesligandoId] = useState<string | null>(null);
+  const [funcDesligamento, setFuncDesligamento] = useState<Funcionario | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<string>("ativo");
   const [filtroFuncao, setFiltroFuncao] = useState<string>("todas");
   const [filtroEscala, setFiltroEscala] = useState<string>("todas");
@@ -39,7 +43,6 @@ export default function Funcionarios() {
   const [ordenacao, setOrdenacao] = useState<string>("nome");
   const navigate = useNavigate();
   const { isAdmin, loading: roleLoading } = useUserRole();
-  const { logEvent } = useAuditLog();
 
   async function fetchFuncionarios() {
     setLoading(true);
@@ -51,6 +54,10 @@ export default function Funcionarios() {
         funcao, 
         escala_id, 
         ativo,
+        data_admissao,
+        tenant_id,
+        data_desligamento,
+        motivo_desligamento,
         escalas(nome)
       `)
       .order("nome_completo");
@@ -112,38 +119,16 @@ export default function Funcionarios() {
   const funcoesUnicas = [...new Set(funcionarios.map(f => f.funcao))].sort();
   const escalasUnicas = [...new Set(funcionarios.map(f => f.escalas?.nome).filter(Boolean))].sort();
 
-  async function desligarFuncionario(id: string) {
+  function abrirDesligamento(func: Funcionario) {
     if (!isAdmin) {
-      toast({ 
-        variant: "destructive", 
+      toast({
+        variant: "destructive",
         title: "Acesso negado",
-        description: "Apenas administradores podem desligar funcionários" 
+        description: "Apenas administradores podem desligar funcionários",
       });
       return;
     }
-
-    setDesligandoId(id);
-    
-    // Get current funcionario data for audit
-    const { data: funcionarioAtual } = await supabase
-      .from("funcionarios")
-      .select("*")
-      .eq("id", id)
-      .single();
-    
-    const { error } = await supabase
-      .from("funcionarios")
-      .update({ ativo: false })
-      .eq("id", id);
-
-    if (!error) {
-      await logEvent('funcionarios', 'UPDATE', funcionarioAtual, { ativo: false });
-      toast({ title: "Funcionário desligado com sucesso." });
-      fetchFuncionarios();
-    } else {
-      toast({ variant: "destructive", title: "Erro ao desligar funcionário" });
-    }
-    setDesligandoId(null);
+    setFuncDesligamento(func);
   }
 
   if (roleLoading) {
@@ -365,14 +350,9 @@ export default function Funcionarios() {
                         variant="destructive"
                         className="w-8 h-8"
                         title="Desligar"
-                        onClick={() => desligarFuncionario(func.id)}
-                        disabled={desligandoId === func.id}
+                        onClick={() => abrirDesligamento(func)}
                       >
-                        {desligandoId === func.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <UserMinus className="w-4 h-4" />
-                        )}
+                        <UserMinus className="w-4 h-4" />
                       </Button>
                     ) : (
                       <span className="w-8 h-8 inline-flex items-center justify-center opacity-50">
@@ -400,6 +380,13 @@ export default function Funcionarios() {
           </table>
         </div>
       )}
+
+      <DesligamentoDialog
+        funcionario={funcDesligamento}
+        open={!!funcDesligamento}
+        onOpenChange={(o) => { if (!o) setFuncDesligamento(null); }}
+        onSuccess={() => { setFuncDesligamento(null); fetchFuncionarios(); }}
+      />
     </div>
   );
 }

@@ -25,6 +25,7 @@ interface FuncionarioVT {
   valor_diaria_vale_transporte: number | null;
   data_admissao: string | null;
   data_inicio_vigencia: string | null;
+  data_desligamento: string | null;
   escala_id: number | null;
   escala?: { nome: string; jornada_trabalho: string } | null;
 }
@@ -58,20 +59,31 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id, nome_completo, funcao, recebe_vale_transporte, valor_diaria_vale_transporte, data_admissao, data_inicio_vigencia, escala_id, escala:escalas(nome, jornada_trabalho)"
+          "id, nome_completo, funcao, recebe_vale_transporte, valor_diaria_vale_transporte, data_admissao, data_inicio_vigencia, data_desligamento, escala_id, escala:escalas(nome, jornada_trabalho)"
         )
-        .eq("ativo", true)
         .eq("recebe_vale_transporte", true)
         .order("nome_completo");
       if (error) throw error;
-      return (data || []) as unknown as FuncionarioVT[];
+      // Inclui ativos + desligados cuja data de desligamento cai no/após o mês de referência
+      const lista = (data || []) as unknown as FuncionarioVT[];
+      return lista;
     },
     enabled: open,
   });
 
   const linhas = useMemo<LinhaRelatorio[]>(() => {
     if (!funcionarios) return [];
-    return funcionarios.map((f) => {
+    const primeiroDia = new Date(ano, mes - 1, 1);
+    return funcionarios
+      .filter((f) => {
+        // Se desligado antes do primeiro dia do mês, ignora
+        if (f.data_desligamento) {
+          const dd = new Date(f.data_desligamento + "T12:00:00");
+          if (dd < primeiroDia) return false;
+        }
+        return true;
+      })
+      .map((f) => {
       const jornada = f.escala?.jornada_trabalho || "40h_8h_segsex";
       const dias = calcularDiasTrabalhados({
         ano,
@@ -79,6 +91,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         jornada,
         dataInicioVigencia: f.data_inicio_vigencia,
         dataAdmissao: f.data_admissao,
+        dataDesligamento: f.data_desligamento,
       });
       const valorDiaria = Number(f.valor_diaria_vale_transporte || 0);
       return {
@@ -90,7 +103,8 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         valorDiaria,
         total: dias * valorDiaria,
       };
-    });
+    })
+    .filter((l) => l.dias > 0);
   }, [funcionarios, mes, ano]);
 
   const totais = useMemo(() => {
