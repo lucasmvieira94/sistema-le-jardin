@@ -396,6 +396,40 @@ function Info({ label, value }: { label: string; value: string | number | boolea
   );
 }
 
+function formatMotivoDeslig(v: string | null): string {
+  if (!v) return "—";
+  const map: Record<string, string> = {
+    pedido_demissao: "Demissão a pedido",
+    sem_justa_causa: "Dispensa sem justa causa",
+    com_justa_causa: "Dispensa por justa causa",
+    acordo_mutuo: "Rescisão por acordo mútuo",
+    termino_contrato: "Término de contrato determinado",
+    aposentadoria: "Aposentadoria",
+    falecimento: "Falecimento",
+  };
+  return map[v] || v;
+}
+
+function formatTipoAviso(v: string | null): string {
+  if (!v) return "—";
+  const map: Record<string, string> = {
+    trabalhado: "Trabalhado",
+    indenizado: "Indenizado",
+    dispensado: "Dispensado pelo empregador",
+  };
+  return map[v] || v;
+}
+
+function formatModalidadeReducao(v: string | null): string {
+  if (!v) return "—";
+  const map: Record<string, string> = {
+    reducao_2h_entrada: "Entrada 2h depois",
+    reducao_2h_saida: "Saída 2h antes",
+    reducao_7_dias_corridos: "Folga nos 7 últimos dias corridos",
+  };
+  return map[v] || v;
+}
+
 function MiniCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border p-3 text-center">
