@@ -6,7 +6,6 @@ import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet, Filter, Ar
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useAuditLog } from "@/hooks/useAuditLog";
 import ImportarFuncionarios from "@/components/ImportarFuncionarios";
 import ExportarFuncionarios from "@/components/ExportarFuncionarios";
 import DesligamentoDialog from "@/components/funcionarios/DesligamentoDialog";
@@ -44,7 +43,6 @@ export default function Funcionarios() {
   const [ordenacao, setOrdenacao] = useState<string>("nome");
   const navigate = useNavigate();
   const { isAdmin, loading: roleLoading } = useUserRole();
-  const { logEvent } = useAuditLog();
 
   async function fetchFuncionarios() {
     setLoading(true);
