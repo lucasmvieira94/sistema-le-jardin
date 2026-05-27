@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Edit, UserPlus, UserMinus, Shield, FileSpreadsheet, Filter, ArrowUpDown, Eye } from "lucide-react";
+import { Loader2, Edit, UserPlus, UserMinus, UserCheck, Shield, FileSpreadsheet, Filter, ArrowUpDown, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -36,6 +36,8 @@ export default function Funcionarios() {
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [funcDesligamento, setFuncDesligamento] = useState<Funcionario | null>(null);
+  const [funcReligar, setFuncReligar] = useState<Funcionario | null>(null);
+  const [religando, setReligando] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<string>("ativo");
   const [filtroFuncao, setFiltroFuncao] = useState<string>("todas");
   const [filtroEscala, setFiltroEscala] = useState<string>("todas");
@@ -129,6 +131,34 @@ export default function Funcionarios() {
       return;
     }
     setFuncDesligamento(func);
+  }
+
+  async function confirmarReligamento() {
+    if (!funcReligar) return;
+    setReligando(true);
+    const { error } = await supabase
+      .from("funcionarios")
+      .update({
+        ativo: true,
+        data_desligamento: null,
+        motivo_desligamento: null,
+        aviso_previo: false,
+        tipo_aviso_previo: null,
+        modalidade_reducao_aviso: null,
+        data_inicio_aviso: null,
+        data_fim_aviso: null,
+        observacoes_desligamento: null,
+        desligado_por: null,
+      })
+      .eq("id", funcReligar.id);
+    setReligando(false);
+    if (error) {
+      toast({ variant: "destructive", title: "Erro ao religar", description: error.message });
+      return;
+    }
+    toast({ title: "Funcionário religado", description: `${funcReligar.nome_completo} foi reativado.` });
+    setFuncReligar(null);
+    fetchFuncionarios();
   }
 
   if (roleLoading) {
@@ -355,9 +385,15 @@ export default function Funcionarios() {
                         <UserMinus className="w-4 h-4" />
                       </Button>
                     ) : (
-                      <span className="w-8 h-8 inline-flex items-center justify-center opacity-50">
-                        <UserMinus className="w-4 h-4" />
-                      </span>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="w-8 h-8 border-green-500 text-green-600 hover:bg-green-50"
+                        title="Religar funcionário"
+                        onClick={() => setFuncReligar(func)}
+                      >
+                        <UserCheck className="w-4 h-4" />
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -387,6 +423,26 @@ export default function Funcionarios() {
         onOpenChange={(o) => { if (!o) setFuncDesligamento(null); }}
         onSuccess={() => { setFuncDesligamento(null); fetchFuncionarios(); }}
       />
+
+      <Dialog open={!!funcReligar} onOpenChange={(o) => { if (!o) setFuncReligar(null); }}>
+        <DialogContent className="max-w-md">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Religar funcionário</h3>
+            <p className="text-sm text-muted-foreground">
+              Confirma a reativação de <strong>{funcReligar?.nome_completo}</strong>? Os dados de desligamento serão limpos e o funcionário voltará ao status ativo. O histórico em <em>desligamentos_historico</em> será preservado para auditoria.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setFuncReligar(null)} disabled={religando}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmarReligamento} disabled={religando}>
+                {religando ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserCheck className="w-4 h-4 mr-2" />}
+                Confirmar religamento
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
