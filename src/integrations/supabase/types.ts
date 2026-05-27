@@ -1233,6 +1233,57 @@ export type Database = {
           },
         ]
       }
+      desligamentos_historico: {
+        Row: {
+          aviso_previo: boolean
+          created_at: string
+          data_desligamento: string
+          data_fim_aviso: string | null
+          data_inicio_aviso: string | null
+          funcionario_id: string
+          id: string
+          modalidade_reducao_aviso: string | null
+          motivo_desligamento: string
+          observacoes: string | null
+          registrado_por: string | null
+          snapshot_funcionario: Json | null
+          tenant_id: string | null
+          tipo_aviso_previo: string | null
+        }
+        Insert: {
+          aviso_previo?: boolean
+          created_at?: string
+          data_desligamento: string
+          data_fim_aviso?: string | null
+          data_inicio_aviso?: string | null
+          funcionario_id: string
+          id?: string
+          modalidade_reducao_aviso?: string | null
+          motivo_desligamento: string
+          observacoes?: string | null
+          registrado_por?: string | null
+          snapshot_funcionario?: Json | null
+          tenant_id?: string | null
+          tipo_aviso_previo?: string | null
+        }
+        Update: {
+          aviso_previo?: boolean
+          created_at?: string
+          data_desligamento?: string
+          data_fim_aviso?: string | null
+          data_inicio_aviso?: string | null
+          funcionario_id?: string
+          id?: string
+          modalidade_reducao_aviso?: string | null
+          motivo_desligamento?: string
+          observacoes?: string | null
+          registrado_por?: string | null
+          snapshot_funcionario?: Json | null
+          tenant_id?: string | null
+          tipo_aviso_previo?: string | null
+        }
+        Relationships: []
+      }
       entrada_medicamentos: {
         Row: {
           created_at: string | null
@@ -1805,63 +1856,90 @@ export type Database = {
         Row: {
           acesso_supervisor: boolean
           ativo: boolean
+          aviso_previo: boolean
           codigo_4_digitos: string
           cpf: string
           created_at: string
           data_admissao: string
+          data_desligamento: string | null
+          data_fim_aviso: string | null
+          data_inicio_aviso: string | null
           data_inicio_vigencia: string | null
           data_nascimento: string
+          desligado_por: string | null
           email: string
           escala_id: number | null
           funcao: string
           id: string
+          modalidade_reducao_aviso: string | null
+          motivo_desligamento: string | null
           nome_completo: string
+          observacoes_desligamento: string | null
           recebe_vale_transporte: boolean
           registra_ponto: boolean
           telefone: string | null
           tenant_id: string | null
+          tipo_aviso_previo: string | null
           user_id: string | null
           valor_diaria_vale_transporte: number | null
         }
         Insert: {
           acesso_supervisor?: boolean
           ativo?: boolean
+          aviso_previo?: boolean
           codigo_4_digitos: string
           cpf: string
           created_at?: string
           data_admissao: string
+          data_desligamento?: string | null
+          data_fim_aviso?: string | null
+          data_inicio_aviso?: string | null
           data_inicio_vigencia?: string | null
           data_nascimento: string
+          desligado_por?: string | null
           email: string
           escala_id?: number | null
           funcao: string
           id?: string
+          modalidade_reducao_aviso?: string | null
+          motivo_desligamento?: string | null
           nome_completo: string
+          observacoes_desligamento?: string | null
           recebe_vale_transporte?: boolean
           registra_ponto?: boolean
           telefone?: string | null
           tenant_id?: string | null
+          tipo_aviso_previo?: string | null
           user_id?: string | null
           valor_diaria_vale_transporte?: number | null
         }
         Update: {
           acesso_supervisor?: boolean
           ativo?: boolean
+          aviso_previo?: boolean
           codigo_4_digitos?: string
           cpf?: string
           created_at?: string
           data_admissao?: string
+          data_desligamento?: string | null
+          data_fim_aviso?: string | null
+          data_inicio_aviso?: string | null
           data_inicio_vigencia?: string | null
           data_nascimento?: string
+          desligado_por?: string | null
           email?: string
           escala_id?: number | null
           funcao?: string
           id?: string
+          modalidade_reducao_aviso?: string | null
+          motivo_desligamento?: string | null
           nome_completo?: string
+          observacoes_desligamento?: string | null
           recebe_vale_transporte?: boolean
           registra_ponto?: boolean
           telefone?: string | null
           tenant_id?: string | null
+          tipo_aviso_previo?: string | null
           user_id?: string | null
           valor_diaria_vale_transporte?: number | null
         }
