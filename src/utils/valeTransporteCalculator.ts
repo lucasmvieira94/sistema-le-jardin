@@ -17,6 +17,7 @@ export interface CalcularDiasParams {
   jornada: JornadaTipo;
   dataInicioVigencia?: string | null;
   dataAdmissao?: string | null;
+  dataDesligamento?: string | null;
 }
 
 function diasNoMes(ano: number, mes: number): number {
@@ -30,12 +31,14 @@ function diasNoMes(ano: number, mes: number): number {
 function calcular12x36(
   ano: number,
   mes: number,
-  ref: Date
+  ref: Date,
+  fim?: Date | null
 ): number {
   const total = diasNoMes(ano, mes);
   let dias = 0;
   for (let d = 1; d <= total; d++) {
     const data = new Date(ano, mes - 1, d);
+    if (fim && data > fim) continue;
     const diff = Math.floor(
       (data.getTime() - ref.getTime()) / (1000 * 60 * 60 * 24)
     );
@@ -44,24 +47,26 @@ function calcular12x36(
   return dias;
 }
 
-function calcularSegSex(ano: number, mes: number, inicio?: Date | null): number {
+function calcularSegSex(ano: number, mes: number, inicio?: Date | null, fim?: Date | null): number {
   const total = diasNoMes(ano, mes);
   let dias = 0;
   for (let d = 1; d <= total; d++) {
     const data = new Date(ano, mes - 1, d);
     if (inicio && data < inicio) continue;
+    if (fim && data > fim) continue;
     const dow = data.getDay(); // 0=dom, 6=sab
     if (dow >= 1 && dow <= 5) dias++;
   }
   return dias;
 }
 
-function calcularSegSab(ano: number, mes: number, inicio?: Date | null): number {
+function calcularSegSab(ano: number, mes: number, inicio?: Date | null, fim?: Date | null): number {
   const total = diasNoMes(ano, mes);
   let dias = 0;
   for (let d = 1; d <= total; d++) {
     const data = new Date(ano, mes - 1, d);
     if (inicio && data < inicio) continue;
+    if (fim && data > fim) continue;
     const dow = data.getDay();
     if (dow >= 1 && dow <= 6) dias++;
   }
@@ -75,21 +80,21 @@ export function calcularDiasTrabalhados(p: CalcularDiasParams): number {
     ? new Date(p.dataAdmissao + "T12:00:00")
     : null;
 
+  const fim = p.dataDesligamento ? new Date(p.dataDesligamento + "T12:00:00") : null;
+
   const jornada = (p.jornada || "").toLowerCase();
 
   if (jornada.includes("12x36")) {
     const ref = inicio ?? new Date(p.ano, p.mes - 1, 1);
-    // Limitar referência ao início do mês se vigência for anterior
-    const refMes = ref < new Date(p.ano, p.mes - 1, 1) ? ref : ref;
-    return calcular12x36(p.ano, p.mes, refMes);
+    return calcular12x36(p.ano, p.mes, ref, fim);
   }
 
   if (jornada.includes("seg_sab") || jornada.includes("segsex_4h_sab")) {
-    return calcularSegSab(p.ano, p.mes, inicio);
+    return calcularSegSab(p.ano, p.mes, inicio, fim);
   }
 
   // Default: segunda a sexta
-  return calcularSegSex(p.ano, p.mes, inicio);
+  return calcularSegSex(p.ano, p.mes, inicio, fim);
 }
 
 export function nomeMes(mes: number): string {
