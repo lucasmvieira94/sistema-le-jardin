@@ -31,6 +31,14 @@ type FuncionarioCompleto = {
   acesso_supervisor: boolean;
   data_inicio_vigencia: string | null;
   escala_id: number | null;
+  data_desligamento: string | null;
+  motivo_desligamento: string | null;
+  aviso_previo: boolean | null;
+  tipo_aviso_previo: string | null;
+  modalidade_reducao_aviso: string | null;
+  data_inicio_aviso: string | null;
+  data_fim_aviso: string | null;
+  observacoes_desligamento: string | null;
   escalas?: { nome: string; entrada: string; saida: string; jornada_trabalho: string; intervalo_inicio: string | null; intervalo_fim: string | null } | null;
 };
 
@@ -149,6 +157,37 @@ export default function FichaFuncionario() {
               </div>
             </CardContent>
           </Card>
+          {funcionario.data_desligamento && (
+            <Card className="mt-4 border-destructive/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-5 h-5" /> Desligamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <Info label="Data de Desligamento" value={formatDate(funcionario.data_desligamento)} />
+                  <Info label="Motivo (CLT)" value={formatMotivoDeslig(funcionario.motivo_desligamento)} />
+                  <Info label="Aviso Prévio" value={funcionario.aviso_previo ? "Sim" : "Não"} />
+                  {funcionario.aviso_previo && (
+                    <>
+                      <Info label="Tipo de Aviso" value={formatTipoAviso(funcionario.tipo_aviso_previo)} />
+                      {funcionario.tipo_aviso_previo === "trabalhado" && (
+                        <Info label="Modalidade Redução" value={formatModalidadeReducao(funcionario.modalidade_reducao_aviso)} />
+                      )}
+                      <Info label="Início do Aviso" value={funcionario.data_inicio_aviso ? formatDate(funcionario.data_inicio_aviso) : "—"} />
+                      <Info label="Fim do Aviso" value={funcionario.data_fim_aviso ? formatDate(funcionario.data_fim_aviso) : "—"} />
+                    </>
+                  )}
+                  {funcionario.observacoes_desligamento && (
+                    <div className="md:col-span-2">
+                      <Info label="Observações" value={funcionario.observacoes_desligamento} />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ESCALA */}
