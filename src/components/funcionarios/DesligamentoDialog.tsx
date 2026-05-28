@@ -164,6 +164,9 @@ export default function DesligamentoDialog({
       const isAvisoTrabalhadoEmCurso =
         avisoPrevio && tipoAviso === "trabalhado" && dataDesligamento > hoje;
 
+      // Funcionário permanece ATIVO enquanto cumprir aviso prévio trabalhado
+      // (data de desligamento ainda no futuro). Nos demais casos é inativado
+      // imediatamente: indenizado, dispensado, sem aviso ou aviso já vencido.
       const updatePayload: Record<string, unknown> = {
         data_desligamento: dataDesligamento,
         motivo_desligamento: motivo,
@@ -175,7 +178,7 @@ export default function DesligamentoDialog({
         data_fim_aviso: avisoPrevio ? dataFimAviso : null,
         observacoes_desligamento: observacoes || null,
         desligado_por: user?.id || null,
-        ativo: !isAvisoTrabalhadoEmCurso, // mantém ativo durante aviso trabalhado em curso
+        ativo: isAvisoTrabalhadoEmCurso, // true enquanto cumprir aviso trabalhado
       };
 
       const { error: updErr } = await supabase
