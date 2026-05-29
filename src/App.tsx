@@ -10,7 +10,7 @@ import { PublicLayout } from "@/layouts/PublicLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ModuleGuard } from "@/components/saas/ModuleGuard";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { UpdateAvailableBanner } from "@/components/UpdateAvailableBanner";
 
 // Páginas públicas
 import Auth from "./pages/Auth";
@@ -76,14 +76,13 @@ import MinhaAssinatura from "./pages/MinhaAssinatura";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useVersionCheck();
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+        <UpdateAvailableBanner />
         <PWAInstallPrompt />
         <TenantProvider>
           <Routes>
