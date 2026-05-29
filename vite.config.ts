@@ -3,6 +3,34 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
+import fs from 'fs';
+
+// Versão única gerada a cada build (timestamp).
+const BUILD_VERSION = String(Date.now());
+
+// Plugin que escreve /version.json (público) em build e em dev,
+// permitindo verificação confiável da versão ativa.
+function versionJsonPlugin() {
+  const payload = JSON.stringify({ version: BUILD_VERSION, builtAt: new Date().toISOString() });
+  return {
+    name: 'app-version-json',
+    buildStart() {
+      try {
+        fs.mkdirSync(path.resolve(__dirname, 'public'), { recursive: true });
+        fs.writeFileSync(path.resolve(__dirname, 'public/version.json'), payload);
+      } catch {
+        // ignore
+      }
+    },
+    configureServer(server: any) {
+      server.middlewares.use('/version.json', (_req: any, res: any) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store, must-revalidate');
+        res.end(payload);
+      });
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -10,10 +38,14 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  define: {
+    __APP_VERSION__: JSON.stringify(BUILD_VERSION),
+  },
   plugins: [
     react(),
     mode === 'development' &&
     componentTagger(),
+    versionJsonPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['pwa-icon.png'],
