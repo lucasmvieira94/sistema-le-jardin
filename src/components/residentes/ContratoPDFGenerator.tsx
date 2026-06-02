@@ -102,7 +102,8 @@ export default function ContratoPDFGenerator({
         <p><strong>IV –</strong> Roupa de cama e banho;</p>
         <p><strong>V –</strong> Serviços de lavanderia;</p>
         <p><strong>VI –</strong> Atividades coordenadas por profissionais devidamente capacitados visando à preservação da saúde física e mental e do aperfeiçoamento moral, intelectual, espiritual e social do CONTRATANTE;</p>
-        <p><strong>VII –</strong> Atividades que buscam a preservação do vínculo familiar.</p>
+        <p><strong>VII –</strong> Atividades que buscam a preservação do vínculo familiar;</p>
+        <p><strong>VIII –</strong> Área protegida com atendimento médico de urgência/emergência prestado pela Vitalmed/Constat, disponível 24 (vinte e quatro) horas por dia, nas dependências da CONTRATADA, sem custo adicional ao CONTRATANTE.</p>
       </div>
       <p class="justify"><strong>1.2.</strong> Não estão incluídos no objeto deste Contrato os seguintes serviços:</p>
       <div class="lista small">
