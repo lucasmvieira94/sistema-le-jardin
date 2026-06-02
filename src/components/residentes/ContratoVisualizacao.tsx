@@ -129,7 +129,8 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
             <p><strong>IV –</strong> Roupa de cama e banho;</p>
             <p><strong>V –</strong> Serviços de lavanderia;</p>
             <p><strong>VI –</strong> Atividades coordenadas por profissionais devidamente capacitados visando à preservação da saúde física e mental e do aperfeiçoamento moral, intelectual, espiritual e social do CONTRATANTE;</p>
-            <p><strong>VII –</strong> Atividades que buscam a preservação do vínculo familiar.</p>
+            <p><strong>VII –</strong> Atividades que buscam a preservação do vínculo familiar;</p>
+            <p><strong>VIII –</strong> Área protegida com atendimento médico de urgência/emergência prestado pela Vitalmed/Constat, disponível 24 (vinte e quatro) horas por dia, nas dependências da CONTRATADA, sem custo adicional ao CONTRATANTE.</p>
           </div>
 
           <p className="text-justify mb-2">
@@ -216,15 +217,11 @@ const ContratoVisualizacao = forwardRef<HTMLDivElement, ContratoVisualizacaoProp
           </p>
 
           <p className="text-justify mb-2 text-xs">
-            <strong>2.11.</strong> É dado ao CONTRATANTE 10 (dez) dias de carência ao ingressar no residencial, para fins de adaptação. No caso de desistência, será descontado o valor da diária da respectiva garantia.
+            <strong>2.11.</strong> O CONTRATANTE deverá no ato do pagamento dos valores descritos nas cláusulas anteriores ressarcir a CONTRATADA de todos os gastos e despesas extras que pela CONTRATADA excepcionalmente venham a ser antecipados, tais como materiais de higiene, medicamentos, fraldas, manicure, cabeleireiro ou similares, utilizados pelo CONTRATANTE durante o mês imediatamente anterior, devendo a CONTRATADA comprovar tais despesas através da apresentação de notas fiscais e/ou recibos.
           </p>
 
           <p className="text-justify mb-2 text-xs">
-            <strong>2.12.</strong> O CONTRATANTE deverá no ato do pagamento dos valores descritos nas cláusulas anteriores ressarcir a CONTRATADA de todos os gastos e despesas extras que pela CONTRATADA excepcionalmente venham a ser antecipados, tais como materiais de higiene, medicamentos, fraldas, manicure, cabeleireiro ou similares, utilizados pelo CONTRATANTE durante o mês imediatamente anterior, devendo a CONTRATADA comprovar tais despesas através da apresentação de notas fiscais e/ou recibos.
-          </p>
-
-          <p className="text-justify mb-2 text-xs">
-            <strong>2.13. ADICIONAL NATALINO:</strong> Será cobrada uma taxa de 100% a mais sobre a mensalidade de prestação de serviços, para pagamentos de despesas adicionais como décimos terceiros e férias, que deverá ser pago pelo CONTRATANTE em 12 (doze) parcelas, na mesma data de vencimento da mensalidade. Valor: {formatarMoeda(valorAdicionalNatalino)} em 12x {formatarMoeda(parcelaAdicionalNatalino)}.
+            <strong>2.12. ADICIONAL NATALINO:</strong> Será cobrada uma taxa de 100% a mais sobre a mensalidade de prestação de serviços, para pagamentos de despesas adicionais como décimos terceiros e férias, que deverá ser pago pelo CONTRATANTE em 12 (doze) parcelas, na mesma data de vencimento da mensalidade. Valor: {formatarMoeda(valorAdicionalNatalino)} em 12x {formatarMoeda(parcelaAdicionalNatalino)}.
           </p>
         </div>
 
