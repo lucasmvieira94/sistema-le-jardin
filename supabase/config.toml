@@ -107,3 +107,9 @@ verify_jwt = false
 [functions.criar-admin-empresa]
 verify_jwt = false
 
+[functions.registrar-documento]
+verify_jwt = false
+
+[functions.verificar-documento]
+verify_jwt = false
+
