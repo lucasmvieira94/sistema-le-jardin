@@ -14,6 +14,7 @@ import { Plus, Copy, Check, FileText, Loader2, Trash2, Printer } from "lucide-re
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { hojeExtenso, formatarData as formatarDataBR } from "@/utils/dateUtils";
+import { useDocumentoAutenticidade, rodapeAutenticidadeHTML } from "@/hooks/useDocumentoAutenticidade";
 
 interface Solicitacao {
   id: string;
@@ -246,6 +247,7 @@ function getContractStyleSheet() {
 
 export default function ContratosTemporarios() {
   const { toast } = useToast();
+  const { registrar } = useDocumentoAutenticidade();
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -369,8 +371,33 @@ export default function ContratosTemporarios() {
     }
   };
 
-  const imprimirContrato = (s: Solicitacao) => {
+  const imprimirContrato = async (s: Solicitacao) => {
     const htmlContent = generateTemporaryContractHTML(s, empresaConfig);
+
+    let rodape = "";
+    try {
+      const auth = await registrar({
+        tipo: "contrato_temporario",
+        referencia_id: s.id,
+        referencia_tabela: "solicitacoes_contrato_temporario",
+        numero_documento: s.token,
+        titular_nome: s.contratante_nome || s.residente_nome || "—",
+        dados_estruturais: {
+          contratante_nome: s.contratante_nome,
+          contratante_cpf: s.contratante_cpf,
+          residente_nome: s.residente_nome,
+          residente_cpf: s.residente_cpf,
+          valor_total: s.valor_mensalidade,
+          data_inicio: s.data_inicio_contrato,
+          data_fim: s.data_fim_contrato,
+          forma_pagamento: s.forma_pagamento,
+        },
+      });
+      rodape = rodapeAutenticidadeHTML(auth);
+    } catch (e) {
+      console.error("Falha ao registrar autenticidade do contrato temporário:", e);
+    }
+
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast({ title: "Erro", description: "Não foi possível abrir a janela de impressão. Verifique se popups estão permitidos.", variant: "destructive" });
@@ -385,7 +412,7 @@ export default function ContratosTemporarios() {
         <title>Contrato Temporário - ${s.contratante_nome || "Sem nome"}</title>
         <style>${getContractStyleSheet()}</style>
       </head>
-      <body>${htmlContent}</body>
+      <body>${htmlContent}${rodape}</body>
       </html>
     `);
     printWindow.document.close();
