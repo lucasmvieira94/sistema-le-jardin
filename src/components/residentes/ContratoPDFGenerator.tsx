@@ -1,13 +1,14 @@
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { FileDown, Printer } from "lucide-react";
+import { FileDown, Printer, ShieldCheck, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { hojeExtenso, formatarDataExtenso, formatarData } from "@/utils/dateUtils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
+import { useDocumentoAutenticidade, rodapeAutenticidadeHTML, type DocumentoAutenticidade } from "@/hooks/useDocumentoAutenticidade";
 
 interface ContratoPDFGeneratorProps {
   open: boolean;
@@ -26,6 +27,8 @@ export default function ContratoPDFGenerator({
 }: ContratoPDFGeneratorProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { registrar, loading: registrandoAuth } = useDocumentoAutenticidade();
+  const [auth, setAuth] = useState<DocumentoAutenticidade | null>(null);
   const [empresaConfig, setEmpresaConfig] = useState<{
     nome_empresa: string;
     cnpj: string | null;
@@ -45,6 +48,56 @@ export default function ContratoPDFGenerator({
     }
     if (open) fetchEmpresa();
   }, [open]);
+
+  // Registra o documento no backend (hash + auditoria) ao abrir o dialog
+  useEffect(() => {
+    if (!open) {
+      setAuth(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await registrar({
+          tipo: "contrato_residente",
+          referencia_id: contrato.id ?? null,
+          referencia_tabela: "contratos_residentes",
+          numero_documento: contrato.numero_contrato,
+          titular_nome: residente.nome_completo,
+          dados_estruturais: {
+            numero: contrato.numero_contrato,
+            valor_mensalidade: contrato.valor_mensalidade,
+            dia_vencimento: contrato.dia_vencimento,
+            forma_pagamento: contrato.forma_pagamento,
+            data_inicio: contrato.data_inicio_contrato,
+            data_fim: contrato.data_fim_contrato ?? null,
+            contratante: {
+              nome: contrato.contratante_nome,
+              cpf: contrato.contratante_cpf ?? null,
+              rg: contrato.contratante_rg ?? null,
+            },
+            residente: {
+              nome: residente.nome_completo,
+              cpf: residente.cpf ?? null,
+              data_nascimento: residente.data_nascimento ?? null,
+            },
+            servicos: contrato.servicos_inclusos ?? [],
+          },
+        });
+        if (!cancelled) setAuth(result);
+      } catch (e) {
+        console.error("Erro ao registrar autenticidade:", e);
+        toast({
+          title: "Aviso",
+          description: "Não foi possível registrar o código de autenticidade. O documento pode ser visualizado, mas sem QR Code.",
+          variant: "destructive",
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, contrato.id]);
 
   const generateContractHTML = () => {
     const formatarMoeda = (valor: number) =>
@@ -321,7 +374,7 @@ export default function ContratoPDFGenerator({
         <title>Contrato nº ${contrato.numero_contrato}</title>
         <style>${getStyleSheet()}</style>
       </head>
-      <body>${htmlContent}</body>
+      <body>${htmlContent}${auth ? rodapeAutenticidadeHTML(auth) : ""}</body>
       </html>
     `);
     printWindow.document.close();
@@ -348,6 +401,9 @@ export default function ContratoPDFGenerator({
       tempContainer.style.padding = "20px 50px";
       tempContainer.style.color = "#000";
       tempContainer.innerHTML = generateContractHTML();
+      if (auth) {
+        tempContainer.innerHTML += rodapeAutenticidadeHTML(auth);
+      }
 
       // Apply inline styles for rendering
       const style = document.createElement("style");
@@ -369,6 +425,14 @@ export default function ContratoPDFGenerator({
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
+      // Metadados (padrão de arquivamento — PDF/A-like)
+      pdf.setDocumentProperties({
+        title: `Contrato ${contrato.numero_contrato}`,
+        subject: "Contrato de Prestação de Serviços - ILPI",
+        author: empresaConfig?.nome_empresa || "Le Jardin Residencial Sênior",
+        creator: "Senex Care",
+        keywords: `contrato,${contrato.numero_contrato},${residente.nome_completo}${auth ? `,hash:${auth.hash}` : ""}`,
+      });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
@@ -386,6 +450,14 @@ export default function ContratoPDFGenerator({
         pdf.addImage(imgData, "PNG", 0, -position, pdfWidth, scaledHeight);
         position += pageHeight;
         page++;
+      }
+
+      // Bloqueia edição/anotação; permite leitura e impressão (PDF/A-like)
+      try {
+        // jsPDF expõe setEncryption em runtime, mas o tipo não está nas typings
+        (pdf as any).setEncryption?.("", crypto.randomUUID(), ["print", "copy"]);
+      } catch (e) {
+        console.warn("setEncryption não suportado nesta build do jsPDF", e);
       }
 
       const fileName = `Contrato_${contrato.numero_contrato.replace(/\//g, "-")}_${residente.nome_completo.split(" ")[0]}.pdf`;
@@ -409,6 +481,16 @@ export default function ContratoPDFGenerator({
           <DialogTitle className="flex items-center justify-between">
             <span>Contrato nº {contrato.numero_contrato}</span>
             <div className="flex gap-2">
+              {registrandoAuth && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Registrando autenticidade…
+                </span>
+              )}
+              {auth && (
+                <span className="text-xs text-green-700 flex items-center gap-1" title={`Hash: ${auth.hash}`}>
+                  <ShieldCheck className="w-3.5 h-3.5" /> Autenticidade registrada
+                </span>
+              )}
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
@@ -427,7 +509,7 @@ export default function ContratoPDFGenerator({
             ref={printRef}
             className="bg-white text-black p-8 max-w-4xl mx-auto border rounded shadow-sm"
             style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: "11pt", lineHeight: "1.5" }}
-            dangerouslySetInnerHTML={{ __html: generateContractHTML() }}
+            dangerouslySetInnerHTML={{ __html: generateContractHTML() + (auth ? rodapeAutenticidadeHTML(auth) : "") }}
           />
         </div>
       </DialogContent>

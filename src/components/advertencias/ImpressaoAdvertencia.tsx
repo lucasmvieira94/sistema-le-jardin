@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { formatarDataExtenso, formatarDataHora, formatarData, hojeExtenso } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
-import { Printer, X } from "lucide-react";
+import { Printer, X, ShieldCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useDocumentoAutenticidade, rodapeAutenticidadeHTML, type DocumentoAutenticidade } from "@/hooks/useDocumentoAutenticidade";
 
 const TIPO_LABELS: Record<string, string> = {
   advertencia_verbal: "ADVERTÊNCIA VERBAL",
@@ -43,6 +44,8 @@ interface ImpressaoAdvertenciaProps {
 export default function ImpressaoAdvertencia({ advertencia, onClose }: ImpressaoAdvertenciaProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const [empresa, setEmpresa] = useState<{ nome_empresa: string; cnpj: string | null; logo_url: string | null; cidade: string | null } | null>(null);
+  const { registrar, loading: registrandoAuth } = useDocumentoAutenticidade();
+  const [auth, setAuth] = useState<DocumentoAutenticidade | null>(null);
 
   useEffect(() => {
     async function fetchEmpresa() {
@@ -55,6 +58,37 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
     }
     fetchEmpresa();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await registrar({
+          tipo: "advertencia",
+          referencia_id: advertencia.id,
+          referencia_tabela: "advertencias_suspensoes",
+          numero_documento: advertencia.id.slice(0, 8).toUpperCase(),
+          titular_nome: advertencia.funcionarios.nome_completo,
+          dados_estruturais: {
+            tipo: advertencia.tipo,
+            motivo: advertencia.motivo,
+            descricao: advertencia.descricao,
+            data_ocorrencia: advertencia.data_ocorrencia,
+            dias_suspensao: advertencia.dias_suspensao,
+            data_inicio_suspensao: advertencia.data_inicio_suspensao,
+            data_fim_suspensao: advertencia.data_fim_suspensao,
+            funcionario_recusou_assinar: advertencia.funcionario_recusou_assinar,
+            hash_db: advertencia.hash_verificacao,
+            created_at: advertencia.created_at,
+          },
+        });
+        if (!cancelled) setAuth(result);
+      } catch (e) {
+        console.error("Erro ao registrar autenticidade da advertência:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [advertencia.id]);
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -99,6 +133,7 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
       </head>
       <body>
         ${content.innerHTML}
+        ${auth ? rodapeAutenticidadeHTML(auth) : ""}
       </body>
       </html>
     `);
@@ -116,6 +151,16 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Visualização para Impressão</h3>
         <div className="flex gap-2">
+          {registrandoAuth && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" /> Registrando autenticidade…
+            </span>
+          )}
+          {auth && (
+            <span className="text-xs text-green-700 flex items-center gap-1" title={`Hash: ${auth.hash}`}>
+              <ShieldCheck className="w-3.5 h-3.5" /> Autenticidade registrada
+            </span>
+          )}
           <Button onClick={handlePrint} className="gap-2">
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
