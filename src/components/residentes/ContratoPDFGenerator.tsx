@@ -454,7 +454,8 @@ export default function ContratoPDFGenerator({
 
       // Bloqueia edição/anotação; permite leitura e impressão (PDF/A-like)
       try {
-        pdf.setEncryption("", crypto.randomUUID(), ["print", "copy"]);
+        // jsPDF expõe setEncryption em runtime, mas o tipo não está nas typings
+        (pdf as any).setEncryption?.("", crypto.randomUUID(), ["print", "copy"]);
       } catch (e) {
         console.warn("setEncryption não suportado nesta build do jsPDF", e);
       }
