@@ -1284,6 +1284,92 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos_auditoria: {
+        Row: {
+          acao: Database["public"]["Enums"]["documento_acao"]
+          created_at: string
+          documento_id: string
+          id: string
+          ip_origem: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: Database["public"]["Enums"]["documento_acao"]
+          created_at?: string
+          documento_id: string
+          id?: string
+          ip_origem?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: Database["public"]["Enums"]["documento_acao"]
+          created_at?: string
+          documento_id?: string
+          id?: string
+          ip_origem?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_auditoria_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_emitidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos_emitidos: {
+        Row: {
+          created_at: string
+          dados_estruturais: Json
+          emitido_em: string
+          emitido_por: string | null
+          hash_sha256: string
+          id: string
+          numero_documento: string | null
+          referencia_id: string | null
+          referencia_tabela: string | null
+          tenant_id: string | null
+          tipo: Database["public"]["Enums"]["documento_tipo"]
+          titular_nome: string
+        }
+        Insert: {
+          created_at?: string
+          dados_estruturais?: Json
+          emitido_em?: string
+          emitido_por?: string | null
+          hash_sha256: string
+          id?: string
+          numero_documento?: string | null
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          tenant_id?: string | null
+          tipo: Database["public"]["Enums"]["documento_tipo"]
+          titular_nome: string
+        }
+        Update: {
+          created_at?: string
+          dados_estruturais?: Json
+          emitido_em?: string
+          emitido_por?: string | null
+          hash_sha256?: string
+          id?: string
+          numero_documento?: string | null
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          tenant_id?: string | null
+          tipo?: Database["public"]["Enums"]["documento_tipo"]
+          titular_nome?: string
+        }
+        Relationships: []
+      }
       entrada_medicamentos: {
         Row: {
           created_at: string | null
@@ -4279,6 +4365,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "employee" | "super_admin"
+      documento_acao:
+        | "gerado"
+        | "reemitido"
+        | "visualizado"
+        | "verificado_publico"
+      documento_tipo:
+        | "contrato_residente"
+        | "contrato_temporario"
+        | "advertencia"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -4432,6 +4527,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "employee", "super_admin"],
+      documento_acao: [
+        "gerado",
+        "reemitido",
+        "visualizado",
+        "verificado_publico",
+      ],
+      documento_tipo: [
+        "contrato_residente",
+        "contrato_temporario",
+        "advertencia",
+      ],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [
         "plantao",
