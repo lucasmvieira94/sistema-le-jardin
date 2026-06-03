@@ -1,69 +1,88 @@
-## Contexto
+## Objetivo
 
-Hoje o botão "Desligar" na página `/funcionarios` apenas marca `ativo = false`. Não há registro do motivo (CLT), data efetiva, aviso prévio nem ajustes nos cálculos de folha de ponto, faltas e vale-transporte. Precisamos transformar isso em um processo formal de rescisão que reflita corretamente na contabilização.
+Refatorar a geração, armazenamento e validação de documentos (contratos de residentes, contratos temporários e advertências/suspensões — que já usam jsPDF/html2canvas) para garantir autenticidade (hash + QR Code), conformidade arquivística (PDF/A-like), trilha de auditoria e controle de acesso LGPD.
 
-## Estrutura da solução
+## Escopo dos documentos cobertos
+
+1. Contratos de residentes (`ContratoPDFGenerator.tsx`)
+2. Contratos temporários (`ContratosTemporarios.tsx`)
+3. Advertências/Suspensões (`ImpressaoAdvertencia.tsx`)
+
+Documentos puramente operacionais (folha de ponto, relatórios) ficam fora desta refatoração — escopo limitado a documentos legais.
+
+## Arquitetura
+
+```text
+Geração ──► hash SHA-256 ──► persiste em `documentos_emitidos` ──► QR Code no rodapé
+                                       │
+                                       ├──► log em `documentos_auditoria` (user, IP, timestamp)
+                                       │
+Verificação pública ──► /verificar-documento?id=...&hash=... ──► Edge Function (anon)
+                                       │
+                                       └──► retorna apenas: tipo, número, data, status, hash match
+```
 
 ### 1. Banco de dados (migration)
 
-Novas colunas em `public.funcionarios`:
+Tabela `documentos_emitidos`:
+- `id` (uuid), `tipo` (enum: contrato_residente, contrato_temporario, advertencia)
+- `referencia_id` (uuid do registro original), `referencia_tabela` (text)
+- `numero_documento` (text), `titular_nome` (text, mínimo necessário para conferência visual)
+- `hash_sha256` (text, unique), `dados_estruturais` (jsonb — campos canônicos usados no hash)
+- `emitido_por` (uuid → auth.users), `emitido_em` (timestamptz)
+- `tenant_id` (uuid)
 
-- `data_desligamento` (date)
-- `motivo_desligamento` (text) — enum livre validado no app:
-  - `pedido_demissao` (demissão a pedido)
-  - `sem_justa_causa` (dispensa sem justa causa)
-  - `com_justa_causa` (dispensa com justa causa)
-  - `acordo_mutuo` (rescisão por acordo - Art. 484-A)
-  - `termino_contrato` (término de contrato determinado/experiência)
-  - `aposentadoria`
-  - `falecimento`
-- `aviso_previo` (boolean, default false)
-- `tipo_aviso_previo` (text) — `trabalhado` | `indenizado` | `dispensado`
-- `modalidade_reducao_aviso` (text, nullable) — só quando `tipo_aviso_previo='trabalhado'`:
-  - `reducao_2h_entrada` (entra 2h depois)
-  - `reducao_2h_saida` (sai 2h antes)
-  - `reducao_7_dias_corridos` (folga 7 dias corridos ao final)
-- `data_inicio_aviso` (date, nullable)
-- `data_fim_aviso` (date, nullable)
-- `observacoes_desligamento` (text, nullable)
-- `desligado_por` (uuid, nullable) — auditoria
+Tabela `documentos_auditoria`:
+- `id`, `documento_id` → documentos_emitidos
+- `acao` (gerado, reemitido, visualizado, verificado_publico)
+- `user_id` (nullable — anon na verificação pública), `ip_origem` (inet), `user_agent` (text)
+- `criado_em` (timestamptz)
 
-Nova tabela `public.desligamentos_historico` para auditoria (snapshot completo da rescisão), com RLS de admin.
+RLS:
+- `documentos_emitidos`: SELECT/INSERT para `authenticated` com tenant match; sem acesso `anon` direto
+- `documentos_auditoria`: INSERT amplo (via Edge Function service_role), SELECT só para admin via `has_role`
+- GRANTs explícitos para `authenticated` e `service_role` (anon nunca)
 
-### 2. Ajustes nos cálculos (DB functions)
+### 2. Edge Functions
 
-- `gerar_folha_ponto_mensal` / `calcular_totais_folha_ponto`: ignorar dias **posteriores** a `data_desligamento` (não contar como falta).
-- Durante o aviso prévio trabalhado com redução de 7 dias corridos: gerar abonos automáticos em `afastamentos` (tipo "Aviso Prévio - Redução 7 dias") para os 7 últimos dias.
-- Para redução 2h entrada/saída: ajustar a escala efetiva do funcionário no período de aviso (campo informativo + observação em folha; o ponto real já reflete a redução porque o funcionário não bate o horário cheio — não gera falta de 2h).
+- `registrar-documento` (verify_jwt=false, valida JWT em código): recebe payload canônico, calcula hash server-side via `crypto.subtle`, grava em `documentos_emitidos`, registra auditoria com IP de `x-forwarded-for`. Retorna `{ id, hash, qr_url }`.
+- `verificar-documento` (público, anon): recebe `id` + `hash`, retorna `{ autentico: bool, tipo, numero, titular_mascarado, emitido_em }`. Registra auditoria de verificação pública. **Nunca** devolve conteúdo completo.
 
-### 3. Vale-transporte
+### 3. Frontend
 
-`src/utils/valeTransporteCalculator.ts` — aceitar `dataDesligamento` e parar de contar dias após esta data. Atualizar `ModalValeTransporte` para passar o novo parâmetro.
+- Hook `useDocumentoAutenticidade.ts`: chama `registrar-documento`, devolve `{ id, hash, qrUrl }` para injetar no PDF.
+- Componente `RodapeAutenticidade.tsx`: renderiza QR (lib `qrcode` ou `react-qr-code` — adicionar via `bun add react-qr-code`) + hash em texto + instruções de verificação. Injetado nos três geradores de PDF.
+- Página pública `/verificar-documento` (rota em `App.tsx`, fora do `ProtectedRoute`, dentro do `PublicLayout`): formulário com `id` + `hash` (preenchidos via query string), chama edge function, mostra badge verde "Documento Autêntico" ou vermelho "Documento Inválido/Alterado" + dados mínimos.
+- Geração: antes de chamar `html2canvas`/`jsPDF`, calcular hash canônico no client (apenas para exibição imediata) e em paralelo registrar via edge function; usar o hash retornado pelo servidor como fonte de verdade no PDF.
 
-### 4. UI
+### 4. PDF/A (preservação)
 
-Novo componente `src/components/funcionarios/DesligamentoDialog.tsx`:
+jsPDF não emite PDF/A nativo, mas aplicaremos as restrições viáveis:
+- Setar metadados (`setDocumentProperties`: title, author, subject, keywords, creator)
+- Embutir fonte padrão (Times) e evitar JS embutido
+- Aplicar `setEncryption` com permissões: `print` permitido, `modify`/`copy`/`annot-forms` bloqueados, owner password aleatório (não exposto)
+- Marcar no rodapé "Documento conforme padrão de arquivamento (PDF/A-like)"
 
-- Campos: data desligamento, motivo (Select CLT), switch aviso prévio, tipo aviso (radio), modalidade de redução (radio condicional), observações.
-- Auto-cálculo `data_fim_aviso = data_inicio_aviso + 30 dias` (com indicação visual).
-- Validações: data desligamento não pode ser anterior à admissão.
-- Ao confirmar: registra na `desligamentos_historico`, atualiza `funcionarios`, e, se `reducao_7_dias_corridos`, cria os afastamentos automaticamente.
+Observação ao usuário: PDF/A estrito exige biblioteca server-side (ex: pdf-lib + conversor). Caso queira conformidade ISO 19005 completa, propor edge function com `pdf-lib` numa segunda etapa.
 
-Substituir o botão atual de desligar em `src/pages/Funcionarios.tsx` por este Dialog. Adicionar coluna/badge mostrando motivo quando desligado e tooltip com data efetiva.
+### 5. LGPD / RBAC
 
-### 5. Ficha do funcionário
+- Reemissão e listagem de documentos: somente `authenticated` com role `admin` ou `gestor` (via `has_role`)
+- Logs de auditoria: somente `admin`
+- Verificação pública: expõe apenas tipo, número, data, primeiro nome + iniciais do titular, status — nunca CPF, endereço ou valores
+- Toda chamada de geração registra IP e user_id; toda verificação pública registra IP (sem user)
 
-Em `src/pages/FichaFuncionario.tsx`, exibir bloco "Desligamento" com todos os dados quando aplicável.
+## Entregas, em ordem
 
-## Detalhes técnicos
+1. Migration: tabelas, RLS, GRANTs, índices em `hash_sha256` e `referencia_id`
+2. Edge functions `registrar-documento` e `verificar-documento`
+3. Hook + componente de rodapé com QR
+4. Integração nos três geradores de PDF existentes + metadados/encryption
+5. Página pública `/verificar-documento` + rota
+6. Tela admin de auditoria (lista filtrada de `documentos_auditoria` por documento) — opcional na primeira entrega; confirme se deve já incluir
 
-- Manter compatibilidade: `ativo = false` continua sendo a flag mestre. Funcionário com aviso trabalhado em curso permanece `ativo = true` até `data_desligamento`; o cron/edge não precisa mudar.
-- Migration cria índice em `data_desligamento` para queries de relatório.
-- Tipos TS gerados automaticamente após migration.
+## Pontos a confirmar antes de implementar
 
-## Fora de escopo (proposta futura)
-
-- Cálculo de verbas rescisórias (saldo de salário, férias proporcionais, 13º, multa FGTS) — sugiro tratar em módulo financeiro separado, pois envolve regras tributárias.
-- Geração de TRCT (Termo de Rescisão) em PDF.
-
-Confirma para eu seguir com a migration e a implementação?
+1. Confirma os 3 documentos no escopo (contrato residente, contrato temporário, advertência)? Quer incluir mais algum?
+2. Para PDF/A: aceita a abordagem "PDF/A-like" com jsPDF (metadados + encryption) agora, e migração para pdf-lib server-side depois — ou já quer pdf-lib server-side desde já?
+3. Tela admin de auditoria entra nesta entrega ou fica para a próxima?
