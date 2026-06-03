@@ -29,6 +29,7 @@ import PainelIntercorrencias from "./pages/PainelIntercorrencias";
 import ContratoTemporarioPublico from "./pages/ContratoTemporarioPublico";
 import AdministracaoMedicamentosPublico from "./pages/AdministracaoMedicamentosPublico";
 import FichaAcolhimentoPublico from "./pages/FichaAcolhimentoPublico";
+import VerificarDocumento from "./pages/VerificarDocumento";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 
@@ -108,6 +109,7 @@ const App = () => {
               <Route path="/gamificacao" element={<Gamificacao />} />
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/verificar-documento" element={<VerificarDocumento />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}
