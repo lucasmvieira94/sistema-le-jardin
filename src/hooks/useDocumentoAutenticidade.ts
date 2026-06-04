@@ -2,7 +2,11 @@ import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
 
-export type DocumentoTipo = "contrato_residente" | "contrato_temporario" | "advertencia";
+export type DocumentoTipo =
+  | "contrato_residente"
+  | "contrato_temporario"
+  | "advertencia"
+  | "recibo_pagamento";
 
 export interface RegistrarDocumentoInput {
   tipo: DocumentoTipo;
