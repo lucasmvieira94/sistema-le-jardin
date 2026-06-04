@@ -1,10 +1,13 @@
 import jsPDF from "jspdf";
 import { formatarData } from "./dateUtils";
 import { supabase } from "@/integrations/supabase/client";
+import QRCode from "qrcode";
 
 export type ReciboPagamento = {
   residenteNome: string;
   residenteId?: string;
+  mensalidadeId?: string;
+  tenantId?: string | null;
   competencia: string; // YYYY-MM-DD
   dataVencimento: string;
   dataPagamento: string;
@@ -92,7 +95,71 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
     }
   }
 
+  // ===== Registra o documento e gera o código de autenticidade (hash + QR) =====
+  // Dados canônicos que serão hasheados — qualquer alteração invalida o hash.
+  const dadosEstruturais = {
+    numero_recibo: r.numeroRecibo,
+    residente_id: r.residenteId ?? null,
+    residente_nome: r.residenteNome,
+    competencia: r.competencia,
+    data_vencimento: r.dataVencimento,
+    data_pagamento: r.dataPagamento,
+    valor_mensalidade: r.valorMensalidade,
+    valor_extras: r.valorExtras,
+    valor_desconto: r.valorDesconto,
+    valor_total: r.valorTotal,
+    valor_pago: r.valorPago,
+    forma_pagamento: r.formaPagamento ?? null,
+    observacoes: r.observacoes ?? null,
+    responsavel_nome: resp?.nome ?? null,
+    responsavel_cpf: resp?.cpf ?? null,
+  };
+
+  let autenticidade: { id: string; hash: string; urlVerificacao: string; qrDataUrl: string } | null = null;
+  try {
+    const { data: regData, error: regErr } = await supabase.functions.invoke(
+      "registrar-documento",
+      {
+        body: {
+          tipo: "recibo_pagamento",
+          referencia_id: r.mensalidadeId ?? null,
+          referencia_tabela: r.mensalidadeId ? "mensalidades_residentes" : null,
+          numero_documento: r.numeroRecibo,
+          titular_nome: r.residenteNome,
+          dados_estruturais: dadosEstruturais,
+          tenant_id: r.tenantId ?? null,
+        },
+      }
+    );
+    if (!regErr && regData?.id && regData?.hash) {
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const urlVerificacao = `${origin}/verificar-documento?id=${encodeURIComponent(
+        regData.id
+      )}&hash=${encodeURIComponent(regData.hash)}`;
+      const qrDataUrl = await QRCode.toDataURL(urlVerificacao, {
+        width: 220,
+        margin: 1,
+        errorCorrectionLevel: "M",
+      });
+      autenticidade = { id: regData.id, hash: regData.hash, urlVerificacao, qrDataUrl };
+    }
+  } catch {
+    // Mesmo se o registro falhar, o recibo é emitido — o rodapé apenas será omitido.
+  }
+
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+  // Metadados PDF/A-like — alinhado aos contratos e advertências.
+  try {
+    doc.setDocumentProperties({
+      title: `Recibo de Pagamento ${r.numeroRecibo}`,
+      subject: "Recibo de pagamento de mensalidade",
+      author: nomeEmpresa,
+      creator: nomeEmpresa,
+      keywords: `recibo,pagamento,${r.numeroRecibo}`,
+    });
+  } catch {}
+
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 18;
@@ -263,6 +330,53 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
     doc.text(`CNPJ: ${cnpj}`, pageW / 2, y, { align: "center" });
   }
 
+  // ===== Rodapé de autenticidade (hash + QR) =====
+  if (autenticidade) {
+    const boxH = 36;
+    const boxY = pageH - 14 - boxH - 4;
+    doc.setDrawColor(120);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, boxY, pageW - margin * 2, boxH, 1.5, 1.5, "S");
+
+    // QR à esquerda
+    const qrSize = 30;
+    try {
+      doc.addImage(autenticidade.qrDataUrl, "PNG", margin + 3, boxY + 3, qrSize, qrSize);
+    } catch {}
+
+    // Texto à direita
+    const txtX = margin + qrSize + 8;
+    let ty = boxY + 6;
+    doc.setTextColor(0);
+    doc.setFont("times", "bold");
+    doc.setFontSize(9);
+    doc.text("CÓDIGO DE AUTENTICIDADE", txtX, ty);
+    ty += 4;
+    doc.setFont("times", "normal");
+    doc.setFontSize(8);
+    doc.text(`ID: ${autenticidade.id}`, txtX, ty);
+    ty += 3.5;
+    const hashLines = doc.splitTextToSize(
+      `Hash SHA-256: ${autenticidade.hash}`,
+      pageW - margin - txtX - 3
+    );
+    doc.text(hashLines, txtX, ty);
+    ty += hashLines.length * 3.5;
+    const urlLines = doc.splitTextToSize(
+      `Verificar: ${autenticidade.urlVerificacao}`,
+      pageW - margin - txtX - 3
+    );
+    doc.text(urlLines, txtX, ty);
+    ty += urlLines.length * 3.5 + 1;
+    doc.setTextColor(90);
+    const aviso = doc.splitTextToSize(
+      "Documento arquivado eletronicamente em conformidade com a LGPD (Lei 13.709/2018). Qualquer alteração no conteúdo invalidará o hash.",
+      pageW - margin - txtX - 3
+    );
+    doc.text(aviso, txtX, ty);
+    doc.setTextColor(0);
+  }
+
   // Rodapé
   doc.setDrawColor(200);
   doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
@@ -274,6 +388,16 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
     pageH - 9,
     { align: "center" }
   );
+
+  // Restringe edição/anotação (PDF/A-like), igual aos demais documentos.
+  try {
+    (doc as any).setEncryption?.(
+      "",
+      "",
+      ["print"],
+      128
+    );
+  } catch {}
 
   doc.save(`recibo-${r.numeroRecibo}.pdf`);
 }
