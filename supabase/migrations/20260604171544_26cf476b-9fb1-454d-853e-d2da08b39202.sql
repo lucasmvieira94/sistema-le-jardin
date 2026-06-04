@@ -1,0 +1,1 @@
+ALTER TYPE public.documento_tipo ADD VALUE IF NOT EXISTS 'recibo_pagamento';

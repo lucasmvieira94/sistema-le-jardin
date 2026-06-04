@@ -4374,6 +4374,7 @@ export type Database = {
         | "contrato_residente"
         | "contrato_temporario"
         | "advertencia"
+        | "recibo_pagamento"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -4537,6 +4538,7 @@ export const Constants = {
         "contrato_residente",
         "contrato_temporario",
         "advertencia",
+        "recibo_pagamento",
       ],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [
