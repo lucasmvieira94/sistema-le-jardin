@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     if (!tipo || !titular_nome || !dados_estruturais) {
       return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    if (!['contrato_residente', 'contrato_temporario', 'advertencia'].includes(tipo)) {
+    if (!['contrato_residente', 'contrato_temporario', 'advertencia', 'recibo_pagamento'].includes(tipo)) {
       return new Response(JSON.stringify({ error: 'Tipo inválido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
