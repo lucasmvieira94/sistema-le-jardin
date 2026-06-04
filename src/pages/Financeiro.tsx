@@ -112,15 +112,17 @@ export default function Financeiro() {
   );
 
   const kpis = useMemo(() => {
-    const total = mensalidades.reduce((s, m) => s + Number(m.valor_total), 0);
-    const recebido = mensalidades.reduce((s, m) => s + Number(m.valor_pago), 0);
-    const aReceber = mensalidades
+    // Cobranças canceladas são excluídas do faturamento.
+    const ativas = mensalidades.filter((m) => m.status !== "cancelado");
+    const total = ativas.reduce((s, m) => s + Number(m.valor_total), 0);
+    const recebido = ativas.reduce((s, m) => s + Number(m.valor_pago), 0);
+    const aReceber = ativas
       .filter((m) => ["pendente", "parcial"].includes(m.status))
       .reduce((s, m) => s + (Number(m.valor_total) - Number(m.valor_pago)), 0);
-    const vencido = mensalidades
+    const vencido = ativas
       .filter((m) => m.status === "vencido")
       .reduce((s, m) => s + (Number(m.valor_total) - Number(m.valor_pago)), 0);
-    const inadimplentes = mensalidades.filter((m) => m.status === "vencido").length;
+    const inadimplentes = ativas.filter((m) => m.status === "vencido").length;
     return { total, recebido, aReceber, vencido, inadimplentes };
   }, [mensalidades]);
 
@@ -445,8 +447,15 @@ export default function Financeiro() {
                         <Badge variant="outline" className={STATUS_COLORS[m.status]}>{m.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-1 whitespace-nowrap">
-                        {m.status !== "pago" && m.status !== "cancelado" && (
-                          <Button size="sm" onClick={() => abrirPagamento(m)}>Receber</Button>
+                        {m.status !== "cancelado" && (
+                          <Button
+                            size="sm"
+                            onClick={() => abrirPagamento(m)}
+                            disabled={m.status === "pago"}
+                            title={m.status === "pago" ? "Pagamento já recebido" : "Registrar recebimento"}
+                          >
+                            {m.status === "pago" ? "Recebido" : "Receber"}
+                          </Button>
                         )}
                         {m.status !== "cancelado" && (
                           <Button size="sm" variant="outline" onClick={() => baixarReciboMensalidade(m)}>
