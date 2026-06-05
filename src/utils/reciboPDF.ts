@@ -95,6 +95,27 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
     }
   }
 
+  // ===== Lançamentos vinculados (extras / descontos / adicional natalino) =====
+  type Lanc = { descricao: string; valor: number; tipo: string };
+  let lancamentos: Lanc[] = [];
+  if (r.mensalidadeId) {
+    const { data: lancs } = await (supabase as any)
+      .from("lancamentos_financeiros")
+      .select("descricao, valor, tipo")
+      .eq("mensalidade_id", r.mensalidadeId)
+      .order("created_at", { ascending: true });
+    lancamentos = (lancs ?? []) as Lanc[];
+  }
+  const labelTipo = (t: string) => {
+    switch (t) {
+      case "extra": return "Extra";
+      case "servico_terceiros": return "Serviço de terceiros";
+      case "adicional_natalino": return "Adicional natalino";
+      case "desconto": return "Desconto";
+      default: return t;
+    }
+  };
+
   // ===== Registra o documento e gera o código de autenticidade (hash + QR) =====
   // Dados canônicos que serão hasheados — qualquer alteração invalida o hash.
   const dadosEstruturais = {
@@ -113,6 +134,11 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
     observacoes: r.observacoes ?? null,
     responsavel_nome: resp?.nome ?? null,
     responsavel_cpf: resp?.cpf ?? null,
+    lancamentos: lancamentos.map((l) => ({
+      tipo: l.tipo,
+      descricao: l.descricao,
+      valor: Number(l.valor),
+    })),
   };
 
   let autenticidade: { id: string; hash: string; urlVerificacao: string; qrDataUrl: string } | null = null;
@@ -285,8 +311,26 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
   };
 
   linha("Mensalidade", r.valorMensalidade);
-  if (r.valorExtras > 0) linha("Extras / Serviços", r.valorExtras);
-  if (r.valorDesconto > 0) linha("Descontos", -r.valorDesconto);
+  // Detalha cada lançamento vinculado (extras, serviços de terceiros, adicional natalino).
+  const acrescimos = lancamentos.filter((l) =>
+    ["extra", "servico_terceiros", "adicional_natalino"].includes(l.tipo)
+  );
+  const descontos = lancamentos.filter((l) => l.tipo === "desconto");
+  if (acrescimos.length > 0) {
+    acrescimos.forEach((l) => {
+      linha(`${labelTipo(l.tipo)} — ${l.descricao}`, Number(l.valor));
+    });
+  } else if (r.valorExtras > 0) {
+    // Fallback: recibo gerado sem detalhamento individual disponível.
+    linha("Extras / Serviços", r.valorExtras);
+  }
+  if (descontos.length > 0) {
+    descontos.forEach((l) => {
+      linha(`Desconto — ${l.descricao}`, -Number(l.valor));
+    });
+  } else if (r.valorDesconto > 0) {
+    linha("Descontos", -r.valorDesconto);
+  }
   doc.setDrawColor(200);
   doc.line(margin, y - 2, pageW - margin, y - 2);
   linha("Total da fatura", r.valorTotal, true);
