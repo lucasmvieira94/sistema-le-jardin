@@ -533,7 +533,15 @@ export default function Financeiro() {
           <div className="space-y-3">
             <div>
               <Label>Tipo</Label>
-              <Select value={extraTipo} onValueChange={(v) => setExtraTipo(v as any)}>
+              <Select
+                value={extraTipo}
+                onValueChange={(v) => {
+                  setExtraTipo(v as any);
+                  if (v === "adicional_natalino" && !extraDesc) {
+                    setExtraDesc("Adicional natalino (gratificação anual)");
+                  }
+                }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="extra">Extra (acréscimo)</SelectItem>
