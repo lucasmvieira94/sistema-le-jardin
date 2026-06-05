@@ -79,7 +79,7 @@ export default function Financeiro() {
   const [extraDialog, setExtraDialog] = useState<{ open: boolean; m: Mensalidade | null }>({ open: false, m: null });
   const [extraDesc, setExtraDesc] = useState("");
   const [extraValor, setExtraValor] = useState("");
-  const [extraTipo, setExtraTipo] = useState<"extra" | "desconto" | "servico_terceiros">("extra");
+  const [extraTipo, setExtraTipo] = useState<"extra" | "desconto" | "servico_terceiros" | "adicional_natalino">("extra");
 
   const carregar = async () => {
     setLoading(true);
@@ -538,6 +538,7 @@ export default function Financeiro() {
                 <SelectContent>
                   <SelectItem value="extra">Extra (acréscimo)</SelectItem>
                   <SelectItem value="servico_terceiros">Serviço de terceiros</SelectItem>
+                  <SelectItem value="adicional_natalino">Adicional natalino</SelectItem>
                   <SelectItem value="desconto">Desconto</SelectItem>
                 </SelectContent>
               </Select>
