@@ -311,8 +311,26 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
   };
 
   linha("Mensalidade", r.valorMensalidade);
-  if (r.valorExtras > 0) linha("Extras / Serviços", r.valorExtras);
-  if (r.valorDesconto > 0) linha("Descontos", -r.valorDesconto);
+  // Detalha cada lançamento vinculado (extras, serviços de terceiros, adicional natalino).
+  const acrescimos = lancamentos.filter((l) =>
+    ["extra", "servico_terceiros", "adicional_natalino"].includes(l.tipo)
+  );
+  const descontos = lancamentos.filter((l) => l.tipo === "desconto");
+  if (acrescimos.length > 0) {
+    acrescimos.forEach((l) => {
+      linha(`${labelTipo(l.tipo)} — ${l.descricao}`, Number(l.valor));
+    });
+  } else if (r.valorExtras > 0) {
+    // Fallback: recibo gerado sem detalhamento individual disponível.
+    linha("Extras / Serviços", r.valorExtras);
+  }
+  if (descontos.length > 0) {
+    descontos.forEach((l) => {
+      linha(`Desconto — ${l.descricao}`, -Number(l.valor));
+    });
+  } else if (r.valorDesconto > 0) {
+    linha("Descontos", -r.valorDesconto);
+  }
   doc.setDrawColor(200);
   doc.line(margin, y - 2, pageW - margin, y - 2);
   linha("Total da fatura", r.valorTotal, true);
