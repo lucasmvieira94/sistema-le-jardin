@@ -965,6 +965,77 @@ export type Database = {
           },
         ]
       }
+      contas_pagar: {
+        Row: {
+          anexo_url: string | null
+          categoria: string
+          created_at: string
+          criado_por: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento: string | null
+          fornecedor: string | null
+          frequencia_recorrencia: string | null
+          id: string
+          observacoes: string | null
+          origem_recorrencia: string | null
+          recorrente: boolean
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          anexo_url?: string | null
+          categoria?: string
+          created_at?: string
+          criado_por?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento?: string | null
+          fornecedor?: string | null
+          frequencia_recorrencia?: string | null
+          id?: string
+          observacoes?: string | null
+          origem_recorrencia?: string | null
+          recorrente?: boolean
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          anexo_url?: string | null
+          categoria?: string
+          created_at?: string
+          criado_por?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          forma_pagamento?: string | null
+          fornecedor?: string | null
+          frequencia_recorrencia?: string | null
+          id?: string
+          observacoes?: string | null
+          origem_recorrencia?: string | null
+          recorrente?: boolean
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_origem_recorrencia_fkey"
+            columns: ["origem_recorrencia"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_residentes: {
         Row: {
           clausulas_especiais: string | null
@@ -4226,6 +4297,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      marcar_contas_atrasadas: { Args: never; Returns: number }
       obter_alertas_estoque_fraldas: {
         Args: never
         Returns: {

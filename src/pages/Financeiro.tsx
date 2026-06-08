@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, AlertCircle, Plus, RefreshCw, Wallet, Loader2, Receipt } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams } from "react-router-dom";
+import ContasPagarLista from "@/components/financeiro/ContasPagarLista";
+import LucratividadeDashboard from "@/components/financeiro/LucratividadeDashboard";
 import { formatarData } from "@/utils/dateUtils";
 import { gerarReciboPDF } from "@/utils/reciboPDF";
 
@@ -54,6 +58,19 @@ const competenciaAtual = () => {
 
 export default function Financeiro() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const initialTab = tabParam === "contas-pagar" || tabParam === "lucratividade" ? tabParam : "receitas";
+  const [tab, setTab] = useState<string>(initialTab);
+  useEffect(() => {
+    const cur = searchParams.get("tab");
+    if (cur !== tab) {
+      const sp = new URLSearchParams(searchParams);
+      sp.set("tab", tab);
+      setSearchParams(sp, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
   const [loading, setLoading] = useState(true);
   const [gerando, setGerando] = useState(false);
   const [competencia, setCompetencia] = useState<string>(competenciaAtual());
@@ -289,6 +306,14 @@ export default function Financeiro() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="receitas">Receitas</TabsTrigger>
+          <TabsTrigger value="contas-pagar">Contas a Pagar</TabsTrigger>
+          <TabsTrigger value="lucratividade">Lucratividade</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="receitas" className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
@@ -477,6 +502,16 @@ export default function Financeiro() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="contas-pagar">
+          <ContasPagarLista />
+        </TabsContent>
+
+        <TabsContent value="lucratividade">
+          <LucratividadeDashboard />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog: Pagamento */}
       <Dialog open={pagDialog.open} onOpenChange={(o) => setPagDialog({ open: o, m: o ? pagDialog.m : null })}>
