@@ -1,88 +1,108 @@
-## Objetivo
+# Sistema de Controle de Gastos
 
-Refatorar a geração, armazenamento e validação de documentos (contratos de residentes, contratos temporários e advertências/suspensões — que já usam jsPDF/html2canvas) para garantir autenticidade (hash + QR Code), conformidade arquivística (PDF/A-like), trilha de auditoria e controle de acesso LGPD.
+## Visão geral
+Novo módulo "Controle de Gastos" integrado ao Financeiro, permitindo cadastrar contas a pagar, receber lembretes no dashboard, dar baixa em pagamentos, e visualizar lucro líquido e insights do negócio (receitas — vindas das mensalidades + extras — menos despesas).
 
-## Escopo dos documentos cobertos
+## Estrutura
 
-1. Contratos de residentes (`ContratoPDFGenerator.tsx`)
-2. Contratos temporários (`ContratosTemporarios.tsx`)
-3. Advertências/Suspensões (`ImpressaoAdvertencia.tsx`)
+### 1. Banco de dados (migração Supabase)
 
-Documentos puramente operacionais (folha de ponto, relatórios) ficam fora desta refatoração — escopo limitado a documentos legais.
+**Tabela `contas_pagar`** (multi-tenant, RLS por tenant):
+- `descricao` (texto)
+- `categoria` (enum: `fornecedor`, `folha_pagamento`, `agua`, `luz`, `internet`, `aluguel`, `manutencao`, `alimentacao`, `medicamentos`, `impostos`, `servicos`, `outros`)
+- `valor` (numeric)
+- `data_vencimento` (date)
+- `data_pagamento` (date, nullable)
+- `status` (enum: `pendente`, `pago`, `atrasado`, `cancelado`)
+- `forma_pagamento` (texto, nullable)
+- `recorrente` (bool) + `frequencia_recorrencia` (mensal/semanal, nullable)
+- `fornecedor` (texto)
+- `observacoes` (texto)
+- `anexo_url` (texto, nullable — comprovante)
+- `criado_por` (uuid)
 
-## Arquitetura
+**Função `gerar_proxima_recorrencia()`**: trigger que ao dar baixa numa conta recorrente, cria automaticamente a próxima ocorrência.
 
+**View `v_resumo_financeiro_mensal`**: agrega receitas (mensalidades + extras) e despesas (contas pagas) por mês, calculando lucro bruto e líquido.
+
+RLS: PERMISSIVE para `authenticated` com isolamento por tenant.
+
+### 2. Frontend — Nova aba no `/financeiro`
+
+Adicionar 3 novas abas na página `Financeiro.tsx`:
+- **Receitas** (atual, renomeado)
+- **Contas a Pagar** (novo)
+- **Lucratividade** (novo, com insights)
+
+### 3. Componentes novos
+
+`src/components/financeiro/`:
+- `ContasPagarLista.tsx` — Tabela com filtros (status, categoria, mês), badges de status, ações: pagar, editar, cancelar
+- `ContaPagarForm.tsx` — Dialog para cadastro/edição
+- `BaixaPagamentoDialog.tsx` — Dialog para dar baixa (data, forma de pagamento, anexo)
+- `LucratividadeDashboard.tsx` — Cards de KPIs + gráficos
+- `InsightsNegocio.tsx` — Análises automáticas
+
+### 4. Lembretes no dashboard
+
+Novo componente `src/components/dashboard/AlertasContasPagar.tsx`:
+- Lista contas que vencem nos próximos 7 dias
+- Destaque visual para atrasadas (vermelho) e vencendo hoje (amarelo)
+- Link direto para `/financeiro?tab=contas-pagar`
+- Integrar no `src/pages/Index.tsx` (dashboard do gestor)
+
+### 5. Lucro Líquido e Insights
+
+**KPIs do mês corrente:**
+- Receita Bruta (mensalidades + extras recebidos)
+- Despesas Totais (contas pagas)
+- Lucro Líquido (receita - despesas)
+- Margem de Lucro (%)
+- Contas a Vencer (próx. 30 dias)
+- Inadimplência (mensalidades em aberto)
+
+**Gráficos (recharts já instalado):**
+- Linha: evolução de receita vs despesa nos últimos 6 meses
+- Pizza: distribuição de despesas por categoria
+- Barras: lucro líquido mensal (últimos 12 meses)
+
+**Insights automáticos (regras locais, sem IA):**
+- Maior categoria de despesa do mês
+- Variação % vs mês anterior (receita, despesa, lucro)
+- Alerta se margem < 10%
+- Projeção de fechamento do mês baseado nos dias decorridos
+- Top 3 fornecedores por gasto
+- Sugestões: "Despesa de X aumentou Y% — revisar fornecedor"
+
+## Detalhes técnicos
+
+### Cálculo de Lucro Líquido
 ```text
-Geração ──► hash SHA-256 ──► persiste em `documentos_emitidos` ──► QR Code no rodapé
-                                       │
-                                       ├──► log em `documentos_auditoria` (user, IP, timestamp)
-                                       │
-Verificação pública ──► /verificar-documento?id=...&hash=... ──► Edge Function (anon)
-                                       │
-                                       └──► retorna apenas: tipo, número, data, status, hash match
+Receita Mês = soma(mensalidades_residentes.valor_total) WHERE status='pago' E mes_referencia = mês
+Despesa Mês = soma(contas_pagar.valor) WHERE status='pago' E EXTRACT(MONTH FROM data_pagamento) = mês
+Lucro Líquido = Receita - Despesa
+Margem (%) = (Lucro / Receita) * 100
 ```
 
-### 1. Banco de dados (migration)
+### Recorrência
+Trigger PG after-update em `contas_pagar`: quando `status` muda para `pago` e `recorrente=true`, inserir nova linha com `data_vencimento` somada do intervalo da `frequencia_recorrencia`.
 
-Tabela `documentos_emitidos`:
-- `id` (uuid), `tipo` (enum: contrato_residente, contrato_temporario, advertencia)
-- `referencia_id` (uuid do registro original), `referencia_tabela` (text)
-- `numero_documento` (text), `titular_nome` (text, mínimo necessário para conferência visual)
-- `hash_sha256` (text, unique), `dados_estruturais` (jsonb — campos canônicos usados no hash)
-- `emitido_por` (uuid → auth.users), `emitido_em` (timestamptz)
-- `tenant_id` (uuid)
+### Rota / Navegação
+Reutiliza `/financeiro` existente — adiciona `<Tabs>` no topo. Sidebar mantém um único item "Financeiro".
 
-Tabela `documentos_auditoria`:
-- `id`, `documento_id` → documentos_emitidos
-- `acao` (gerado, reemitido, visualizado, verificado_publico)
-- `user_id` (nullable — anon na verificação pública), `ip_origem` (inet), `user_agent` (text)
-- `criado_em` (timestamptz)
+### Permissões
+Apenas perfis `admin` e `gestor_financeiro` (via `has_role`). Demais usuários não veem a aba nem o alerta no dashboard.
 
-RLS:
-- `documentos_emitidos`: SELECT/INSERT para `authenticated` com tenant match; sem acesso `anon` direto
-- `documentos_auditoria`: INSERT amplo (via Edge Function service_role), SELECT só para admin via `has_role`
-- GRANTs explícitos para `authenticated` e `service_role` (anon nunca)
+## Etapas de entrega
+1. Migração: tabela `contas_pagar`, enums, view, trigger de recorrência, RLS + GRANTs
+2. Tipos + hook `useContasPagar.ts`
+3. Componentes da aba Contas a Pagar (lista, form, baixa)
+4. Componente Lucratividade + Insights
+5. Integração no `Financeiro.tsx` com Tabs
+6. Alerta de vencimento no Dashboard
+7. QA: cadastrar conta, dar baixa, verificar recorrência, validar lucro líquido
 
-### 2. Edge Functions
-
-- `registrar-documento` (verify_jwt=false, valida JWT em código): recebe payload canônico, calcula hash server-side via `crypto.subtle`, grava em `documentos_emitidos`, registra auditoria com IP de `x-forwarded-for`. Retorna `{ id, hash, qr_url }`.
-- `verificar-documento` (público, anon): recebe `id` + `hash`, retorna `{ autentico: bool, tipo, numero, titular_mascarado, emitido_em }`. Registra auditoria de verificação pública. **Nunca** devolve conteúdo completo.
-
-### 3. Frontend
-
-- Hook `useDocumentoAutenticidade.ts`: chama `registrar-documento`, devolve `{ id, hash, qrUrl }` para injetar no PDF.
-- Componente `RodapeAutenticidade.tsx`: renderiza QR (lib `qrcode` ou `react-qr-code` — adicionar via `bun add react-qr-code`) + hash em texto + instruções de verificação. Injetado nos três geradores de PDF.
-- Página pública `/verificar-documento` (rota em `App.tsx`, fora do `ProtectedRoute`, dentro do `PublicLayout`): formulário com `id` + `hash` (preenchidos via query string), chama edge function, mostra badge verde "Documento Autêntico" ou vermelho "Documento Inválido/Alterado" + dados mínimos.
-- Geração: antes de chamar `html2canvas`/`jsPDF`, calcular hash canônico no client (apenas para exibição imediata) e em paralelo registrar via edge function; usar o hash retornado pelo servidor como fonte de verdade no PDF.
-
-### 4. PDF/A (preservação)
-
-jsPDF não emite PDF/A nativo, mas aplicaremos as restrições viáveis:
-- Setar metadados (`setDocumentProperties`: title, author, subject, keywords, creator)
-- Embutir fonte padrão (Times) e evitar JS embutido
-- Aplicar `setEncryption` com permissões: `print` permitido, `modify`/`copy`/`annot-forms` bloqueados, owner password aleatório (não exposto)
-- Marcar no rodapé "Documento conforme padrão de arquivamento (PDF/A-like)"
-
-Observação ao usuário: PDF/A estrito exige biblioteca server-side (ex: pdf-lib + conversor). Caso queira conformidade ISO 19005 completa, propor edge function com `pdf-lib` numa segunda etapa.
-
-### 5. LGPD / RBAC
-
-- Reemissão e listagem de documentos: somente `authenticated` com role `admin` ou `gestor` (via `has_role`)
-- Logs de auditoria: somente `admin`
-- Verificação pública: expõe apenas tipo, número, data, primeiro nome + iniciais do titular, status — nunca CPF, endereço ou valores
-- Toda chamada de geração registra IP e user_id; toda verificação pública registra IP (sem user)
-
-## Entregas, em ordem
-
-1. Migration: tabelas, RLS, GRANTs, índices em `hash_sha256` e `referencia_id`
-2. Edge functions `registrar-documento` e `verificar-documento`
-3. Hook + componente de rodapé com QR
-4. Integração nos três geradores de PDF existentes + metadados/encryption
-5. Página pública `/verificar-documento` + rota
-6. Tela admin de auditoria (lista filtrada de `documentos_auditoria` por documento) — opcional na primeira entrega; confirme se deve já incluir
-
-## Pontos a confirmar antes de implementar
-
-1. Confirma os 3 documentos no escopo (contrato residente, contrato temporário, advertência)? Quer incluir mais algum?
-2. Para PDF/A: aceita a abordagem "PDF/A-like" com jsPDF (metadados + encryption) agora, e migração para pdf-lib server-side depois — ou já quer pdf-lib server-side desde já?
-3. Tela admin de auditoria entra nesta entrega ou fica para a próxima?
+## Confirmações antes de implementar
+- Categorias de despesa: a lista proposta atende, ou quer customizar?
+- Upload de comprovante de pagamento: incluir nesta versão ou deixar para depois?
+- Insights: regras locais (sem custo) atendem, ou prefere IA via Gemini (como nos outros assistentes)?
