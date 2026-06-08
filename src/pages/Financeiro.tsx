@@ -15,6 +15,10 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, AlertCircle, Plus, RefreshCw, Wallet, Loader2, Receipt } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams } from "react-router-dom";
+import ContasPagarLista from "@/components/financeiro/ContasPagarLista";
+import LucratividadeDashboard from "@/components/financeiro/LucratividadeDashboard";
 import { formatarData } from "@/utils/dateUtils";
 import { gerarReciboPDF } from "@/utils/reciboPDF";
 
