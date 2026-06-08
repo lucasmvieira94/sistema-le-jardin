@@ -502,6 +502,16 @@ export default function Financeiro() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="contas-pagar">
+          <ContasPagarLista />
+        </TabsContent>
+
+        <TabsContent value="lucratividade">
+          <LucratividadeDashboard />
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog: Pagamento */}
       <Dialog open={pagDialog.open} onOpenChange={(o) => setPagDialog({ open: o, m: o ? pagDialog.m : null })}>
