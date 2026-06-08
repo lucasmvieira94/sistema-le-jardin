@@ -58,6 +58,19 @@ const competenciaAtual = () => {
 
 export default function Financeiro() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const initialTab = tabParam === "contas-pagar" || tabParam === "lucratividade" ? tabParam : "receitas";
+  const [tab, setTab] = useState<string>(initialTab);
+  useEffect(() => {
+    const cur = searchParams.get("tab");
+    if (cur !== tab) {
+      const sp = new URLSearchParams(searchParams);
+      sp.set("tab", tab);
+      setSearchParams(sp, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
   const [loading, setLoading] = useState(true);
   const [gerando, setGerando] = useState(false);
   const [competencia, setCompetencia] = useState<string>(competenciaAtual());
