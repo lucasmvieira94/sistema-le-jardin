@@ -576,6 +576,43 @@ export default function Financeiro() {
                 <Input type="date" value={pagData} onChange={(e) => setPagData(e.target.value)} />
               </div>
             </div>
+            {pagDiasAtraso > 0 && (pagMulta > 0 || pagJuros > 0) && (
+              <div className="rounded border border-red-500/30 bg-red-500/5 p-3 text-sm space-y-1">
+                <div className="flex items-center justify-between font-medium">
+                  <span className="text-red-700">
+                    Em atraso há {pagDiasAtraso} dia{pagDiasAtraso > 1 ? "s" : ""}
+                  </span>
+                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pagCobrarMora}
+                      onChange={(e) => {
+                        const cobrar = e.target.checked;
+                        setPagCobrarMora(cobrar);
+                        if (pagDialog.m) {
+                          const base = Number(pagDialog.m.valor_mensalidade) + Number(pagDialog.m.valor_extras) - Number(pagDialog.m.valor_desconto);
+                          const pendente = Math.max(0, base - Number(pagDialog.m.valor_pago));
+                          setPagValor((pendente + (cobrar ? pagMulta + pagJuros : 0)).toFixed(2));
+                        }
+                      }}
+                    />
+                    Cobrar multa/juros
+                  </label>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Multa ({configMora.multa_atraso_percentual}%):</span>
+                  <span>{fmtBRL(pagMulta)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Juros ({configMora.juros_mora_mensal_percentual}% a.m. · {pagDiasAtraso} dia{pagDiasAtraso > 1 ? "s" : ""}):</span>
+                  <span>{fmtBRL(pagJuros)}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t pt-1">
+                  <span>Acréscimo total:</span>
+                  <span className="text-red-700">{fmtBRL(pagMulta + pagJuros)}</span>
+                </div>
+              </div>
+            )}
             <div>
               <Label>Forma de pagamento</Label>
               <Select value={pagForma} onValueChange={(v) => setPagForma(v as any)}>
