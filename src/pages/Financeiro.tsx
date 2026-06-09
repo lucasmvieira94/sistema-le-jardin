@@ -21,6 +21,7 @@ import ContasPagarLista from "@/components/financeiro/ContasPagarLista";
 import LucratividadeDashboard from "@/components/financeiro/LucratividadeDashboard";
 import { formatarData } from "@/utils/dateUtils";
 import { gerarReciboPDF } from "@/utils/reciboPDF";
+import { calcularJurosMulta, CONFIG_PADRAO, type ConfigJurosMulta } from "@/utils/jurosMulta";
 
 type Mensalidade = {
   id: string;
@@ -30,6 +31,8 @@ type Mensalidade = {
   valor_mensalidade: number;
   valor_extras: number;
   valor_desconto: number;
+  valor_multa: number;
+  valor_juros: number;
   valor_total: number;
   valor_pago: number;
   status: "pendente" | "pago" | "parcial" | "vencido" | "cancelado";
@@ -77,6 +80,7 @@ export default function Financeiro() {
   const [mensalidades, setMensalidades] = useState<Mensalidade[]>([]);
   const [residentes, setResidentes] = useState<Residente[]>([]);
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [configMora, setConfigMora] = useState<ConfigJurosMulta>(CONFIG_PADRAO);
 
   // Dialog: registrar pagamento
   const [pagDialog, setPagDialog] = useState<{ open: boolean; m: Mensalidade | null }>({ open: false, m: null });
@@ -84,6 +88,10 @@ export default function Financeiro() {
   const [pagForma, setPagForma] = useState<"pix" | "boleto" | "dinheiro">("pix");
   const [pagData, setPagData] = useState(new Date().toISOString().slice(0, 10));
   const [pagObs, setPagObs] = useState("");
+  const [pagMulta, setPagMulta] = useState(0);
+  const [pagJuros, setPagJuros] = useState(0);
+  const [pagDiasAtraso, setPagDiasAtraso] = useState(0);
+  const [pagCobrarMora, setPagCobrarMora] = useState(true);
 
   // Dialog: nova cobrança manual
   const [novaDialog, setNovaDialog] = useState(false);
@@ -100,7 +108,7 @@ export default function Financeiro() {
 
   const carregar = async () => {
     setLoading(true);
-    const [mensRes, resiRes] = await Promise.all([
+    const [mensRes, resiRes, cfgRes] = await Promise.all([
       (supabase as any)
         .from("mensalidades_residentes")
         .select("*")
@@ -111,10 +119,23 @@ export default function Financeiro() {
         .select("id, nome_completo, numero_prontuario")
         .eq("ativo", true)
         .order("nome_completo"),
+      (supabase as any)
+        .from("configuracoes_empresa")
+        .select("cobrar_juros_multa, multa_atraso_percentual, juros_mora_mensal_percentual, dias_carencia_atraso")
+        .limit(1)
+        .maybeSingle(),
     ]);
     if (mensRes.error) toast({ title: "Erro ao carregar mensalidades", description: mensRes.error.message, variant: "destructive" });
     setMensalidades((mensRes.data as any) ?? []);
     setResidentes((resiRes.data as any) ?? []);
+    if (cfgRes?.data) {
+      setConfigMora({
+        cobrar_juros_multa: cfgRes.data.cobrar_juros_multa ?? true,
+        multa_atraso_percentual: Number(cfgRes.data.multa_atraso_percentual ?? 2),
+        juros_mora_mensal_percentual: Number(cfgRes.data.juros_mora_mensal_percentual ?? 1),
+        dias_carencia_atraso: Number(cfgRes.data.dias_carencia_atraso ?? 0),
+      });
+    }
     setLoading(false);
   };
 
@@ -162,8 +183,16 @@ export default function Financeiro() {
   };
 
   const abrirPagamento = (m: Mensalidade) => {
-    const pendente = Number(m.valor_total) - Number(m.valor_pago);
-    setPagValor(pendente.toFixed(2));
+    // Saldo "limpo" (sem multa/juros já incluídos no total) para base do cálculo de mora.
+    const baseSemMora =
+      Number(m.valor_mensalidade) + Number(m.valor_extras) - Number(m.valor_desconto);
+    const pendenteSemMora = Math.max(0, baseSemMora - Number(m.valor_pago));
+    const mora = calcularJurosMulta(pendenteSemMora, m.data_vencimento, new Date(), configMora);
+    setPagDiasAtraso(mora.diasAtraso);
+    setPagCobrarMora(mora.total > 0);
+    setPagMulta(mora.multa);
+    setPagJuros(mora.juros);
+    setPagValor((pendenteSemMora + mora.total).toFixed(2));
     setPagForma("pix");
     setPagData(new Date().toISOString().slice(0, 10));
     setPagObs(m.observacoes ?? "");
@@ -173,11 +202,15 @@ export default function Financeiro() {
   const registrarPagamento = async () => {
     if (!pagDialog.m) return;
     const valorRecebido = Number(pagValor || 0);
+    const multaAplicar = pagCobrarMora ? Number(pagMulta || 0) : 0;
+    const jurosAplicar = pagCobrarMora ? Number(pagJuros || 0) : 0;
     const novoPago = Number(pagDialog.m.valor_pago) + valorRecebido;
     const { error } = await (supabase as any)
       .from("mensalidades_residentes")
       .update({
         valor_pago: novoPago,
+        valor_multa: Number(pagDialog.m.valor_multa || 0) + multaAplicar,
+        valor_juros: Number(pagDialog.m.valor_juros || 0) + jurosAplicar,
         forma_pagamento: pagForma,
         data_pagamento: pagData,
         observacoes: pagObs || null,
@@ -200,7 +233,15 @@ export default function Financeiro() {
         valorMensalidade: Number(pagDialog.m.valor_mensalidade),
         valorExtras: Number(pagDialog.m.valor_extras),
         valorDesconto: Number(pagDialog.m.valor_desconto),
-        valorTotal: Number(pagDialog.m.valor_total),
+        valorMulta: Number(pagDialog.m.valor_multa || 0) + multaAplicar,
+        valorJuros: Number(pagDialog.m.valor_juros || 0) + jurosAplicar,
+        diasAtraso: pagDiasAtraso,
+        valorTotal:
+          Number(pagDialog.m.valor_mensalidade) +
+          Number(pagDialog.m.valor_extras) -
+          Number(pagDialog.m.valor_desconto) +
+          Number(pagDialog.m.valor_multa || 0) + multaAplicar +
+          Number(pagDialog.m.valor_juros || 0) + jurosAplicar,
         valorPago: valorRecebido,
         formaPagamento: pagForma,
         numeroRecibo: `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`,
@@ -225,6 +266,8 @@ export default function Financeiro() {
         valorMensalidade: Number(m.valor_mensalidade),
         valorExtras: Number(m.valor_extras),
         valorDesconto: Number(m.valor_desconto),
+        valorMulta: Number(m.valor_multa || 0),
+        valorJuros: Number(m.valor_juros || 0),
         valorTotal: Number(m.valor_total),
         valorPago: Number(m.valor_pago),
         formaPagamento: m.forma_pagamento,
@@ -533,6 +576,43 @@ export default function Financeiro() {
                 <Input type="date" value={pagData} onChange={(e) => setPagData(e.target.value)} />
               </div>
             </div>
+            {pagDiasAtraso > 0 && (pagMulta > 0 || pagJuros > 0) && (
+              <div className="rounded border border-red-500/30 bg-red-500/5 p-3 text-sm space-y-1">
+                <div className="flex items-center justify-between font-medium">
+                  <span className="text-red-700">
+                    Em atraso há {pagDiasAtraso} dia{pagDiasAtraso > 1 ? "s" : ""}
+                  </span>
+                  <label className="flex items-center gap-1 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={pagCobrarMora}
+                      onChange={(e) => {
+                        const cobrar = e.target.checked;
+                        setPagCobrarMora(cobrar);
+                        if (pagDialog.m) {
+                          const base = Number(pagDialog.m.valor_mensalidade) + Number(pagDialog.m.valor_extras) - Number(pagDialog.m.valor_desconto);
+                          const pendente = Math.max(0, base - Number(pagDialog.m.valor_pago));
+                          setPagValor((pendente + (cobrar ? pagMulta + pagJuros : 0)).toFixed(2));
+                        }
+                      }}
+                    />
+                    Cobrar multa/juros
+                  </label>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Multa ({configMora.multa_atraso_percentual}%):</span>
+                  <span>{fmtBRL(pagMulta)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Juros ({configMora.juros_mora_mensal_percentual}% a.m. · {pagDiasAtraso} dia{pagDiasAtraso > 1 ? "s" : ""}):</span>
+                  <span>{fmtBRL(pagJuros)}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t pt-1">
+                  <span>Acréscimo total:</span>
+                  <span className="text-red-700">{fmtBRL(pagMulta + pagJuros)}</span>
+                </div>
+              </div>
+            )}
             <div>
               <Label>Forma de pagamento</Label>
               <Select value={pagForma} onValueChange={(v) => setPagForma(v as any)}>

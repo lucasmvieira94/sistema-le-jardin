@@ -803,7 +803,9 @@ export type Database = {
           adicional_noturno: number | null
           cidade: string | null
           cnpj: string | null
+          cobrar_juros_multa: boolean
           created_at: string | null
+          dias_carencia_atraso: number
           dominio_email: string | null
           endereco: string | null
           geofence_ativo: boolean
@@ -814,7 +816,9 @@ export type Database = {
           hora_inicio_noturno: string | null
           id: string
           intervalo_minimo_minutos: number | null
+          juros_mora_mensal_percentual: number
           logo_url: string | null
+          multa_atraso_percentual: number
           nome_empresa: string
           tenant_id: string | null
           updated_at: string | null
@@ -825,7 +829,9 @@ export type Database = {
           adicional_noturno?: number | null
           cidade?: string | null
           cnpj?: string | null
+          cobrar_juros_multa?: boolean
           created_at?: string | null
+          dias_carencia_atraso?: number
           dominio_email?: string | null
           endereco?: string | null
           geofence_ativo?: boolean
@@ -836,7 +842,9 @@ export type Database = {
           hora_inicio_noturno?: string | null
           id?: string
           intervalo_minimo_minutos?: number | null
+          juros_mora_mensal_percentual?: number
           logo_url?: string | null
+          multa_atraso_percentual?: number
           nome_empresa: string
           tenant_id?: string | null
           updated_at?: string | null
@@ -847,7 +855,9 @@ export type Database = {
           adicional_noturno?: number | null
           cidade?: string | null
           cnpj?: string | null
+          cobrar_juros_multa?: boolean
           created_at?: string | null
+          dias_carencia_atraso?: number
           dominio_email?: string | null
           endereco?: string | null
           geofence_ativo?: boolean
@@ -858,7 +868,9 @@ export type Database = {
           hora_inicio_noturno?: string | null
           id?: string
           intervalo_minimo_minutos?: number | null
+          juros_mora_mensal_percentual?: number
           logo_url?: string | null
+          multa_atraso_percentual?: number
           nome_empresa?: string
           tenant_id?: string | null
           updated_at?: string | null
@@ -2820,7 +2832,9 @@ export type Database = {
           updated_at: string
           valor_desconto: number
           valor_extras: number
+          valor_juros: number
           valor_mensalidade: number
+          valor_multa: number
           valor_pago: number
           valor_total: number
         }
@@ -2840,7 +2854,9 @@ export type Database = {
           updated_at?: string
           valor_desconto?: number
           valor_extras?: number
+          valor_juros?: number
           valor_mensalidade?: number
+          valor_multa?: number
           valor_pago?: number
           valor_total?: number
         }
@@ -2860,7 +2876,9 @@ export type Database = {
           updated_at?: string
           valor_desconto?: number
           valor_extras?: number
+          valor_juros?: number
           valor_mensalidade?: number
+          valor_multa?: number
           valor_pago?: number
           valor_total?: number
         }
