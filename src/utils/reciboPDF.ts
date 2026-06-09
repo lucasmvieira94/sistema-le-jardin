@@ -14,6 +14,9 @@ export type ReciboPagamento = {
   valorMensalidade: number;
   valorExtras: number;
   valorDesconto: number;
+  valorMulta?: number;
+  valorJuros?: number;
+  diasAtraso?: number;
   valorTotal: number;
   valorPago: number;
   formaPagamento: string | null;
@@ -330,6 +333,14 @@ export async function gerarReciboPDF(r: ReciboPagamento) {
     });
   } else if (r.valorDesconto > 0) {
     linha("Descontos", -r.valorDesconto);
+  }
+  // Multa por atraso e juros de mora — discriminados quando aplicáveis.
+  if (r.valorMulta && r.valorMulta > 0) {
+    linha("Multa por atraso", r.valorMulta);
+  }
+  if (r.valorJuros && r.valorJuros > 0) {
+    const sufixo = r.diasAtraso ? ` (${r.diasAtraso} dia${r.diasAtraso > 1 ? "s" : ""})` : "";
+    linha(`Juros de mora${sufixo}`, r.valorJuros);
   }
   doc.setDrawColor(200);
   doc.line(margin, y - 2, pageW - margin, y - 2);
