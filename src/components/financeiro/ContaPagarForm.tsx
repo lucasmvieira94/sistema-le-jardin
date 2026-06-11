@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { CATEGORIAS, FREQUENCIAS, type ContaPagar } from "@/hooks/financeiro/useContasPagar";
+import { useTenant } from "@/hooks/useTenant";
 
 type Props = {
   open: boolean;
@@ -19,6 +20,7 @@ type Props = {
 
 export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: Props) {
   const { toast } = useToast();
+  const { tenantId } = useTenant();
   const [saving, setSaving] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("outros");
@@ -65,6 +67,7 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
     } else {
       const { data: u } = await supabase.auth.getUser();
       payload.criado_por = u?.user?.id ?? null;
+      payload.tenant_id = tenantId ?? null;
       const r = await (supabase as any).from("contas_pagar").insert(payload);
       error = r.error;
     }
