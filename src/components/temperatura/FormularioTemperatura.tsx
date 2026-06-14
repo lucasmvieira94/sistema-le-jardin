@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Thermometer, MapPin, User, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
-import { horarioAtualCurto, formatarData as formatarDataUtil } from "@/utils/dateUtils";
+import { horarioAtualCurto, hojeExtenso } from "@/utils/dateUtils";
 import { ptBR } from "date-fns/locale";
 import CodigoFuncionarioInput from "@/components/CodigoFuncionarioInput";
 import { useTemperatura } from "@/hooks/useTemperatura";
@@ -131,7 +131,7 @@ export function FormularioTemperatura({ onSuccess, funcionarioId, funcionarioNom
                   <FormLabel>Data do Registro</FormLabel>
                   <div className="flex items-center p-3 border rounded-md bg-gray-50">
                     <CalendarIcon className="h-4 w-4 mr-2" />
-                    {formatarDataUtil(new Date().toISOString())}
+                    {hojeExtenso()}
                   </div>
                 </div>
 

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
+import { hojeISO, horarioAtual } from "@/utils/dateUtils";
 
 interface Residente {
   id: string;
@@ -98,14 +98,13 @@ export default function NovoRegistroForm({
     setLoading(true);
     
     try {
-      const agora = new Date();
       const { error } = await supabase
         .from('prontuario_registros')
         .insert({
           residente_id: formData.residente_id,
           funcionario_id: funcionarioId,
-          data_registro: format(agora, 'yyyy-MM-dd'),
-          horario_registro: format(agora, 'HH:mm:ss'),
+          data_registro: hojeISO(),
+          horario_registro: horarioAtual(),
           tipo_registro: formData.tipo_registro,
           titulo: formData.titulo,
           descricao: formData.descricao,
