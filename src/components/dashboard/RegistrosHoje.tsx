@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, getDay } from "date-fns";
-import { hojeISO } from "@/utils/dateUtils";
+import { hojeISO, agora, parseDataLocal } from "@/utils/dateUtils";
 
 interface RegistroHoje {
   funcionario_nome: string;
@@ -15,7 +15,7 @@ interface RegistroHoje {
 
 // Função para verificar se o funcionário está de folga baseado na escala
 function isFuncionarioEmFolga(jornadaTrabalho: string, dataInicioVigencia: string, dataHoje: Date): boolean {
-  const inicioVigencia = new Date(dataInicioVigencia);
+  const inicioVigencia = parseDataLocal(dataInicioVigencia);
   const diasDecorridos = differenceInDays(dataHoje, inicioVigencia);
   const diaSemana = getDay(dataHoje); // 0 = domingo, 1 = segunda, etc.
 
@@ -84,7 +84,7 @@ export default function RegistrosHoje() {
             const jornadaTrabalho = func.escalas?.jornada_trabalho;
             const dataInicioVigencia = func.data_inicio_vigencia;
             const estaEmFolga = jornadaTrabalho && dataInicioVigencia 
-              ? isFuncionarioEmFolga(jornadaTrabalho, dataInicioVigencia, new Date())
+              ? isFuncionarioEmFolga(jornadaTrabalho, dataInicioVigencia, agora())
               : false;
             
             // Só incluir se NÃO está de folga
