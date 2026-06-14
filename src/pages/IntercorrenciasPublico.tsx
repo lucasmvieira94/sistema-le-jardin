@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useIntercorrencias, IntercorrenciaLog } from '@/hooks/useIntercorrencias';
 import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
 import { UploadImagensIntercorrencia } from '@/components/intercorrencias/UploadImagensIntercorrencia';
+import { formatarTimestampData, formatarTimestampDataHora } from '@/utils/formatTimestamp';
 
 const CATEGORIAS = [
   { value: 'saude_residente', label: 'Saúde do Residente', icon: '🏥' },
@@ -401,7 +402,7 @@ export default function IntercorrenciasPublico() {
                         {item.prazo_resolucao && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                             <Clock className="w-3 h-3" />
-                            Prazo: {new Date(item.prazo_resolucao).toLocaleDateString('pt-BR')}
+                            Prazo: {formatarTimestampData(item.prazo_resolucao)}
                           </div>
                         )}
 
@@ -413,10 +414,7 @@ export default function IntercorrenciasPublico() {
                             <p className="text-xs text-foreground">{item.feedback_gestor}</p>
                             {item.feedback_data && (
                               <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(item.feedback_data).toLocaleDateString('pt-BR', {
-                                  day: '2-digit', month: '2-digit', year: 'numeric',
-                                  hour: '2-digit', minute: '2-digit'
-                                })}
+                                {formatarTimestampDataHora(item.feedback_data)}
                               </p>
                             )}
                           </div>
@@ -424,10 +422,7 @@ export default function IntercorrenciasPublico() {
 
                         <div className="flex justify-between items-center mt-3 pt-2 border-t border-border/50">
                           <span className="text-xs text-muted-foreground">
-                            {new Date(item.created_at).toLocaleDateString('pt-BR', {
-                              day: '2-digit', month: '2-digit', year: 'numeric',
-                              hour: '2-digit', minute: '2-digit'
-                            })}
+                            {formatarTimestampDataHora(item.created_at)}
                           </span>
                           <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => handleViewLogs(item.id)}>
                             Ver Histórico
@@ -457,10 +452,7 @@ export default function IntercorrenciasPublico() {
                     <div key={log.id} className="border-l-2 border-primary pl-3 py-1.5">
                       <p className="text-sm font-medium">{log.descricao}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {log.usuario_nome} ({log.usuario_tipo === 'funcionario' ? 'Funcionário' : 'Gestor'}) — {new Date(log.created_at).toLocaleDateString('pt-BR', {
-                          day: '2-digit', month: '2-digit', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit'
-                        })}
+                        {log.usuario_nome} ({log.usuario_tipo === 'funcionario' ? 'Funcionário' : 'Gestor'}) — {formatarTimestampDataHora(log.created_at)}
                       </p>
                     </div>
                   ))

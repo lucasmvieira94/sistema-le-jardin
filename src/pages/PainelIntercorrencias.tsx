@@ -15,6 +15,7 @@ import { useIntercorrencias, Intercorrencia, IntercorrenciaLog } from '@/hooks/u
 import { useSupervisorDashboardData } from '@/hooks/useSupervisorDashboardData';
 import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
 import AssistenteSupervisorChat from '@/components/supervisor/AssistenteSupervisorChat';
+import { formatarTimestampData, formatarTimestampDataHora } from '@/utils/formatTimestamp';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: string }> = {
   aberta: { label: 'Aberta', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: '🔵' },
@@ -258,7 +259,7 @@ export default function PainelIntercorrencias() {
                                 <Badge variant="outline" className="text-[10px]">{m.quantidade_atual}/{m.quantidade_minima}</Badge>
                               </div>
                               {m.data_validade && (
-                                <p className="text-xs text-gray-500">Validade: {new Date(m.data_validade).toLocaleDateString('pt-BR')}</p>
+                                <p className="text-xs text-gray-500">Validade: {formatarTimestampData(m.data_validade)}</p>
                               )}
                             </div>
                           ))}
@@ -377,9 +378,9 @@ export default function PainelIntercorrencias() {
                           <div className="flex items-center gap-2 text-xs text-gray-400">
                             {isOverdue && <span className="text-red-600 font-semibold flex items-center gap-1"><Clock className="w-3 h-3" /> ATRASADA</span>}
                             {item.prazo_resolucao && !isOverdue && (
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(item.prazo_resolucao).toLocaleDateString('pt-BR')}</span>
+                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatarTimestampData(item.prazo_resolucao)}</span>
                             )}
-                            <span>{new Date(item.created_at).toLocaleDateString('pt-BR')}</span>
+                            <span>{formatarTimestampData(item.created_at)}</span>
                           </div>
                         </div>
                       </CardContent>
@@ -423,7 +424,7 @@ export default function PainelIntercorrencias() {
                     {selectedItem.residentes && ` • Residente: ${(selectedItem.residentes as any)?.nome_completo || 'N/A'}`}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {new Date(selectedItem.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {formatarTimestampDataHora(selectedItem.created_at)}
                   </p>
                 </div>
 
@@ -491,7 +492,7 @@ export default function PainelIntercorrencias() {
                           <div key={log.id} className="border-l-2 border-indigo-400 pl-3 py-1">
                             <p className="text-sm text-gray-700">{log.descricao}</p>
                             <p className="text-xs text-gray-400">
-                              {log.usuario_nome} — {new Date(log.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              {log.usuario_nome} — {formatarTimestampDataHora(log.created_at)}
                             </p>
                           </div>
                         ))
