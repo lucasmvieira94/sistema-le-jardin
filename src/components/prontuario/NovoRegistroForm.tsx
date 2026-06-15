@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { hojeISO, horarioAtual } from "@/utils/dateUtils";
+import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
 
 interface Residente {
   id: string;
@@ -49,6 +50,9 @@ export default function NovoRegistroForm({
     template_id: ""
   });
   const [loading, setLoading] = useState(false);
+  const [temBiometria, setTemBiometria] = useState(false);
+  const [funcionarioNome, setFuncionarioNome] = useState("");
+  const [biometriaOpen, setBiometriaOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchTemplates = async () => {
@@ -70,6 +74,20 @@ export default function NovoRegistroForm({
     fetchTemplates();
   }, []);
 
+  // Verifica se o funcionário tem biometria cadastrada
+  useEffect(() => {
+    if (!funcionarioId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('funcionarios')
+        .select('nome, biometria_facial')
+        .eq('id', funcionarioId)
+        .single();
+      setTemBiometria(!!(data as any)?.biometria_facial);
+      setFuncionarioNome((data as any)?.nome || "");
+    })();
+  }, [funcionarioId]);
+
   const handleTemplateSelect = (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
     if (template) {
@@ -83,20 +101,8 @@ export default function NovoRegistroForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.residente_id || !formData.tipo_registro || !formData.titulo || !formData.descricao) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const salvarRegistro = async () => {
     setLoading(true);
-    
     try {
       const { error } = await supabase
         .from('prontuario_registros')
@@ -124,6 +130,27 @@ export default function NovoRegistroForm({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.residente_id || !formData.tipo_registro || !formData.titulo || !formData.descricao) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Se possui biometria cadastrada, exige validação facial antes de salvar
+    if (temBiometria) {
+      setBiometriaOpen(true);
+      return;
+    }
+
+    await salvarRegistro();
   };
 
   const tiposRegistro = [
@@ -278,6 +305,18 @@ export default function NovoRegistroForm({
           </div>
         </form>
       </CardContent>
+
+      <ValidacaoBiometricaDialog
+        open={biometriaOpen}
+        onOpenChange={setBiometriaOpen}
+        funcionarioId={funcionarioId}
+        funcionarioNome={funcionarioNome}
+        contexto="prontuario"
+        onValidado={() => {
+          setBiometriaOpen(false);
+          salvarRegistro();
+        }}
+      />
     </Card>
   );
 }
