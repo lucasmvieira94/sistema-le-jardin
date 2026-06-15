@@ -657,6 +657,53 @@ export type Database = {
           },
         ]
       }
+      biometria_validacoes_log: {
+        Row: {
+          contexto: string
+          created_at: string
+          distancia: number | null
+          funcionario_id: string | null
+          id: string
+          ip_address: string | null
+          sucesso: boolean
+          tenant_id: string | null
+          threshold: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          contexto: string
+          created_at?: string
+          distancia?: number | null
+          funcionario_id?: string | null
+          id?: string
+          ip_address?: string | null
+          sucesso: boolean
+          tenant_id?: string | null
+          threshold?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          contexto?: string
+          created_at?: string
+          distancia?: number | null
+          funcionario_id?: string | null
+          id?: string
+          ip_address?: string | null
+          sucesso?: boolean
+          tenant_id?: string | null
+          threshold?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biometria_validacoes_log_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalogo_vacinas: {
         Row: {
           ativo: boolean
@@ -2026,6 +2073,9 @@ export type Database = {
           acesso_supervisor: boolean
           ativo: boolean
           aviso_previo: boolean
+          biometria_cadastrada_em: string | null
+          biometria_facial: Json | null
+          biometria_obrigatoria: boolean
           codigo_4_digitos: string
           cpf: string
           created_at: string
@@ -2056,6 +2106,9 @@ export type Database = {
           acesso_supervisor?: boolean
           ativo?: boolean
           aviso_previo?: boolean
+          biometria_cadastrada_em?: string | null
+          biometria_facial?: Json | null
+          biometria_obrigatoria?: boolean
           codigo_4_digitos: string
           cpf: string
           created_at?: string
@@ -2086,6 +2139,9 @@ export type Database = {
           acesso_supervisor?: boolean
           ativo?: boolean
           aviso_previo?: boolean
+          biometria_cadastrada_em?: string | null
+          biometria_facial?: Json | null
+          biometria_obrigatoria?: boolean
           codigo_4_digitos?: string
           cpf?: string
           created_at?: string
