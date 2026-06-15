@@ -18,6 +18,7 @@ import { useIntercorrencias, IntercorrenciaLog } from '@/hooks/useIntercorrencia
 import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
 import { UploadImagensIntercorrencia } from '@/components/intercorrencias/UploadImagensIntercorrencia';
 import { formatarTimestampData, formatarTimestampDataHora } from '@/utils/formatTimestamp';
+import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometricaDialog';
 
 const CATEGORIAS = [
   { value: 'saude_residente', label: 'Saúde do Residente', icon: '🏥' },
@@ -69,6 +70,21 @@ export default function IntercorrenciasPublico() {
   const [imagens, setImagens] = useState<string[]>([]);
   const [selectedLogs, setSelectedLogs] = useState<IntercorrenciaLog[]>([]);
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
+  const [temBiometria, setTemBiometria] = useState(false);
+  const [biometriaOpen, setBiometriaOpen] = useState(false);
+
+  // Verifica se o funcionário tem biometria cadastrada
+  useEffect(() => {
+    if (!funcionarioId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('funcionarios')
+        .select('biometria_facial')
+        .eq('id', funcionarioId)
+        .single();
+      setTemBiometria(!!(data as any)?.biometria_facial);
+    })();
+  }, [funcionarioId]);
 
   useEffect(() => {
     const fetchResidentes = async () => {
@@ -91,8 +107,7 @@ export default function IntercorrenciasPublico() {
     r.nome_completo.toLowerCase().includes(residenteSearch.toLowerCase())
   );
 
-  const handleSubmit = async () => {
-    if (!titulo.trim() || !descricao.trim() || !categoria) return;
+  const persistirIntercorrencia = async () => {
     setSubmitting(true);
     const idsToUse = residenteIds.length > 0 ? residenteIds : [null];
     let success = true;
@@ -119,6 +134,16 @@ export default function IntercorrenciasPublico() {
       setShowForm(false);
     }
     setSubmitting(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!titulo.trim() || !descricao.trim() || !categoria) return;
+    // Se possui biometria cadastrada, exige validação facial antes de registrar
+    if (temBiometria) {
+      setBiometriaOpen(true);
+      return;
+    }
+    await persistirIntercorrencia();
   };
 
   const handleViewLogs = async (intercorrenciaId: string) => {
