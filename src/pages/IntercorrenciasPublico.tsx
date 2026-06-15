@@ -487,6 +487,18 @@ export default function IntercorrenciasPublico() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <ValidacaoBiometricaDialog
+        open={biometriaOpen}
+        onOpenChange={setBiometriaOpen}
+        funcionarioId={funcionarioId}
+        funcionarioNome={funcionarioNome}
+        contexto="intercorrencia"
+        onValidado={() => {
+          setBiometriaOpen(false);
+          persistirIntercorrencia();
+        }}
+      />
     </div>
   );
 }
