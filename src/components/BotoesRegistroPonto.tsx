@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { formatInTimeZone } from 'date-fns-tz';
 import { validarGeofence, type GeofenceConfig } from '@/utils/geofence';
+import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometricaDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,6 +77,9 @@ export default function BotoesRegistroPonto({
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
   const [geofenceConfig, setGeofenceConfig] = useState<GeofenceConfig | null>(null);
+  const [biometriaOpen, setBiometriaOpen] = useState(false);
+  const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
+  const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
@@ -147,6 +151,19 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
+  // Verifica se o funcionário tem biometria cadastrada
+  useEffect(() => {
+    if (!funcionarioId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('funcionarios')
+        .select('biometria_facial')
+        .eq('id', funcionarioId)
+        .single();
+      setTemBiometriaCadastrada(!!(data as any)?.biometria_facial);
+    })();
+  }, [funcionarioId]);
+
   // Carrega a configuração de geofence
   useEffect(() => {
     const carregarGeofence = async () => {
@@ -169,7 +186,12 @@ export default function BotoesRegistroPonto({
     carregarGeofence();
   }, []);
 
-  const registrarPonto = async (tipo: TipoRegistro) => {
+  /**
+   * Executa de fato o registro de ponto após todas as validações.
+   * Extraído para poder ser chamado tanto direto (sem biometria) quanto
+   * após o callback de validação facial bem-sucedida.
+   */
+  const executarRegistro = async (tipo: TipoRegistro) => {
     // Validação de geofence antes de qualquer ação
     const validacao = validarGeofence(geofenceConfig, latitude, longitude);
     if (!validacao.permitido) {
@@ -315,6 +337,19 @@ export default function BotoesRegistroPonto({
       });
     } finally {
       setRegistrando(null);
+    }
+  };
+
+  /**
+   * Entrypoint dos botões. Se o funcionário tem biometria cadastrada,
+   * abre o dialog de validação facial antes de registrar.
+   */
+  const registrarPonto = (tipo: TipoRegistro) => {
+    if (temBiometriaCadastrada) {
+      setTipoPendente(tipo);
+      setBiometriaOpen(true);
+    } else {
+      executarRegistro(tipo);
     }
   };
 
@@ -478,6 +513,23 @@ export default function BotoesRegistroPonto({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Validação biométrica */}
+      <ValidacaoBiometricaDialog
+        open={biometriaOpen}
+        onOpenChange={setBiometriaOpen}
+        funcionarioId={funcionarioId}
+        funcionarioNome={funcionarioNome}
+        contexto="registro_ponto"
+        onValidado={() => {
+          if (tipoPendente) {
+            const t = tipoPendente;
+            setTipoPendente(null);
+            executarRegistro(t);
+          }
+        }}
+        onCancelado={() => setTipoPendente(null)}
+      />
     </div>
   );
 }

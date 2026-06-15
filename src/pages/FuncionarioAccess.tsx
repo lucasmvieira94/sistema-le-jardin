@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import careLogo from "@/assets/logo-senex-care-new.png";
 import PainelLembretes from "@/components/lembretes/PainelLembretes";
 import ChatLembretes from "@/components/lembretes/ChatLembretes";
+import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
+import { toast } from "@/components/ui/use-toast";
 
 const SESSION_KEY = 'funcionario_session';
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas em ms
@@ -54,6 +56,14 @@ export default function FuncionarioAccess() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [companyName, setCompanyName] = useState<string>('Sistema de Gestão');
   const [companyLogo, setCompanyLogo] = useState<string>('');
+  // Estado para validação biométrica após PIN
+  const [pendingBiometria, setPendingBiometria] = useState<null | {
+    id: string;
+    nome: string;
+    registraPonto: boolean;
+    acessoSupervisor: boolean;
+  }>(null);
+  const [biometriaOpen, setBiometriaOpen] = useState(false);
 
   // Auto-expire session every minute
   useEffect(() => {
@@ -108,16 +118,14 @@ export default function FuncionarioAccess() {
   }, []);
 
   const handleFuncionarioValidado = async (id: string, nome: string) => {
-    setFuncionarioId(id);
-    setFuncionarioNome(nome);
-    
     let registraPonto = true;
     let acessoSupervisor = false;
+    let temBiometria = false;
 
     try {
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('registra_ponto, acesso_supervisor')
+        .select('registra_ponto, acesso_supervisor, biometria_facial')
         .eq('id', id)
         .single();
       
@@ -126,21 +134,50 @@ export default function FuncionarioAccess() {
       } else {
         registraPonto = data.registra_ponto;
         acessoSupervisor = (data as any).acesso_supervisor ?? false;
+        temBiometria = !!(data as any).biometria_facial;
       }
     } catch (error) {
       console.error('Erro ao buscar funcionário:', error);
     }
 
+    // Se possui biometria cadastrada, exige validação facial antes de liberar a sessão
+    if (temBiometria) {
+      setPendingBiometria({ id, nome, registraPonto, acessoSupervisor });
+      setBiometriaOpen(true);
+      return;
+    }
+
+    // Sem biometria cadastrada — libera direto (compatibilidade)
+    setFuncionarioId(id);
+    setFuncionarioNome(nome);
     setFuncionarioRegistraPonto(registraPonto);
     setFuncionarioAcessoSupervisor(acessoSupervisor);
-
-    // Salvar sessão com timestamp
     saveSession({
       id,
       nome,
       registraPonto,
       acessoSupervisor,
       timestamp: Date.now(),
+    });
+  };
+
+  const concluirLoginAposBiometria = () => {
+    if (!pendingBiometria) return;
+    const { id, nome, registraPonto, acessoSupervisor } = pendingBiometria;
+    setFuncionarioId(id);
+    setFuncionarioNome(nome);
+    setFuncionarioRegistraPonto(registraPonto);
+    setFuncionarioAcessoSupervisor(acessoSupervisor);
+    saveSession({ id, nome, registraPonto, acessoSupervisor, timestamp: Date.now() });
+    setPendingBiometria(null);
+  };
+
+  const cancelarLogin = () => {
+    setPendingBiometria(null);
+    toast({
+      variant: 'destructive',
+      title: 'Acesso negado',
+      description: 'Validação biométrica é obrigatória para este funcionário.',
     });
   };
 
@@ -221,6 +258,7 @@ export default function FuncionarioAccess() {
 
   if (!funcionarioId) {
     return (
+      <>
       <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center p-2 sm:p-4">
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8 w-full max-w-md">
           <div className="text-center mb-6 sm:mb-8 -mt-2">
@@ -276,6 +314,18 @@ export default function FuncionarioAccess() {
           </div>
         </div>
       </div>
+      {pendingBiometria && (
+        <ValidacaoBiometricaDialog
+          open={biometriaOpen}
+          onOpenChange={setBiometriaOpen}
+          funcionarioId={pendingBiometria.id}
+          funcionarioNome={pendingBiometria.nome}
+          contexto="login_portal"
+          onValidado={concluirLoginAposBiometria}
+          onCancelado={cancelarLogin}
+        />
+      )}
+      </>
     );
   }
 
