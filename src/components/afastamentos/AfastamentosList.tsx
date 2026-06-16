@@ -143,18 +143,42 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Ações</TableHead>
               <TableHead>Funcionário</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Período</TableHead>
               <TableHead>Data/Hora</TableHead>
               <TableHead>Duração</TableHead>
               <TableHead>Observações</TableHead>
-              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {afastamentos.map((afastamento) => (
               <TableRow key={afastamento.id}>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditId(afastamento.id);
+                        setEditOpen(true);
+                      }}
+                      aria-label="Editar"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteId(afastamento.id)}
+                      className="text-red-600 hover:text-red-700"
+                      aria-label="Excluir"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
                 <TableCell className="font-medium">
                   {afastamento.funcionario_nome}
                 </TableCell>
@@ -190,30 +214,6 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
                 </TableCell>
                 <TableCell className="max-w-xs truncate">
                   {afastamento.observacoes || "-"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditId(afastamento.id);
-                        setEditOpen(true);
-                      }}
-                      aria-label="Editar"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteId(afastamento.id)}
-                      className="text-red-600 hover:text-red-700"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
                 </TableCell>
               </TableRow>
             ))}
