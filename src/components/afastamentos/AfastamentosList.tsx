@@ -143,13 +143,13 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Ações</TableHead>
               <TableHead>Funcionário</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Período</TableHead>
               <TableHead>Data/Hora</TableHead>
               <TableHead>Duração</TableHead>
               <TableHead>Observações</TableHead>
-              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
