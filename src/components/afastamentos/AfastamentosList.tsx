@@ -5,8 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { useAuditLog } from "@/hooks/useAuditLog";
+import EditarAfastamentoDialog from "./EditarAfastamentoDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Afastamento {
   id: string;
@@ -31,6 +43,10 @@ export interface AfastamentosListRef {
 const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
   const [afastamentos, setAfastamentos] = useState<Afastamento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { logEvent } = useAuditLog();
 
   useImperativeHandle(ref, () => ({
     fetchAfastamentos
@@ -78,18 +94,22 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
   }
 
   async function deleteAfastamento(id: string) {
-    if (!confirm("Tem certeza que deseja excluir este afastamento?")) {
-      return;
-    }
-
     try {
-      const { error } = await supabase.from("afastamentos").delete().eq("id", id);
+      // Buscar registro completo para auditoria antes da exclusão
+      const { data: anterior } = await supabase
+        .from("afastamentos")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
 
+      const { error } = await supabase.from("afastamentos").delete().eq("id", id);
       if (error) throw error;
+
+      await logEvent("afastamentos", "DELETE", anterior, null);
 
       toast({
         title: "Afastamento excluído!",
-        description: "O afastamento foi excluído com sucesso.",
+        description: "O afastamento foi excluído e registrado na auditoria.",
       });
 
       fetchAfastamentos();
@@ -99,6 +119,8 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
         title: "Erro ao excluir afastamento",
         description: error?.message,
       });
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -170,20 +192,61 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
                   {afastamento.observacoes || "-"}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteAfastamento(afastamento.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditId(afastamento.id);
+                        setEditOpen(true);
+                      }}
+                      aria-label="Editar"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteId(afastamento.id)}
+                      className="text-red-600 hover:text-red-700"
+                      aria-label="Excluir"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <EditarAfastamentoDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        afastamentoId={editId}
+        onSaved={fetchAfastamentos}
+      />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir afastamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O evento será registrado na auditoria.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteId && deleteAfastamento(deleteId)}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 });
