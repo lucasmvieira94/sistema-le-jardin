@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check, MapPinOff } from 'lucide-react';
+import { LogIn, LogOut, PauseCircle, PlayCircle, Loader2, Check, MapPinOff, Coffee } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
@@ -26,13 +26,18 @@ interface BotoesRegistroPontoProps {
   onRegistroRealizado: () => void;
 }
 
-type TipoRegistro = 'entrada' | 'intervalo_inicio' | 'intervalo_fim' | 'saida';
+type TipoRegistro = 'entrada' | 'pausa_inicio' | 'pausa_fim' | 'saida';
+
+interface Pausa {
+  inicio: string;
+  fim?: string | null;
+}
 
 interface RegistroStatus {
   temEntrada: boolean;
-  temIntervaloInicio: boolean;
-  temIntervaloFim: boolean;
   temSaida: boolean;
+  pausas: Pausa[];
+  pausaAberta: boolean;
 }
 
 function traduzirErro(error: any): string {
