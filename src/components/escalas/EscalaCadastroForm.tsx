@@ -35,6 +35,7 @@ const escalaSchema = z.object({
   saida: z.string().min(1, "Informe o horário"),
   intervaloInicio: z.string().optional(),
   intervaloFim: z.string().optional(),
+  intervaloPreAssinalado: z.boolean().optional().default(false),
   observacoes: z.string().optional(),
 })
 .refine((data) => {
@@ -82,6 +83,7 @@ export type EscalaData = {
   saida: string;
   intervalo_inicio?: string;
   intervalo_fim?: string;
+  intervalo_pre_assinalado?: boolean;
   observacoes?: string;
 }
 
@@ -104,6 +106,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       saida: escala?.saida?.slice(0, 5) || "",
       intervaloInicio: escala?.intervalo_inicio?.slice(0, 5) || "",
       intervaloFim: escala?.intervalo_fim?.slice(0, 5) || "",
+      intervaloPreAssinalado: escala?.intervalo_pre_assinalado ?? false,
       observacoes: escala?.observacoes || "",
     }
   });
@@ -116,6 +119,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       saida: data.saida,
       intervalo_inicio: data.intervaloInicio || null,
       intervalo_fim: data.intervaloFim || null,
+      intervalo_pre_assinalado: !!data.intervaloPreAssinalado,
       observacoes: data.observacoes || null,
     };
 
@@ -179,7 +183,11 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       <EscalaNomeField register={form.register} errors={form.formState.errors} />
       <JornadaTrabalhoSelect control={form.control} errors={form.formState.errors} />
       <HorariosFields register={form.register} errors={form.formState.errors} />
-      <IntervaloFields register={form.register} errors={form.formState.errors} />
+      <IntervaloFields
+        register={form.register}
+        errors={form.formState.errors}
+        control={form.control}
+      />
       <ObservacoesField register={form.register} />
       <div className="pt-2 flex justify-end gap-2">
         <Button

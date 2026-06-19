@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, PauseCircle, RotateCcw, Loader2, Check, MapPinOff } from 'lucide-react';
+import { LogIn, LogOut, PauseCircle, PlayCircle, Loader2, Check, MapPinOff, Coffee } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
@@ -26,13 +26,18 @@ interface BotoesRegistroPontoProps {
   onRegistroRealizado: () => void;
 }
 
-type TipoRegistro = 'entrada' | 'intervalo_inicio' | 'intervalo_fim' | 'saida';
+type TipoRegistro = 'entrada' | 'pausa_inicio' | 'pausa_fim' | 'saida';
+
+interface Pausa {
+  inicio: string;
+  fim?: string | null;
+}
 
 interface RegistroStatus {
   temEntrada: boolean;
-  temIntervaloInicio: boolean;
-  temIntervaloFim: boolean;
   temSaida: boolean;
+  pausas: Pausa[];
+  pausaAberta: boolean;
 }
 
 function traduzirErro(error: any): string {
@@ -70,9 +75,9 @@ export default function BotoesRegistroPonto({
   const [registrando, setRegistrando] = useState<TipoRegistro | null>(null);
   const [status, setStatus] = useState<RegistroStatus>({
     temEntrada: false,
-    temIntervaloInicio: false,
-    temIntervaloFim: false,
-    temSaida: false
+    temSaida: false,
+    pausas: [],
+    pausaAberta: false,
   });
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
@@ -80,12 +85,36 @@ export default function BotoesRegistroPonto({
   const [biometriaOpen, setBiometriaOpen] = useState(false);
   const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
+  const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
   const handleConfirmarAlerta = () => {
     setAlertaAberto(false);
     navigate('/funcionario-access');
+  };
+
+  // Helpers para pausas (múltiplos intervalos)
+  const parsePausas = (raw: any): Pausa[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw as Pausa[];
+    try { return JSON.parse(raw) as Pausa[]; } catch { return []; }
+  };
+
+  const calcularTotalPausas = (pausas: Pausa[]): string => {
+    let totalSeg = 0;
+    for (const p of pausas) {
+      if (!p.inicio || !p.fim) continue;
+      const [ih, im, is] = p.inicio.split(':').map(Number);
+      const [fh, fm, fs] = p.fim.split(':').map(Number);
+      let diff = (fh * 3600 + fm * 60 + (fs || 0)) - (ih * 3600 + im * 60 + (is || 0));
+      if (diff < 0) diff += 24 * 3600; // cruza meia-noite
+      totalSeg += diff;
+    }
+    const h = Math.floor(totalSeg / 3600);
+    const m = Math.floor((totalSeg % 3600) / 60);
+    const s = totalSeg % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   };
 
   // Carregar status atual dos registros (considera turnos noturnos que cruzam a meia-noite)
@@ -98,17 +127,18 @@ export default function BotoesRegistroPonto({
       // Primeiro, verifica se existe registro de HOJE
       const { data: registroHoje } = await supabase
         .from('registros_ponto')
-        .select('entrada, intervalo_inicio, intervalo_fim, saida')
+        .select('entrada, intervalo_inicio, intervalo_fim, saida, intervalos_pausas')
         .eq('funcionario_id', funcionarioId)
         .eq('data', hoje)
         .single();
 
       if (registroHoje) {
+        const pausas = parsePausas((registroHoje as any).intervalos_pausas);
         setStatus({
           temEntrada: !!registroHoje.entrada,
-          temIntervaloInicio: !!registroHoje.intervalo_inicio,
-          temIntervaloFim: !!registroHoje.intervalo_fim,
-          temSaida: !!registroHoje.saida
+          temSaida: !!registroHoje.saida,
+          pausas,
+          pausaAberta: pausas.some((p) => p.inicio && !p.fim),
         });
         return;
       }
@@ -116,7 +146,7 @@ export default function BotoesRegistroPonto({
       // Se não há registro hoje, verifica se há registro de ONTEM sem saída (turno noturno)
       const { data: registroOntem } = await supabase
         .from('registros_ponto')
-        .select('entrada, intervalo_inicio, intervalo_fim, saida')
+        .select('entrada, intervalo_inicio, intervalo_fim, saida, intervalos_pausas')
         .eq('funcionario_id', funcionarioId)
         .eq('data', ontem)
         .is('saida', null)
@@ -124,11 +154,12 @@ export default function BotoesRegistroPonto({
 
       if (registroOntem && registroOntem.entrada) {
         // Existe um turno aberto de ontem - mostrar como se tivesse entrada
+        const pausas = parsePausas((registroOntem as any).intervalos_pausas);
         setStatus({
           temEntrada: true,
-          temIntervaloInicio: !!registroOntem.intervalo_inicio,
-          temIntervaloFim: !!registroOntem.intervalo_fim,
-          temSaida: false
+          temSaida: false,
+          pausas,
+          pausaAberta: pausas.some((p) => p.inicio && !p.fim),
         });
         return;
       }
@@ -136,9 +167,9 @@ export default function BotoesRegistroPonto({
       // Não há registro aberto
       setStatus({
         temEntrada: false,
-        temIntervaloInicio: false,
-        temIntervaloFim: false,
-        temSaida: false
+        temSaida: false,
+        pausas: [],
+        pausaAberta: false,
       });
     } catch (error) {
       console.error('Erro ao carregar status:', error);
@@ -151,16 +182,27 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
-  // Verifica se o funcionário tem biometria cadastrada
+  // Verifica se o funcionário tem biometria cadastrada + carrega flag intervalo pré-assinalado da escala
   useEffect(() => {
     if (!funcionarioId) return;
     (async () => {
       const { data } = await supabase
         .from('funcionarios')
-        .select('biometria_facial')
+        .select('biometria_facial, escala_id')
         .eq('id', funcionarioId)
         .single();
       setTemBiometriaCadastrada(!!(data as any)?.biometria_facial);
+      const escalaId = (data as any)?.escala_id;
+      if (escalaId) {
+        const { data: esc } = await supabase
+          .from('escalas')
+          .select('intervalo_pre_assinalado')
+          .eq('id', escalaId)
+          .single();
+        setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
+      } else {
+        setIntervaloPreAssinalado(false);
+      }
     })();
   }, [funcionarioId]);
 
@@ -256,15 +298,42 @@ export default function BotoesRegistroPonto({
         case 'entrada':
           updateData.entrada = horario;
           break;
-        case 'intervalo_inicio':
-          updateData.intervalo_inicio = horario;
+        case 'pausa_inicio': {
+          const pausasAtuais = parsePausas((registroExistente as any)?.intervalos_pausas);
+          if (pausasAtuais.some((p) => p.inicio && !p.fim)) {
+            throw new Error('Já existe um intervalo em andamento. Finalize-o antes de iniciar outro.');
+          }
+          const novas = [...pausasAtuais, { inicio: horario, fim: null }];
+          updateData.intervalos_pausas = novas;
+          // Compat. legado: 1ª pausa também preenche intervalo_inicio
+          if (!registroExistente?.intervalo_inicio) {
+            updateData.intervalo_inicio = horario;
+          }
           break;
-        case 'intervalo_fim':
+        }
+        case 'pausa_fim': {
+          const pausasAtuais = parsePausas((registroExistente as any)?.intervalos_pausas);
+          const idx = pausasAtuais.findIndex((p) => p.inicio && !p.fim);
+          if (idx === -1) {
+            throw new Error('Nenhum intervalo aberto para finalizar.');
+          }
+          const novas = pausasAtuais.map((p, i) => i === idx ? { ...p, fim: horario } : p);
+          updateData.intervalos_pausas = novas;
+          // Compat. legado: último fim alimenta intervalo_fim
           updateData.intervalo_fim = horario;
           break;
-        case 'saida':
+        }
+        case 'saida': {
           updateData.saida = horario;
-          if (registroExistente?.entrada && !registroExistente.intervalo_inicio) {
+          const pausasAtuais = parsePausas((registroExistente as any)?.intervalos_pausas);
+          // Não inferir intervalo automático quando: escala pré-assinalada,
+          // ou já houve pausas registradas, ou intervalo_inicio já preenchido.
+          if (
+            !intervaloPreAssinalado &&
+            pausasAtuais.length === 0 &&
+            registroExistente?.entrada &&
+            !registroExistente.intervalo_inicio
+          ) {
             try {
               const { data: intervalos } = await supabase.rpc('inserir_intervalo_automatico', {
                 p_funcionario_id: funcionarioId,
@@ -285,6 +354,7 @@ export default function BotoesRegistroPonto({
             }
           }
           break;
+        }
       }
 
       if (registroExistente) {
@@ -314,8 +384,8 @@ export default function BotoesRegistroPonto({
 
       const tipoNomes: Record<TipoRegistro, string> = {
         entrada: 'Entrada',
-        intervalo_inicio: 'Início do Intervalo',
-        intervalo_fim: 'Fim do Intervalo',
+        pausa_inicio: 'Início do Intervalo',
+        pausa_fim: 'Fim do Intervalo',
         saida: 'Saída'
       };
 
@@ -365,7 +435,9 @@ export default function BotoesRegistroPonto({
   };
 
   const proximoPrincipal = getProximoRegistroPrincipal();
-  const mostrarIntervalos = status.temEntrada && !status.temSaida;
+  const mostrarIntervalos =
+    status.temEntrada && !status.temSaida && !intervaloPreAssinalado;
+  const totalPausas = calcularTotalPausas(status.pausas);
 
   // Status visual da geofence
   const validacao = validarGeofence(geofenceConfig, latitude, longitude);
@@ -434,61 +506,74 @@ export default function BotoesRegistroPonto({
       {mostrarIntervalos && (
         <div className="space-y-3">
           <p className="text-sm text-center text-muted-foreground font-medium">
-            Registros de Intervalo
+            Intervalo (você pode iniciar e finalizar quantas vezes precisar)
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={() => registrarPonto('intervalo_inicio')}
-              disabled={registrando !== null || status.temIntervaloInicio}
-              className={`h-14 text-sm font-semibold ${
-                status.temIntervaloInicio 
-                  ? 'bg-muted text-muted-foreground' 
-                  : 'bg-accent text-accent-foreground hover:bg-accent/90'
-              }`}
-              variant={status.temIntervaloInicio ? "outline" : "default"}
-            >
-              {registrando === 'intervalo_inicio' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : status.temIntervaloInicio ? (
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  <span>Iniciado</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <PauseCircle className="w-5 h-5" />
-                  <span>Início Intervalo</span>
-                </div>
-              )}
-            </Button>
-            
-            <Button
-              onClick={() => registrarPonto('intervalo_fim')}
-              disabled={registrando !== null || !status.temIntervaloInicio || status.temIntervaloFim}
-              className={`h-14 text-sm font-semibold ${
-                status.temIntervaloFim 
-                  ? 'bg-muted text-muted-foreground' 
-                  : !status.temIntervaloInicio 
-                    ? 'bg-muted/50 text-muted-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
-              }`}
-              variant={status.temIntervaloFim ? "outline" : "default"}
-            >
-              {registrando === 'intervalo_fim' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : status.temIntervaloFim ? (
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  <span>Finalizado</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <RotateCcw className="w-5 h-5" />
-                  <span>Fim Intervalo</span>
-                </div>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={() =>
+              registrarPonto(status.pausaAberta ? 'pausa_fim' : 'pausa_inicio')
+            }
+            disabled={registrando !== null}
+            className={`w-full h-14 text-sm font-semibold ${
+              status.pausaAberta
+                ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+                : 'bg-accent text-accent-foreground hover:bg-accent/90'
+            }`}
+          >
+            {registrando === 'pausa_inicio' || registrando === 'pausa_fim' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : status.pausaAberta ? (
+              <div className="flex items-center gap-2">
+                <PlayCircle className="w-5 h-5" />
+                <span>Finalizar Intervalo</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <PauseCircle className="w-5 h-5" />
+                <span>Iniciar Intervalo</span>
+              </div>
+            )}
+          </Button>
+
+          {status.pausas.length > 0 && (
+            <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-muted-foreground">
+                  Pausas do dia ({status.pausas.length})
+                </span>
+                <span className="font-semibold">
+                  Total: {totalPausas.slice(0, 5)}
+                </span>
+              </div>
+              <ul className="space-y-1">
+                {status.pausas.map((p, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 text-xs text-foreground"
+                  >
+                    <Coffee className="w-3 h-3 text-muted-foreground" />
+                    <span>
+                      #{i + 1}: {p.inicio?.slice(0, 5) ?? '--:--'} →{' '}
+                      {p.fim?.slice(0, 5) ?? (
+                        <span className="italic text-amber-600">em andamento</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Aviso quando o intervalo é pré-assinalado */}
+      {status.temEntrada && !status.temSaida && intervaloPreAssinalado && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary flex items-start gap-2">
+          <Coffee className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>
+            Sua escala usa <b>intervalo pré-assinalado</b>. O intervalo já está
+            previsto na escala e será descontado automaticamente. Não é
+            necessário registrar início/fim do intervalo.
+          </span>
         </div>
       )}
 
