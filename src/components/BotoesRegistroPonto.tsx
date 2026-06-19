@@ -298,15 +298,42 @@ export default function BotoesRegistroPonto({
         case 'entrada':
           updateData.entrada = horario;
           break;
-        case 'intervalo_inicio':
-          updateData.intervalo_inicio = horario;
+        case 'pausa_inicio': {
+          const pausasAtuais = parsePausas((registroExistente as any)?.intervalos_pausas);
+          if (pausasAtuais.some((p) => p.inicio && !p.fim)) {
+            throw new Error('Já existe um intervalo em andamento. Finalize-o antes de iniciar outro.');
+          }
+          const novas = [...pausasAtuais, { inicio: horario, fim: null }];
+          updateData.intervalos_pausas = novas;
+          // Compat. legado: 1ª pausa também preenche intervalo_inicio
+          if (!registroExistente?.intervalo_inicio) {
+            updateData.intervalo_inicio = horario;
+          }
           break;
-        case 'intervalo_fim':
+        }
+        case 'pausa_fim': {
+          const pausasAtuais = parsePausas((registroExistente as any)?.intervalos_pausas);
+          const idx = pausasAtuais.findIndex((p) => p.inicio && !p.fim);
+          if (idx === -1) {
+            throw new Error('Nenhum intervalo aberto para finalizar.');
+          }
+          const novas = pausasAtuais.map((p, i) => i === idx ? { ...p, fim: horario } : p);
+          updateData.intervalos_pausas = novas;
+          // Compat. legado: último fim alimenta intervalo_fim
           updateData.intervalo_fim = horario;
           break;
-        case 'saida':
+        }
+        case 'saida': {
           updateData.saida = horario;
-          if (registroExistente?.entrada && !registroExistente.intervalo_inicio) {
+          const pausasAtuais = parsePausas((registroExistente as any)?.intervalos_pausas);
+          // Não inferir intervalo automático quando: escala pré-assinalada,
+          // ou já houve pausas registradas, ou intervalo_inicio já preenchido.
+          if (
+            !intervaloPreAssinalado &&
+            pausasAtuais.length === 0 &&
+            registroExistente?.entrada &&
+            !registroExistente.intervalo_inicio
+          ) {
             try {
               const { data: intervalos } = await supabase.rpc('inserir_intervalo_automatico', {
                 p_funcionario_id: funcionarioId,
@@ -327,6 +354,7 @@ export default function BotoesRegistroPonto({
             }
           }
           break;
+        }
       }
 
       if (registroExistente) {
@@ -356,8 +384,8 @@ export default function BotoesRegistroPonto({
 
       const tipoNomes: Record<TipoRegistro, string> = {
         entrada: 'Entrada',
-        intervalo_inicio: 'Início do Intervalo',
-        intervalo_fim: 'Fim do Intervalo',
+        pausa_inicio: 'Início do Intervalo',
+        pausa_fim: 'Fim do Intervalo',
         saida: 'Saída'
       };
 
@@ -407,7 +435,9 @@ export default function BotoesRegistroPonto({
   };
 
   const proximoPrincipal = getProximoRegistroPrincipal();
-  const mostrarIntervalos = status.temEntrada && !status.temSaida;
+  const mostrarIntervalos =
+    status.temEntrada && !status.temSaida && !intervaloPreAssinalado;
+  const totalPausas = calcularTotalPausas(status.pausas);
 
   // Status visual da geofence
   const validacao = validarGeofence(geofenceConfig, latitude, longitude);
