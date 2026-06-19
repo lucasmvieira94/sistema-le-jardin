@@ -506,61 +506,74 @@ export default function BotoesRegistroPonto({
       {mostrarIntervalos && (
         <div className="space-y-3">
           <p className="text-sm text-center text-muted-foreground font-medium">
-            Registros de Intervalo
+            Intervalo (você pode iniciar e finalizar quantas vezes precisar)
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={() => registrarPonto('intervalo_inicio')}
-              disabled={registrando !== null || status.temIntervaloInicio}
-              className={`h-14 text-sm font-semibold ${
-                status.temIntervaloInicio 
-                  ? 'bg-muted text-muted-foreground' 
-                  : 'bg-accent text-accent-foreground hover:bg-accent/90'
-              }`}
-              variant={status.temIntervaloInicio ? "outline" : "default"}
-            >
-              {registrando === 'intervalo_inicio' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : status.temIntervaloInicio ? (
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  <span>Iniciado</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <PauseCircle className="w-5 h-5" />
-                  <span>Início Intervalo</span>
-                </div>
-              )}
-            </Button>
-            
-            <Button
-              onClick={() => registrarPonto('intervalo_fim')}
-              disabled={registrando !== null || !status.temIntervaloInicio || status.temIntervaloFim}
-              className={`h-14 text-sm font-semibold ${
-                status.temIntervaloFim 
-                  ? 'bg-muted text-muted-foreground' 
-                  : !status.temIntervaloInicio 
-                    ? 'bg-muted/50 text-muted-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
-              }`}
-              variant={status.temIntervaloFim ? "outline" : "default"}
-            >
-              {registrando === 'intervalo_fim' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : status.temIntervaloFim ? (
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  <span>Finalizado</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <RotateCcw className="w-5 h-5" />
-                  <span>Fim Intervalo</span>
-                </div>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={() =>
+              registrarPonto(status.pausaAberta ? 'pausa_fim' : 'pausa_inicio')
+            }
+            disabled={registrando !== null}
+            className={`w-full h-14 text-sm font-semibold ${
+              status.pausaAberta
+                ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+                : 'bg-accent text-accent-foreground hover:bg-accent/90'
+            }`}
+          >
+            {registrando === 'pausa_inicio' || registrando === 'pausa_fim' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : status.pausaAberta ? (
+              <div className="flex items-center gap-2">
+                <PlayCircle className="w-5 h-5" />
+                <span>Finalizar Intervalo</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <PauseCircle className="w-5 h-5" />
+                <span>Iniciar Intervalo</span>
+              </div>
+            )}
+          </Button>
+
+          {status.pausas.length > 0 && (
+            <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-muted-foreground">
+                  Pausas do dia ({status.pausas.length})
+                </span>
+                <span className="font-semibold">
+                  Total: {totalPausas.slice(0, 5)}
+                </span>
+              </div>
+              <ul className="space-y-1">
+                {status.pausas.map((p, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 text-xs text-foreground"
+                  >
+                    <Coffee className="w-3 h-3 text-muted-foreground" />
+                    <span>
+                      #{i + 1}: {p.inicio?.slice(0, 5) ?? '--:--'} →{' '}
+                      {p.fim?.slice(0, 5) ?? (
+                        <span className="italic text-amber-600">em andamento</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Aviso quando o intervalo é pré-assinalado */}
+      {status.temEntrada && !status.temSaida && intervaloPreAssinalado && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary flex items-start gap-2">
+          <Coffee className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>
+            Sua escala usa <b>intervalo pré-assinalado</b>. O intervalo já está
+            previsto na escala e será descontado automaticamente. Não é
+            necessário registrar início/fim do intervalo.
+          </span>
         </div>
       )}
 
