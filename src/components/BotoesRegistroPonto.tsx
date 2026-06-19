@@ -81,6 +81,7 @@ export default function BotoesRegistroPonto({
   });
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
+  const [alertaEhPausa, setAlertaEhPausa] = useState(false);
   const [geofenceConfig, setGeofenceConfig] = useState<GeofenceConfig | null>(null);
   const [biometriaOpen, setBiometriaOpen] = useState(false);
   const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
@@ -91,7 +92,11 @@ export default function BotoesRegistroPonto({
   // Função para fechar alerta e voltar à tela inicial
   const handleConfirmarAlerta = () => {
     setAlertaAberto(false);
-    navigate('/funcionario-access');
+    // Em pausas (início/fim) o funcionário permanece na tela para poder
+    // iniciar/finalizar quantos intervalos forem necessários.
+    if (!alertaEhPausa) {
+      navigate('/funcionario-access');
+    }
   };
 
   // Helpers para pausas (múltiplos intervalos)
@@ -394,6 +399,7 @@ export default function BotoesRegistroPonto({
         tipo: tipoNomes[tipo],
         horario: horario.slice(0, 5)
       });
+      setAlertaEhPausa(tipo === 'pausa_inicio' || tipo === 'pausa_fim');
       setAlertaAberto(true);
 
       await carregarStatus();
