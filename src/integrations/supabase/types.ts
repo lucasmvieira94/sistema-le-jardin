@@ -1597,6 +1597,7 @@ export type Database = {
           id: number
           intervalo_fim: string | null
           intervalo_inicio: string | null
+          intervalo_pre_assinalado: boolean
           jornada_trabalho: string
           nome: string
           observacoes: string | null
@@ -1609,6 +1610,7 @@ export type Database = {
           id?: number
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          intervalo_pre_assinalado?: boolean
           jornada_trabalho?: string
           nome: string
           observacoes?: string | null
@@ -1621,6 +1623,7 @@ export type Database = {
           id?: number
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          intervalo_pre_assinalado?: boolean
           jornada_trabalho?: string
           nome?: string
           observacoes?: string | null
@@ -3351,6 +3354,7 @@ export type Database = {
           id: string
           intervalo_fim: string | null
           intervalo_inicio: string | null
+          intervalos_pausas: Json
           justificativa: string | null
           latitude: number | null
           longitude: number | null
@@ -3368,6 +3372,7 @@ export type Database = {
           id?: string
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          intervalos_pausas?: Json
           justificativa?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -3385,6 +3390,7 @@ export type Database = {
           id?: string
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          intervalos_pausas?: Json
           justificativa?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -4472,6 +4478,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      somar_pausas: { Args: { p_pausas: Json }; Returns: string }
       validar_codigo_funcionario: {
         Args: { p_codigo: string }
         Returns: {
