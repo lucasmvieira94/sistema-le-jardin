@@ -75,9 +75,9 @@ export default function BotoesRegistroPonto({
   const [registrando, setRegistrando] = useState<TipoRegistro | null>(null);
   const [status, setStatus] = useState<RegistroStatus>({
     temEntrada: false,
-    temIntervaloInicio: false,
-    temIntervaloFim: false,
-    temSaida: false
+    temSaida: false,
+    pausas: [],
+    pausaAberta: false,
   });
   const [alertaAberto, setAlertaAberto] = useState(false);
   const [alertaInfo, setAlertaInfo] = useState({ tipo: '', horario: '' });
@@ -85,12 +85,36 @@ export default function BotoesRegistroPonto({
   const [biometriaOpen, setBiometriaOpen] = useState(false);
   const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
+  const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
   const handleConfirmarAlerta = () => {
     setAlertaAberto(false);
     navigate('/funcionario-access');
+  };
+
+  // Helpers para pausas (múltiplos intervalos)
+  const parsePausas = (raw: any): Pausa[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw as Pausa[];
+    try { return JSON.parse(raw) as Pausa[]; } catch { return []; }
+  };
+
+  const calcularTotalPausas = (pausas: Pausa[]): string => {
+    let totalSeg = 0;
+    for (const p of pausas) {
+      if (!p.inicio || !p.fim) continue;
+      const [ih, im, is] = p.inicio.split(':').map(Number);
+      const [fh, fm, fs] = p.fim.split(':').map(Number);
+      let diff = (fh * 3600 + fm * 60 + (fs || 0)) - (ih * 3600 + im * 60 + (is || 0));
+      if (diff < 0) diff += 24 * 3600; // cruza meia-noite
+      totalSeg += diff;
+    }
+    const h = Math.floor(totalSeg / 3600);
+    const m = Math.floor((totalSeg % 3600) / 60);
+    const s = totalSeg % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   };
 
   // Carregar status atual dos registros (considera turnos noturnos que cruzam a meia-noite)
@@ -103,17 +127,18 @@ export default function BotoesRegistroPonto({
       // Primeiro, verifica se existe registro de HOJE
       const { data: registroHoje } = await supabase
         .from('registros_ponto')
-        .select('entrada, intervalo_inicio, intervalo_fim, saida')
+        .select('entrada, intervalo_inicio, intervalo_fim, saida, intervalos_pausas')
         .eq('funcionario_id', funcionarioId)
         .eq('data', hoje)
         .single();
 
       if (registroHoje) {
+        const pausas = parsePausas((registroHoje as any).intervalos_pausas);
         setStatus({
           temEntrada: !!registroHoje.entrada,
-          temIntervaloInicio: !!registroHoje.intervalo_inicio,
-          temIntervaloFim: !!registroHoje.intervalo_fim,
-          temSaida: !!registroHoje.saida
+          temSaida: !!registroHoje.saida,
+          pausas,
+          pausaAberta: pausas.some((p) => p.inicio && !p.fim),
         });
         return;
       }
@@ -121,7 +146,7 @@ export default function BotoesRegistroPonto({
       // Se não há registro hoje, verifica se há registro de ONTEM sem saída (turno noturno)
       const { data: registroOntem } = await supabase
         .from('registros_ponto')
-        .select('entrada, intervalo_inicio, intervalo_fim, saida')
+        .select('entrada, intervalo_inicio, intervalo_fim, saida, intervalos_pausas')
         .eq('funcionario_id', funcionarioId)
         .eq('data', ontem)
         .is('saida', null)
@@ -129,11 +154,12 @@ export default function BotoesRegistroPonto({
 
       if (registroOntem && registroOntem.entrada) {
         // Existe um turno aberto de ontem - mostrar como se tivesse entrada
+        const pausas = parsePausas((registroOntem as any).intervalos_pausas);
         setStatus({
           temEntrada: true,
-          temIntervaloInicio: !!registroOntem.intervalo_inicio,
-          temIntervaloFim: !!registroOntem.intervalo_fim,
-          temSaida: false
+          temSaida: false,
+          pausas,
+          pausaAberta: pausas.some((p) => p.inicio && !p.fim),
         });
         return;
       }
@@ -141,9 +167,9 @@ export default function BotoesRegistroPonto({
       // Não há registro aberto
       setStatus({
         temEntrada: false,
-        temIntervaloInicio: false,
-        temIntervaloFim: false,
-        temSaida: false
+        temSaida: false,
+        pausas: [],
+        pausaAberta: false,
       });
     } catch (error) {
       console.error('Erro ao carregar status:', error);
@@ -156,16 +182,27 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
-  // Verifica se o funcionário tem biometria cadastrada
+  // Verifica se o funcionário tem biometria cadastrada + carrega flag intervalo pré-assinalado da escala
   useEffect(() => {
     if (!funcionarioId) return;
     (async () => {
       const { data } = await supabase
         .from('funcionarios')
-        .select('biometria_facial')
+        .select('biometria_facial, escala_id')
         .eq('id', funcionarioId)
         .single();
       setTemBiometriaCadastrada(!!(data as any)?.biometria_facial);
+      const escalaId = (data as any)?.escala_id;
+      if (escalaId) {
+        const { data: esc } = await supabase
+          .from('escalas')
+          .select('intervalo_pre_assinalado')
+          .eq('id', escalaId)
+          .single();
+        setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
+      } else {
+        setIntervaloPreAssinalado(false);
+      }
     })();
   }, [funcionarioId]);
 
