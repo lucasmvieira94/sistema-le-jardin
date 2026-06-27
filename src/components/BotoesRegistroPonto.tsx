@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, PauseCircle, PlayCircle, Loader2, Check, MapPinOff, Coffee } from 'lucide-react';
+import { LogIn, LogOut, PauseCircle, PlayCircle, Loader2, Check, MapPinOff, Coffee, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
@@ -11,6 +11,7 @@ import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometric
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -87,6 +88,7 @@ export default function BotoesRegistroPonto({
   const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
   const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
+  const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
@@ -473,27 +475,23 @@ export default function BotoesRegistroPonto({
         </div>
       )}
 
-      {/* Botão Principal de Entrada/Saída */}
-      {proximoPrincipal && (
+      {/* Botão Principal de ENTRADA (destaque) */}
+      {proximoPrincipal && proximoPrincipal.tipo === 'entrada' && (
         <Button
-          onClick={() => registrarPonto(proximoPrincipal.tipo)}
+          onClick={() => registrarPonto('entrada')}
           disabled={registrando !== null || (geofenceAtiva && !validacao.permitido)}
-          className={`w-full h-20 text-xl font-bold shadow-lg transition-all ${
-            proximoPrincipal.tipo === 'entrada' 
-              ? 'bg-primary hover:bg-primary/90' 
-              : 'bg-destructive hover:bg-destructive/90'
-          }`}
+          className="w-full h-20 text-xl font-bold shadow-lg bg-primary hover:bg-primary/90"
           size="lg"
         >
-          {registrando === proximoPrincipal.tipo ? (
+          {registrando === 'entrada' ? (
             <div className="flex items-center gap-3">
               <Loader2 className="w-7 h-7 animate-spin" />
               <span>Registrando...</span>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <proximoPrincipal.icon className="w-7 h-7" />
-              <span>{proximoPrincipal.label}</span>
+              <LogIn className="w-7 h-7" />
+              <span>REGISTRAR ENTRADA</span>
             </div>
           )}
         </Button>
@@ -510,38 +508,58 @@ export default function BotoesRegistroPonto({
 
       {/* Botões de Intervalo (só aparecem após entrada e antes da saída) */}
       {mostrarIntervalos && (
-        <div className="space-y-3">
-          <p className="text-sm text-center text-muted-foreground font-medium">
-            Intervalo (você pode iniciar e finalizar quantas vezes precisar)
+        <div
+          className={`rounded-2xl border-2 p-4 space-y-3 transition-colors ${
+            status.pausaAberta
+              ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/30'
+              : 'border-dashed border-muted-foreground/30 bg-muted/30'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Coffee
+              className={`w-5 h-5 ${
+                status.pausaAberta ? 'text-amber-600' : 'text-muted-foreground'
+              }`}
+            />
+            <p className="text-sm font-semibold">
+              {status.pausaAberta
+                ? 'Intervalo em andamento'
+                : 'Intervalo (opcional)'}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {status.pausaAberta
+              ? 'Volte aqui ao retornar e toque em "Finalizar Intervalo".'
+              : 'Você pode iniciar e finalizar o intervalo quantas vezes precisar.'}
           </p>
           <Button
             onClick={() =>
               registrarPonto(status.pausaAberta ? 'pausa_fim' : 'pausa_inicio')
             }
             disabled={registrando !== null}
-            className={`w-full h-14 text-sm font-semibold ${
+            className={`w-full h-16 text-base font-bold ${
               status.pausaAberta
-                ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
-                : 'bg-accent text-accent-foreground hover:bg-accent/90'
+                ? 'bg-amber-500 text-white hover:bg-amber-500/90'
+                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
             }`}
           >
             {registrando === 'pausa_inicio' || registrando === 'pausa_fim' ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : status.pausaAberta ? (
               <div className="flex items-center gap-2">
-                <PlayCircle className="w-5 h-5" />
-                <span>Finalizar Intervalo</span>
+                <PlayCircle className="w-6 h-6" />
+                <span>FINALIZAR INTERVALO</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <PauseCircle className="w-5 h-5" />
-                <span>Iniciar Intervalo</span>
+                <PauseCircle className="w-6 h-6" />
+                <span>INICIAR INTERVALO</span>
               </div>
             )}
           </Button>
 
           {status.pausas.length > 0 && (
-            <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+            <div className="rounded-lg border bg-background/60 p-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-muted-foreground">
                   Pausas do dia ({status.pausas.length})
@@ -568,6 +586,43 @@ export default function BotoesRegistroPonto({
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Botão de SAÍDA — separado visualmente para evitar toque acidental */}
+      {proximoPrincipal && proximoPrincipal.tipo === 'saida' && (
+        <div className="pt-2 border-t border-dashed border-muted-foreground/30">
+          {status.pausaAberta && (
+            <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>
+                Existe um intervalo aberto. Finalize-o antes de encerrar a
+                jornada.
+              </span>
+            </div>
+          )}
+          <Button
+            onClick={() => setConfirmSaidaAberto(true)}
+            disabled={
+              registrando !== null ||
+              status.pausaAberta ||
+              (geofenceAtiva && !validacao.permitido)
+            }
+            variant="outline"
+            className="w-full h-16 text-base font-bold border-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          >
+            {registrando === 'saida' ? (
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span>Registrando...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <LogOut className="w-6 h-6" />
+                <span>ENCERRAR JORNADA (SAÍDA)</span>
+              </div>
+            )}
+          </Button>
         </div>
       )}
 
@@ -601,6 +656,39 @@ export default function BotoesRegistroPonto({
             <AlertDialogAction className="w-full sm:w-auto" onClick={handleConfirmarAlerta}>
               OK
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmação antes de registrar SAÍDA */}
+      <AlertDialog open={confirmSaidaAberto} onOpenChange={setConfirmSaidaAberto}>
+        <AlertDialogContent className="max-w-sm mx-auto">
+          <AlertDialogHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-2">
+              <LogOut className="w-8 h-8 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-xl">
+              Encerrar a jornada?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao confirmar, sua <b>saída</b> será registrada e o dia será
+              fechado. Use esta opção apenas no <b>final do expediente</b> —
+              não para iniciar o intervalo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction
+              className="w-full bg-destructive hover:bg-destructive/90"
+              onClick={() => {
+                setConfirmSaidaAberto(false);
+                registrarPonto('saida');
+              }}
+            >
+              Sim, encerrar jornada
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-0">
+              Cancelar
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
