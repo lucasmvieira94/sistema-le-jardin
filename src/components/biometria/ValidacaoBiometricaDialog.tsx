@@ -162,6 +162,15 @@ export default function ValidacaoBiometricaDialog({
                 status === 'analisando' ? 'capturing' : 'idle'
               }
               mensagem={mensagemCamera}
+              progresso={
+                status === 'sucesso'
+                  ? 100
+                  : status === 'analisando'
+                  ? (tentativas / MAX_TENTATIVAS_AUTO) * 100
+                  : status === 'falha'
+                  ? 100
+                  : 0
+              }
             />
             {ultimaDistancia !== null && status === 'analisando' && (
               <p className="text-center text-xs text-muted-foreground">
