@@ -702,7 +702,6 @@ export default function NovoFormularioProntuario({
       // Chamar função para finalizar o prontuário
       const { data, error } = await supabase
         .rpc('finalizar_prontuario_diario', {
-          p_ciclo_id: cicloId,
           p_ciclo_id: cicloIdRef.current,
           p_funcionario_id: funcionarioId,
           p_codigo_validacao: codigo
