@@ -685,7 +685,8 @@ export default function NovoFormularioProntuario({
     // Salvar dados atuais antes de abrir o diálogo de código
     setIsSaving(true);
     try {
-      await saveFormData(true); // Mostrar toast de sucesso
+      const saved = await saveFormData(true); // Mostrar toast de sucesso
+      if (!saved) return;
       setShowCodigoDialog(true);
     } catch (error) {
       // Erro já tratado na função saveFormData
@@ -702,6 +703,7 @@ export default function NovoFormularioProntuario({
       const { data, error } = await supabase
         .rpc('finalizar_prontuario_diario', {
           p_ciclo_id: cicloId,
+          p_ciclo_id: cicloIdRef.current,
           p_funcionario_id: funcionarioId,
           p_codigo_validacao: codigo
         });
