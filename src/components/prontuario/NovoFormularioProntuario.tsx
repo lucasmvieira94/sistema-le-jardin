@@ -1077,7 +1077,7 @@ export default function NovoFormularioProntuario({
                 variant="outline" 
                 size="sm"
                 onClick={() => saveFormData(true)}
-                disabled={loading || !cicloId}
+                disabled={loading}
                 className="h-10 sm:h-auto"
               >
                 <Save className="w-4 h-4 sm:mr-2" />
