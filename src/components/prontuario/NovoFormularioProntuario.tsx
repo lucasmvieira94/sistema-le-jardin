@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Heart, Pill, Clock, Stethoscope, Smile, AlertTriangle, FileText, ArrowLeft, Users, CheckCircle, Shield, Lock, Save } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import CodigoFinalizacaoProntuario from "./CodigoFinalizacaoProntuario";
 import AssistenteProntuarioIA from "./AssistenteProntuarioIA";
 
@@ -104,8 +105,15 @@ export default function NovoFormularioProntuario({
   const [camposConfigurados, setCamposConfigurados] = useState<any[]>([]);
   const [showFinalizarDialog, setShowFinalizarDialog] = useState(false);
   const [showCodigoDialog, setShowCodigoDialog] = useState(false);
+  const cicloIdRef = useRef<string | null>(null);
+  const registroIdRef = useRef<string | null>(null);
+  const latestValuesRef = useRef<Partial<FormularioData>>({});
+  const lastSavedSignatureRef = useRef("");
+  const saveInFlightRef = useRef(false);
+  const pendingSaveRef = useRef(false);
+  const saveFormDataRef = useRef<(showSuccessToast?: boolean, force?: boolean) => Promise<boolean>>(async () => false);
   
-  const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<FormularioData>({
+  const { register, watch, setValue, handleSubmit, reset, formState: { errors } } = useForm<FormularioData>({
     defaultValues: {
       medicacoes: [{ nome: "", dosagem: "", horarios: [], observacoes: "" }],
       dor: [0],
@@ -118,11 +126,113 @@ export default function NovoFormularioProntuario({
 
   const watchedValues = watch();
 
+  useEffect(() => {
+    cicloIdRef.current = cicloId;
+  }, [cicloId]);
+
+  useEffect(() => {
+    registroIdRef.current = registroId;
+  }, [registroId]);
+
+  useEffect(() => {
+    latestValuesRef.current = watchedValues;
+  }, [watchedValues]);
+
+  const isValorPreenchido = (valor: any, tipo?: string) => {
+    if (valor === undefined || valor === null) return false;
+    if (typeof valor === 'string') return valor.trim().length > 0;
+    if (Array.isArray(valor)) {
+      if (tipo === 'slider') return valor.length > 0 && valor[0] !== undefined && valor[0] !== null;
+      return valor.length > 0 && valor.some((item) => isValorPreenchido(item));
+    }
+    if (typeof valor === 'number') return Number.isFinite(valor);
+    if (typeof valor === 'object') {
+      return Object.values(valor).some((item) => isValorPreenchido(item));
+    }
+    return Boolean(valor);
+  };
+
+  const extrairDadosRelevantes = (dados: Partial<FormularioData>) => {
+    const normalizado: Record<string, any> = {};
+
+    Object.entries(dados || {}).forEach(([key, value]) => {
+      if (key.startsWith('campo_')) {
+        const campoId = key.replace('campo_', '');
+        const campo = camposConfigurados.find((item) => item.id === campoId);
+        if (isValorPreenchido(value, campo?.tipo)) normalizado[key] = value;
+        return;
+      }
+
+      if (key === 'medicacoes' && Array.isArray(value)) {
+        const medicacoesPreenchidas = value.filter((med: any) =>
+          med?.nome?.trim() || med?.dosagem?.trim() || med?.observacoes?.trim() || (med?.horarios?.length > 0)
+        );
+        if (medicacoesPreenchidas.length > 0) normalizado[key] = medicacoesPreenchidas;
+        return;
+      }
+
+      if (['doencas_cronicas', 'deficiencias', 'atividades_realizadas', 'ocorrencias'].includes(key)) {
+        if (isValorPreenchido(value)) normalizado[key] = value;
+        return;
+      }
+
+      if (typeof value === 'string' && value.trim().length > 0) {
+        normalizado[key] = value.trim();
+      }
+    });
+
+    return normalizado;
+  };
+
+  const criarAssinaturaDados = (dados: Record<string, any>) => {
+    const ordenar = (valor: any): any => {
+      if (Array.isArray(valor)) return valor.map(ordenar);
+      if (valor && typeof valor === 'object') {
+        return Object.keys(valor)
+          .sort()
+          .reduce((acc: Record<string, any>, key) => {
+            acc[key] = ordenar(valor[key]);
+            return acc;
+          }, {});
+      }
+      return valor;
+    };
+
+    return JSON.stringify(ordenar(dados));
+  };
+
+  const calcularProgressoLocal = (dados: Partial<FormularioData>) => {
+    const obrigatorios = camposConfigurados.filter((campo) => campo.ativo !== false && campo.obrigatorio);
+    if (obrigatorios.length === 0) return 0;
+
+    const preenchidos = obrigatorios.filter((campo) => {
+      const valor = (dados as any)[`campo_${campo.id}`];
+      return isValorPreenchido(valor, campo.tipo);
+    }).length;
+
+    return Math.round((preenchidos / obrigatorios.length) * 100);
+  };
+
   // Verificar ciclo diário e inicializar prontuário - SIMPLIFICADO
   useEffect(() => {
     const inicializarProntuario = async () => {
       console.log('🔄 Inicializando prontuário para residente:', residenteId);
       setLoading(true);
+      reset({
+        medicacoes: [{ nome: "", dosagem: "", horarios: [], observacoes: "" }],
+        dor: [0],
+        doencas_cronicas: [],
+        deficiencias: [],
+        atividades_realizadas: [],
+        ocorrencias: []
+      });
+      setCicloId(null);
+      setRegistroId(null);
+      setCicloStatus('');
+      setProntuarioJaFinalizado(false);
+      cicloIdRef.current = null;
+      registroIdRef.current = null;
+      lastSavedSignatureRef.current = '';
       try {
         // Buscar dados do residente
         const { data: residenteData, error: residenteError } = await supabase
@@ -159,6 +269,7 @@ export default function NovoFormularioProntuario({
           console.log('📋 Status atual do ciclo:', statusAtual);
           
           setCicloId(cicloExistente.ciclo_id);
+          cicloIdRef.current = cicloExistente.ciclo_id;
           setCicloStatus(statusAtual);
           
           // Verificar se está finalizado
@@ -183,8 +294,10 @@ export default function NovoFormularioProntuario({
             if (registroExistente) {
               console.log('✅ Registro existente encontrado, carregando dados...');
               setRegistroId(registroExistente.id);
+              registroIdRef.current = registroExistente.id;
               try {
                 const dadosExistentes = JSON.parse(registroExistente.descricao);
+                lastSavedSignatureRef.current = criarAssinaturaDados(extrairDadosRelevantes(dadosExistentes));
                 
                 // Aplicar dados existentes ao formulário
                 Object.keys(dadosExistentes).forEach(key => {
@@ -197,6 +310,7 @@ export default function NovoFormularioProntuario({
               }
             } else {
               console.log('ℹ️ Nenhum registro existente encontrado para este ciclo');
+              lastSavedSignatureRef.current = '';
             }
           }
           
@@ -224,7 +338,7 @@ export default function NovoFormularioProntuario({
     if (residenteId && funcionarioId) {
       inicializarProntuario();
     }
-  }, [residenteId, funcionarioId, setValue, toast]); // Dependências mínimas
+  }, [residenteId, funcionarioId, setValue, reset, toast]); // Dependências mínimas
 
   // Buscar lista de residentes para o dropdown
   useEffect(() => {
@@ -273,94 +387,70 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  // Auto-save otimizado: dispara mesmo sem ciclo (saveFormData cria o ciclo).
+  // Auto-save: salva somente quando há alteração real no conteúdo do prontuário.
   useEffect(() => {
     if (prontuarioJaFinalizado || loading || isSaving) {
       return;
     }
 
     const timer = setTimeout(() => {
-      console.log('⏰ Timer do auto-save acionado');
-      
-      // Verificação se há dados significativos
-      const hasRealData = Object.keys(watchedValues).some(key => {
-        const value = watchedValues[key as keyof FormularioData];
-        
-        // Priorizar campos configurados (campo_xxx)
-        if (key.startsWith('campo_')) {
-          if (typeof value === 'string') return value.trim().length > 0;
-          if (Array.isArray(value)) return value.length > 0;
-          if (typeof value === 'number') return !isNaN(value) && isFinite(value);
-          return value !== undefined && value !== null && value !== '';
-        }
-        
-        // Verificar medicações
-        if (key === 'medicacoes') {
-          return Array.isArray(value) && value.some((med: any) => 
-            med.nome?.trim() || med.dosagem?.trim()
-          );
-        }
-        
-        // Verificar arrays
-        if (Array.isArray(value)) {
-          return value.length > 0 && value.some(v => v?.toString().trim());
-        }
-        
-        // Verificar strings (mínimo 2 caracteres para evitar auto-save por engano)
-        if (typeof value === 'string') return value.trim().length > 2;
-        
-        // Verificar números
-        if (typeof value === 'number') return !isNaN(value) && isFinite(value);
-        
-        return false;
-      });
-      
-      // Auto-save sempre que houver dados válidos. Se o ciclo ainda não existir
-      // ou estiver em 'nao_iniciado', o próprio saveFormData cria/promove o ciclo.
-      if (hasRealData) {
+      const dadosRelevantes = extrairDadosRelevantes(latestValuesRef.current);
+      const assinaturaAtual = criarAssinaturaDados(dadosRelevantes);
+
+      if (Object.keys(dadosRelevantes).length > 0 && assinaturaAtual !== lastSavedSignatureRef.current) {
         console.log('💾 Auto-save executado com dados válidos (status:', cicloStatus, ')');
-        saveFormData(false);
+        saveFormDataRef.current(false, false);
       }
-    }, 5000); // 5 segundos
+    }, 4000);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus, loading, isSaving]);
+  }, [watchedValues, prontuarioJaFinalizado, cicloStatus, loading, isSaving, camposConfigurados]);
 
-  // Flush de segurança: salva ao sair da página / trocar de aba.
-  useEffect(() => {
-    if (prontuarioJaFinalizado || loading) return;
-
-    const flush = () => {
-      // dispara save assíncrono (sem await — beforeunload não espera)
-      saveFormData(false);
-    };
-
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') flush();
-    };
-
-    window.addEventListener('beforeunload', flush);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('beforeunload', flush);
-      document.removeEventListener('visibilitychange', onVisibility);
-      // Salva também ao desmontar o componente (ex: trocar de residente)
-      flush();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prontuarioJaFinalizado, loading, cicloId, watchedValues]);
-
-  const saveFormData = async (showSuccessToast = false) => {
+  const saveFormData = async (showSuccessToast = false, force = false): Promise<boolean> => {
     // Verificações iniciais mais rigorosas
     if (prontuarioJaFinalizado) {
       console.log('❌ Prontuário finalizado, não é possível salvar');
-      return;
+      return false;
     }
+
+    if (saveInFlightRef.current) {
+      pendingSaveRef.current = true;
+      return false;
+    }
+
+    const dadosRelevantes = extrairDadosRelevantes(latestValuesRef.current);
+    const assinaturaAtual = criarAssinaturaDados(dadosRelevantes);
+    const hasSignificantData = Object.keys(dadosRelevantes).length > 0;
+
+    if (!hasSignificantData) {
+      console.log('⚠️ Nenhum dado significativo encontrado, pulando salvamento');
+      if (showSuccessToast) {
+        toast({
+          title: "Nada para salvar",
+          description: "Preencha ao menos uma informação do prontuário antes de salvar.",
+        });
+      }
+      return false;
+    }
+
+    if (!force && assinaturaAtual === lastSavedSignatureRef.current) {
+      console.log('✅ Sem alterações desde o último salvamento');
+      if (showSuccessToast) {
+        toast({
+          title: "Sem alterações",
+          description: "O prontuário já está salvo.",
+        });
+      }
+      return true;
+    }
+
+    saveInFlightRef.current = true;
     
     // Se não há ciclo, criar um silenciosamente
-    if (!cicloId) {
+    let activeCicloId = cicloIdRef.current;
+    if (!activeCicloId) {
       console.log('🆕 Criando ciclo antes do salvamento...');
       try {
         const { data: novoCiclo, error: cicloError } = await supabase
@@ -376,16 +466,18 @@ export default function NovoFormularioProntuario({
 
         const resultado = novoCiclo?.[0];
         if (resultado?.success) {
-          setCicloId(resultado.ciclo_id);
+          activeCicloId = resultado.ciclo_id;
+          setCicloId(activeCicloId);
+          cicloIdRef.current = activeCicloId;
           setCicloStatus('em_andamento');
-          onStatusChange?.(residenteId, 'em_andamento', resultado.ciclo_id);
+          onStatusChange?.(residenteId, 'em_andamento', activeCicloId);
         } else {
           console.error('❌ Falha ao criar ciclo');
-          return;
+          return false;
         }
       } catch (error) {
         console.error('❌ Erro inesperado ao criar ciclo:', error);
-        return;
+        return false;
       }
     }
     
@@ -394,11 +486,11 @@ export default function NovoFormularioProntuario({
     
     try {
       // Buscar registro existente
-      console.log('🔍 Buscando registro existente para ciclo:', cicloId);
+      console.log('🔍 Buscando registro existente para ciclo:', activeCicloId);
       const { data: registroExistente, error: buscaError } = await supabase
         .from('prontuario_registros')
         .select('id')
-        .eq('ciclo_id', cicloId)
+        .eq('ciclo_id', activeCicloId)
         .eq('tipo_registro', 'prontuario_completo')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -409,53 +501,12 @@ export default function NovoFormularioProntuario({
         throw buscaError;
       }
 
-      const registroEncontrado = registroExistente?.id || registroId;
-
-      // Validação de dados significativos
-      const hasSignificantData = Object.keys(watchedValues).some(key => {
-        const value = watchedValues[key as keyof FormularioData];
-        
-        // Priorizar campos configurados
-        if (key.startsWith('campo_')) {
-          if (typeof value === 'string') return value.trim().length > 0;
-          if (Array.isArray(value)) return value.length > 0;
-          if (typeof value === 'number') return !isNaN(value) && isFinite(value);
-          return value !== undefined && value !== null && value !== '';
-        }
-        
-        // Medicações
-        if (key === 'medicacoes') {
-          return Array.isArray(value) && value.some((med: any) => 
-            med.nome?.trim() || med.dosagem?.trim() || (med.horarios && med.horarios.length > 0)
-          );
-        }
-        
-        // Arrays
-        if (Array.isArray(value)) {
-          return value.length > 0 && value.some(v => {
-            if (typeof v === 'string') return v.trim().length > 0;
-            return v !== undefined && v !== null;
-          });
-        }
-        
-        // Strings
-        if (typeof value === 'string') return value.trim().length > 0;
-        
-        // Números
-        if (typeof value === 'number') return !isNaN(value) && isFinite(value);
-        
-        return value !== undefined && value !== null && value !== '';
-      });
-      
-      if (!hasSignificantData) {
-        console.log('⚠️ Nenhum dado significativo encontrado, pulando salvamento');
-        return;
-      }
+      const registroEncontrado = registroExistente?.id || registroIdRef.current;
       
       console.log('📊 Dados válidos encontrados, salvando...');
       
       // Preparar dados
-      const dados = JSON.stringify(watchedValues);
+      const dados = JSON.stringify(dadosRelevantes);
       let savedData;
       
       if (registroEncontrado) {
@@ -482,7 +533,10 @@ export default function NovoFormularioProntuario({
         }
         
         console.log('✅ Prontuário atualizado com sucesso');
-        if (!registroId) setRegistroId(registroEncontrado); // Garantir que o state está correto
+        if (!registroIdRef.current) {
+          setRegistroId(registroEncontrado);
+          registroIdRef.current = registroEncontrado;
+        }
         savedData = data;
         
         if (showSuccessToast) {
@@ -497,7 +551,7 @@ export default function NovoFormularioProntuario({
         const { data, error } = await supabase
           .from('prontuario_registros')
           .insert({
-            ciclo_id: cicloId,
+            ciclo_id: activeCicloId,
             residente_id: residenteId,
             funcionario_id: funcionarioId,
             tipo_registro: 'prontuario_completo',
@@ -521,10 +575,11 @@ export default function NovoFormularioProntuario({
         
         console.log('✅ Novo prontuário criado com sucesso:', {
           registroId: data?.id,
-          cicloId
+          cicloId: activeCicloId
         });
         
         setRegistroId(data.id); // Definir imediatamente no state
+        registroIdRef.current = data.id;
         savedData = data;
         
         if (showSuccessToast) {
@@ -537,8 +592,8 @@ export default function NovoFormularioProntuario({
 
       // Forçar atualização do status do ciclo baseado no conteúdo
       if (hasSignificantData) {
-        // Tentar atualizar o status do ciclo para 'em_andamento' ou 'completo'
-        const newStatus = hasSignificantData ? 'em_andamento' : cicloStatus;
+        const progresso = calcularProgressoLocal(dadosRelevantes as Partial<FormularioData>);
+        const newStatus = progresso >= 100 ? 'completo' : 'em_andamento';
         
         const { error: statusError } = await supabase
           .from('prontuario_ciclos')
@@ -546,14 +601,17 @@ export default function NovoFormularioProntuario({
             status: newStatus,
             updated_at: new Date().toISOString()
           })
-          .eq('id', cicloId);
+          .eq('id', activeCicloId);
         
         if (!statusError) {
+          lastSavedSignatureRef.current = assinaturaAtual;
           setCicloStatus(newStatus);
           // Notificar mudança de status para que o progresso seja recalculado na página pai
-          onStatusChange?.(residenteId, newStatus, cicloId);
+          onStatusChange?.(residenteId, newStatus, activeCicloId);
         }
       }
+
+      return true;
       
     } catch (error) {
       console.error('❌ Erro completo ao salvar prontuário:', {
@@ -569,10 +627,39 @@ export default function NovoFormularioProntuario({
         description: `Falha no salvamento: ${error?.message || 'Erro desconhecido'}. Tente novamente.`,
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSaving(false);
+      saveInFlightRef.current = false;
+      if (pendingSaveRef.current) {
+        pendingSaveRef.current = false;
+        window.setTimeout(() => saveFormDataRef.current(false, false), 250);
+      }
     }
   };
+
+  useEffect(() => {
+    saveFormDataRef.current = saveFormData;
+  });
+
+  // Flush de segurança: usa refs para não salvar em todo re-render ou troca de campo.
+  useEffect(() => {
+    const flush = () => {
+      saveFormDataRef.current(false, false);
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+
+    window.addEventListener('beforeunload', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+      flush();
+    };
+  }, []);
 
   const handleFinalizarClick = () => {
     if (prontuarioJaFinalizado) {
