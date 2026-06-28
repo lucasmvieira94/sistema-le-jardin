@@ -322,12 +322,13 @@ export default function NovoFormularioProntuario({
         return false;
       });
       
-      // Só fazer auto-save se há dados válidos E o ciclo não está em status inicial
-      if (hasRealData && cicloStatus !== 'nao_iniciado' && cicloStatus !== '') {
-        console.log('💾 Auto-save executado com dados válidos');
+      // Auto-save sempre que houver dados válidos. Se o ciclo ainda não existir
+      // ou estiver em 'nao_iniciado', o próprio saveFormData cria/promove o ciclo.
+      if (hasRealData) {
+        console.log('💾 Auto-save executado com dados válidos (status:', cicloStatus, ')');
         saveFormData(false);
       } else {
-        console.log('⏭️ Auto-save pulado - sem dados válidos ou ciclo não iniciado');
+        console.log('⏭️ Auto-save pulado - sem dados significativos digitados ainda');
       }
     }, 10000); // 10 segundos para dar tempo ao usuário
 
