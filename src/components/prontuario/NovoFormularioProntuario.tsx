@@ -997,6 +997,14 @@ export default function NovoFormularioProntuario({
 
   // Definir ordem das seções
   const ordemSecoes = ['rotina_diaria', 'aspectos_clinicos', 'bem_estar', 'ocorrencias', 'observacoes'];
+  const progressoPreenchimento = calcularProgressoLocal(watchedValues);
+  const statusVisual = prontuarioJaFinalizado
+    ? 'Finalizado'
+    : progressoPreenchimento >= 100
+      ? 'Completo'
+      : cicloId || registroId
+        ? 'Em andamento'
+        : 'Não iniciado';
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-20">
@@ -1024,6 +1032,13 @@ export default function NovoFormularioProntuario({
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="hidden sm:flex flex-col gap-1 w-48">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{statusVisual}</span>
+                <span>{progressoPreenchimento}%</span>
+              </div>
+              <Progress value={progressoPreenchimento} className="h-2" />
+            </div>
             {/* Status de salvamento */}
             <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
               {isSaving && <span className="hidden sm:inline">Salvando...</span>}
@@ -1031,6 +1046,14 @@ export default function NovoFormularioProntuario({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="sm:hidden mx-2 space-y-1">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{statusVisual}</span>
+          <span>{progressoPreenchimento}%</span>
+        </div>
+        <Progress value={progressoPreenchimento} className="h-2" />
       </div>
 
       {/* Identificação do Idoso */}
