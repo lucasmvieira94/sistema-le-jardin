@@ -461,7 +461,8 @@ export default function NovoFormularioProntuario({
 
         if (cicloError) {
           console.error('❌ Erro ao criar ciclo:', cicloError);
-          return;
+          saveInFlightRef.current = false;
+          throw cicloError;
         }
 
         const resultado = novoCiclo?.[0];
@@ -473,10 +474,12 @@ export default function NovoFormularioProntuario({
           onStatusChange?.(residenteId, 'em_andamento', activeCicloId);
         } else {
           console.error('❌ Falha ao criar ciclo');
+          saveInFlightRef.current = false;
           return false;
         }
       } catch (error) {
         console.error('❌ Erro inesperado ao criar ciclo:', error);
+        saveInFlightRef.current = false;
         return false;
       }
     }
@@ -608,6 +611,8 @@ export default function NovoFormularioProntuario({
           setCicloStatus(newStatus);
           // Notificar mudança de status para que o progresso seja recalculado na página pai
           onStatusChange?.(residenteId, newStatus, activeCicloId);
+        } else {
+          throw statusError;
         }
       }
 
