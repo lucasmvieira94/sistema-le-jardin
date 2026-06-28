@@ -273,19 +273,12 @@ export default function NovoFormularioProntuario({
     }
   };
 
-  // Auto-save otimizado e mais conservador
+  // Auto-save otimizado: dispara mesmo sem ciclo (saveFormData cria o ciclo).
   useEffect(() => {
-    // Condições para NÃO fazer auto-save
-    if (prontuarioJaFinalizado || !cicloId || loading || isSaving) {
-      console.log('⏸️ Auto-save bloqueado:', { 
-        finalizado: prontuarioJaFinalizado, 
-        temCiclo: !!cicloId, 
-        carregando: loading, 
-        salvando: isSaving 
-      });
+    if (prontuarioJaFinalizado || loading || isSaving) {
       return;
     }
-    
+
     const timer = setTimeout(() => {
       console.log('⏰ Timer do auto-save acionado');
       
@@ -327,16 +320,37 @@ export default function NovoFormularioProntuario({
       if (hasRealData) {
         console.log('💾 Auto-save executado com dados válidos (status:', cicloStatus, ')');
         saveFormData(false);
-      } else {
-        console.log('⏭️ Auto-save pulado - sem dados significativos digitados ainda');
       }
-    }, 10000); // 10 segundos para dar tempo ao usuário
+    }, 5000); // 5 segundos
 
     return () => {
-      console.log('🧹 Limpando timer do auto-save');
       clearTimeout(timer);
     };
   }, [watchedValues, prontuarioJaFinalizado, cicloId, cicloStatus, loading, isSaving]);
+
+  // Flush de segurança: salva ao sair da página / trocar de aba.
+  useEffect(() => {
+    if (prontuarioJaFinalizado || loading) return;
+
+    const flush = () => {
+      // dispara save assíncrono (sem await — beforeunload não espera)
+      saveFormData(false);
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+
+    window.addEventListener('beforeunload', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+      // Salva também ao desmontar o componente (ex: trocar de residente)
+      flush();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prontuarioJaFinalizado, loading, cicloId, watchedValues]);
 
   const saveFormData = async (showSuccessToast = false) => {
     // Verificações iniciais mais rigorosas
@@ -1063,7 +1077,7 @@ export default function NovoFormularioProntuario({
                 variant="outline" 
                 size="sm"
                 onClick={() => saveFormData(true)}
-                disabled={loading || !cicloId}
+                disabled={loading}
                 className="h-10 sm:h-auto"
               >
                 <Save className="w-4 h-4 sm:mr-2" />
