@@ -461,7 +461,8 @@ export default function NovoFormularioProntuario({
 
         if (cicloError) {
           console.error('❌ Erro ao criar ciclo:', cicloError);
-          return;
+          saveInFlightRef.current = false;
+          throw cicloError;
         }
 
         const resultado = novoCiclo?.[0];
@@ -473,10 +474,12 @@ export default function NovoFormularioProntuario({
           onStatusChange?.(residenteId, 'em_andamento', activeCicloId);
         } else {
           console.error('❌ Falha ao criar ciclo');
+          saveInFlightRef.current = false;
           return false;
         }
       } catch (error) {
         console.error('❌ Erro inesperado ao criar ciclo:', error);
+        saveInFlightRef.current = false;
         return false;
       }
     }
@@ -608,6 +611,8 @@ export default function NovoFormularioProntuario({
           setCicloStatus(newStatus);
           // Notificar mudança de status para que o progresso seja recalculado na página pai
           onStatusChange?.(residenteId, newStatus, activeCicloId);
+        } else {
+          throw statusError;
         }
       }
 
@@ -680,7 +685,8 @@ export default function NovoFormularioProntuario({
     // Salvar dados atuais antes de abrir o diálogo de código
     setIsSaving(true);
     try {
-      await saveFormData(true); // Mostrar toast de sucesso
+      const saved = await saveFormData(true); // Mostrar toast de sucesso
+      if (!saved) return;
       setShowCodigoDialog(true);
     } catch (error) {
       // Erro já tratado na função saveFormData
@@ -696,7 +702,7 @@ export default function NovoFormularioProntuario({
       // Chamar função para finalizar o prontuário
       const { data, error } = await supabase
         .rpc('finalizar_prontuario_diario', {
-          p_ciclo_id: cicloId,
+          p_ciclo_id: cicloIdRef.current,
           p_funcionario_id: funcionarioId,
           p_codigo_validacao: codigo
         });
@@ -992,6 +998,14 @@ export default function NovoFormularioProntuario({
 
   // Definir ordem das seções
   const ordemSecoes = ['rotina_diaria', 'aspectos_clinicos', 'bem_estar', 'ocorrencias', 'observacoes'];
+  const progressoPreenchimento = calcularProgressoLocal(watchedValues);
+  const statusVisual = prontuarioJaFinalizado
+    ? 'Finalizado'
+    : progressoPreenchimento >= 100
+      ? 'Completo'
+      : cicloId || registroId
+        ? 'Em andamento'
+        : 'Não iniciado';
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-20">
@@ -1019,6 +1033,13 @@ export default function NovoFormularioProntuario({
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="hidden sm:flex flex-col gap-1 w-48">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{statusVisual}</span>
+                <span>{progressoPreenchimento}%</span>
+              </div>
+              <Progress value={progressoPreenchimento} className="h-2" />
+            </div>
             {/* Status de salvamento */}
             <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
               {isSaving && <span className="hidden sm:inline">Salvando...</span>}
@@ -1026,6 +1047,14 @@ export default function NovoFormularioProntuario({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="sm:hidden mx-2 space-y-1">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{statusVisual}</span>
+          <span>{progressoPreenchimento}%</span>
+        </div>
+        <Progress value={progressoPreenchimento} className="h-2" />
       </div>
 
       {/* Identificação do Idoso */}

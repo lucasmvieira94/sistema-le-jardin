@@ -121,6 +121,13 @@ export default function Prontuario() {
     }
   };
 
+  const derivarStatusPeloProgresso = (statusBanco: string, progresso: number) => {
+    if (statusBanco === 'encerrado') return 'encerrado';
+    if (progresso >= 100) return 'completo';
+    if (statusBanco === 'nao_iniciado' && progresso === 0) return 'nao_iniciado';
+    return progresso > 0 || statusBanco === 'em_andamento' ? 'em_andamento' : statusBanco;
+  };
+
   const verificarStatusProntuarios = async (residentesData: any[]) => {
     const statusMap: Record<string, {status: string, cicloId: string | null, progresso?: number}> = {};
     
@@ -147,8 +154,10 @@ export default function Prontuario() {
             progresso = await calcularProgressoBaseadoCampos(ciclo.id);
           }
           
+          const statusFinal = derivarStatusPeloProgresso(ciclo.status, progresso);
+
           statusMap[residente.id] = {
-            status: ciclo.status,
+            status: statusFinal,
             cicloId: ciclo.id,
             progresso
           };
@@ -171,8 +180,10 @@ export default function Prontuario() {
               progresso = await calcularProgressoBaseadoCampos(cicloInfo.ciclo_id);
             }
             
+            const statusFinal = derivarStatusPeloProgresso(cicloInfo.status || 'nao_iniciado', progresso);
+
             statusMap[residente.id] = {
-              status: cicloInfo.status || 'nao_iniciado',
+              status: statusFinal,
               cicloId: cicloInfo.ciclo_id,
               progresso
             };
@@ -425,9 +436,11 @@ export default function Prontuario() {
                 progresso = await calcularProgressoBaseadoCampos(cicloId);
               }
               
+              const statusFinal = derivarStatusPeloProgresso(status, progresso);
+
               setProntuariosStatus(prev => ({
                 ...prev,
-                [residenteId]: { status, cicloId, progresso }
+                [residenteId]: { status: statusFinal, cicloId, progresso }
               }));
             }}
           />
