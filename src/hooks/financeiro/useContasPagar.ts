@@ -65,7 +65,8 @@ export function useContasPagar(filtros?: {
   const carregar = useCallback(async () => {
     setLoading(true);
     // marca atrasadas antes
-    await (supabase as any).rpc("marcar_contas_atrasadas").catch(() => {});
+    const r = await (supabase as any).rpc("marcar_contas_atrasadas");
+    if (r?.error) console.warn("[contas_pagar] marcar_contas_atrasadas falhou:", r.error.message);
     let q = (supabase as any).from("contas_pagar").select("*").order("data_vencimento", { ascending: true });
     if (filtros?.inicio) q = q.gte("data_vencimento", filtros.inicio);
     if (filtros?.fim) q = q.lte("data_vencimento", filtros.fim);
