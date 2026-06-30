@@ -1027,6 +1027,8 @@ export type Database = {
       contas_pagar: {
         Row: {
           anexo_url: string | null
+          beneficiario_documento: string | null
+          beneficiario_nome: string | null
           categoria: string
           created_at: string
           criado_por: string | null
@@ -1047,6 +1049,8 @@ export type Database = {
         }
         Insert: {
           anexo_url?: string | null
+          beneficiario_documento?: string | null
+          beneficiario_nome?: string | null
           categoria?: string
           created_at?: string
           criado_por?: string | null
@@ -1067,6 +1071,8 @@ export type Database = {
         }
         Update: {
           anexo_url?: string | null
+          beneficiario_documento?: string | null
+          beneficiario_nome?: string | null
           categoria?: string
           created_at?: string
           criado_por?: string | null
@@ -4528,6 +4534,7 @@ export type Database = {
         | "contrato_temporario"
         | "advertencia"
         | "recibo_pagamento"
+        | "recibo_despesa"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -4692,6 +4699,7 @@ export const Constants = {
         "contrato_temporario",
         "advertencia",
         "recibo_pagamento",
+        "recibo_despesa",
       ],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [

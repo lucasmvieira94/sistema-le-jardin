@@ -30,6 +30,8 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
   const [observacoes, setObservacoes] = useState("");
   const [recorrente, setRecorrente] = useState(false);
   const [frequencia, setFrequencia] = useState<string>("mensal");
+  const [beneficiarioNome, setBeneficiarioNome] = useState("");
+  const [beneficiarioDoc, setBeneficiarioDoc] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -41,6 +43,8 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
       setObservacoes(conta?.observacoes ?? "");
       setRecorrente(conta?.recorrente ?? false);
       setFrequencia(conta?.frequencia_recorrencia ?? "mensal");
+      setBeneficiarioNome((conta as any)?.beneficiario_nome ?? "");
+      setBeneficiarioDoc((conta as any)?.beneficiario_documento ?? "");
     }
   }, [open, conta]);
 
@@ -59,6 +63,8 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
       observacoes: observacoes || null,
       recorrente,
       frequencia_recorrencia: recorrente ? frequencia : null,
+      beneficiario_nome: beneficiarioNome || null,
+      beneficiario_documento: beneficiarioDoc || null,
     };
     let error: any = null;
     if (conta?.id) {
@@ -139,6 +145,22 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
           <div>
             <Label>Observações</Label>
             <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} />
+          </div>
+          <div className="rounded border p-3 space-y-2">
+            <div>
+              <Label className="text-sm">Beneficiário (para emissão de recibo)</Label>
+              <p className="text-xs text-muted-foreground">Quem irá receber o pagamento — útil principalmente para pagamentos em dinheiro.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Nome completo</Label>
+                <Input value={beneficiarioNome} onChange={(e) => setBeneficiarioNome(e.target.value)} placeholder="Ex.: João da Silva" />
+              </div>
+              <div>
+                <Label className="text-xs">CPF / CNPJ</Label>
+                <Input value={beneficiarioDoc} onChange={(e) => setBeneficiarioDoc(e.target.value)} placeholder="Opcional" />
+              </div>
+            </div>
           </div>
         </div>
         <DialogFooter>

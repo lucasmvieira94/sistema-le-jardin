@@ -10,6 +10,7 @@ const TIPO_LABEL: Record<string, string> = {
   contrato_temporario: 'Contrato de Hospedagem Temporária',
   advertencia: 'Documento Disciplinar',
   recibo_pagamento: 'Recibo de Pagamento',
+  recibo_despesa: 'Recibo de Pagamento de Despesa',
 }
 
 function mascararNome(nome: string): string {
