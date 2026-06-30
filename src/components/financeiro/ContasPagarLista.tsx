@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, RefreshCw, Loader2, CreditCard, AlertCircle, Repeat, Pencil, Ban } from "lucide-react";
+import { Plus, RefreshCw, Loader2, CreditCard, AlertCircle, Repeat, Pencil, Ban, FileText } from "lucide-react";
 import { formatarData } from "@/utils/dateUtils";
 import { CATEGORIAS, useContasPagar, type ContaPagar } from "@/hooks/financeiro/useContasPagar";
 import ContaPagarForm from "./ContaPagarForm";
 import BaixaPagamentoDialog from "./BaixaPagamentoDialog";
+import EmitirReciboDespesaDialog from "./EmitirReciboDespesaDialog";
 import { useToast } from "@/hooks/use-toast";
 
 const fmtBRL = (v: number) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -41,6 +42,8 @@ export default function ContasPagarLista() {
   const [editing, setEditing] = useState<ContaPagar | null>(null);
   const [baixaOpen, setBaixaOpen] = useState(false);
   const [baixaConta, setBaixaConta] = useState<ContaPagar | null>(null);
+  const [reciboOpen, setReciboOpen] = useState(false);
+  const [reciboConta, setReciboConta] = useState<ContaPagar | null>(null);
 
   const totais = useMemo(() => {
     const ativas = contas.filter((c) => c.status !== "cancelado");
@@ -162,6 +165,16 @@ export default function ContasPagarLista() {
                             <Ban className="h-3.5 w-3.5" />
                           </Button>
                         )}
+                        {c.status === "pago" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setReciboConta(c); setReciboOpen(true); }}
+                            title="Emitir recibo de pagamento"
+                          >
+                            <FileText className="h-3.5 w-3.5 mr-1" /> Recibo
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -174,6 +187,7 @@ export default function ContasPagarLista() {
 
       <ContaPagarForm open={formOpen} onOpenChange={setFormOpen} conta={editing} onSaved={recarregar} />
       <BaixaPagamentoDialog open={baixaOpen} onOpenChange={setBaixaOpen} conta={baixaConta} onSaved={recarregar} />
+      <EmitirReciboDespesaDialog open={reciboOpen} onOpenChange={setReciboOpen} conta={reciboConta} onSaved={recarregar} />
     </div>
   );
 }
