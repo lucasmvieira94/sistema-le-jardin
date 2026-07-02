@@ -411,7 +411,7 @@ export default function NovoFormularioProntuario({
 
   // Atualiza o indicador do botão de salvar conforme o estado sincronizado do formulário
   useEffect(() => {
-    if (prontuarioJaFinalizado || loading || isSaving) {
+    if (prontuarioJaFinalizado || loading || isSaving || saveStatus === 'error') {
       return;
     }
 
@@ -427,7 +427,7 @@ export default function NovoFormularioProntuario({
     } else {
       setSaveStatus('idle');
     }
-  }, [watchedValues, prontuarioJaFinalizado, loading, isSaving]);
+  }, [watchedValues, prontuarioJaFinalizado, loading, isSaving, saveStatus]);
 
   const saveFormData = async (showSuccessToast = false, force = false): Promise<boolean> => {
     // Verificações iniciais mais rigorosas
