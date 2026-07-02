@@ -470,6 +470,9 @@ export default function NovoFormularioProntuario({
     }
 
     saveInFlightRef.current = true;
+    setSaveStatus('saving');
+    
+    // Se não há ciclo, criar um silenciosamente
     
     // Se não há ciclo, criar um silenciosamente
     let activeCicloId = cicloIdRef.current;
