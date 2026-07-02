@@ -95,6 +95,7 @@ export default function NovoFormularioProntuario({
   const { toast } = useToast();
   const [isFinalizando, setIsFinalizando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'unsaved' | 'error'>('idle');
   const [registroId, setRegistroId] = useState<string | null>(null);
   const [residenteData, setResidenteData] = useState<any>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
@@ -109,6 +110,7 @@ export default function NovoFormularioProntuario({
   const registroIdRef = useRef<string | null>(null);
   const latestValuesRef = useRef<Partial<FormularioData>>({});
   const lastSavedSignatureRef = useRef("");
+  const errorSignatureRef = useRef("");
   const saveInFlightRef = useRef(false);
   const pendingSaveRef = useRef(false);
   const saveFormDataRef = useRef<(showSuccessToast?: boolean, force?: boolean) => Promise<boolean>>(async () => false);
@@ -408,6 +410,34 @@ export default function NovoFormularioProntuario({
     };
   }, [watchedValues, prontuarioJaFinalizado, cicloStatus, loading, isSaving, camposConfigurados]);
 
+  // Atualiza o indicador do botão de salvar conforme o estado sincronizado do formulário
+  useEffect(() => {
+    if (prontuarioJaFinalizado || loading || isSaving) {
+      return;
+    }
+
+    const dadosRelevantes = extrairDadosRelevantes(latestValuesRef.current);
+    const hasSignificantData = Object.keys(dadosRelevantes).length > 0;
+    const assinaturaAtual = criarAssinaturaDados(dadosRelevantes);
+    const isSync = lastSavedSignatureRef.current !== '' && assinaturaAtual === lastSavedSignatureRef.current;
+
+    if (saveStatus === 'error') {
+      // mantém vermelho enquanto os dados que falharam não forem alterados
+      if (assinaturaAtual !== errorSignatureRef.current) {
+        setSaveStatus('unsaved');
+      }
+      return;
+    }
+
+    if (hasSignificantData && !isSync) {
+      setSaveStatus('unsaved');
+    } else if (isSync) {
+      setSaveStatus('saved');
+    } else {
+      setSaveStatus('idle');
+    }
+  }, [watchedValues, prontuarioJaFinalizado, loading, isSaving, saveStatus]);
+
   const saveFormData = async (showSuccessToast = false, force = false): Promise<boolean> => {
     // Verificações iniciais mais rigorosas
     if (prontuarioJaFinalizado) {
@@ -426,6 +456,7 @@ export default function NovoFormularioProntuario({
 
     if (!hasSignificantData) {
       console.log('⚠️ Nenhum dado significativo encontrado, pulando salvamento');
+      setSaveStatus('idle');
       if (showSuccessToast) {
         toast({
           title: "Nada para salvar",
@@ -437,6 +468,7 @@ export default function NovoFormularioProntuario({
 
     if (!force && assinaturaAtual === lastSavedSignatureRef.current) {
       console.log('✅ Sem alterações desde o último salvamento');
+      setSaveStatus(lastSavedSignatureRef.current ? 'saved' : 'idle');
       if (showSuccessToast) {
         toast({
           title: "Sem alterações",
@@ -447,6 +479,7 @@ export default function NovoFormularioProntuario({
     }
 
     saveInFlightRef.current = true;
+    setSaveStatus('saving');
     
     // Se não há ciclo, criar um silenciosamente
     let activeCicloId = cicloIdRef.current;
@@ -609,6 +642,7 @@ export default function NovoFormularioProntuario({
         if (!statusError) {
           lastSavedSignatureRef.current = assinaturaAtual;
           setCicloStatus(newStatus);
+          setSaveStatus('saved');
           // Notificar mudança de status para que o progresso seja recalculado na página pai
           onStatusChange?.(residenteId, newStatus, activeCicloId);
         } else {
@@ -627,6 +661,8 @@ export default function NovoFormularioProntuario({
         funcionarioId,
         residenteId
       });
+      errorSignatureRef.current = assinaturaAtual;
+      setSaveStatus('error');
       toast({
         title: "Erro ao salvar",
         description: `Falha no salvamento: ${error?.message || 'Erro desconhecido'}. Tente novamente.`,
@@ -1182,24 +1218,44 @@ export default function NovoFormularioProntuario({
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-3 sm:p-4 safe-area-pb">
         <div className="flex gap-2 sm:gap-3 max-w-screen-xl mx-auto">
           {/* Indicador de salvamento e botão de salvar manual */}
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-            {isSaving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                <span className="hidden sm:inline">Salvando...</span>
-              </>
-            ) : !prontuarioJaFinalizado ? (
-              <Button 
-                variant="outline" 
+          <div className="flex items-center flex-shrink-0">
+            {!prontuarioJaFinalizado && (
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => saveFormData(true)}
-                disabled={loading}
-                className="h-10 sm:h-auto"
+                disabled={loading || saveStatus === 'saving' || saveStatus === 'saved'}
+                className={`h-10 sm:h-auto transition-colors ${
+                  saveStatus === 'saved'
+                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800'
+                    : saveStatus === 'error'
+                    ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800'
+                    : ''
+                }`}
               >
-                <Save className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Salvar</span>
+                {saveStatus === 'saving' ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+                    <span className="hidden sm:inline">Salvando...</span>
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 sm:mr-2 text-green-600" />
+                    <span className="hidden sm:inline">Alterações salvas</span>
+                  </>
+                ) : saveStatus === 'error' ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 sm:mr-2 text-red-600" />
+                    <span className="hidden sm:inline">Erro ao salvar</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Salvar</span>
+                  </>
+                )}
               </Button>
-            ) : null}
+            )}
           </div>
           
           <AlertDialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
