@@ -409,6 +409,26 @@ export default function NovoFormularioProntuario({
     };
   }, [watchedValues, prontuarioJaFinalizado, cicloStatus, loading, isSaving, camposConfigurados]);
 
+  // Atualiza o indicador do botão de salvar conforme o estado sincronizado do formulário
+  useEffect(() => {
+    if (prontuarioJaFinalizado || loading || isSaving) {
+      return;
+    }
+
+    const dadosRelevantes = extrairDadosRelevantes(latestValuesRef.current);
+    const hasSignificantData = Object.keys(dadosRelevantes).length > 0;
+    const assinaturaAtual = criarAssinaturaDados(dadosRelevantes);
+    const isSync = lastSavedSignatureRef.current !== '' && assinaturaAtual === lastSavedSignatureRef.current;
+
+    if (hasSignificantData && !isSync) {
+      setSaveStatus('unsaved');
+    } else if (isSync) {
+      setSaveStatus('saved');
+    } else {
+      setSaveStatus('idle');
+    }
+  }, [watchedValues, prontuarioJaFinalizado, loading, isSaving]);
+
   const saveFormData = async (showSuccessToast = false, force = false): Promise<boolean> => {
     // Verificações iniciais mais rigorosas
     if (prontuarioJaFinalizado) {
