@@ -95,6 +95,7 @@ export default function NovoFormularioProntuario({
   const { toast } = useToast();
   const [isFinalizando, setIsFinalizando] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'unsaved' | 'error'>('idle');
   const [registroId, setRegistroId] = useState<string | null>(null);
   const [residenteData, setResidenteData] = useState<any>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
