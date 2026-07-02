@@ -1208,24 +1208,44 @@ export default function NovoFormularioProntuario({
       <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t p-3 sm:p-4 safe-area-pb">
         <div className="flex gap-2 sm:gap-3 max-w-screen-xl mx-auto">
           {/* Indicador de salvamento e botão de salvar manual */}
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-            {isSaving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                <span className="hidden sm:inline">Salvando...</span>
-              </>
-            ) : !prontuarioJaFinalizado ? (
-              <Button 
-                variant="outline" 
+          <div className="flex items-center flex-shrink-0">
+            {!prontuarioJaFinalizado && (
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => saveFormData(true)}
-                disabled={loading}
-                className="h-10 sm:h-auto"
+                disabled={loading || saveStatus === 'saving' || saveStatus === 'saved'}
+                className={`h-10 sm:h-auto transition-colors ${
+                  saveStatus === 'saved'
+                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800'
+                    : saveStatus === 'error'
+                    ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800'
+                    : ''
+                }`}
               >
-                <Save className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Salvar</span>
+                {saveStatus === 'saving' ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+                    <span className="hidden sm:inline">Salvando...</span>
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 sm:mr-2 text-green-600" />
+                    <span className="hidden sm:inline">Alterações salvas</span>
+                  </>
+                ) : saveStatus === 'error' ? (
+                  <>
+                    <AlertTriangle className="w-4 h-4 sm:mr-2 text-red-600" />
+                    <span className="hidden sm:inline">Erro ao salvar</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Salvar</span>
+                  </>
+                )}
               </Button>
-            ) : null}
+            )}
           </div>
           
           <AlertDialog open={showFinalizarDialog} onOpenChange={setShowFinalizarDialog}>
