@@ -447,6 +447,7 @@ export default function NovoFormularioProntuario({
 
     if (!hasSignificantData) {
       console.log('⚠️ Nenhum dado significativo encontrado, pulando salvamento');
+      setSaveStatus('idle');
       if (showSuccessToast) {
         toast({
           title: "Nada para salvar",
