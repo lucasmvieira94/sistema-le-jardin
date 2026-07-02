@@ -473,8 +473,6 @@ export default function NovoFormularioProntuario({
     setSaveStatus('saving');
     
     // Se não há ciclo, criar um silenciosamente
-    
-    // Se não há ciclo, criar um silenciosamente
     let activeCicloId = cicloIdRef.current;
     if (!activeCicloId) {
       console.log('🆕 Criando ciclo antes do salvamento...');
