@@ -412,7 +412,7 @@ export default function NovoFormularioProntuario({
 
   // Atualiza o indicador do botão de salvar conforme o estado sincronizado do formulário
   useEffect(() => {
-    if (prontuarioJaFinalizado || loading || isSaving || saveStatus === 'error') {
+    if (prontuarioJaFinalizado || loading || isSaving) {
       return;
     }
 
@@ -420,6 +420,14 @@ export default function NovoFormularioProntuario({
     const hasSignificantData = Object.keys(dadosRelevantes).length > 0;
     const assinaturaAtual = criarAssinaturaDados(dadosRelevantes);
     const isSync = lastSavedSignatureRef.current !== '' && assinaturaAtual === lastSavedSignatureRef.current;
+
+    if (saveStatus === 'error') {
+      // mantém vermelho enquanto os dados que falharam não forem alterados
+      if (assinaturaAtual !== errorSignatureRef.current) {
+        setSaveStatus('unsaved');
+      }
+      return;
+    }
 
     if (hasSignificantData && !isSync) {
       setSaveStatus('unsaved');
