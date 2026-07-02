@@ -661,6 +661,7 @@ export default function NovoFormularioProntuario({
         funcionarioId,
         residenteId
       });
+      errorSignatureRef.current = assinaturaAtual;
       setSaveStatus('error');
       toast({
         title: "Erro ao salvar",
