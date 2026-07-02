@@ -110,6 +110,7 @@ export default function NovoFormularioProntuario({
   const registroIdRef = useRef<string | null>(null);
   const latestValuesRef = useRef<Partial<FormularioData>>({});
   const lastSavedSignatureRef = useRef("");
+  const errorSignatureRef = useRef("");
   const saveInFlightRef = useRef(false);
   const pendingSaveRef = useRef(false);
   const saveFormDataRef = useRef<(showSuccessToast?: boolean, force?: boolean) => Promise<boolean>>(async () => false);
