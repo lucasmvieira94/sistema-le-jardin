@@ -139,7 +139,7 @@ export default function Prontuario() {
           .select('id, status, data_inicio_efetivo')
           .eq('residente_id', residente.id)
           .eq('data_ciclo', hojeISO())
-          .single();
+          .maybeSingle();
 
         if (!error && ciclo) {
           // Calcular progresso baseado nos campos obrigatórios preenchidos
