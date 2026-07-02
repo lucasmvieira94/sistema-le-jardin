@@ -459,6 +459,7 @@ export default function NovoFormularioProntuario({
 
     if (!force && assinaturaAtual === lastSavedSignatureRef.current) {
       console.log('✅ Sem alterações desde o último salvamento');
+      setSaveStatus(lastSavedSignatureRef.current ? 'saved' : 'idle');
       if (showSuccessToast) {
         toast({
           title: "Sem alterações",
