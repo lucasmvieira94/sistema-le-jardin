@@ -652,6 +652,7 @@ export default function NovoFormularioProntuario({
         funcionarioId,
         residenteId
       });
+      setSaveStatus('error');
       toast({
         title: "Erro ao salvar",
         description: `Falha no salvamento: ${error?.message || 'Erro desconhecido'}. Tente novamente.`,
