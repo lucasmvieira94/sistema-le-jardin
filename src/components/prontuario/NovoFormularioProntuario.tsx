@@ -633,6 +633,7 @@ export default function NovoFormularioProntuario({
         if (!statusError) {
           lastSavedSignatureRef.current = assinaturaAtual;
           setCicloStatus(newStatus);
+          setSaveStatus('saved');
           // Notificar mudança de status para que o progresso seja recalculado na página pai
           onStatusChange?.(residenteId, newStatus, activeCicloId);
         } else {
