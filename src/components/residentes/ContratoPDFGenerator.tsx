@@ -388,17 +388,24 @@ export default function ContratoPDFGenerator({
     try {
       toast({ title: "Gerando PDF...", description: "Aguarde enquanto o documento é gerado." });
 
-      // Create a temporary hidden container with print styles
+      // Margens A4 (mm) — devem coincidir com a versão de impressão
+      const marginTopMm = 20;
+      const marginBottomMm = 20;
+      const marginLeftMm = 20;
+      const marginRightMm = 20;
+      const contentWidthMm = 210 - marginLeftMm - marginRightMm; // 170mm
+
+      // Create a temporary hidden container with print styles (largura = área útil)
       const tempContainer = document.createElement("div");
       tempContainer.style.position = "absolute";
       tempContainer.style.left = "-9999px";
       tempContainer.style.top = "0";
-      tempContainer.style.width = "210mm";
+      tempContainer.style.width = `${contentWidthMm}mm`;
       tempContainer.style.backgroundColor = "#ffffff";
       tempContainer.style.fontFamily = "'Times New Roman', Times, serif";
       tempContainer.style.fontSize = "11pt";
       tempContainer.style.lineHeight = "1.5";
-      tempContainer.style.padding = "20px 50px";
+      tempContainer.style.padding = "0";
       tempContainer.style.color = "#000";
       tempContainer.innerHTML = generateContractHTML();
       if (auth) {
@@ -436,19 +443,30 @@ export default function ContratoPDFGenerator({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = pdfWidth / imgWidth;
-      const scaledHeight = imgHeight * ratio;
+      // Imagem escalada para caber na área útil (largura = contentWidthMm)
+      const renderWidth = pdfWidth - marginLeftMm - marginRightMm;
+      const ratio = renderWidth / canvas.width;
+      const renderHeight = canvas.height * ratio;
+      const usableHeight = pdfHeight - marginTopMm - marginBottomMm;
 
-      const pageHeight = pdfHeight;
       let position = 0;
       let page = 0;
-
-      while (position < scaledHeight) {
+      while (position < renderHeight) {
         if (page > 0) pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, -position, pdfWidth, scaledHeight);
-        position += pageHeight;
+        // Fundo branco cobrindo margens (evita que a imagem "vaze" ao ser deslocada)
+        pdf.addImage(
+          imgData,
+          "PNG",
+          marginLeftMm,
+          marginTopMm - position,
+          renderWidth,
+          renderHeight
+        );
+        // Máscaras brancas nas margens superior e inferior para recorte limpo
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pdfWidth, marginTopMm, "F");
+        pdf.rect(0, pdfHeight - marginBottomMm, pdfWidth, marginBottomMm, "F");
+        position += usableHeight;
         page++;
       }
 
