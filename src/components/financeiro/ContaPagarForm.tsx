@@ -30,6 +30,8 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
   const [observacoes, setObservacoes] = useState("");
   const [recorrente, setRecorrente] = useState(false);
   const [frequencia, setFrequencia] = useState<string>("mensal");
+  const [parcelado, setParcelado] = useState(false);
+  const [numParcelas, setNumParcelas] = useState("2");
   const [beneficiarioNome, setBeneficiarioNome] = useState("");
   const [beneficiarioDoc, setBeneficiarioDoc] = useState("");
 
@@ -43,14 +45,39 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
       setObservacoes(conta?.observacoes ?? "");
       setRecorrente(conta?.recorrente ?? false);
       setFrequencia(conta?.frequencia_recorrencia ?? "mensal");
+      setParcelado(false);
+      setNumParcelas("2");
       setBeneficiarioNome((conta as any)?.beneficiario_nome ?? "");
       setBeneficiarioDoc((conta as any)?.beneficiario_documento ?? "");
     }
   }, [open, conta]);
 
+  const somarPorFrequencia = (dataISO: string, freq: string, n: number): string => {
+    const [y, m, d] = dataISO.split("-").map(Number);
+    const dt = new Date(y, m - 1, d, 12, 0, 0);
+    switch (freq) {
+      case "semanal": dt.setDate(dt.getDate() + 7 * n); break;
+      case "quinzenal": dt.setDate(dt.getDate() + 15 * n); break;
+      case "mensal": dt.setMonth(dt.getMonth() + 1 * n); break;
+      case "bimestral": dt.setMonth(dt.getMonth() + 2 * n); break;
+      case "trimestral": dt.setMonth(dt.getMonth() + 3 * n); break;
+      case "semestral": dt.setMonth(dt.getMonth() + 6 * n); break;
+      case "anual": dt.setFullYear(dt.getFullYear() + 1 * n); break;
+    }
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    return `${yy}-${mm}-${dd}`;
+  };
+
   const salvar = async () => {
     if (!descricao || !valor || !vencimento) {
       toast({ title: "Preencha descrição, valor e vencimento", variant: "destructive" });
+      return;
+    }
+    const totalParcelas = parcelado ? Math.max(2, Math.min(120, parseInt(numParcelas) || 0)) : 1;
+    if (parcelado && (!totalParcelas || totalParcelas < 2)) {
+      toast({ title: "Informe um número de parcelas válido (mínimo 2)", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -61,8 +88,8 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
       valor: Number(valor),
       data_vencimento: vencimento,
       observacoes: observacoes || null,
-      recorrente,
-      frequencia_recorrencia: recorrente ? frequencia : null,
+      recorrente: parcelado ? false : recorrente,
+      frequencia_recorrencia: (parcelado || recorrente) ? frequencia : null,
       beneficiario_nome: beneficiarioNome || null,
       beneficiario_documento: beneficiarioDoc || null,
     };
@@ -74,15 +101,31 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
       const { data: u } = await supabase.auth.getUser();
       payload.criado_por = u?.user?.id ?? null;
       payload.tenant_id = tenantId ?? null;
-      const r = await (supabase as any).from("contas_pagar").insert(payload);
-      error = r.error;
+      if (parcelado) {
+        const rows = Array.from({ length: totalParcelas }, (_, i) => ({
+          ...payload,
+          descricao: `${descricao} (${i + 1}/${totalParcelas})`,
+          data_vencimento: somarPorFrequencia(vencimento, frequencia, i),
+        }));
+        const r = await (supabase as any).from("contas_pagar").insert(rows);
+        error = r.error;
+      } else {
+        const r = await (supabase as any).from("contas_pagar").insert(payload);
+        error = r.error;
+      }
     }
     setSaving(false);
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: conta ? "Conta atualizada" : "Conta cadastrada" });
+    toast({
+      title: conta
+        ? "Conta atualizada"
+        : parcelado
+          ? `${totalParcelas} parcelas cadastradas`
+          : "Conta cadastrada",
+    });
     onOpenChange(false);
     onSaved();
   };
@@ -124,23 +167,63 @@ export default function ContaPagarForm({ open, onOpenChange, conta, onSaved }: P
               <Input type="date" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
             </div>
           </div>
-          <div className="flex items-center justify-between rounded border p-3">
-            <div>
-              <Label className="cursor-pointer">Recorrente</Label>
-              <p className="text-xs text-muted-foreground">Gera próxima ocorrência ao dar baixa</p>
+          {!conta?.id && (
+            <div className="flex items-center justify-between rounded border p-3">
+              <div>
+                <Label className="cursor-pointer">Parcelada (nº fixo de parcelas)</Label>
+                <p className="text-xs text-muted-foreground">Cria todas as parcelas agora, com vencimentos sequenciais</p>
+              </div>
+              <Switch
+                checked={parcelado}
+                onCheckedChange={(v) => { setParcelado(v); if (v) setRecorrente(false); }}
+              />
             </div>
-            <Switch checked={recorrente} onCheckedChange={setRecorrente} />
-          </div>
-          {recorrente && (
-            <div>
-              <Label>Frequência</Label>
-              <Select value={frequencia} onValueChange={setFrequencia}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {FREQUENCIAS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+          )}
+          {parcelado && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Número de parcelas</Label>
+                <Input
+                  type="number"
+                  min={2}
+                  max={120}
+                  value={numParcelas}
+                  onChange={(e) => setNumParcelas(e.target.value)}
+                  placeholder="Ex.: 8"
+                />
+              </div>
+              <div>
+                <Label>Frequência</Label>
+                <Select value={frequencia} onValueChange={setFrequencia}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {FREQUENCIAS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+          )}
+          {!parcelado && (
+            <>
+              <div className="flex items-center justify-between rounded border p-3">
+                <div>
+                  <Label className="cursor-pointer">Recorrente (contínua)</Label>
+                  <p className="text-xs text-muted-foreground">Gera a próxima ocorrência ao dar baixa</p>
+                </div>
+                <Switch checked={recorrente} onCheckedChange={setRecorrente} />
+              </div>
+              {recorrente && (
+                <div>
+                  <Label>Frequência</Label>
+                  <Select value={frequencia} onValueChange={setFrequencia}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCIAS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
           )}
           <div>
             <Label>Observações</Label>
