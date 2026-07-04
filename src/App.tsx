@@ -32,6 +32,7 @@ import FichaAcolhimentoPublico from "./pages/FichaAcolhimentoPublico";
 import VerificarDocumento from "./pages/VerificarDocumento";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
+import Landing from "./pages/Landing";
 
 // Páginas protegidas (admin)
 import Index from "./pages/Index";
@@ -110,6 +111,7 @@ const App = () => {
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/verificar-documento" element={<VerificarDocumento />} />
+              <Route path="/landing" element={<Landing />} />
             </Route>
 
             {/* Rotas protegidas - layout com sidebar */}

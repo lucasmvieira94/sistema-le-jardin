@@ -21,6 +21,8 @@ export default {
 		extend: {
 			fontFamily: {
 				heebo: ['Heebo', 'sans-serif'],
+				outfit: ['Outfit', 'sans-serif'],
+				figtree: ['Figtree', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
