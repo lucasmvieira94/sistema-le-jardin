@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, RefreshCw, Loader2, CreditCard, AlertCircle, Repeat, Pencil, Ban, FileText } from "lucide-react";
+import { Plus, RefreshCw, Loader2, CreditCard, AlertCircle, Repeat, Pencil, Ban, FileText, Paperclip } from "lucide-react";
 import { formatarData } from "@/utils/dateUtils";
 import { CATEGORIAS, useContasPagar, type ContaPagar } from "@/hooks/financeiro/useContasPagar";
 import ContaPagarForm from "./ContaPagarForm";
@@ -59,6 +59,18 @@ export default function ContasPagarLista() {
     const { error } = await (supabase as any).from("contas_pagar").update({ status: "cancelado" }).eq("id", c.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     recarregar();
+  };
+
+  const verComprovante = async (c: ContaPagar) => {
+    if (!c.anexo_url) return;
+    const { data, error } = await supabase.storage
+      .from("comprovantes-pagamento")
+      .createSignedUrl(c.anexo_url, 60 * 10);
+    if (error || !data?.signedUrl) {
+      toast({ title: "Erro ao abrir comprovante", description: error?.message, variant: "destructive" });
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
   };
 
   return (
@@ -173,6 +185,11 @@ export default function ContasPagarLista() {
                             title="Emitir recibo de pagamento"
                           >
                             <FileText className="h-3.5 w-3.5 mr-1" /> Recibo
+                          </Button>
+                        )}
+                        {c.anexo_url && (
+                          <Button size="sm" variant="ghost" onClick={() => verComprovante(c)} title="Ver comprovante">
+                            <Paperclip className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </TableCell>
