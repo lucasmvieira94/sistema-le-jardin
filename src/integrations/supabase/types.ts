@@ -1101,6 +1101,56 @@ export type Database = {
           },
         ]
       }
+      contracheques: {
+        Row: {
+          ano: number
+          created_at: string
+          enviado_por: string | null
+          funcionario_id: string
+          id: string
+          mes: number
+          paginas: number | null
+          path: string
+          tamanho_bytes: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          enviado_por?: string | null
+          funcionario_id: string
+          id?: string
+          mes: number
+          paginas?: number | null
+          path: string
+          tamanho_bytes?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          enviado_por?: string | null
+          funcionario_id?: string
+          id?: string
+          mes?: number
+          paginas?: number | null
+          path?: string
+          tamanho_bytes?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracheques_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_residentes: {
         Row: {
           clausulas_especiais: string | null
@@ -4340,10 +4390,25 @@ export type Database = {
         }[]
       }
       gerar_token_convite: { Args: never; Returns: string }
+      get_contracheque_path: {
+        Args: { p_contracheque_id: string; p_funcionario_id: string }
+        Returns: string
+      }
       get_current_tenant_id: { Args: never; Returns: string }
       get_current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_meus_contracheques: {
+        Args: { p_funcionario_id: string }
+        Returns: {
+          ano: number
+          created_at: string
+          id: string
+          mes: number
+          paginas: number
+          path: string
+        }[]
       }
       has_role: {
         Args: {
