@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart, Eye, FileSearch, AlertTriangle, Trophy, Pill, Syringe } from "lucide-react";
+import { CalendarRange, FileHeart, Clock, User, Shield, Thermometer, Baby, CalendarDays, ClipboardList, MessageSquareHeart, Eye, FileSearch, AlertTriangle, Trophy, Pill, Syringe, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -243,6 +243,10 @@ export default function FuncionarioAccess() {
 
   const navigateToVacinas = () => {
     navigate(`/controle-vacinas-publico?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToContracheques = () => {
+    navigate(`/meus-contracheques?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToAuth = () => {
