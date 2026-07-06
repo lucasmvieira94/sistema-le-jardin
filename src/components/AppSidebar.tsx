@@ -74,6 +74,7 @@ export function AppSidebar() {
     { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
     { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
     { path: "/gestao-gamificacao", icon: Trophy, label: "Gamificação", adminOnly: true },
+    { path: "/contracheques", icon: CreditCard, label: "Contracheques", adminOnly: true },
   ];
   const sistemaMenuItems = [
     { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
