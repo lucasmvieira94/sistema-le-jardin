@@ -43,18 +43,18 @@ export default function Contracheques() {
       // 1. Busca funcionários ativos do tenant
       const { data: funcs, error: fErr } = await supabase
         .from('funcionarios')
-        .select('id, nome')
+        .select('id, nome_completo')
         .eq('tenant_id', tenantId)
-        .eq('status', 'ativo');
+        .eq('ativo', true);
       if (fErr) throw fErr;
       if (!funcs || funcs.length === 0) {
         toast({ variant: 'destructive', title: 'Nenhum funcionário ativo encontrado' });
         return;
       }
-      const matches: FuncionarioMatch[] = funcs.map((f) => ({
+      const matches: FuncionarioMatch[] = funcs.map((f: any) => ({
         id: f.id,
-        nome: f.nome,
-        nomeNormalizado: normalizar(f.nome),
+        nome: f.nome_completo,
+        nomeNormalizado: normalizar(f.nome_completo),
       }));
 
       // 2. Processa PDF
