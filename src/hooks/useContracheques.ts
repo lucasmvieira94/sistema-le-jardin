@@ -22,14 +22,14 @@ export function useContrachequesAdmin(mes: number, ano: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('contracheques')
-        .select('*, funcionarios(nome)')
+        .select('*, funcionarios(nome_completo)')
         .eq('mes', mes)
         .eq('ano', ano)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []).map((c: any) => ({
         ...c,
-        funcionario_nome: c.funcionarios?.nome,
+        funcionario_nome: c.funcionarios?.nome_completo,
       })) as ContrachequeAdmin[];
     },
   });
