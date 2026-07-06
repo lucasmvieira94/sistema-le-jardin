@@ -1,108 +1,64 @@
-# Sistema de Controle de Gastos
+# Contracheques dos Funcionários
 
-## Visão geral
-Novo módulo "Controle de Gastos" integrado ao Financeiro, permitindo cadastrar contas a pagar, receber lembretes no dashboard, dar baixa em pagamentos, e visualizar lucro líquido e insights do negócio (receitas — vindas das mensalidades + extras — menos despesas).
+Novo módulo para o gestor subir **um único PDF contendo todos os contracheques do mês** e o sistema separar as páginas por funcionário automaticamente, disponibilizando cada holerite na área do funcionário (acesso por PIN).
 
-## Estrutura
+## Fluxo do Gestor
 
-### 1. Banco de dados (migração Supabase)
+1. Nova página `/contracheques` no painel admin (menu lateral, na seção Funcionários).
+2. Formulário simples:
+   - **Mês/Ano de referência** (ex.: 10/2026)
+   - **Arquivo PDF consolidado** (drag & drop)
+3. Ao enviar:
+   - O PDF é processado no navegador (extração de texto por página com `pdfjs-dist`).
+   - Para cada página, o sistema procura o nome de um funcionário ativo do tenant (match case-insensitive, ignora acentos).
+   - Páginas consecutivas do mesmo funcionário são agrupadas em um único holerite.
+   - Cada holerite é recortado em um PDF individual (`pdf-lib`) e salvo em Storage.
+   - É criado um registro em `contracheques` vinculando funcionário + mês + arquivo.
+4. Tela mostra o resultado: quantos foram distribuídos, quantas páginas não identificadas (listadas para reprocessar/atribuir manualmente).
+5. Ações extras: reenviar (substitui o do mesmo mês), excluir holerite individual, atribuir página órfã manualmente a um funcionário.
 
-**Tabela `contas_pagar`** (multi-tenant, RLS por tenant):
-- `descricao` (texto)
-- `categoria` (enum: `fornecedor`, `folha_pagamento`, `agua`, `luz`, `internet`, `aluguel`, `manutencao`, `alimentacao`, `medicamentos`, `impostos`, `servicos`, `outros`)
-- `valor` (numeric)
-- `data_vencimento` (date)
-- `data_pagamento` (date, nullable)
-- `status` (enum: `pendente`, `pago`, `atrasado`, `cancelado`)
-- `forma_pagamento` (texto, nullable)
-- `recorrente` (bool) + `frequencia_recorrencia` (mensal/semanal, nullable)
-- `fornecedor` (texto)
-- `observacoes` (texto)
-- `anexo_url` (texto, nullable — comprovante)
-- `criado_por` (uuid)
+## Fluxo do Funcionário
 
-**Função `gerar_proxima_recorrencia()`**: trigger que ao dar baixa numa conta recorrente, cria automaticamente a próxima ocorrência.
+1. Novo botão **"Meus Contracheques"** no portal do funcionário (rota `/meus-contracheques`, acesso por PIN, sessão de 2h já existente).
+2. Lista dos contracheques do funcionário logado, ordenados por mês (mais recente primeiro).
+3. Cada linha: mês de referência, data de disponibilização, botão **Visualizar** (abre PDF em nova aba via signed URL) e **Baixar**.
 
-**View `v_resumo_financeiro_mensal`**: agrega receitas (mensalidades + extras) e despesas (contas pagas) por mês, calculando lucro bruto e líquido.
+## Estrutura Técnica
 
-RLS: PERMISSIVE para `authenticated` com isolamento por tenant.
+### Banco (migration)
 
-### 2. Frontend — Nova aba no `/financeiro`
+Tabela `contracheques`:
+- `funcionario_id` (FK funcionarios)
+- `mes` (int 1–12), `ano` (int)
+- `path` (caminho no Storage)
+- `tamanho_bytes`, `paginas`
+- `enviado_por` (uuid do gestor)
+- unique (`tenant_id`, `funcionario_id`, `mes`, `ano`)
 
-Adicionar 3 novas abas na página `Financeiro.tsx`:
-- **Receitas** (atual, renomeado)
-- **Contas a Pagar** (novo)
-- **Lucratividade** (novo, com insights)
+RLS:
+- Gestor autenticado (mesmo tenant) faz tudo.
+- Função `get_meus_contracheques(p_funcionario_id uuid)` `SECURITY DEFINER` retorna somente os do funcionário — chamada da área pública com o `funcionario_id` da sessão PIN (padrão já usado no projeto).
 
-### 3. Componentes novos
+### Storage
 
-`src/components/financeiro/`:
-- `ContasPagarLista.tsx` — Tabela com filtros (status, categoria, mês), badges de status, ações: pagar, editar, cancelar
-- `ContaPagarForm.tsx` — Dialog para cadastro/edição
-- `BaixaPagamentoDialog.tsx` — Dialog para dar baixa (data, forma de pagamento, anexo)
-- `LucratividadeDashboard.tsx` — Cards de KPIs + gráficos
-- `InsightsNegocio.tsx` — Análises automáticas
+Bucket privado `contracheques`, layout `{tenant_id}/{funcionario_id}/{ano}-{mes}.pdf`. Políticas RLS em `storage.objects` restringindo por bucket + tenant. URLs sempre assinadas (5 min).
 
-### 4. Lembretes no dashboard
+### Frontend
 
-Novo componente `src/components/dashboard/AlertasContasPagar.tsx`:
-- Lista contas que vencem nos próximos 7 dias
-- Destaque visual para atrasadas (vermelho) e vencendo hoje (amarelo)
-- Link direto para `/financeiro?tab=contas-pagar`
-- Integrar no `src/pages/Index.tsx` (dashboard do gestor)
+- `src/pages/Contracheques.tsx` — página admin (upload + resultado).
+- `src/components/contracheques/UploadContrachequesForm.tsx` — processa PDF no cliente.
+- `src/pages/MeusContracheques.tsx` — página pública do funcionário.
+- `src/hooks/useContracheques.ts` — queries/mutations.
+- Bibliotecas: `pdfjs-dist` (extrair texto), `pdf-lib` (recortar páginas).
+- Rota admin registrada em `AdminLayout` / `App.tsx`; rota pública registrada em `PublicLayout`; botão no `FuncionarioAccess`.
 
-### 5. Lucro Líquido e Insights
+### Matching de nomes
 
-**KPIs do mês corrente:**
-- Receita Bruta (mensalidades + extras recebidos)
-- Despesas Totais (contas pagas)
-- Lucro Líquido (receita - despesas)
-- Margem de Lucro (%)
-- Contas a Vencer (próx. 30 dias)
-- Inadimplência (mensalidades em aberto)
+- Normaliza (lowercase, remove acentos, colapsa espaços) o nome do funcionário e o texto da página.
+- Considera match quando o nome completo aparece na página; empate resolvido pelo nome mais longo (mais específico).
+- Páginas sem match viram "órfãs" e podem ser atribuídas manualmente.
 
-**Gráficos (recharts já instalado):**
-- Linha: evolução de receita vs despesa nos últimos 6 meses
-- Pizza: distribuição de despesas por categoria
-- Barras: lucro líquido mensal (últimos 12 meses)
+## Observações
 
-**Insights automáticos (regras locais, sem IA):**
-- Maior categoria de despesa do mês
-- Variação % vs mês anterior (receita, despesa, lucro)
-- Alerta se margem < 10%
-- Projeção de fechamento do mês baseado nos dias decorridos
-- Top 3 fornecedores por gasto
-- Sugestões: "Despesa de X aumentou Y% — revisar fornecedor"
-
-## Detalhes técnicos
-
-### Cálculo de Lucro Líquido
-```text
-Receita Mês = soma(mensalidades_residentes.valor_total) WHERE status='pago' E mes_referencia = mês
-Despesa Mês = soma(contas_pagar.valor) WHERE status='pago' E EXTRACT(MONTH FROM data_pagamento) = mês
-Lucro Líquido = Receita - Despesa
-Margem (%) = (Lucro / Receita) * 100
-```
-
-### Recorrência
-Trigger PG after-update em `contas_pagar`: quando `status` muda para `pago` e `recorrente=true`, inserir nova linha com `data_vencimento` somada do intervalo da `frequencia_recorrencia`.
-
-### Rota / Navegação
-Reutiliza `/financeiro` existente — adiciona `<Tabs>` no topo. Sidebar mantém um único item "Financeiro".
-
-### Permissões
-Apenas perfis `admin` e `gestor_financeiro` (via `has_role`). Demais usuários não veem a aba nem o alerta no dashboard.
-
-## Etapas de entrega
-1. Migração: tabela `contas_pagar`, enums, view, trigger de recorrência, RLS + GRANTs
-2. Tipos + hook `useContasPagar.ts`
-3. Componentes da aba Contas a Pagar (lista, form, baixa)
-4. Componente Lucratividade + Insights
-5. Integração no `Financeiro.tsx` com Tabs
-6. Alerta de vencimento no Dashboard
-7. QA: cadastrar conta, dar baixa, verificar recorrência, validar lucro líquido
-
-## Confirmações antes de implementar
-- Categorias de despesa: a lista proposta atende, ou quer customizar?
-- Upload de comprovante de pagamento: incluir nesta versão ou deixar para depois?
-- Insights: regras locais (sem custo) atendem, ou prefere IA via Gemini (como nos outros assistentes)?
+- Processamento roda no navegador do gestor (sem edge function), então PDFs grandes (>50 MB) podem ser lentos — mostro barra de progresso.
+- Se o layout do holerite mudar e o nome não aparecer no texto (PDF escaneado), o funcionário não será identificado; nesse caso a UI oferece atribuição manual.
