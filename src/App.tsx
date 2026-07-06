@@ -63,6 +63,8 @@ import GestaoGamificacao from "./pages/GestaoGamificacao";
 import ControleVacinas from "./pages/ControleVacinas";
 import ControleVacinasPublico from "./pages/ControleVacinasPublico";
 import Financeiro from "./pages/Financeiro";
+import Contracheques from "./pages/Contracheques";
+import MeusContracheques from "./pages/MeusContracheques";
 
 // SaaS / Plataforma
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
@@ -109,6 +111,7 @@ const App = () => {
               <Route path="/ficha-acolhimento/:token" element={<FichaAcolhimentoPublico />} />
               <Route path="/gamificacao" element={<Gamificacao />} />
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
+              <Route path="/meus-contracheques" element={<MeusContracheques />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/verificar-documento" element={<VerificarDocumento />} />
               <Route path="/landing" element={<Landing />} />
@@ -129,6 +132,7 @@ const App = () => {
               <Route path="/configuracoes-alertas" element={<ProtectedRoute><ConfiguracoesAlertas /></ProtectedRoute>} />
               <Route path="/residentes" element={<ProtectedRoute><Residentes /></ProtectedRoute>} />
               <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
+              <Route path="/contracheques" element={<ProtectedRoute><Contracheques /></ProtectedRoute>} />
               <Route path="/controle-prontuarios" element={<ProtectedRoute><ControleProntuarios /></ProtectedRoute>} />
               <Route path="/configuracao-formulario" element={<ProtectedRoute><ConfiguracaoFormulario /></ProtectedRoute>} />
               <Route path="/controle-medicamentos" element={<ProtectedRoute><ModuleGuard modulo="medicamentos"><ControleMedicamentos /></ModuleGuard></ProtectedRoute>} />
