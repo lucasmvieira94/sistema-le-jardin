@@ -65,6 +65,7 @@ import ControleVacinasPublico from "./pages/ControleVacinasPublico";
 import Financeiro from "./pages/Financeiro";
 import Contracheques from "./pages/Contracheques";
 import MeusContracheques from "./pages/MeusContracheques";
+import MinhasFolhasPonto from "./pages/MinhasFolhasPonto";
 
 // SaaS / Plataforma
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
@@ -112,6 +113,7 @@ const App = () => {
               <Route path="/gamificacao" element={<Gamificacao />} />
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
               <Route path="/meus-contracheques" element={<MeusContracheques />} />
+              <Route path="/minhas-folhas-ponto" element={<MinhasFolhasPonto />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/verificar-documento" element={<VerificarDocumento />} />
               <Route path="/landing" element={<Landing />} />
