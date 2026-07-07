@@ -2071,6 +2071,56 @@ export type Database = {
         }
         Relationships: []
       }
+      folhas_ponto: {
+        Row: {
+          ano: number
+          created_at: string
+          enviado_por: string | null
+          funcionario_id: string
+          id: string
+          mes: number
+          paginas: number | null
+          path: string
+          tamanho_bytes: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          enviado_por?: string | null
+          funcionario_id: string
+          id?: string
+          mes: number
+          paginas?: number | null
+          path: string
+          tamanho_bytes?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          enviado_por?: string | null
+          funcionario_id?: string
+          id?: string
+          mes?: number
+          paginas?: number | null
+          path?: string
+          tamanho_bytes?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folhas_ponto_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formulario_campos_config: {
         Row: {
           ativo: boolean
@@ -4400,6 +4450,17 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_meus_contracheques: {
+        Args: { p_funcionario_id: string }
+        Returns: {
+          ano: number
+          created_at: string
+          id: string
+          mes: number
+          paginas: number
+          path: string
+        }[]
+      }
+      get_minhas_folhas_ponto: {
         Args: { p_funcionario_id: string }
         Returns: {
           ano: number
