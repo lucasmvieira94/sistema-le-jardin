@@ -8,6 +8,8 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FolhaPontoData, TotaisFolhaPonto } from "@/hooks/useFolhaPonto";
 import { exportMultipleFuncionariosToPDF, exportMultipleFuncionariosToExcel } from "@/utils/folhaPontoExport";
+import { publicarFolhaPontoFuncionario } from "@/utils/folhaPontoIndividualPDF";
+import { useTenantContext } from "@/contexts/TenantContext";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -38,6 +40,7 @@ interface ModalFolhaPontoGeralProps {
 }
 
 export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios }: ModalFolhaPontoGeralProps) {
+  const { tenantId } = useTenantContext();
   const [mes, setMes] = useState<number>(new Date().getMonth() + 1);
   const [ano, setAno] = useState<number>(new Date().getFullYear());
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
@@ -166,6 +169,38 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
 
       await exportMultipleFuncionariosToPDF(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
       toast({ title: "PDF gerado com sucesso!", description: `Relatório com ${dadosCompletos.funcionariosDados.length} funcionários exportado` });
+
+      // Publica folha de ponto individual de cada funcionário no portal (via bucket privado)
+      if (tenantId) {
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          const uid = userData.user?.id ?? null;
+          let publicados = 0;
+          let falhas = 0;
+          for (const item of dadosCompletos.funcionariosDados) {
+            if (!item.dados.length) continue;
+            const funcionarioId = (item.dados[0] as any).funcionario_id
+              ?? funcionarios.find(f => f.nome_completo === item.dados[0].funcionario_nome)?.id;
+            if (!funcionarioId) { falhas++; continue; }
+            const r = await publicarFolhaPontoFuncionario({
+              tenantId,
+              funcionarioId,
+              mes,
+              ano,
+              dados: item.dados,
+              totais: item.totais,
+              enviadoPor: uid,
+            });
+            if (r.ok) publicados++; else falhas++;
+          }
+          toast({
+            title: "Folhas de ponto publicadas",
+            description: `${publicados} disponibilizada(s) no portal do funcionário${falhas ? ` · ${falhas} falha(s)` : ''}.`,
+          });
+        } catch (pubErr) {
+          console.error('Erro ao publicar folhas individuais:', pubErr);
+        }
+      }
     } catch (error) {
       console.error('Erro na exportação PDF:', error);
       toast({ variant: "destructive", title: "Erro ao gerar PDF", description: "Verifique se há dados disponíveis para o período selecionado" });
