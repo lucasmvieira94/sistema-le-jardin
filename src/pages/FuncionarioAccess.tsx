@@ -249,6 +249,10 @@ export default function FuncionarioAccess() {
     navigate(`/meus-contracheques?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
+  const navigateToMinhasFolhasPonto = () => {
+    navigate(`/minhas-folhas-ponto?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
   const navigateToAuth = () => {
     window.open('/auth', '_blank');
   };
@@ -582,6 +586,32 @@ export default function FuncionarioAccess() {
                     onClick={navigateToMeusPontos}
                   >
                     Ver Registros
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Minhas Folhas de Ponto (PDFs mensais publicados pelo gestor) */}
+            {funcionarioRegistraPonto && (
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-blue-400"
+                onClick={navigateToMinhasFolhasPonto}
+              >
+                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-blue-700" />
+                  </div>
+                  <CardTitle className="text-blue-800 text-base sm:text-lg">Minhas Folhas de Ponto</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center p-4 sm:p-6 pt-0">
+                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+                    Baixe as folhas de ponto mensais publicadas pelo gestor
+                  </p>
+                  <Button
+                    className="w-full bg-blue-700 hover:bg-blue-800 text-sm sm:text-base py-2 sm:py-3"
+                    onClick={navigateToMinhasFolhasPonto}
+                  >
+                    Ver Folhas de Ponto
                   </Button>
                 </CardContent>
               </Card>
