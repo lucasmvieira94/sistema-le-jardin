@@ -128,12 +128,12 @@ export default function RegistroPonto() {
     <div className="min-h-screen bg-gradient-to-br from-primary to-primary/80 flex flex-col">
       {/* Header fixo */}
       <header className="bg-background/95 backdrop-blur-sm shadow-sm px-4 py-3 flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={handleVoltar} className="text-muted-foreground hover:text-foreground p-2">
+        <Button variant="ghost" size="sm" onClick={handleVoltar} aria-label="Voltar para o portal do cuidador" className="text-muted-foreground hover:text-foreground p-2">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div className="text-sm font-medium text-foreground">
-          {funcionarioNome.split(' ')[0]}
-        </div>
+        <h1 className="text-sm font-medium text-foreground">
+          Registro de Ponto — {funcionarioNome.split(' ')[0]}
+        </h1>
         <div className="w-9" /> {/* Spacer para centralizar o nome */}
       </header>
 
@@ -176,6 +176,7 @@ export default function RegistroPonto() {
                   size="sm"
                   onClick={carregarRegistrosHoje}
                   disabled={atualizando}
+                  aria-label="Atualizar registros de hoje"
                   className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
                 >
                   <RefreshCw className={`w-4 h-4 ${atualizando ? 'animate-spin' : ''}`} />

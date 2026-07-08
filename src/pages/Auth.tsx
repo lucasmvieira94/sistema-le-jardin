@@ -164,7 +164,9 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-          <CardTitle className="text-2xl">Acesso Administrativo</CardTitle>
+          <CardTitle asChild className="text-2xl">
+            <h1>Acesso Administrativo</h1>
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
             Entre com suas credenciais para acessar o sistema
           </p>
