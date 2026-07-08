@@ -273,13 +273,13 @@ export default function FuncionarioAccess() {
             {companyLogo ? (
               <img 
                 src={companyLogo} 
-                alt="Logo da empresa" 
+                alt={`Logo ${companyName}`} 
                 className="w-64 h-64 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-160 lg:h-160 mx-auto mb-3 sm:mb-4 object-contain"
               />
             ) : (
               <img 
                 src={careLogo} 
-                alt="Logo da empresa" 
+                alt={`Logo ${companyName} — SenexCare`} 
                 className="w-64 h-64 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-160 lg:h-160 mx-auto -mt-4 mb-0 object-contain"
               />
             )}
@@ -347,21 +347,23 @@ export default function FuncionarioAccess() {
               {companyLogo ? (
                 <img 
                   src={companyLogo} 
-                  alt="Logo da empresa" 
+                  alt={`Logo ${companyName}`} 
                   className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain flex-shrink-0"
                 />
               ) : (
                 <img 
                   src={careLogo} 
-                  alt="Logo da empresa" 
+                  alt={`Logo ${companyName} — SenexCare`} 
                   className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain flex-shrink-0"
                 />
               )}
               <div className="text-center sm:text-left">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-green-700 break-words">
-                  {getGreeting()}, {funcionarioNome.split(' ')[0]}!
+                  Portal do Cuidador
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600">Bem-vindo(a) ao sistema</p>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {getGreeting()}, {funcionarioNome.split(' ')[0]}! Bem-vindo(a) ao sistema
+                </p>
               </div>
             </div>
             

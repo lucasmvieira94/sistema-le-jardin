@@ -306,7 +306,7 @@ export default function Prontuario() {
         <div className="container mx-auto px-2 sm:px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="flex-shrink-0">
+              <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Sair e voltar para o portal do cuidador" className="flex-shrink-0">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <div className="min-w-0 flex-1">
