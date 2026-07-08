@@ -1,0 +1,9 @@
+# SenexCare
+
+> Plataforma SaaS de gestão inteligente para Instituições de Longa Permanência para Idosos (ILPI), com prontuário eletrônico, ponto, escalas, medicação, controle de fraldas, temperatura, vacinas e relatórios com IA.
+
+## Pages
+
+- [Início](/): Portal de acesso para cuidadores e administradores.
+- [Landing](/landing): Apresentação da plataforma SenexCare e seus módulos.
+- [Acesso Administrativo](/auth): Login e cadastro para gestores da instituição.
