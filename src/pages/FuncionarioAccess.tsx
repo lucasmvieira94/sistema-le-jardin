@@ -15,6 +15,56 @@ import { toast } from "@/components/ui/use-toast";
 const SESSION_KEY = 'funcionario_session';
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas em ms
 
+type FeatureColor = 'green' | 'red' | 'blue' | 'teal' | 'emerald' | 'yellow' | 'cyan' | 'purple' | 'orange' | 'pink' | 'amber' | 'indigo';
+
+const COLOR_MAP: Record<FeatureColor, { bgSoft: string; icon: string; title: string; button: string; hoverBorder: string }> = {
+  green:   { bgSoft: 'bg-green-100',   icon: 'text-green-700',   title: 'text-green-800',   button: 'bg-green-700 hover:bg-green-800',     hoverBorder: 'hover:border-green-400' },
+  red:     { bgSoft: 'bg-red-100',     icon: 'text-red-700',     title: 'text-red-800',     button: 'bg-red-700 hover:bg-red-800',         hoverBorder: 'hover:border-red-400' },
+  blue:    { bgSoft: 'bg-blue-100',    icon: 'text-blue-700',    title: 'text-blue-800',    button: 'bg-blue-700 hover:bg-blue-800',       hoverBorder: 'hover:border-blue-400' },
+  teal:    { bgSoft: 'bg-teal-100',    icon: 'text-teal-700',    title: 'text-teal-800',    button: 'bg-teal-700 hover:bg-teal-800',       hoverBorder: 'hover:border-teal-400' },
+  emerald: { bgSoft: 'bg-emerald-100', icon: 'text-emerald-700', title: 'text-emerald-800', button: 'bg-emerald-700 hover:bg-emerald-800', hoverBorder: 'hover:border-emerald-400' },
+  yellow:  { bgSoft: 'bg-yellow-100',  icon: 'text-yellow-700',  title: 'text-yellow-800',  button: 'bg-yellow-600 hover:bg-yellow-700',   hoverBorder: 'hover:border-yellow-400' },
+  cyan:    { bgSoft: 'bg-cyan-100',    icon: 'text-cyan-700',    title: 'text-cyan-800',    button: 'bg-cyan-700 hover:bg-cyan-800',       hoverBorder: 'hover:border-cyan-400' },
+  purple:  { bgSoft: 'bg-purple-100',  icon: 'text-purple-700',  title: 'text-purple-800',  button: 'bg-purple-700 hover:bg-purple-800',   hoverBorder: 'hover:border-purple-400' },
+  orange:  { bgSoft: 'bg-orange-100',  icon: 'text-orange-700',  title: 'text-orange-800',  button: 'bg-orange-700 hover:bg-orange-800',   hoverBorder: 'hover:border-orange-400' },
+  pink:    { bgSoft: 'bg-pink-100',    icon: 'text-pink-700',    title: 'text-pink-800',    button: 'bg-pink-700 hover:bg-pink-800',       hoverBorder: 'hover:border-pink-400' },
+  amber:   { bgSoft: 'bg-amber-100',   icon: 'text-amber-700',   title: 'text-amber-800',   button: 'bg-amber-700 hover:bg-amber-800',     hoverBorder: 'hover:border-amber-400' },
+  indigo:  { bgSoft: 'bg-indigo-100',  icon: 'text-indigo-700',  title: 'text-indigo-800',  button: 'bg-indigo-700 hover:bg-indigo-800',   hoverBorder: 'hover:border-indigo-400' },
+};
+
+interface FeatureCardProps {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: FeatureColor;
+  buttonLabel: string;
+  onClick: () => void;
+  featured?: boolean;
+}
+
+function FeatureCard({ title, description, icon: Icon, color, buttonLabel, onClick, featured }: FeatureCardProps) {
+  const c = COLOR_MAP[color];
+  return (
+    <Card
+      onClick={onClick}
+      className={`cursor-pointer transition-all duration-200 active:scale-95 sm:hover:scale-[1.03] border-2 ${c.hoverBorder} ${featured ? 'shadow-lg ring-1 ring-white/40' : 'hover:shadow-lg'}`}
+    >
+      <CardHeader className="text-center pb-2 sm:pb-3 p-3 sm:p-5">
+        <div className={`w-11 h-11 sm:w-14 sm:h-14 ${c.bgSoft} rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3`}>
+          <Icon className={`w-5 h-5 sm:w-7 sm:h-7 ${c.icon}`} />
+        </div>
+        <CardTitle className={`${c.title} text-sm sm:text-base leading-tight`}>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="text-center p-3 sm:p-5 pt-0">
+        <p className="text-gray-600 mb-2 sm:mb-3 text-xs sm:text-sm min-h-[2.5rem]">{description}</p>
+        <Button className={`w-full ${c.button} text-xs sm:text-sm py-2`} onClick={(e) => { e.stopPropagation(); onClick(); }}>
+          {buttonLabel}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 interface FuncionarioSession {
   id: string;
   nome: string;
