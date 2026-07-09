@@ -259,10 +259,6 @@ export default function FuncionarioAccess() {
     navigate(`/minha-escala?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
-  const navigateToMeusPontos = () => {
-    navigate(`/meus-pontos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
-  };
-
   const navigateToFeedback = () => {
     navigate(`/feedback-sistema?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
