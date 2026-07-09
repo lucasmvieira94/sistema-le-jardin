@@ -385,7 +385,7 @@ export default function FuncionarioAccess() {
         </div>
 
         {/* Seleção de funcionalidade */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Painel de lembretes do agente IA */}
           <PainelLembretes
             funcionarioId={funcionarioId}
@@ -397,400 +397,94 @@ export default function FuncionarioAccess() {
             }}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {/* Registro de Ponto - só mostra se funcionário registra ponto */}
-            {funcionarioRegistraPonto && (
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-                onClick={navigateToRegistroPonto}
-              >
-                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <CalendarRange className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
-                  </div>
-                  <CardTitle className="text-green-800 text-base sm:text-lg">Registro de Ponto</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center p-4 sm:p-6 pt-0">
-                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    Registre entrada, saída e intervalos do seu horário de trabalho
-                  </p>
-                  <Button 
-                    className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
-                    onClick={navigateToRegistroPonto}
-                  >
-                    Acessar Registro
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+          {/* A. PRINCIPAIS — uso diário */}
+          <section>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="h-1 w-8 bg-green-300 rounded-full" />
+              <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Principais</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {funcionarioRegistraPonto && (
+                <FeatureCard title="Registro de Ponto" description="Entrada, saída e intervalos" icon={CalendarRange} color="green" buttonLabel="Registrar" onClick={navigateToRegistroPonto} featured />
+              )}
+              <FeatureCard title="Prontuário Eletrônico" description="Atividades dos residentes" icon={FileHeart} color="green" buttonLabel="Acessar" onClick={navigateToProntuario} featured />
+              <FeatureCard title="Controle de Temperatura" description="Sala de medicamentos" icon={Thermometer} color="green" buttonLabel="Registrar" onClick={navigateToTemperatura} featured />
+              <FeatureCard title="Intercorrências" description="Registre e acompanhe" icon={AlertTriangle} color="red" buttonLabel="Registrar" onClick={navigateToIntercorrencias} featured />
+            </div>
+          </section>
 
-            {/* Prontuário Eletrônico */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-              onClick={navigateToProntuario}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <FileHeart className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
-                </div>
-                <CardTitle className="text-green-800 text-base sm:text-lg">Prontuário Eletrônico</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Registre atividades e observações dos residentes
-                </p>
-                <Button 
-                  className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToProntuario}
-                >
-                  Acessar Prontuário
-                </Button>
-              </CardContent>
-            </Card>
+          {/* B1. MEU RH */}
+          <section>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="h-1 w-8 bg-blue-300 rounded-full" />
+              <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Meu RH</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              {funcionarioRegistraPonto && (
+                <FeatureCard title="Minhas Folhas de Ponto" description="Folhas mensais publicadas pelo gestor" icon={Clock} color="blue" buttonLabel="Ver Folhas" onClick={navigateToMinhasFolhasPonto} />
+              )}
+              <FeatureCard title="Minha Escala" description="Seus dias escalados no mês" icon={CalendarDays} color="teal" buttonLabel="Ver Escala" onClick={navigateToMinhaEscala} />
+              <FeatureCard title="Meus Contracheques" description="Baixe seus holerites por mês" icon={Receipt} color="emerald" buttonLabel="Ver Contracheques" onClick={navigateToContracheques} />
+              <FeatureCard title="Meu Desempenho" description="Pontos, nível e prêmios" icon={Trophy} color="yellow" buttonLabel="Ver Desempenho" onClick={navigateToGamificacao} />
+            </div>
+          </section>
 
-            {/* Controle de Temperatura */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-              onClick={navigateToTemperatura}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Thermometer className="w-6 h-6 sm:w-8 sm:h-8 text-green-700" />
-                </div>
-                <CardTitle className="text-green-800 text-base sm:text-lg">Controle de Temperatura</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Registre temperatura da sala de medicamentos
-                </p>
-                <Button 
-                  className="w-full bg-green-700 hover:bg-green-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToTemperatura}
-                >
-                  Registrar Temperatura
-                </Button>
-              </CardContent>
-            </Card>
+          {/* B2. RESIDENTES */}
+          <section>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="h-1 w-8 bg-purple-300 rounded-full" />
+              <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Residentes</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <FeatureCard title="Meus Prontuários" description="Prontuários que você preencheu" icon={FileSearch} color="cyan" buttonLabel="Ver Registros" onClick={navigateToMeusProntuarios} />
+              <FeatureCard title="Controle de Fraldas" description="Uso e estoque de fraldas" icon={Baby} color="purple" buttonLabel="Acessar" onClick={navigateToFraldas} />
+              <FeatureCard title="Medicamentos" description="Administração e confirmação" icon={Pill} color="orange" buttonLabel="Administrar" onClick={navigateToAdministracaoMedicamentos} />
+              <FeatureCard title="Cartão Vacinal" description="Consulte e registre vacinas" icon={Syringe} color="pink" buttonLabel="Acessar" onClick={navigateToVacinas} />
+            </div>
+          </section>
 
-            {/* Controle de Fraldas */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-              onClick={navigateToFraldas}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Baby className="w-6 h-6 sm:w-8 sm:h-8 text-purple-700" />
-                </div>
-                <CardTitle className="text-purple-800 text-base sm:text-lg">Controle de Fraldas</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Registre uso e cadastre estoque de fraldas
-                </p>
-                <Button 
-                  className="w-full bg-purple-700 hover:bg-purple-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToFraldas}
-                >
-                  Acessar Fraldas
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Administração de Medicamentos */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-orange-400"
-              onClick={navigateToAdministracaoMedicamentos}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Pill className="w-6 h-6 sm:w-8 sm:h-8 text-orange-700" />
-                </div>
-                <CardTitle className="text-orange-800 text-base sm:text-lg">Medicamentos</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Visualize e confirme a administração de medicamentos
-                </p>
-                <Button 
-                  className="w-full bg-orange-700 hover:bg-orange-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToAdministracaoMedicamentos}
-                >
-                  Administrar Medicamentos
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Cartão Vacinal */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-pink-400"
-              onClick={navigateToVacinas}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Syringe className="w-6 h-6 sm:w-8 sm:h-8 text-pink-700" />
-                </div>
-                <CardTitle className="text-pink-800 text-base sm:text-lg">Cartão Vacinal</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Consulte e registre vacinas dos residentes
-                </p>
-                <Button 
-                  className="w-full bg-pink-700 hover:bg-pink-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToVacinas}
-                >
-                  Acessar Vacinas
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-              onClick={navigateToMinhaEscala}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <CalendarDays className="w-6 h-6 sm:w-8 sm:h-8 text-teal-700" />
-                </div>
-                <CardTitle className="text-teal-800 text-base sm:text-lg">Minha Escala</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Veja seus dias escalados no mês corrente
-                </p>
-                <Button 
-                  className="w-full bg-teal-700 hover:bg-teal-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToMinhaEscala}
-                >
-                  Ver Escala
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Meus Pontos */}
-            {funcionarioRegistraPonto && (
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-                onClick={navigateToMeusPontos}
-              >
-                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <ClipboardList className="w-6 h-6 sm:w-8 sm:h-8 text-blue-700" />
-                  </div>
-                  <CardTitle className="text-blue-800 text-base sm:text-lg">Meus Pontos</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center p-4 sm:p-6 pt-0">
-                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    Consulte seus registros de ponto do mês anterior
-                  </p>
-                  <Button 
-                    className="w-full bg-blue-700 hover:bg-blue-800 text-sm sm:text-base py-2 sm:py-3"
-                    onClick={navigateToMeusPontos}
-                  >
-                    Ver Registros
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Minhas Folhas de Ponto (PDFs mensais publicados pelo gestor) */}
-            {funcionarioRegistraPonto && (
-              <Card
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-blue-400"
-                onClick={navigateToMinhasFolhasPonto}
-              >
-                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-blue-700" />
-                  </div>
-                  <CardTitle className="text-blue-800 text-base sm:text-lg">Minhas Folhas de Ponto</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center p-4 sm:p-6 pt-0">
-                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    Baixe as folhas de ponto mensais publicadas pelo gestor
-                  </p>
-                  <Button
-                    className="w-full bg-blue-700 hover:bg-blue-800 text-sm sm:text-base py-2 sm:py-3"
-                    onClick={navigateToMinhasFolhasPonto}
-                  >
-                    Ver Folhas de Ponto
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Painel do Supervisor - só mostra se tem acesso */}
-            {funcionarioAcessoSupervisor && (
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-indigo-400"
-                onClick={navigateToSupervisor}
-              >
-                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <Eye className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-700" />
-                  </div>
-                  <CardTitle className="text-indigo-800 text-base sm:text-lg">Painel do Supervisor</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center p-4 sm:p-6 pt-0">
-                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    Visualize prontuários, estoques e intercorrências
-                  </p>
-                  <Button 
-                    className="w-full bg-indigo-700 hover:bg-indigo-800 text-sm sm:text-base py-2 sm:py-3"
-                    onClick={navigateToSupervisor}
-                  >
-                    Acessar Painel
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Meus Prontuários */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-cyan-400"
-              onClick={navigateToMeusProntuarios}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <FileSearch className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-700" />
-                </div>
-                <CardTitle className="text-cyan-800 text-base sm:text-lg">Meus Prontuários</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Consulte os prontuários que você preencheu
-                </p>
-                <Button 
-                  className="w-full bg-cyan-700 hover:bg-cyan-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToMeusProntuarios}
-                >
-                  Ver Meus Registros
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Feedback do Sistema */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-green-400"
-              onClick={navigateToFeedback}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <MessageSquareHeart className="w-6 h-6 sm:w-8 sm:h-8 text-amber-700" />
-                </div>
-                <CardTitle className="text-amber-800 text-base sm:text-lg">Feedback do Sistema</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Avalie e sugira melhorias para o SENEXCARE
-                </p>
-                <Button 
-                  className="w-full bg-amber-700 hover:bg-amber-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToFeedback}
-                >
-                  Avaliar Sistema
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Intercorrências */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-red-400"
-              onClick={navigateToIntercorrencias}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-red-700" />
-                </div>
-                <CardTitle className="text-red-800 text-base sm:text-lg">Intercorrências</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Registre e acompanhe intercorrências
-                </p>
-                <Button 
-                  className="w-full bg-red-700 hover:bg-red-800 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToIntercorrencias}
-                >
-                  Registrar Intercorrência
-                </Button>
-              </CardContent>
-              </Card>
-
-            {/* Dashboard do Supervisor - só mostra se tem acesso supervisor */}
-            {funcionarioAcessoSupervisor && (
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-rose-400"
-                onClick={navigateToPainelIntercorrencias}
-              >
-                <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-rose-700" />
-                  </div>
-                  <CardTitle className="text-rose-800 text-base sm:text-lg">Dashboard Supervisão</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center p-4 sm:p-6 pt-0">
-                  <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    Estoques, intercorrências e assistente IA
-                  </p>
-                  <Button 
-                    className="w-full bg-rose-700 hover:bg-rose-800 text-sm sm:text-base py-2 sm:py-3"
-                    onClick={navigateToPainelIntercorrencias}
-                  >
-                    Acessar Dashboard
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Meu Desempenho (Gamificação) */}
-            <Card 
-              className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-yellow-400"
-              onClick={navigateToGamificacao}
-            >
-              <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                  <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-700" />
-                </div>
-                <CardTitle className="text-yellow-800 text-base sm:text-lg">Meu Desempenho</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center p-4 sm:p-6 pt-0">
-                <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                  Veja seus pontos, nível e resgate prêmios
-                </p>
-                <Button 
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-sm sm:text-base py-2 sm:py-3"
-                  onClick={navigateToGamificacao}
-                >
-                  Acessar Desempenho
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Meus Contracheques */}
-          <Card
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 sm:hover:scale-105 border-2 hover:border-emerald-400 mt-3 sm:mt-4"
-            onClick={navigateToContracheques}
-          >
-            <CardHeader className="text-center pb-3 sm:pb-4 p-4 sm:p-6">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Receipt className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-700" />
+          {/* D. PAINEL DO SUPERVISOR (unificado) */}
+          {funcionarioAcessoSupervisor && (
+            <section>
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <div className="h-1 w-8 bg-indigo-300 rounded-full" />
+                <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Supervisão</h2>
               </div>
-              <CardTitle className="text-emerald-800 text-base sm:text-lg">Meus Contracheques</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center p-4 sm:p-6 pt-0">
-              <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                Visualize e baixe seus holerites por mês
-              </p>
-              <Button
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-sm sm:text-base py-2 sm:py-3"
-                onClick={navigateToContracheques}
-              >
-                Acessar Contracheques
-              </Button>
-            </CardContent>
-          </Card>
+              <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-[0.99] sm:hover:scale-[1.01] border-2 hover:border-indigo-400 bg-gradient-to-br from-indigo-50 to-white" onClick={navigateToPainelIntercorrencias}>
+                <CardHeader className="pb-3 sm:pb-4 p-4 sm:p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Eye className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-700" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-indigo-800 text-base sm:text-lg mb-1">Painel do Supervisor</CardTitle>
+                      <p className="text-gray-600 text-sm sm:text-base">Prontuários da equipe, estoques, intercorrências e assistente IA</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button className="w-full bg-indigo-700 hover:bg-indigo-800 text-sm sm:text-base py-2 sm:py-3" onClick={(e) => { e.stopPropagation(); navigateToPainelIntercorrencias(); }}>
+                      Dashboard Operacional
+                    </Button>
+                    <Button variant="outline" className="w-full border-indigo-700 text-indigo-700 hover:bg-indigo-50 text-sm sm:text-base py-2 sm:py-3" onClick={(e) => { e.stopPropagation(); navigateToSupervisor(); }}>
+                      Prontuários da Equipe
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* C. Menos importante */}
+          <section>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="h-1 w-8 bg-amber-300 rounded-full" />
+              <h2 className="text-white/80 text-xs sm:text-sm font-medium uppercase tracking-wider">Outros</h2>
+            </div>
+            <FeatureCard title="Feedback do Sistema" description="Avalie e sugira melhorias para o SENEXCARE" icon={MessageSquareHeart} color="amber" buttonLabel="Avaliar" onClick={navigateToFeedback} />
+          </section>
+
 
           {/* Botão de logout */}
           <div className="text-center mt-6 sm:mt-8 space-y-4">
