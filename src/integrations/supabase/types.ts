@@ -2074,39 +2074,57 @@ export type Database = {
       folhas_ponto: {
         Row: {
           ano: number
+          confirmacao_ip: string | null
+          confirmacao_user_agent: string | null
+          confirmado: boolean | null
+          confirmado_at: string | null
           created_at: string
           enviado_por: string | null
           funcionario_id: string
           id: string
           mes: number
+          motivo_discordancia: string | null
           paginas: number | null
           path: string
+          primeira_abertura_at: string | null
           tamanho_bytes: number | null
           tenant_id: string
           updated_at: string
         }
         Insert: {
           ano: number
+          confirmacao_ip?: string | null
+          confirmacao_user_agent?: string | null
+          confirmado?: boolean | null
+          confirmado_at?: string | null
           created_at?: string
           enviado_por?: string | null
           funcionario_id: string
           id?: string
           mes: number
+          motivo_discordancia?: string | null
           paginas?: number | null
           path: string
+          primeira_abertura_at?: string | null
           tamanho_bytes?: number | null
           tenant_id: string
           updated_at?: string
         }
         Update: {
           ano?: number
+          confirmacao_ip?: string | null
+          confirmacao_user_agent?: string | null
+          confirmado?: boolean | null
+          confirmado_at?: string | null
           created_at?: string
           enviado_por?: string | null
           funcionario_id?: string
           id?: string
           mes?: number
+          motivo_discordancia?: string | null
           paginas?: number | null
           path?: string
+          primeira_abertura_at?: string | null
           tamanho_bytes?: number | null
           tenant_id?: string
           updated_at?: string
@@ -4358,6 +4376,22 @@ export type Database = {
         }[]
       }
       cleanup_expired_rotation_tokens: { Args: never; Returns: undefined }
+      confirmar_folha_ponto: {
+        Args: {
+          p_concorda: boolean
+          p_folha_id: string
+          p_funcionario_id: string
+          p_ip?: string
+          p_motivo?: string
+          p_user_agent?: string
+        }
+        Returns: {
+          confirmado: boolean
+          confirmado_at: string
+          id: string
+          motivo_discordancia: string
+        }[]
+      }
       criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
       eh_horario_noturno: {
@@ -4464,11 +4498,15 @@ export type Database = {
         Args: { p_funcionario_id: string }
         Returns: {
           ano: number
+          confirmado: boolean
+          confirmado_at: string
           created_at: string
           id: string
           mes: number
+          motivo_discordancia: string
           paginas: number
           path: string
+          primeira_abertura_at: string
         }[]
       }
       has_role: {
@@ -4507,6 +4545,10 @@ export type Database = {
           p_operacao: string
           p_tabela: string
         }
+        Returns: undefined
+      }
+      marcar_abertura_folha_ponto: {
+        Args: { p_folha_id: string; p_funcionario_id: string }
         Returns: undefined
       }
       marcar_contas_atrasadas: { Args: never; Returns: number }
