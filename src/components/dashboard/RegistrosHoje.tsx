@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, getDay } from "date-fns";
-import { hojeISO, agora, parseDataLocal } from "@/utils/dateUtils";
+import { hojeISO, parseDataLocal } from "@/utils/dateUtils";
 
 interface RegistroHoje {
   funcionario_nome: string;
@@ -78,13 +78,14 @@ export default function RegistrosHoje() {
           .select('funcionario_id, entrada, saida')
           .eq('data', hoje);
 
+        const hojeSP = parseDataLocal(hoje);
         const registrosProcessados = funcionarios
           .filter(func => {
             // Filtrar apenas funcionários que deveriam trabalhar hoje
             const jornadaTrabalho = func.escalas?.jornada_trabalho;
             const dataInicioVigencia = func.data_inicio_vigencia;
             const estaEmFolga = jornadaTrabalho && dataInicioVigencia 
-              ? isFuncionarioEmFolga(jornadaTrabalho, dataInicioVigencia, agora())
+              ? isFuncionarioEmFolga(jornadaTrabalho, dataInicioVigencia, hojeSP)
               : false;
             
             // Só incluir se NÃO está de folga
