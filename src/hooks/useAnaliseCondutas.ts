@@ -89,7 +89,7 @@ export function useAnaliseCondutas(diasAnalise = 30) {
 
         const { data: registros } = await supabase
           .from("registros_ponto")
-          .select("id, funcionario_id, data, entrada, saida, intervalo_inicio, intervalo_fim, intervalos_pausas, abono")
+          .select("id, funcionario_id, data, entrada, saida, intervalo_inicio, intervalo_fim, intervalos_pausas")
           .gte("data", dataInicio)
           .lte("data", dataFimStr);
 
@@ -135,12 +135,12 @@ export function useAnaliseCondutas(diasAnalise = 30) {
             if (estaEmFolga(jornada, inicioVig, dia)) continue;
             if (afastadoEm(diaStr)) continue;
 
-            const reg = (registros || []).find(
+            const reg: any = (registros || []).find(
               (r: any) => r.funcionario_id === func.id && r.data === diaStr
             );
 
             // Sem entrada → falta
-            if (!reg || (!reg.entrada && !reg.abono)) {
+            if (!reg || !reg.entrada) {
               novosAlertas.push({
                 id: `falta-${func.id}-${diaStr}`,
                 tipo: "falta",
