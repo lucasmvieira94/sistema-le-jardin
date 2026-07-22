@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, PauseCircle, PlayCircle, Loader2, Check, MapPinOff, Coffee, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -89,6 +91,18 @@ export default function BotoesRegistroPonto({
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
   const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
   const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
+  const [horarioEntradaEscala, setHorarioEntradaEscala] = useState<string | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [justificativaAberta, setJustificativaAberta] = useState(false);
+  const [justificativaTexto, setJustificativaTexto] = useState('');
+  const [justificativaInfo, setJustificativaInfo] = useState<{
+    registroId: string | null;
+    data: string;
+    minutosAtraso: number;
+    horarioPrevisto: string;
+    horarioRegistrado: string;
+  } | null>(null);
+  const [salvandoJustificativa, setSalvandoJustificativa] = useState(false);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
@@ -200,15 +214,18 @@ export default function BotoesRegistroPonto({
         .single();
       setTemBiometriaCadastrada(!!(data as any)?.biometria_facial);
       const escalaId = (data as any)?.escala_id;
+      setTenantId((data as any)?.tenant_id ?? null);
       if (escalaId) {
         const { data: esc } = await supabase
           .from('escalas')
-          .select('intervalo_pre_assinalado')
+          .select('intervalo_pre_assinalado, entrada')
           .eq('id', escalaId)
           .single();
         setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
+        setHorarioEntradaEscala((esc as any)?.entrada ?? null);
       } else {
         setIntervaloPreAssinalado(false);
+        setHorarioEntradaEscala(null);
       }
     })();
   }, [funcionarioId]);
