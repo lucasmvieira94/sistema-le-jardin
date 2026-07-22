@@ -423,6 +423,31 @@ export default function BotoesRegistroPonto({
 
       await carregarStatus();
       onRegistroRealizado();
+
+      // Detectar atraso > 15min ao registrar ENTRADA e solicitar justificativa
+      if (tipo === 'entrada' && horarioEntradaEscala) {
+        const [ph, pm] = horarioEntradaEscala.split(':').map(Number);
+        const [rh, rm] = horario.split(':').map(Number);
+        const atrasoMin = (rh * 60 + rm) - (ph * 60 + pm);
+        if (atrasoMin > 15) {
+          // Buscar id do registro recém-gravado
+          const { data: reg } = await supabase
+            .from('registros_ponto')
+            .select('id')
+            .eq('funcionario_id', funcionarioId)
+            .eq('data', dataReferencia)
+            .maybeSingle();
+          setJustificativaInfo({
+            registroId: (reg as any)?.id ?? null,
+            data: dataReferencia,
+            minutosAtraso: atrasoMin,
+            horarioPrevisto: horarioEntradaEscala,
+            horarioRegistrado: horario,
+          });
+          setJustificativaTexto('');
+          setTimeout(() => setJustificativaAberta(true), 300);
+        }
+      }
     } catch (error: any) {
       console.error('Erro ao registrar ponto:', error);
       toast({
