@@ -768,6 +768,8 @@ export default function BotoesRegistroPonto({
 
       {/* Validação biométrica */}
       <ValidacaoBiometricaDialog
+
+
         open={biometriaOpen}
         onOpenChange={setBiometriaOpen}
         funcionarioId={funcionarioId}
