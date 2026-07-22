@@ -42,6 +42,7 @@ import EditarFuncionario from "./pages/EditarFuncionario";
 import FichaFuncionario from "./pages/FichaFuncionario";
 import Escalas from "./pages/Escalas";
 import ApropriacaoHoras from "./pages/ApropriacaoHoras";
+import AnaliseCondutas from "./pages/AnaliseCondutas";
 import Relatorios from "./pages/Relatorios";
 import Faltas from "./pages/Faltas";
 import Configuracoes from "./pages/Configuracoes";
@@ -128,6 +129,7 @@ const App = () => {
               <Route path="/funcionarios/:id/ficha" element={<ProtectedRoute><FichaFuncionario /></ProtectedRoute>} />
               <Route path="/escalas" element={<ProtectedRoute><Escalas /></ProtectedRoute>} />
               <Route path="/apropriacao" element={<ProtectedRoute><ApropriacaoHoras /></ProtectedRoute>} />
+              <Route path="/analise-condutas" element={<ProtectedRoute><AnaliseCondutas /></ProtectedRoute>} />
               <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
               <Route path="/faltas" element={<ProtectedRoute><Faltas /></ProtectedRoute>} />
               <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
