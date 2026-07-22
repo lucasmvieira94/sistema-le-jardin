@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogIn, LogOut, PauseCircle, PlayCircle, Loader2, Check, MapPinOff, Coffee, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuditLog } from '@/hooks/useAuditLog';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -89,6 +91,18 @@ export default function BotoesRegistroPonto({
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
   const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
   const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
+  const [horarioEntradaEscala, setHorarioEntradaEscala] = useState<string | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
+  const [justificativaAberta, setJustificativaAberta] = useState(false);
+  const [justificativaTexto, setJustificativaTexto] = useState('');
+  const [justificativaInfo, setJustificativaInfo] = useState<{
+    registroId: string | null;
+    data: string;
+    minutosAtraso: number;
+    horarioPrevisto: string;
+    horarioRegistrado: string;
+  } | null>(null);
+  const [salvandoJustificativa, setSalvandoJustificativa] = useState(false);
   const { logEvent } = useAuditLog();
 
   // Função para fechar alerta e voltar à tela inicial
@@ -98,6 +112,37 @@ export default function BotoesRegistroPonto({
     // iniciar/finalizar quantos intervalos forem necessários.
     if (!alertaEhPausa) {
       navigate('/funcionario-access');
+    }
+  };
+
+  const enviarJustificativaAtraso = async () => {
+    if (!justificativaInfo) return;
+    if (justificativaTexto.trim().length < 5) {
+      toast({ variant: 'destructive', title: 'Justificativa muito curta', description: 'Descreva o motivo do atraso.' });
+      return;
+    }
+    setSalvandoJustificativa(true);
+    try {
+      const { error } = await supabase.from('justificativas_atraso').insert({
+        tenant_id: tenantId,
+        funcionario_id: funcionarioId,
+        registro_ponto_id: justificativaInfo.registroId,
+        data: justificativaInfo.data,
+        horario_previsto: justificativaInfo.horarioPrevisto,
+        horario_registrado: justificativaInfo.horarioRegistrado,
+        minutos_atraso: justificativaInfo.minutosAtraso,
+        justificativa: justificativaTexto.trim(),
+        status: 'pendente',
+      });
+      if (error) throw error;
+      toast({ title: 'Justificativa enviada', description: 'O gestor será notificado para análise.' });
+      setJustificativaAberta(false);
+      setJustificativaInfo(null);
+      setJustificativaTexto('');
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Erro', description: e.message });
+    } finally {
+      setSalvandoJustificativa(false);
     }
   };
 
@@ -195,20 +240,23 @@ export default function BotoesRegistroPonto({
     (async () => {
       const { data } = await supabase
         .from('funcionarios')
-        .select('biometria_facial, escala_id')
+        .select('biometria_facial, escala_id, tenant_id')
         .eq('id', funcionarioId)
         .single();
       setTemBiometriaCadastrada(!!(data as any)?.biometria_facial);
       const escalaId = (data as any)?.escala_id;
+      setTenantId((data as any)?.tenant_id ?? null);
       if (escalaId) {
         const { data: esc } = await supabase
           .from('escalas')
-          .select('intervalo_pre_assinalado')
+          .select('intervalo_pre_assinalado, entrada')
           .eq('id', escalaId)
           .single();
         setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
+        setHorarioEntradaEscala((esc as any)?.entrada ?? null);
       } else {
         setIntervaloPreAssinalado(false);
+        setHorarioEntradaEscala(null);
       }
     })();
   }, [funcionarioId]);
@@ -406,6 +454,31 @@ export default function BotoesRegistroPonto({
 
       await carregarStatus();
       onRegistroRealizado();
+
+      // Detectar atraso > 15min ao registrar ENTRADA e solicitar justificativa
+      if (tipo === 'entrada' && horarioEntradaEscala) {
+        const [ph, pm] = horarioEntradaEscala.split(':').map(Number);
+        const [rh, rm] = horario.split(':').map(Number);
+        const atrasoMin = (rh * 60 + rm) - (ph * 60 + pm);
+        if (atrasoMin > 15) {
+          // Buscar id do registro recém-gravado
+          const { data: reg } = await supabase
+            .from('registros_ponto')
+            .select('id')
+            .eq('funcionario_id', funcionarioId)
+            .eq('data', dataReferencia)
+            .maybeSingle();
+          setJustificativaInfo({
+            registroId: (reg as any)?.id ?? null,
+            data: dataReferencia,
+            minutosAtraso: atrasoMin,
+            horarioPrevisto: horarioEntradaEscala,
+            horarioRegistrado: horario,
+          });
+          setJustificativaTexto('');
+          setTimeout(() => setJustificativaAberta(true), 300);
+        }
+      }
     } catch (error: any) {
       console.error('Erro ao registrar ponto:', error);
       toast({
@@ -709,6 +782,56 @@ export default function BotoesRegistroPonto({
         }}
         onCancelado={() => setTipoPendente(null)}
       />
+
+      {/* Modal: justificativa de atraso (>15min) */}
+      <Dialog
+        open={justificativaAberta}
+        onOpenChange={(o) => {
+          // Não permite fechar sem enviar
+          if (!salvandoJustificativa) setJustificativaAberta(o);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="w-5 h-5" /> Justificativa de atraso
+            </DialogTitle>
+            <DialogDescription>
+              {justificativaInfo && (
+                <>
+                  Você registrou entrada às{' '}
+                  <b>{justificativaInfo.horarioRegistrado.slice(0, 5)}</b>, com{' '}
+                  <b>{justificativaInfo.minutosAtraso} min</b> de atraso em
+                  relação ao horário previsto{' '}
+                  (<b>{justificativaInfo.horarioPrevisto.slice(0, 5)}</b>).
+                  Descreva brevemente o motivo — o gestor irá analisar.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={justificativaTexto}
+            onChange={(e) => setJustificativaTexto(e.target.value)}
+            placeholder="Ex.: Problema com transporte, consulta médica, etc."
+            rows={4}
+            maxLength={500}
+            disabled={salvandoJustificativa}
+          />
+          <DialogFooter>
+            <Button
+              onClick={enviarJustificativaAtraso}
+              disabled={salvandoJustificativa || justificativaTexto.trim().length < 5}
+              className="w-full"
+            >
+              {salvandoJustificativa ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>
+              ) : (
+                'Enviar justificativa'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

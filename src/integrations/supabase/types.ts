@@ -2723,6 +2723,75 @@ export type Database = {
           },
         ]
       }
+      justificativas_atraso: {
+        Row: {
+          analisado_em: string | null
+          analisado_por: string | null
+          created_at: string
+          data: string
+          funcionario_id: string
+          horario_previsto: string
+          horario_registrado: string
+          id: string
+          justificativa: string
+          minutos_atraso: number
+          registro_ponto_id: string | null
+          resposta_gestor: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          analisado_em?: string | null
+          analisado_por?: string | null
+          created_at?: string
+          data: string
+          funcionario_id: string
+          horario_previsto: string
+          horario_registrado: string
+          id?: string
+          justificativa: string
+          minutos_atraso: number
+          registro_ponto_id?: string | null
+          resposta_gestor?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          analisado_em?: string | null
+          analisado_por?: string | null
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          horario_previsto?: string
+          horario_registrado?: string
+          id?: string
+          justificativa?: string
+          minutos_atraso?: number
+          registro_ponto_id?: string | null
+          resposta_gestor?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "justificativas_atraso_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "justificativas_atraso_registro_ponto_id_fkey"
+            columns: ["registro_ponto_id"]
+            isOneToOne: false
+            referencedRelation: "registros_ponto"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lancamentos_financeiros: {
         Row: {
           competencia: string
