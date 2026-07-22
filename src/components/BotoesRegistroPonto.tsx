@@ -768,9 +768,6 @@ export default function BotoesRegistroPonto({
 
       {/* Validação biométrica */}
       <ValidacaoBiometricaDialog
-
-
-
         open={biometriaOpen}
         onOpenChange={setBiometriaOpen}
         funcionarioId={funcionarioId}
@@ -785,6 +782,56 @@ export default function BotoesRegistroPonto({
         }}
         onCancelado={() => setTipoPendente(null)}
       />
+
+      {/* Modal: justificativa de atraso (>15min) */}
+      <Dialog
+        open={justificativaAberta}
+        onOpenChange={(o) => {
+          // Não permite fechar sem enviar
+          if (!salvandoJustificativa) setJustificativaAberta(o);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="w-5 h-5" /> Justificativa de atraso
+            </DialogTitle>
+            <DialogDescription>
+              {justificativaInfo && (
+                <>
+                  Você registrou entrada às{' '}
+                  <b>{justificativaInfo.horarioRegistrado.slice(0, 5)}</b>, com{' '}
+                  <b>{justificativaInfo.minutosAtraso} min</b> de atraso em
+                  relação ao horário previsto{' '}
+                  (<b>{justificativaInfo.horarioPrevisto.slice(0, 5)}</b>).
+                  Descreva brevemente o motivo — o gestor irá analisar.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={justificativaTexto}
+            onChange={(e) => setJustificativaTexto(e.target.value)}
+            placeholder="Ex.: Problema com transporte, consulta médica, etc."
+            rows={4}
+            maxLength={500}
+            disabled={salvandoJustificativa}
+          />
+          <DialogFooter>
+            <Button
+              onClick={enviarJustificativaAtraso}
+              disabled={salvandoJustificativa || justificativaTexto.trim().length < 5}
+              className="w-full"
+            >
+              {salvandoJustificativa ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...</>
+              ) : (
+                'Enviar justificativa'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
