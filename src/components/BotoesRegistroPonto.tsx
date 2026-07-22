@@ -115,6 +115,37 @@ export default function BotoesRegistroPonto({
     }
   };
 
+  const enviarJustificativaAtraso = async () => {
+    if (!justificativaInfo) return;
+    if (justificativaTexto.trim().length < 5) {
+      toast({ variant: 'destructive', title: 'Justificativa muito curta', description: 'Descreva o motivo do atraso.' });
+      return;
+    }
+    setSalvandoJustificativa(true);
+    try {
+      const { error } = await supabase.from('justificativas_atraso').insert({
+        tenant_id: tenantId,
+        funcionario_id: funcionarioId,
+        registro_ponto_id: justificativaInfo.registroId,
+        data: justificativaInfo.data,
+        horario_previsto: justificativaInfo.horarioPrevisto,
+        horario_registrado: justificativaInfo.horarioRegistrado,
+        minutos_atraso: justificativaInfo.minutosAtraso,
+        justificativa: justificativaTexto.trim(),
+        status: 'pendente',
+      });
+      if (error) throw error;
+      toast({ title: 'Justificativa enviada', description: 'O gestor será notificado para análise.' });
+      setJustificativaAberta(false);
+      setJustificativaInfo(null);
+      setJustificativaTexto('');
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Erro', description: e.message });
+    } finally {
+      setSalvandoJustificativa(false);
+    }
+  };
+
   // Helpers para pausas (múltiplos intervalos)
   const parsePausas = (raw: any): Pausa[] => {
     if (!raw) return [];
