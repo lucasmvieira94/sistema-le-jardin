@@ -70,6 +70,7 @@ export function AppSidebar() {
     { path: "/funcionarios", icon: Users, label: "Funcionários", adminOnly: true },
     { path: "/escalas", icon: Calendar, label: "Escalas", adminOnly: true },
     { path: "/apropriacao", icon: Clock, label: "Apropriação", adminOnly: true },
+    { path: "/analise-condutas", icon: AlertTriangle, label: "Análise de Condutas", adminOnly: true },
     { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
     { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
     { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
