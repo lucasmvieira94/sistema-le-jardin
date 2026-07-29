@@ -164,7 +164,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         startY: 38,
         head: [["Funcionário", "Função", "Escala", "Dias", "Valor diária", "Total"]],
         body: linhas.map((l) => [
-          l.nome,
+          l.observacao ? `${l.nome} (${l.observacao})` : l.nome,
           l.funcao,
           l.escala,
           String(l.dias),
@@ -202,6 +202,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
           Dias: l.dias,
           "Valor diária (R$)": l.valorDiaria,
           "Total (R$)": l.total,
+          Observação: l.observacao || "",
         }))
       );
       XLSX.utils.sheet_add_aoa(ws, [["", "", "TOTAL", totais.dias, "", totais.valor]], {
@@ -280,7 +281,13 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
               <tbody>
                 {linhas.map((l) => (
                   <tr key={l.nome} className="border-t">
-                    <td className="p-2">{l.nome}<div className="text-xs text-muted-foreground">{l.funcao}</div></td>
+                    <td className="p-2">
+                      {l.nome}
+                      <div className="text-xs text-muted-foreground">{l.funcao}</div>
+                      {l.observacao && (
+                        <div className="text-xs text-amber-600 font-medium">{l.observacao}</div>
+                      )}
+                    </td>
                     <td className="p-2">{l.escala}</td>
                     <td className="p-2 text-right font-medium">{l.dias}</td>
                     <td className="p-2 text-right">
