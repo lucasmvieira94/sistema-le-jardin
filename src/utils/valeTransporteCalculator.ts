@@ -18,6 +18,53 @@ export interface CalcularDiasParams {
   dataInicioVigencia?: string | null;
   dataAdmissao?: string | null;
   dataDesligamento?: string | null;
+  /** Aviso prévio (CLT) — limita o VT ao último dia efetivamente trabalhado */
+  avisoPrevio?: boolean | null;
+  tipoAvisoPrevio?: string | null; // 'trabalhado' | 'indenizado' | 'dispensado'
+  modalidadeReducaoAviso?: string | null; // 'reducao_2h_entrada' | 'reducao_2h_saida' | 'reducao_7_dias_corridos'
+  dataInicioAviso?: string | null;
+  dataFimAviso?: string | null;
+}
+
+function parseData(d?: string | null): Date | null {
+  return d ? new Date(d + "T12:00:00") : null;
+}
+
+function addDias(d: Date, n: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+/**
+ * Último dia com direito a vale-transporte considerando o aviso prévio.
+ * - trabalhado: até o último dia do aviso (data_fim_aviso).
+ *   Se a redução escolhida for de 7 dias corridos, o último dia é antecipado em 7 dias.
+ * - indenizado/dispensado: o funcionário não comparece durante o aviso,
+ *   logo o último dia é o início do aviso (data_inicio_aviso).
+ */
+export function calcularUltimoDiaVT(p: CalcularDiasParams): Date | null {
+  const desligamento = parseData(p.dataDesligamento);
+  if (!p.avisoPrevio) return desligamento;
+
+  const inicioAviso = parseData(p.dataInicioAviso);
+  const fimAviso = parseData(p.dataFimAviso);
+  let limiteAviso: Date | null = null;
+
+  if (p.tipoAvisoPrevio === "indenizado" || p.tipoAvisoPrevio === "dispensado") {
+    limiteAviso = inicioAviso ?? fimAviso;
+  } else {
+    // trabalhado (ou não informado): trabalha até o fim do aviso
+    limiteAviso = fimAviso ?? inicioAviso;
+    if (limiteAviso && p.modalidadeReducaoAviso === "reducao_7_dias_corridos") {
+      limiteAviso = addDias(limiteAviso, -7);
+    }
+  }
+
+  if (limiteAviso && desligamento) {
+    return limiteAviso < desligamento ? limiteAviso : desligamento;
+  }
+  return limiteAviso ?? desligamento;
 }
 
 function diasNoMes(ano: number, mes: number): number {
@@ -80,7 +127,8 @@ export function calcularDiasTrabalhados(p: CalcularDiasParams): number {
     ? new Date(p.dataAdmissao + "T12:00:00")
     : null;
 
-  const fim = p.dataDesligamento ? new Date(p.dataDesligamento + "T12:00:00") : null;
+  // Limita o cálculo ao último dia efetivamente trabalhado (considera aviso prévio)
+  const fim = calcularUltimoDiaVT(p);
 
   const jornada = (p.jornada || "").toLowerCase();
 
