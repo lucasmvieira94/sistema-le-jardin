@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Bus, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { calcularDiasTrabalhados, nomeMes } from "@/utils/valeTransporteCalculator";
+import { calcularDiasTrabalhados, calcularUltimoDiaVT, nomeMes } from "@/utils/valeTransporteCalculator";
 import { toast } from "@/components/ui/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -26,6 +26,11 @@ interface FuncionarioVT {
   data_admissao: string | null;
   data_inicio_vigencia: string | null;
   data_desligamento: string | null;
+  aviso_previo: boolean | null;
+  tipo_aviso_previo: string | null;
+  modalidade_reducao_aviso: string | null;
+  data_inicio_aviso: string | null;
+  data_fim_aviso: string | null;
   escala_id: number | null;
   escala?: { nome: string; jornada_trabalho: string } | null;
 }
@@ -38,6 +43,7 @@ interface LinhaRelatorio {
   dias: number;
   valorDiaria: number;
   total: number;
+  observacao?: string;
 }
 
 function getProximoMes(): { mes: number; ano: number } {
@@ -59,7 +65,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id, nome_completo, funcao, recebe_vale_transporte, valor_diaria_vale_transporte, data_admissao, data_inicio_vigencia, data_desligamento, escala_id, escala:escalas(nome, jornada_trabalho)"
+          "id, nome_completo, funcao, recebe_vale_transporte, valor_diaria_vale_transporte, data_admissao, data_inicio_vigencia, data_desligamento, aviso_previo, tipo_aviso_previo, modalidade_reducao_aviso, data_inicio_aviso, data_fim_aviso, escala_id, escala:escalas(nome, jornada_trabalho)"
         )
         .eq("recebe_vale_transporte", true)
         .order("nome_completo");
@@ -76,11 +82,19 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
     const primeiroDia = new Date(ano, mes - 1, 1);
     return funcionarios
       .filter((f) => {
-        // Se desligado antes do primeiro dia do mês, ignora
-        if (f.data_desligamento) {
-          const dd = new Date(f.data_desligamento + "T12:00:00");
-          if (dd < primeiroDia) return false;
-        }
+        // Último dia com direito a VT (considera aviso prévio); se anterior ao mês, ignora
+        const ultimoDia = calcularUltimoDiaVT({
+          ano,
+          mes,
+          jornada: "",
+          dataDesligamento: f.data_desligamento,
+          avisoPrevio: f.aviso_previo,
+          tipoAvisoPrevio: f.tipo_aviso_previo,
+          modalidadeReducaoAviso: f.modalidade_reducao_aviso,
+          dataInicioAviso: f.data_inicio_aviso,
+          dataFimAviso: f.data_fim_aviso,
+        });
+        if (ultimoDia && ultimoDia < primeiroDia) return false;
         return true;
       })
       .map((f) => {
@@ -92,8 +106,24 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         dataInicioVigencia: f.data_inicio_vigencia,
         dataAdmissao: f.data_admissao,
         dataDesligamento: f.data_desligamento,
+        avisoPrevio: f.aviso_previo,
+        tipoAvisoPrevio: f.tipo_aviso_previo,
+        modalidadeReducaoAviso: f.modalidade_reducao_aviso,
+        dataInicioAviso: f.data_inicio_aviso,
+        dataFimAviso: f.data_fim_aviso,
       });
       const valorDiaria = Number(f.valor_diaria_vale_transporte || 0);
+      const ultimoDiaVT = calcularUltimoDiaVT({
+        ano,
+        mes,
+        jornada,
+        dataDesligamento: f.data_desligamento,
+        avisoPrevio: f.aviso_previo,
+        tipoAvisoPrevio: f.tipo_aviso_previo,
+        modalidadeReducaoAviso: f.modalidade_reducao_aviso,
+        dataInicioAviso: f.data_inicio_aviso,
+        dataFimAviso: f.data_fim_aviso,
+      });
       return {
         nome: f.nome_completo,
         funcao: f.funcao,
@@ -102,6 +132,10 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         dias,
         valorDiaria,
         total: dias * valorDiaria,
+        observacao:
+          f.aviso_previo && ultimoDiaVT
+            ? `Aviso prévio${f.tipo_aviso_previo ? ` (${f.tipo_aviso_previo})` : ""} — VT até ${ultimoDiaVT.toLocaleDateString("pt-BR")}`
+            : undefined,
       };
     })
     .filter((l) => l.dias > 0);
@@ -130,7 +164,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         startY: 38,
         head: [["Funcionário", "Função", "Escala", "Dias", "Valor diária", "Total"]],
         body: linhas.map((l) => [
-          l.nome,
+          l.observacao ? `${l.nome} (${l.observacao})` : l.nome,
           l.funcao,
           l.escala,
           String(l.dias),
@@ -168,6 +202,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
           Dias: l.dias,
           "Valor diária (R$)": l.valorDiaria,
           "Total (R$)": l.total,
+          Observação: l.observacao || "",
         }))
       );
       XLSX.utils.sheet_add_aoa(ws, [["", "", "TOTAL", totais.dias, "", totais.valor]], {
@@ -246,7 +281,13 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
               <tbody>
                 {linhas.map((l) => (
                   <tr key={l.nome} className="border-t">
-                    <td className="p-2">{l.nome}<div className="text-xs text-muted-foreground">{l.funcao}</div></td>
+                    <td className="p-2">
+                      {l.nome}
+                      <div className="text-xs text-muted-foreground">{l.funcao}</div>
+                      {l.observacao && (
+                        <div className="text-xs text-amber-600 font-medium">{l.observacao}</div>
+                      )}
+                    </td>
                     <td className="p-2">{l.escala}</td>
                     <td className="p-2 text-right font-medium">{l.dias}</td>
                     <td className="p-2 text-right">
