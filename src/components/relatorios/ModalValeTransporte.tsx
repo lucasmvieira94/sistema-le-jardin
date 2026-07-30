@@ -149,7 +149,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
             : undefined,
       };
     })
-    .filter((l) => l.dias > 0);
+    .filter((l) => l.diasCalculados > 0 || l.dias > 0);
   }, [funcionarios, mes, ano, diasManuais]);
 
   const totais = useMemo(() => {
@@ -291,7 +291,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
               </thead>
               <tbody>
                 {linhas.map((l) => (
-                  <tr key={l.nome} className="border-t">
+                  <tr key={l.id} className="border-t">
                     <td className="p-2">
                       {l.nome}
                       <div className="text-xs text-muted-foreground">{l.funcao}</div>
@@ -300,7 +300,25 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
                       )}
                     </td>
                     <td className="p-2">{l.escala}</td>
-                    <td className="p-2 text-right font-medium">{l.dias}</td>
+                    <td className="p-2 text-right">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={31}
+                        value={l.dias}
+                        onChange={(e) => {
+                          const v = Math.max(0, Math.min(31, Number(e.target.value) || 0));
+                          setDiasManuais((prev) => ({ ...prev, [l.id]: v }));
+                        }}
+                        className="w-20 h-8 text-right ml-auto"
+                        aria-label={`Dias de vale-transporte de ${l.nome}`}
+                      />
+                      {l.dias !== l.diasCalculados && (
+                        <div className="text-[10px] text-amber-600 mt-1">
+                          calc.: {l.diasCalculados}
+                        </div>
+                      )}
+                    </td>
                     <td className="p-2 text-right">
                       {l.valorDiaria.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </td>
