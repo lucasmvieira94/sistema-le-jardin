@@ -269,8 +269,16 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
 
         <p className="text-sm text-muted-foreground">
           Cálculo baseado na escala vigente de cada funcionário. O período padrão é o mês seguinte ao atual,
-          para preparar o pagamento antecipado do vale-transporte.
+          para preparar o pagamento antecipado do vale-transporte. Você pode ajustar manualmente a
+          quantidade de dias de cada funcionário antes de exportar.
         </p>
+        {Object.keys(diasManuais).length > 0 && (
+          <div className="flex justify-end -mt-2">
+            <Button variant="ghost" size="sm" onClick={() => setDiasManuais({})}>
+              Restaurar dias calculados
+            </Button>
+          </div>
+        )}
 
         <div className="border rounded-lg overflow-auto max-h-[400px]">
           {isLoading ? (
