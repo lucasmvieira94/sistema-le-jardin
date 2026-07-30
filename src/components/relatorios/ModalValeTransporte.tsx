@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Bus, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,11 +37,13 @@ interface FuncionarioVT {
 }
 
 interface LinhaRelatorio {
+  id: string;
   nome: string;
   funcao: string;
   escala: string;
   jornada: string;
   dias: number;
+  diasCalculados: number;
   valorDiaria: number;
   total: number;
   observacao?: string;
@@ -58,6 +61,13 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
   const [mes, setMes] = useState<number>(padrao.mes);
   const [ano, setAno] = useState<number>(padrao.ano);
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
+  // Ajustes manuais de dias por funcionário (chave: id do funcionário)
+  const [diasManuais, setDiasManuais] = useState<Record<string, number>>({});
+
+  // Limpa ajustes ao trocar o período de referência
+  React.useEffect(() => {
+    setDiasManuais({});
+  }, [mes, ano]);
 
   const { data: funcionarios, isLoading } = useQuery({
     queryKey: ["funcionarios-vt"],
@@ -125,21 +135,23 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         dataFimAviso: f.data_fim_aviso,
       });
       return {
+        id: f.id,
         nome: f.nome_completo,
         funcao: f.funcao,
         escala: f.escala?.nome || "—",
         jornada,
-        dias,
+        dias: diasManuais[f.id] ?? dias,
+        diasCalculados: dias,
         valorDiaria,
-        total: dias * valorDiaria,
+        total: (diasManuais[f.id] ?? dias) * valorDiaria,
         observacao:
           f.aviso_previo && ultimoDiaVT
             ? `Aviso prévio${f.tipo_aviso_previo ? ` (${f.tipo_aviso_previo})` : ""} — VT até ${ultimoDiaVT.toLocaleDateString("pt-BR")}`
             : undefined,
       };
     })
-    .filter((l) => l.dias > 0);
-  }, [funcionarios, mes, ano]);
+    .filter((l) => l.diasCalculados > 0 || l.dias > 0);
+  }, [funcionarios, mes, ano, diasManuais]);
 
   const totais = useMemo(() => {
     return linhas.reduce(
@@ -257,8 +269,16 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
 
         <p className="text-sm text-muted-foreground">
           Cálculo baseado na escala vigente de cada funcionário. O período padrão é o mês seguinte ao atual,
-          para preparar o pagamento antecipado do vale-transporte.
+          para preparar o pagamento antecipado do vale-transporte. Você pode ajustar manualmente a
+          quantidade de dias de cada funcionário antes de exportar.
         </p>
+        {Object.keys(diasManuais).length > 0 && (
+          <div className="flex justify-end -mt-2">
+            <Button variant="ghost" size="sm" onClick={() => setDiasManuais({})}>
+              Restaurar dias calculados
+            </Button>
+          </div>
+        )}
 
         <div className="border rounded-lg overflow-auto max-h-[400px]">
           {isLoading ? (
@@ -280,7 +300,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
               </thead>
               <tbody>
                 {linhas.map((l) => (
-                  <tr key={l.nome} className="border-t">
+                  <tr key={l.id} className="border-t">
                     <td className="p-2">
                       {l.nome}
                       <div className="text-xs text-muted-foreground">{l.funcao}</div>
@@ -289,7 +309,25 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
                       )}
                     </td>
                     <td className="p-2">{l.escala}</td>
-                    <td className="p-2 text-right font-medium">{l.dias}</td>
+                    <td className="p-2 text-right">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={31}
+                        value={l.dias}
+                        onChange={(e) => {
+                          const v = Math.max(0, Math.min(31, Number(e.target.value) || 0));
+                          setDiasManuais((prev) => ({ ...prev, [l.id]: v }));
+                        }}
+                        className="w-20 h-8 text-right ml-auto"
+                        aria-label={`Dias de vale-transporte de ${l.nome}`}
+                      />
+                      {l.dias !== l.diasCalculados && (
+                        <div className="text-[10px] text-amber-600 mt-1">
+                          calc.: {l.diasCalculados}
+                        </div>
+                      )}
+                    </td>
                     <td className="p-2 text-right">
                       {l.valorDiaria.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                     </td>
