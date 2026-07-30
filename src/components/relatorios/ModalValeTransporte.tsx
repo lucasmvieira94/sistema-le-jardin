@@ -36,11 +36,13 @@ interface FuncionarioVT {
 }
 
 interface LinhaRelatorio {
+  id: string;
   nome: string;
   funcao: string;
   escala: string;
   jornada: string;
   dias: number;
+  diasCalculados: number;
   valorDiaria: number;
   total: number;
   observacao?: string;
@@ -58,6 +60,13 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
   const [mes, setMes] = useState<number>(padrao.mes);
   const [ano, setAno] = useState<number>(padrao.ano);
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
+  // Ajustes manuais de dias por funcionário (chave: id do funcionário)
+  const [diasManuais, setDiasManuais] = useState<Record<string, number>>({});
+
+  // Limpa ajustes ao trocar o período de referência
+  React.useEffect(() => {
+    setDiasManuais({});
+  }, [mes, ano]);
 
   const { data: funcionarios, isLoading } = useQuery({
     queryKey: ["funcionarios-vt"],
@@ -125,13 +134,15 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         dataFimAviso: f.data_fim_aviso,
       });
       return {
+        id: f.id,
         nome: f.nome_completo,
         funcao: f.funcao,
         escala: f.escala?.nome || "—",
         jornada,
-        dias,
+        dias: diasManuais[f.id] ?? dias,
+        diasCalculados: dias,
         valorDiaria,
-        total: dias * valorDiaria,
+        total: (diasManuais[f.id] ?? dias) * valorDiaria,
         observacao:
           f.aviso_previo && ultimoDiaVT
             ? `Aviso prévio${f.tipo_aviso_previo ? ` (${f.tipo_aviso_previo})` : ""} — VT até ${ultimoDiaVT.toLocaleDateString("pt-BR")}`
@@ -139,7 +150,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
       };
     })
     .filter((l) => l.dias > 0);
-  }, [funcionarios, mes, ano]);
+  }, [funcionarios, mes, ano, diasManuais]);
 
   const totais = useMemo(() => {
     return linhas.reduce(
