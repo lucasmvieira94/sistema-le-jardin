@@ -98,7 +98,7 @@ export default function ApropriacaoHoras() {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl pt-12 font-heebo">
+    <div className="container mx-auto max-w-7xl pt-12 font-heebo">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-3xl font-bold text-primary">Apropriação de Horas</h2>
         <Button
