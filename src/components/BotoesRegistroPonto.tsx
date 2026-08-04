@@ -691,6 +691,36 @@ export default function BotoesRegistroPonto({
               ? 'Volte aqui ao retornar e toque em "Finalizar Intervalo".'
               : 'Você pode iniciar e finalizar o intervalo quantas vezes precisar.'}
           </p>
+
+          {/* Contador regressivo do intervalo */}
+          <div
+            className={`rounded-xl border p-3 text-center ${
+              excedido
+                ? 'border-destructive/40 bg-destructive/10'
+                : 'border-primary/20 bg-primary/5'
+            }`}
+          >
+            <p className="text-xs font-medium text-muted-foreground">
+              {excedido ? 'Tempo excedido' : 'Tempo restante de intervalo'}
+            </p>
+            <p
+              className={`font-mono text-3xl font-bold tracking-tight ${
+                excedido ? 'text-destructive' : 'text-primary'
+              }`}
+            >
+              {excedido ? '-' : ''}
+              {formatarDuracao(segundosRestantes)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Intervalo previsto na escala: {intervaloMinutos} min · Utilizado:{' '}
+              {formatarDuracao(segundosConsumidos)}
+            </p>
+            {excedido && (
+              <p className="text-[11px] font-semibold text-destructive mt-1">
+                Os minutos excedentes serão descontados das horas trabalhadas/extras.
+              </p>
+            )}
+          </div>
           <Button
             onClick={() =>
               registrarPonto(status.pausaAberta ? 'pausa_fim' : 'pausa_inicio')
