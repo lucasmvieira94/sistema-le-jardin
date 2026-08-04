@@ -1,12 +1,19 @@
 
 import React, { useState, useEffect } from "react";
-import { Edit2, Save, X, Plus, Trash2, Clock } from "lucide-react";
+import { Edit2, Save, X, Trash2, Clock, Coffee, LogIn, LogOut, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+
+/** Pausa individual registrada pelo funcionário no dia. */
+interface Pausa {
+  inicio: string | null;
+  fim: string | null;
+}
 
 interface RegistroPonto {
   id: string;
@@ -17,6 +24,66 @@ interface RegistroPonto {
   saida: string | null;
   observacoes: string | null;
   funcionario_id: string;
+  intervalos_pausas?: Pausa[] | null;
+}
+
+interface EscalaInfo {
+  nome?: string | null;
+  entrada: string;
+  saida: string;
+  intervalo_minutos?: number | null;
+  intervalo_pre_assinalado?: boolean | null;
+}
+
+/* ---------- Helpers de tempo (puros, fáceis de testar) ---------- */
+
+/** Converte "HH:MM[:SS]" em minutos desde 00:00. Retorna null se inválido. */
+export function horaParaMinutos(hora?: string | null): number | null {
+  if (!hora) return null;
+  const [h, m] = hora.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+/** Formata minutos em "HHhMM". */
+export function formatarMinutos(min: number): string {
+  const sinal = min < 0 ? "-" : "";
+  const abs = Math.abs(min);
+  return `${sinal}${String(Math.floor(abs / 60)).padStart(2, "0")}h${String(abs % 60).padStart(2, "0")}`;
+}
+
+/** Normaliza o JSONB de pausas em uma lista tipada. */
+export function parsePausas(valor: unknown): Pausa[] {
+  if (!Array.isArray(valor)) return [];
+  return valor
+    .filter((p) => p && typeof p === "object")
+    .map((p: any) => ({ inicio: p.inicio ?? null, fim: p.fim ?? null }));
+}
+
+/** Total, em minutos, das pausas finalizadas (fallback no par legado). */
+export function totalIntervaloMinutos(registro: RegistroPonto): number {
+  const pausas = parsePausas(registro.intervalos_pausas);
+  if (pausas.length > 0) {
+    return pausas.reduce((acc, p) => {
+      const i = horaParaMinutos(p.inicio);
+      const f = horaParaMinutos(p.fim);
+      if (i === null || f === null) return acc;
+      return acc + (f >= i ? f - i : f + 1440 - i);
+    }, 0);
+  }
+  const i = horaParaMinutos(registro.intervalo_inicio);
+  const f = horaParaMinutos(registro.intervalo_fim);
+  if (i === null || f === null) return 0;
+  return f >= i ? f - i : f + 1440 - i;
+}
+
+/** Minutos trabalhados no dia (entrada → saída, já descontando intervalos). */
+export function minutosTrabalhados(registro: RegistroPonto): number | null {
+  const e = horaParaMinutos(registro.entrada);
+  const s = horaParaMinutos(registro.saida);
+  if (e === null || s === null) return null;
+  const bruto = s >= e ? s - e : s + 1440 - e; // turno noturno
+  return Math.max(0, bruto - totalIntervaloMinutos(registro));
 }
 
 interface FolhaPontoTableProps {
@@ -31,7 +98,7 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [registroEditado, setRegistroEditado] = useState<Partial<RegistroPonto>>({});
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
-  const [escalaFuncionario, setEscalaFuncionario] = useState<{entrada: string, saida: string} | null>(null);
+  const [escalaFuncionario, setEscalaFuncionario] = useState<EscalaInfo | null>(null);
 
   useEffect(() => {
     carregarRegistros();
@@ -54,18 +121,18 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
       .from("funcionarios")
       .select(`
         escalas (
+          nome,
           entrada,
-          saida
+          saida,
+          intervalo_minutos,
+          intervalo_pre_assinalado
         )
       `)
       .eq("id", funcionarioId)
       .single();
     
     if (data?.escalas) {
-      setEscalaFuncionario({
-        entrada: data.escalas.entrada,
-        saida: data.escalas.saida
-      });
+      setEscalaFuncionario(data.escalas as unknown as EscalaInfo);
     }
   };
 
