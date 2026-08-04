@@ -493,6 +493,14 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
           <p className="text-muted-foreground">
             {funcionarioNome} • {formatarData(dataInicio)} a {formatarData(dataFim)}
           </p>
+          {escalaFuncionario && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Escala {escalaFuncionario.nome ?? ""} • Previsto{" "}
+              {formatarHora(escalaFuncionario.entrada)} às {formatarHora(escalaFuncionario.saida)}
+              {limiteIntervalo != null && ` • Intervalo ${limiteIntervalo} min`}
+              {escalaFuncionario.intervalo_pre_assinalado && " (pré-assinalado)"}
+            </p>
+          )}
         </div>
         
         {escalaFuncionario && (
@@ -507,15 +515,44 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
         )}
       </div>
 
+      {/* Resumo do período */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        {(() => {
+          const comRegistro = registros.filter((r) => r.entrada || r.saida);
+          const totalTrab = comRegistro.reduce((a, r) => a + (minutosTrabalhados(r) ?? 0), 0);
+          const totalInt = comRegistro.reduce((a, r) => a + totalIntervaloMinutos(r), 0);
+          const semSaida = comRegistro.filter((r) => r.entrada && !r.saida).length;
+          const atrasos = comRegistro.filter((r) => minutosAtraso(r) > 15).length;
+          const cards = [
+            { label: "Dias com registro", valor: String(comRegistro.length), icon: LogIn },
+            { label: "Horas trabalhadas", valor: formatarMinutos(totalTrab), icon: Clock },
+            { label: "Total de intervalos", valor: formatarMinutos(totalInt), icon: Coffee },
+            { label: "Sem saída", valor: String(semSaida), icon: LogOut },
+            { label: "Atrasos > 15min", valor: String(atrasos), icon: AlertTriangle },
+          ];
+          return cards.map(({ label, valor, icon: Icon }) => (
+            <div key={label} className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </div>
+              <p className="text-lg font-semibold mt-1">{valor}</p>
+            </div>
+          ));
+        })()}
+      </div>
+
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Data</TableHead>
               <TableHead>Entrada</TableHead>
-              <TableHead>Início Intervalo</TableHead>
-              <TableHead>Fim Intervalo</TableHead>
+              <TableHead>Intervalos</TableHead>
               <TableHead>Saída</TableHead>
+              <TableHead>Total intervalo</TableHead>
+              <TableHead>Horas trabalhadas</TableHead>
+              <TableHead>Situação</TableHead>
               <TableHead>Observações</TableHead>
               <TableHead className="w-32">Ações</TableHead>
             </TableRow>
