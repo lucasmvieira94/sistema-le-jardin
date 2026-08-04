@@ -280,6 +280,39 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
+  // Tick de 1s enquanto houver intervalo em andamento (contador regressivo)
+  useEffect(() => {
+    if (!status.pausaAberta) return;
+    setTickAgora(new Date());
+    const timer = setInterval(() => setTickAgora(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [status.pausaAberta]);
+
+  // Notifica o funcionário quando o tempo de intervalo se esgota
+  useEffect(() => {
+    if (!status.pausaAberta) {
+      avisoFimRef.current = false;
+      return;
+    }
+    const consumidos =
+      segundosPausasFinalizadas(status.pausas) +
+      segundosPausaEmAndamento(status.pausas, tickAgora);
+    const restante = intervaloMinutos * 60 - consumidos;
+    if (restante <= 0 && !avisoFimRef.current) {
+      avisoFimRef.current = true;
+      toast({
+        variant: 'destructive',
+        title: 'Intervalo encerrado',
+        description:
+          'O tempo de intervalo acabou. Finalize o intervalo — os minutos excedentes serão descontados.',
+        duration: 10000,
+      });
+      try {
+        navigator.vibrate?.([300, 150, 300]);
+      } catch { /* ignora */ }
+    }
+  }, [tickAgora, status.pausaAberta, status.pausas, intervaloMinutos]);
+
   // Verifica se o funcionário tem biometria cadastrada + carrega flag intervalo pré-assinalado da escala
   useEffect(() => {
     if (!funcionarioId) return;
