@@ -90,6 +90,9 @@ export default function BotoesRegistroPonto({
   const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
   const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
+  const [intervaloMinutos, setIntervaloMinutos] = useState<number>(60);
+  const [tickAgora, setTickAgora] = useState<Date>(new Date());
+  const avisoFimRef = React.useRef(false);
   const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
   const [horarioEntradaEscala, setHorarioEntradaEscala] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
@@ -249,13 +252,15 @@ export default function BotoesRegistroPonto({
       if (escalaId) {
         const { data: esc } = await supabase
           .from('escalas')
-          .select('intervalo_pre_assinalado, entrada')
+          .select('intervalo_pre_assinalado, entrada, intervalo_minutos')
           .eq('id', escalaId)
           .single();
         setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
+        setIntervaloMinutos(Number((esc as any)?.intervalo_minutos ?? 60));
         setHorarioEntradaEscala((esc as any)?.entrada ?? null);
       } else {
         setIntervaloPreAssinalado(false);
+        setIntervaloMinutos(60);
         setHorarioEntradaEscala(null);
       }
     })();
