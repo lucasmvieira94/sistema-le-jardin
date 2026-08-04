@@ -202,7 +202,8 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
             intervalo_fim: null,
             saida: null,
             observacoes: null,
-            funcionario_id: funcionarioId
+            funcionario_id: funcionarioId,
+            intervalos_pausas: []
           });
         }
       });
