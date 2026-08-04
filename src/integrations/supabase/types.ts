@@ -1653,6 +1653,7 @@ export type Database = {
           id: number
           intervalo_fim: string | null
           intervalo_inicio: string | null
+          intervalo_minutos: number
           intervalo_pre_assinalado: boolean
           jornada_trabalho: string
           nome: string
@@ -1666,6 +1667,7 @@ export type Database = {
           id?: number
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          intervalo_minutos?: number
           intervalo_pre_assinalado?: boolean
           jornada_trabalho?: string
           nome: string
@@ -1679,6 +1681,7 @@ export type Database = {
           id?: number
           intervalo_fim?: string | null
           intervalo_inicio?: string | null
+          intervalo_minutos?: number
           intervalo_pre_assinalado?: boolean
           jornada_trabalho?: string
           nome?: string
