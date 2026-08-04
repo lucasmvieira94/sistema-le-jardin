@@ -175,7 +175,7 @@ export default function FuncionarioAccess() {
     try {
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('registra_ponto, acesso_supervisor, biometria_facial')
+        .select('registra_ponto, acesso_supervisor, biometria_facial, exigir_biometria')
         .eq('id', id)
         .single();
       
@@ -184,7 +184,7 @@ export default function FuncionarioAccess() {
       } else {
         registraPonto = data.registra_ponto;
         acessoSupervisor = (data as any).acesso_supervisor ?? false;
-        temBiometria = !!(data as any).biometria_facial;
+        temBiometria = !!(data as any).biometria_facial && ((data as any).exigir_biometria ?? true);
       }
     } catch (error) {
       console.error('Erro ao buscar funcionário:', error);

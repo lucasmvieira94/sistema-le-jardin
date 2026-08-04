@@ -319,10 +319,10 @@ export default function BotoesRegistroPonto({
     (async () => {
       const { data } = await supabase
         .from('funcionarios')
-        .select('biometria_facial, escala_id, tenant_id')
+        .select('biometria_facial, escala_id, tenant_id, exigir_biometria')
         .eq('id', funcionarioId)
         .single();
-      setTemBiometriaCadastrada(!!(data as any)?.biometria_facial);
+      setTemBiometriaCadastrada(!!(data as any)?.biometria_facial && ((data as any)?.exigir_biometria ?? true));
       const escalaId = (data as any)?.escala_id;
       setTenantId((data as any)?.tenant_id ?? null);
       if (escalaId) {
