@@ -255,6 +255,26 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
     });
   };
 
+  /** Rótulo detalhado da data: "seg" + "05/08/2026". */
+  const detalharData = (data: string) => {
+    const d = new Date(data + 'T12:00:00');
+    return {
+      diaSemana: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''),
+      completa: d.toLocaleDateString('pt-BR'),
+      fimDeSemana: [0, 6].includes(d.getDay()),
+    };
+  };
+
+  /** Minutos de atraso em relação à escala (0 quando dentro do horário). */
+  const minutosAtraso = (registro: RegistroPonto): number => {
+    const prev = horaParaMinutos(escalaFuncionario?.entrada);
+    const real = horaParaMinutos(registro.entrada);
+    if (prev === null || real === null) return 0;
+    return Math.max(0, real - prev);
+  };
+
+  const limiteIntervalo = escalaFuncionario?.intervalo_minutos ?? null;
+
   const formatarHora = (hora: string | null) => {
     if (!hora) return "--:--";
     return hora.slice(0, 5);
