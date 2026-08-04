@@ -600,6 +600,11 @@ export default function BotoesRegistroPonto({
   const mostrarIntervalos =
     status.temEntrada && !status.temSaida && !intervaloPreAssinalado;
   const totalPausas = calcularTotalPausas(status.pausas);
+  const segundosConsumidos =
+    segundosPausasFinalizadas(status.pausas) +
+    (status.pausaAberta ? segundosPausaEmAndamento(status.pausas, tickAgora) : 0);
+  const segundosRestantes = intervaloMinutos * 60 - segundosConsumidos;
+  const excedido = segundosRestantes < 0;
 
   // Status visual da geofence
   const validacao = validarGeofence(geofenceConfig, latitude, longitude);
