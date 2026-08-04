@@ -59,6 +59,23 @@ export default function IntervaloFields({ register, errors, control }: Props) {
       {intervaloMsg && (
         <span className="text-red-600 text-sm">{intervaloMsg}</span>
       )}
+      <div>
+        <label className="block mb-1 font-semibold text-green-800">
+          Duração do intervalo (minutos)
+        </label>
+        <Input
+          type="number"
+          min={0}
+          max={240}
+          step={5}
+          {...register("intervaloMinutos")}
+          placeholder="60"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Tempo permitido de intervalo por dia. O funcionário verá um contador
+          regressivo e os minutos excedentes serão abatidos das horas extras.
+        </p>
+      </div>
     </div>
   );
 }

@@ -36,6 +36,7 @@ const escalaSchema = z.object({
   intervaloInicio: z.string().optional(),
   intervaloFim: z.string().optional(),
   intervaloPreAssinalado: z.boolean().optional().default(false),
+  intervaloMinutos: z.coerce.number().int().min(0).max(240).optional().default(60),
   observacoes: z.string().optional(),
 })
 .refine((data) => {
@@ -84,6 +85,7 @@ export type EscalaData = {
   intervalo_inicio?: string;
   intervalo_fim?: string;
   intervalo_pre_assinalado?: boolean;
+  intervalo_minutos?: number;
   observacoes?: string;
 }
 
@@ -107,6 +109,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       intervaloInicio: escala?.intervalo_inicio?.slice(0, 5) || "",
       intervaloFim: escala?.intervalo_fim?.slice(0, 5) || "",
       intervaloPreAssinalado: escala?.intervalo_pre_assinalado ?? false,
+      intervaloMinutos: escala?.intervalo_minutos ?? 60,
       observacoes: escala?.observacoes || "",
     }
   });
@@ -120,6 +123,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       intervalo_inicio: data.intervaloInicio || null,
       intervalo_fim: data.intervaloFim || null,
       intervalo_pre_assinalado: !!data.intervaloPreAssinalado,
+      intervalo_minutos: Number(data.intervaloMinutos ?? 60),
       observacoes: data.observacoes || null,
     };
 

@@ -90,6 +90,9 @@ export default function BotoesRegistroPonto({
   const [tipoPendente, setTipoPendente] = useState<TipoRegistro | null>(null);
   const [temBiometriaCadastrada, setTemBiometriaCadastrada] = useState<boolean | null>(null);
   const [intervaloPreAssinalado, setIntervaloPreAssinalado] = useState<boolean>(false);
+  const [intervaloMinutos, setIntervaloMinutos] = useState<number>(60);
+  const [tickAgora, setTickAgora] = useState<Date>(new Date());
+  const avisoFimRef = React.useRef(false);
   const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
   const [horarioEntradaEscala, setHorarioEntradaEscala] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
@@ -169,6 +172,49 @@ export default function BotoesRegistroPonto({
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   };
 
+  /** Converte "HH:mm:ss" em segundos desde a meia-noite. */
+  const horaParaSegundos = (hora?: string | null): number | null => {
+    if (!hora) return null;
+    const [h, m, s] = hora.split(':').map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h * 3600 + m * 60 + (s || 0);
+  };
+
+  /** Total de segundos de pausas já finalizadas no dia. */
+  const segundosPausasFinalizadas = (pausas: Pausa[]): number => {
+    let total = 0;
+    for (const p of pausas) {
+      const ini = horaParaSegundos(p.inicio);
+      const fim = horaParaSegundos(p.fim);
+      if (ini === null || fim === null) continue;
+      let diff = fim - ini;
+      if (diff < 0) diff += 24 * 3600;
+      total += diff;
+    }
+    return total;
+  };
+
+  /** Segundos decorridos da pausa em andamento (fuso de São Paulo). */
+  const segundosPausaEmAndamento = (pausas: Pausa[], agora: Date): number => {
+    const aberta = pausas.find((p) => p.inicio && !p.fim);
+    const ini = horaParaSegundos(aberta?.inicio);
+    if (ini === null) return 0;
+    const agoraSeg =
+      horaParaSegundos(formatInTimeZone(agora, 'America/Sao_Paulo', 'HH:mm:ss')) ?? 0;
+    let diff = agoraSeg - ini;
+    if (diff < 0) diff += 24 * 3600;
+    return diff;
+  };
+
+  const formatarDuracao = (segundos: number): string => {
+    const abs = Math.abs(Math.floor(segundos));
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    const s = abs % 60;
+    const base = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return h > 0 ? `${String(h).padStart(2, '0')}:${base}` : base;
+  };
+
   // Carregar status atual dos registros (considera turnos noturnos que cruzam a meia-noite)
   const carregarStatus = async () => {
     try {
@@ -234,6 +280,39 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
+  // Tick de 1s enquanto houver intervalo em andamento (contador regressivo)
+  useEffect(() => {
+    if (!status.pausaAberta) return;
+    setTickAgora(new Date());
+    const timer = setInterval(() => setTickAgora(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, [status.pausaAberta]);
+
+  // Notifica o funcionário quando o tempo de intervalo se esgota
+  useEffect(() => {
+    if (!status.pausaAberta) {
+      avisoFimRef.current = false;
+      return;
+    }
+    const consumidos =
+      segundosPausasFinalizadas(status.pausas) +
+      segundosPausaEmAndamento(status.pausas, tickAgora);
+    const restante = intervaloMinutos * 60 - consumidos;
+    if (restante <= 0 && !avisoFimRef.current) {
+      avisoFimRef.current = true;
+      toast({
+        variant: 'destructive',
+        title: 'Intervalo encerrado',
+        description:
+          'O tempo de intervalo acabou. Finalize o intervalo — os minutos excedentes serão descontados.',
+        duration: 10000,
+      });
+      try {
+        navigator.vibrate?.([300, 150, 300]);
+      } catch { /* ignora */ }
+    }
+  }, [tickAgora, status.pausaAberta, status.pausas, intervaloMinutos]);
+
   // Verifica se o funcionário tem biometria cadastrada + carrega flag intervalo pré-assinalado da escala
   useEffect(() => {
     if (!funcionarioId) return;
@@ -249,13 +328,15 @@ export default function BotoesRegistroPonto({
       if (escalaId) {
         const { data: esc } = await supabase
           .from('escalas')
-          .select('intervalo_pre_assinalado, entrada')
+          .select('intervalo_pre_assinalado, entrada, intervalo_minutos')
           .eq('id', escalaId)
           .single();
         setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
+        setIntervaloMinutos(Number((esc as any)?.intervalo_minutos ?? 60));
         setHorarioEntradaEscala((esc as any)?.entrada ?? null);
       } else {
         setIntervaloPreAssinalado(false);
+        setIntervaloMinutos(60);
         setHorarioEntradaEscala(null);
       }
     })();
@@ -519,6 +600,11 @@ export default function BotoesRegistroPonto({
   const mostrarIntervalos =
     status.temEntrada && !status.temSaida && !intervaloPreAssinalado;
   const totalPausas = calcularTotalPausas(status.pausas);
+  const segundosConsumidos =
+    segundosPausasFinalizadas(status.pausas) +
+    (status.pausaAberta ? segundosPausaEmAndamento(status.pausas, tickAgora) : 0);
+  const segundosRestantes = intervaloMinutos * 60 - segundosConsumidos;
+  const excedido = segundosRestantes < 0;
 
   // Status visual da geofence
   const validacao = validarGeofence(geofenceConfig, latitude, longitude);
@@ -605,6 +691,36 @@ export default function BotoesRegistroPonto({
               ? 'Volte aqui ao retornar e toque em "Finalizar Intervalo".'
               : 'Você pode iniciar e finalizar o intervalo quantas vezes precisar.'}
           </p>
+
+          {/* Contador regressivo do intervalo */}
+          <div
+            className={`rounded-xl border p-3 text-center ${
+              excedido
+                ? 'border-destructive/40 bg-destructive/10'
+                : 'border-primary/20 bg-primary/5'
+            }`}
+          >
+            <p className="text-xs font-medium text-muted-foreground">
+              {excedido ? 'Tempo excedido' : 'Tempo restante de intervalo'}
+            </p>
+            <p
+              className={`font-mono text-3xl font-bold tracking-tight ${
+                excedido ? 'text-destructive' : 'text-primary'
+              }`}
+            >
+              {excedido ? '-' : ''}
+              {formatarDuracao(segundosRestantes)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Intervalo previsto na escala: {intervaloMinutos} min · Utilizado:{' '}
+              {formatarDuracao(segundosConsumidos)}
+            </p>
+            {excedido && (
+              <p className="text-[11px] font-semibold text-destructive mt-1">
+                Os minutos excedentes serão descontados das horas trabalhadas/extras.
+              </p>
+            )}
+          </div>
           <Button
             onClick={() =>
               registrarPonto(status.pausaAberta ? 'pausa_fim' : 'pausa_inicio')
