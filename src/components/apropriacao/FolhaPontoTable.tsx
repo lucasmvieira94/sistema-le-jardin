@@ -559,9 +559,15 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
           </TableHeader>
           <TableBody>
             {registros.map((registro) => (
-              <TableRow key={registro.data}>
-                <TableCell className="font-medium">
-                  {formatarData(registro.data)}
+              <TableRow
+                key={registro.data}
+                className={detalharData(registro.data).fimDeSemana ? "bg-muted/20" : undefined}
+              >
+                <TableCell className="font-medium whitespace-nowrap">
+                  <span className="capitalize">{detalharData(registro.data).diaSemana}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {detalharData(registro.data).completa}
+                  </span>
                 </TableCell>
                 
                 {editandoId === registro.id ? (
@@ -581,13 +587,11 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
                         onChange={(e) => setRegistroEditado({...registroEditado, intervalo_inicio: e.target.value})}
                         className="w-24"
                       />
-                    </TableCell>
-                    <TableCell>
                       <Input
                         type="time"
                         value={registroEditado.intervalo_fim || ""}
                         onChange={(e) => setRegistroEditado({...registroEditado, intervalo_fim: e.target.value})}
-                        className="w-24"
+                        className="w-24 mt-1"
                       />
                     </TableCell>
                     <TableCell>
@@ -598,6 +602,9 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
                         className="w-24"
                       />
                     </TableCell>
+                    <TableCell className="text-muted-foreground text-xs">—</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">—</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">Editando</TableCell>
                     <TableCell>
                       <Textarea
                         value={registroEditado.observacoes || ""}
@@ -628,10 +635,92 @@ export default function FolhaPontoTable({ funcionarioId, dataInicio, dataFim }: 
                   </>
                 ) : (
                   <>
-                    <TableCell>{formatarHora(registro.entrada)}</TableCell>
-                    <TableCell>{formatarHora(registro.intervalo_inicio)}</TableCell>
-                    <TableCell>{formatarHora(registro.intervalo_fim)}</TableCell>
-                    <TableCell>{formatarHora(registro.saida)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span className="font-medium">{formatarHora(registro.entrada)}</span>
+                      {minutosAtraso(registro) > 0 && (
+                        <span className="block text-xs text-amber-600">
+                          +{minutosAtraso(registro)} min
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="min-w-[170px]">
+                      {(() => {
+                        const pausas = parsePausas(registro.intervalos_pausas);
+                        if (pausas.length === 0) {
+                          if (!registro.intervalo_inicio && !registro.intervalo_fim) {
+                            return escalaFuncionario?.intervalo_pre_assinalado && registro.entrada ? (
+                              <span className="text-xs text-muted-foreground">Pré-assinalado</span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">--:--</span>
+                            );
+                          }
+                          return (
+                            <span className="text-sm">
+                              {formatarHora(registro.intervalo_inicio)} → {formatarHora(registro.intervalo_fim)}
+                            </span>
+                          );
+                        }
+                        return (
+                          <div className="space-y-0.5">
+                            {pausas.map((p, i) => {
+                              const ini = horaParaMinutos(p.inicio);
+                              const fim = horaParaMinutos(p.fim);
+                              const dur =
+                                ini !== null && fim !== null
+                                  ? fim >= ini
+                                    ? fim - ini
+                                    : fim + 1440 - ini
+                                  : null;
+                              return (
+                                <div key={i} className="text-xs flex items-center gap-1">
+                                  <Coffee className="h-3 w-3 text-muted-foreground" />
+                                  <span>
+                                    {formatarHora(p.inicio)} → {p.fim ? formatarHora(p.fim) : "em andamento"}
+                                  </span>
+                                  {dur !== null && (
+                                    <span className="text-muted-foreground">({dur} min)</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell className="font-medium">{formatarHora(registro.saida)}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {(() => {
+                        const tot = totalIntervaloMinutos(registro);
+                        if (!registro.entrada) return <span className="text-muted-foreground">-</span>;
+                        const excedeu = limiteIntervalo != null && tot > limiteIntervalo;
+                        return (
+                          <span className={excedeu ? "text-red-600 font-medium" : ""}>
+                            {tot} min
+                            {excedeu && (
+                              <span className="block text-xs">
+                                +{tot - (limiteIntervalo ?? 0)} min excedente
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {minutosTrabalhados(registro) !== null
+                        ? formatarMinutos(minutosTrabalhados(registro)!)
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {!registro.entrada && !registro.saida ? (
+                        <Badge variant="outline">Sem registro</Badge>
+                      ) : registro.entrada && !registro.saida ? (
+                        <Badge variant="destructive">Saída pendente</Badge>
+                      ) : minutosAtraso(registro) > 15 ? (
+                        <Badge className="bg-amber-500 hover:bg-amber-500">Atraso</Badge>
+                      ) : (
+                        <Badge variant="secondary">Completo</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="max-w-40 truncate">
                       {registro.observacoes || "-"}
                     </TableCell>
