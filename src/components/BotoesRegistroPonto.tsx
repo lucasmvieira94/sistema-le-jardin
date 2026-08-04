@@ -172,6 +172,49 @@ export default function BotoesRegistroPonto({
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   };
 
+  /** Converte "HH:mm:ss" em segundos desde a meia-noite. */
+  const horaParaSegundos = (hora?: string | null): number | null => {
+    if (!hora) return null;
+    const [h, m, s] = hora.split(':').map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h * 3600 + m * 60 + (s || 0);
+  };
+
+  /** Total de segundos de pausas já finalizadas no dia. */
+  const segundosPausasFinalizadas = (pausas: Pausa[]): number => {
+    let total = 0;
+    for (const p of pausas) {
+      const ini = horaParaSegundos(p.inicio);
+      const fim = horaParaSegundos(p.fim);
+      if (ini === null || fim === null) continue;
+      let diff = fim - ini;
+      if (diff < 0) diff += 24 * 3600;
+      total += diff;
+    }
+    return total;
+  };
+
+  /** Segundos decorridos da pausa em andamento (fuso de São Paulo). */
+  const segundosPausaEmAndamento = (pausas: Pausa[], agora: Date): number => {
+    const aberta = pausas.find((p) => p.inicio && !p.fim);
+    const ini = horaParaSegundos(aberta?.inicio);
+    if (ini === null) return 0;
+    const agoraSeg =
+      horaParaSegundos(formatInTimeZone(agora, 'America/Sao_Paulo', 'HH:mm:ss')) ?? 0;
+    let diff = agoraSeg - ini;
+    if (diff < 0) diff += 24 * 3600;
+    return diff;
+  };
+
+  const formatarDuracao = (segundos: number): string => {
+    const abs = Math.abs(Math.floor(segundos));
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    const s = abs % 60;
+    const base = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return h > 0 ? `${String(h).padStart(2, '0')}:${base}` : base;
+  };
+
   // Carregar status atual dos registros (considera turnos noturnos que cruzam a meia-noite)
   const carregarStatus = async () => {
     try {
