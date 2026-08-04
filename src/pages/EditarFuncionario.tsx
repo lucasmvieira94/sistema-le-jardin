@@ -8,6 +8,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import CadastroFuncionarioForm from "@/components/CadastroFuncionarioForm";
 import CadastroBiometriaDialog from "@/components/biometria/CadastroBiometriaDialog";
+import { Switch } from "@/components/ui/switch";
 import { formatarTimestampDataHora } from "@/utils/formatTimestamp";
 
 export default function EditarFuncionario() {
@@ -18,6 +19,7 @@ export default function EditarFuncionario() {
   const [funcionario, setFuncionario] = useState(null);
   const [loading, setLoading] = useState(true);
   const [biometriaOpen, setBiometriaOpen] = useState(false);
+  const [salvandoExigir, setSalvandoExigir] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -53,6 +55,23 @@ export default function EditarFuncionario() {
     if (!id) return;
     const { data } = await supabase.from("funcionarios").select("*").eq("id", id).single();
     if (data) setFuncionario(data);
+  };
+
+  /** Liga/desliga a exigência de validação facial para este funcionário. */
+  const alternarExigirBiometria = async (valor: boolean) => {
+    if (!id) return;
+    setSalvandoExigir(true);
+    const { error } = await supabase
+      .from("funcionarios")
+      .update({ exigir_biometria: valor } as any)
+      .eq("id", id);
+    setSalvandoExigir(false);
+    if (error) {
+      toast({ variant: "destructive", title: "Erro ao salvar", description: error.message });
+      return;
+    }
+    setFuncionario((prev: any) => ({ ...prev, exigir_biometria: valor }));
+    toast({ title: valor ? "Biometria obrigatória ativada" : "Biometria obrigatória desativada" });
   };
 
   const handleSuccess = async (dadosAtualizados: any) => {
@@ -118,6 +137,23 @@ export default function EditarFuncionario() {
             {(funcionario as any)?.biometria_facial ? "Atualizar Biometria" : "Cadastrar Biometria"}
           </Button>
         </div>
+
+        {(funcionario as any)?.biometria_facial && (
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-md border bg-muted/40 p-3">
+            <div>
+              <p className="text-sm font-medium">Exigir biometria</p>
+              <p className="text-xs text-muted-foreground">
+                Quando desativado, o funcionário acessa o sistema sem validação facial.
+              </p>
+            </div>
+            <Switch
+              checked={(funcionario as any)?.exigir_biometria ?? true}
+              disabled={salvandoExigir}
+              onCheckedChange={alternarExigirBiometria}
+              aria-label="Exigir biometria facial"
+            />
+          </div>
+        )}
       </div>
 
       <CadastroFuncionarioForm

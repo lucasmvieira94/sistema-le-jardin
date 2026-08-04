@@ -1,0 +1,1 @@
+ALTER TABLE public.funcionarios ADD COLUMN IF NOT EXISTS exigir_biometria boolean NOT NULL DEFAULT true;

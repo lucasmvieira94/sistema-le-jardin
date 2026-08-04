@@ -80,10 +80,10 @@ export default function NovoRegistroForm({
     (async () => {
       const { data } = await supabase
         .from('funcionarios')
-        .select('nome, biometria_facial')
+        .select('nome, biometria_facial, exigir_biometria')
         .eq('id', funcionarioId)
         .single();
-      setTemBiometria(!!(data as any)?.biometria_facial);
+      setTemBiometria(!!(data as any)?.biometria_facial && ((data as any)?.exigir_biometria ?? true));
       setFuncionarioNome((data as any)?.nome || "");
     })();
   }, [funcionarioId]);

@@ -2218,6 +2218,7 @@ export type Database = {
           desligado_por: string | null
           email: string
           escala_id: number | null
+          exigir_biometria: boolean
           funcao: string
           id: string
           modalidade_reducao_aviso: string | null
@@ -2251,6 +2252,7 @@ export type Database = {
           desligado_por?: string | null
           email: string
           escala_id?: number | null
+          exigir_biometria?: boolean
           funcao: string
           id?: string
           modalidade_reducao_aviso?: string | null
@@ -2284,6 +2286,7 @@ export type Database = {
           desligado_por?: string | null
           email?: string
           escala_id?: number | null
+          exigir_biometria?: boolean
           funcao?: string
           id?: string
           modalidade_reducao_aviso?: string | null

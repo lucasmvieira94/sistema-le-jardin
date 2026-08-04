@@ -79,10 +79,10 @@ export default function IntercorrenciasPublico() {
     (async () => {
       const { data } = await supabase
         .from('funcionarios')
-        .select('biometria_facial')
+        .select('biometria_facial, exigir_biometria')
         .eq('id', funcionarioId)
         .single();
-      setTemBiometria(!!(data as any)?.biometria_facial);
+      setTemBiometria(!!(data as any)?.biometria_facial && ((data as any)?.exigir_biometria ?? true));
     })();
   }, [funcionarioId]);
 
