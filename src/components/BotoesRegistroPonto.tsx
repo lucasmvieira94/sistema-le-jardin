@@ -95,6 +95,8 @@ export default function BotoesRegistroPonto({
   const avisoFimRef = React.useRef(false);
   const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
   const [horarioEntradaEscala, setHorarioEntradaEscala] = useState<string | null>(null);
+  /** Se o dia de hoje está previsto na escala do funcionário (null = ainda carregando/sem escala). */
+  const [diaPrevistoEscala, setDiaPrevistoEscala] = useState<boolean | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [justificativaAberta, setJustificativaAberta] = useState(false);
   const [justificativaTexto, setJustificativaTexto] = useState('');
@@ -278,6 +280,25 @@ export default function BotoesRegistroPonto({
     if (funcionarioId) {
       carregarStatus();
     }
+  }, [funcionarioId]);
+
+  // Verifica se o dia de hoje está previsto na escala do funcionário
+  useEffect(() => {
+    if (!funcionarioId) return;
+    (async () => {
+      const hoje = formatInTimeZone(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
+      const { data, error } = await supabase.rpc('preencher_horarios_por_escala', {
+        p_funcionario_id: funcionarioId,
+        p_data_inicio: hoje,
+        p_data_fim: hoje,
+      });
+      if (error || !data || (data as any[]).length === 0) {
+        // Sem escala definida: não bloqueia o registro
+        setDiaPrevistoEscala(null);
+        return;
+      }
+      setDiaPrevistoEscala(!!(data as any[])[0].deve_trabalhar);
+    })();
   }, [funcionarioId]);
 
   // Tick de 1s enquanto houver intervalo em andamento (contador regressivo)
@@ -576,7 +597,31 @@ export default function BotoesRegistroPonto({
    * Entrypoint dos botões. Se o funcionário tem biometria cadastrada,
    * abre o dialog de validação facial antes de registrar.
    */
+  /** Jornada do dia já encerrada (entrada e saída registradas). */
+  const jornadaConcluida = status.temSaida;
+  /** Dia não previsto na escala e sem jornada iniciada. */
+  const diaNaoPrevisto = diaPrevistoEscala === false && !status.temEntrada;
+
   const registrarPonto = (tipo: TipoRegistro) => {
+    // Bloqueios de jornada
+    if (jornadaConcluida) {
+      toast({
+        variant: 'destructive',
+        title: 'JORNADA DE TRABALHO CONCLUÍDA',
+        description: 'Todos os registros do dia já foram efetuados.',
+      });
+      return;
+    }
+    if (tipo === 'entrada' && diaNaoPrevisto) {
+      toast({
+        variant: 'destructive',
+        title: `${funcionarioNome.toUpperCase()}, ATENÇÃO`,
+        description:
+          'DIA DE TRABALHO NÃO PREVISTO NA ESCALA DE TRABALHO. ENTRE EM CONTATO COM A ADMINISTRAÇÃO.',
+        duration: 12000,
+      });
+      return;
+    }
     if (temBiometriaCadastrada) {
       setTipoPendente(tipo);
       setBiometriaOpen(true);
@@ -634,8 +679,19 @@ export default function BotoesRegistroPonto({
         </div>
       )}
 
+      {/* Dia não previsto na escala — registro bloqueado */}
+      {diaNaoPrevisto && (
+        <div className="text-center p-6 bg-destructive/10 rounded-xl border-2 border-destructive/30">
+          <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-2" />
+          <p className="text-base font-bold text-destructive uppercase leading-snug">
+            {funcionarioNome}, atenção, dia de trabalho não previsto na escala de
+            trabalho. Entre em contato com a administração.
+          </p>
+        </div>
+      )}
+
       {/* Botão Principal de ENTRADA (destaque) */}
-      {proximoPrincipal && proximoPrincipal.tipo === 'entrada' && (
+      {proximoPrincipal && proximoPrincipal.tipo === 'entrada' && !diaNaoPrevisto && (
         <Button
           onClick={() => registrarPonto('entrada')}
           disabled={registrando !== null || (geofenceAtiva && !validacao.permitido)}
@@ -656,12 +712,17 @@ export default function BotoesRegistroPonto({
         </Button>
       )}
 
-      {/* Jornada completa */}
-      {status.temSaida && (
-        <div className="text-center p-6 bg-primary/10 rounded-xl border border-primary/20">
+      {/* Jornada concluída — registro bloqueado */}
+      {jornadaConcluida && (
+        <div className="text-center p-6 bg-primary/10 rounded-xl border-2 border-primary/30">
           <Check className="w-12 h-12 text-primary mx-auto mb-2" />
-          <p className="text-lg font-semibold text-primary">Jornada Completa!</p>
-          <p className="text-sm text-muted-foreground">Todos os registros do dia foram feitos.</p>
+          <p className="text-lg font-bold text-primary uppercase">
+            Jornada de trabalho concluída
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Todos os registros do dia já foram efetuados. Novos registros estão
+            bloqueados.
+          </p>
         </div>
       )}
 
