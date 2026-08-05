@@ -311,7 +311,7 @@ export function renderFolhaFuncionario(
       6: { halign: 'center', cellWidth: 20 },
       7: { halign: 'center', cellWidth: 18 },
       8: { halign: 'center', cellWidth: 26 },
-      9: { cellWidth: 'auto' },
+      9: { cellWidth: 55, overflow: 'linebreak' },
     },
     margin: { left: MARGIN, right: MARGIN },
     didParseCell: (data) => {
@@ -338,7 +338,7 @@ export function renderFolhaFuncionario(
   });
 
   let finalY = (doc as any).lastAutoTable.finalY + 8;
-  if (finalY > 175) {
+  if (finalY > 185) {
     doc.addPage();
     finalY = MARGIN + 10;
   }
