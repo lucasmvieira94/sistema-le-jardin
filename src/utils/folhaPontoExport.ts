@@ -4,6 +4,14 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  renderCabecalhoEmpresa,
+  renderTitulo,
+  renderCards,
+  renderFolhaFuncionario,
+  renderRodapeNumeracao,
+  CORES,
+} from './folhaPontoPdfLayout';
 
 interface DadosEmpresa {
   nome_empresa: string;
@@ -43,300 +51,88 @@ function formatInterval(interval: string): string {
   return interval.slice(0, 5);
 }
 
-// Exportação individual PDF
+// Exportação individual PDF (layout inspirado na apropriação de horas)
 export async function exportToPDF(
   dados: FolhaPontoData[],
   totais: TotaisFolhaPonto,
   mes: number,
   ano: number
 ) {
-  const doc = new jsPDF('landscape');
-  
   if (dados.length === 0) return;
-  
+
+  const doc = new jsPDF('landscape');
   const funcionario = dados[0];
-  const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   const dadosEmpresa = await buscarDadosEmpresa();
 
-  let currentY = 10;
-
-  if (dadosEmpresa) {
-    doc.setFontSize(16);
-    doc.text(dadosEmpresa.nome_empresa, 148, currentY, { align: 'center' });
-    currentY += 7;
-    if (dadosEmpresa.cnpj) {
-      doc.setFontSize(10);
-      doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 148, currentY, { align: 'center' });
-      currentY += 5;
-    }
-    if (dadosEmpresa.endereco) {
-      doc.setFontSize(8);
-      doc.text(dadosEmpresa.endereco, 148, currentY, { align: 'center' });
-      currentY += 8;
-    }
-    doc.setLineWidth(0.5);
-    doc.line(10, currentY, 287, currentY);
-    currentY += 8;
-  }
-
-  doc.setFontSize(14);
-  doc.text('FOLHA DE PONTO MENSAL', 148, currentY, { align: 'center' });
-  currentY += 7;
-
-  const headerData = [
-    ['Funcionário', funcionario.funcionario_nome, 'CPF', funcionario.funcionario_cpf],
-    ['Função', funcionario.funcionario_funcao, 'Período', mesNome],
-    ['Escala', `${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, '', '']
-  ];
-
-  autoTable(doc, {
-    startY: currentY,
-    body: headerData,
-    theme: 'plain',
-    styles: { fontSize: 8, cellPadding: 1 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 25 },
-      1: { cellWidth: 95 },
-      2: { fontStyle: 'bold', cellWidth: 20 },
-      3: { cellWidth: 80 }
-    }
-  });
-
-  const tableData = dados.map(row => [
-    row.dia.toString().padStart(2, '0'),
-    new Date(row.data).toLocaleDateString('pt-BR', { weekday: 'short' }),
-    formatTime(row.entrada),
-    formatTime(row.intervalo_inicio),
-    formatTime(row.intervalo_fim),
-    formatTime(row.saida),
-    formatInterval(row.horas_trabalhadas),
-    formatInterval(row.horas_extras_diurnas),
-    formatInterval(row.horas_extras_noturnas),
-    row.faltas ? 'F' : '',
-    row.abonos ? 'A' : ''
-  ]);
-
-  autoTable(doc, {
-    startY: (doc as any).lastAutoTable.finalY + 5,
-    head: [['Dia', 'Sem', 'Ent', 'I.Ini', 'I.Fim', 'Saí', 'H.Trab', 'H.Ext.D', 'H.Not', 'Falta', 'Abono']],
-    body: tableData,
-    theme: 'grid',
-    styles: { fontSize: 7, cellPadding: 1, lineWidth: 0.1 },
-    headStyles: { fillColor: [41, 128, 185], fontSize: 7, fontStyle: 'bold', cellPadding: 1 },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 14 },
-      1: { halign: 'center', cellWidth: 18 },
-      2: { halign: 'center', cellWidth: 18 },
-      3: { halign: 'center', cellWidth: 18 },
-      4: { halign: 'center', cellWidth: 18 },
-      5: { halign: 'center', cellWidth: 18 },
-      6: { halign: 'center', cellWidth: 20 },
-      7: { halign: 'center', cellWidth: 18 },
-      8: { halign: 'center', cellWidth: 18 },
-      9: { halign: 'center', cellWidth: 14 },
-      10: { halign: 'center', cellWidth: 14 }
-    }
-  });
-
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-  doc.setFontSize(10);
-  doc.text('RESUMO MENSAL:', 10, finalY);
-  doc.setFontSize(8);
-  doc.text(`Horas Trabalhadas: ${formatInterval(totais.total_horas_trabalhadas)}`, 10, finalY + 8);
-  doc.text(`Horas Extras Diurnas: ${formatInterval(totais.total_horas_extras_diurnas)}`, 10, finalY + 15);
-  doc.text(`Horas Extras Noturnas: ${formatInterval(totais.total_horas_extras_noturnas)}`, 10, finalY + 22);
-  doc.text(`Faltas: ${totais.total_faltas}`, 110, finalY + 8);
-  doc.text(`Abonos: ${totais.total_abonos}`, 110, finalY + 15);
-  doc.text(`Dias Trabalhados: ${totais.dias_trabalhados}`, 110, finalY + 22);
+  renderFolhaFuncionario(doc, dados, totais, mes, ano, dadosEmpresa);
+  renderRodapeNumeracao(doc, dadosEmpresa);
 
   doc.save(`folha-ponto-${funcionario.funcionario_nome.replace(/\s+/g, '-')}-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
 }
 
-// Adicionar página de funcionário ao PDF geral
-async function addFuncionarioPageToPDF(
-  doc: jsPDF,
-  dados: FolhaPontoData[],
-  totais: TotaisFolhaPonto,
-  mes: number,
-  ano: number,
-  isFirstPage = false,
-  dadosEmpresa: DadosEmpresa | null = null
-) {
-  if (!isFirstPage) {
-    doc.addPage();
-  }
-  
-  const funcionario = dados[0];
-  const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
-  let currentY = 10;
-
-  if (isFirstPage && dadosEmpresa) {
-    doc.setFontSize(16);
-    doc.text(dadosEmpresa.nome_empresa, 148, currentY, { align: 'center' });
-    currentY += 7;
-    if (dadosEmpresa.cnpj) {
-      doc.setFontSize(10);
-      doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 148, currentY, { align: 'center' });
-      currentY += 5;
-    }
-    if (dadosEmpresa.endereco) {
-      doc.setFontSize(8);
-      doc.text(dadosEmpresa.endereco, 148, currentY, { align: 'center' });
-      currentY += 8;
-    }
-    doc.setLineWidth(0.5);
-    doc.line(10, currentY, 287, currentY);
-    currentY += 8;
-  }
-
-  doc.setFontSize(14);
-  doc.text('FOLHA DE PONTO MENSAL', 148, currentY, { align: 'center' });
-  currentY += 7;
-
-  const headerData = [
-    ['Funcionário', funcionario.funcionario_nome, 'CPF', funcionario.funcionario_cpf],
-    ['Função', funcionario.funcionario_funcao, 'Período', mesNome],
-    ['Escala', `${funcionario.funcionario_escala_nome} (${formatTime(funcionario.funcionario_escala_entrada)} às ${formatTime(funcionario.funcionario_escala_saida)})`, '', '']
-  ];
-
-  autoTable(doc, {
-    startY: currentY,
-    body: headerData,
-    theme: 'plain',
-    styles: { fontSize: 8, cellPadding: 1 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 25 },
-      1: { cellWidth: 95 },
-      2: { fontStyle: 'bold', cellWidth: 20 },
-      3: { cellWidth: 80 }
-    }
-  });
-
-  const tableData = dados.map(row => [
-    row.dia.toString().padStart(2, '0'),
-    new Date(row.data).toLocaleDateString('pt-BR', { weekday: 'short' }),
-    formatTime(row.entrada),
-    formatTime(row.intervalo_inicio),
-    formatTime(row.intervalo_fim),
-    formatTime(row.saida),
-    formatInterval(row.horas_trabalhadas),
-    formatInterval(row.horas_extras_diurnas),
-    formatInterval(row.horas_extras_noturnas),
-    row.faltas ? 'F' : '',
-    row.abonos ? 'A' : ''
-  ]);
-
-  autoTable(doc, {
-    startY: (doc as any).lastAutoTable.finalY + 5,
-    head: [['Dia', 'Sem', 'Ent', 'I.Ini', 'I.Fim', 'Saí', 'H.Trab', 'H.Ext.D', 'H.Not', 'Falta', 'Abono']],
-    body: tableData,
-    theme: 'grid',
-    styles: { fontSize: 7, cellPadding: 1, lineWidth: 0.1 },
-    headStyles: { fillColor: [41, 128, 185], fontSize: 7, fontStyle: 'bold', cellPadding: 1 },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 14 },
-      1: { halign: 'center', cellWidth: 18 },
-      2: { halign: 'center', cellWidth: 18 },
-      3: { halign: 'center', cellWidth: 18 },
-      4: { halign: 'center', cellWidth: 18 },
-      5: { halign: 'center', cellWidth: 18 },
-      6: { halign: 'center', cellWidth: 20 },
-      7: { halign: 'center', cellWidth: 18 },
-      8: { halign: 'center', cellWidth: 18 },
-      9: { halign: 'center', cellWidth: 14 },
-      10: { halign: 'center', cellWidth: 14 }
-    }
-  });
-
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-  doc.setFontSize(10);
-  doc.text('RESUMO MENSAL:', 10, finalY);
-  doc.setFontSize(8);
-  doc.text(`Horas Trabalhadas: ${formatInterval(totais.total_horas_trabalhadas)}`, 10, finalY + 8);
-  doc.text(`Horas Extras Diurnas: ${formatInterval(totais.total_horas_extras_diurnas)}`, 10, finalY + 15);
-  doc.text(`Horas Extras Noturnas: ${formatInterval(totais.total_horas_extras_noturnas)}`, 10, finalY + 22);
-  doc.text(`Faltas: ${totais.total_faltas}`, 150, finalY + 8);
-  doc.text(`Abonos: ${totais.total_abonos}`, 150, finalY + 15);
-  doc.text(`Dias Trabalhados: ${totais.dias_trabalhados}`, 150, finalY + 22);
-}
-
-// Exportação geral PDF com resumo na primeira página
+// Exportação geral PDF com resumo consolidado na primeira página
 export async function exportMultipleFuncionariosToPDF(
   funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }>,
   resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }>,
   mes: number,
   ano: number
 ) {
-  const doc = new jsPDF('landscape');
-  
   if (funcionariosDados.length === 0) return;
 
+  const doc = new jsPDF('landscape');
   const dadosEmpresa = await buscarDadosEmpresa();
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  
-  let currentY = 10;
 
-  if (dadosEmpresa) {
-    doc.setFontSize(16);
-    doc.text(dadosEmpresa.nome_empresa, 148, currentY, { align: 'center' });
-    currentY += 7;
-    if (dadosEmpresa.cnpj) {
-      doc.setFontSize(10);
-      doc.text(`CNPJ: ${dadosEmpresa.cnpj}`, 148, currentY, { align: 'center' });
-      currentY += 5;
-    }
-    if (dadosEmpresa.endereco) {
-      doc.setFontSize(8);
-      doc.text(dadosEmpresa.endereco, 148, currentY, { align: 'center' });
-      currentY += 8;
-    }
-    doc.setLineWidth(0.5);
-    doc.line(10, currentY, 287, currentY);
-    currentY += 8;
-  }
-  
-  doc.setFontSize(16);
-  doc.text('RELATÓRIO GERAL DE FUNCIONÁRIOS', 148, currentY, { align: 'center' });
-  currentY += 7;
-  doc.setFontSize(12);
-  doc.text(`Período: ${mesNome}`, 148, currentY, { align: 'center' });
-  currentY += 10;
+  let y = renderCabecalhoEmpresa(doc, dadosEmpresa, 10);
+  y = renderTitulo(doc, 'RELATÓRIO GERAL DE FOLHAS DE PONTO', mesNome.toUpperCase(), y);
 
-  const resumoHeaders = ['Funcionário', 'CPF', 'H. Trabalhadas', 'H. Extras Diur.', 'H. Extras Not.', 'Faltas'];
-  const resumoData = resumoGeral.map(f => [
-    f.nome,
-    f.cpf,
-    formatInterval(f.horas_trabalhadas),
-    formatInterval(f.horas_extras),
-    formatInterval(f.horas_noturnas),
-    f.faltas.toString()
-  ]);
+  const totalFaltas = resumoGeral.reduce((a, f) => a + f.faltas, 0);
+  y = renderCards(
+    doc,
+    [
+      { label: 'Funcionários', valor: String(resumoGeral.length) },
+      { label: 'Total de faltas', valor: String(totalFaltas) },
+      { label: 'Período', valor: `${mes.toString().padStart(2, '0')}/${ano}` },
+      { label: 'Folhas geradas', valor: String(funcionariosDados.filter(f => f.dados.length > 0).length) },
+    ],
+    y
+  );
 
   autoTable(doc, {
-    startY: currentY,
-    head: [resumoHeaders],
-    body: resumoData,
+    startY: y,
+    head: [['Funcionário', 'CPF', 'H. Trabalhadas', 'H. Extras Diur.', 'H. Extras Not.', 'Faltas']],
+    body: resumoGeral.map(f => [
+      f.nome,
+      f.cpf,
+      formatInterval(f.horas_trabalhadas),
+      formatInterval(f.horas_extras),
+      formatInterval(f.horas_noturnas),
+      f.faltas.toString()
+    ]),
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 2, lineWidth: 0.1 },
-    headStyles: { fillColor: [41, 128, 185], fontSize: 9, fontStyle: 'bold', cellPadding: 3 },
+    styles: { fontSize: 8, cellPadding: 2, lineWidth: 0.1, lineColor: CORES.borda, textColor: CORES.texto },
+    headStyles: { fillColor: CORES.header, textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', halign: 'center' },
+    alternateRowStyles: { fillColor: CORES.zebra },
     columnStyles: {
-      0: { cellWidth: 70 },
+      0: { cellWidth: 80 },
       1: { cellWidth: 40 },
-      2: { halign: 'center', cellWidth: 30 },
-      3: { halign: 'center', cellWidth: 30 },
-      4: { halign: 'center', cellWidth: 30 },
+      2: { halign: 'center', cellWidth: 32 },
+      3: { halign: 'center', cellWidth: 32 },
+      4: { halign: 'center', cellWidth: 32 },
       5: { halign: 'center', cellWidth: 20 }
-    }
+    },
+    margin: { left: 10, right: 10 }
   });
 
-  for (let index = 0; index < funcionariosDados.length; index++) {
-    const funcionarioData = funcionariosDados[index];
-    if (funcionarioData.dados.length > 0) {
-      await addFuncionarioPageToPDF(doc, funcionarioData.dados, funcionarioData.totais, mes, ano, false, dadosEmpresa);
-    }
+  for (const funcionarioData of funcionariosDados) {
+    if (funcionarioData.dados.length === 0) continue;
+    doc.addPage();
+    renderFolhaFuncionario(doc, funcionarioData.dados, funcionarioData.totais, mes, ano, dadosEmpresa, {
+      comCabecalhoEmpresa: true,
+    });
   }
 
+  renderRodapeNumeracao(doc, dadosEmpresa);
   doc.save(`folhas-ponto-geral-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
 }
 
