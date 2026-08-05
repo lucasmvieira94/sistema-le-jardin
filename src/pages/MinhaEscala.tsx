@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CalendarDays, ArrowLeft, Sun, Moon } from "lucide-react";
+import { CalendarDays, ArrowLeft, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -85,7 +85,7 @@ export default function MinhaEscala() {
   const isHoje = (data: string) => data === hojeISO();
 
   const diasTrabalhados = horarios.filter((h) => h.deve_trabalhar).length;
-  const diasFolga = horarios.filter((h) => !h.deve_trabalhar).length;
+  const horariosTrabalho = horarios.filter((h) => h.deve_trabalhar);
 
   const handleVoltar = () => {
     navigate(`/funcionario-access`);
@@ -126,25 +126,27 @@ export default function MinhaEscala() {
             <Card className="border-green-200">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-green-700">{diasTrabalhados}</p>
-                <p className="text-xs text-muted-foreground">Dias de trabalho</p>
+                <p className="text-xs text-muted-foreground">Dias escalados</p>
               </CardContent>
             </Card>
-            <Card className="border-gray-200">
+            <Card className="border-green-100">
               <CardContent className="p-3 text-center">
-                <p className="text-2xl font-bold text-gray-500">{diasFolga}</p>
-                <p className="text-xs text-muted-foreground">Dias de folga</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {horariosTrabalho.reduce((acc, h) => acc + (h.entrada && h.saida ? 1 : 0), 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Dias com horário definido</p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Tabela de horários */}
+          {/* Tabela de horários */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl">
           {carregando ? (
             <div className="text-center py-8 text-muted-foreground">Carregando escala...</div>
-          ) : horarios.length === 0 ? (
+          ) : horariosTrabalho.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhuma escala encontrada para este mês.
+              Nenhum dia escalado encontrado para este mês.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -158,10 +160,10 @@ export default function MinhaEscala() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {horarios.map((h) => (
+                  {horariosTrabalho.map((h) => (
                     <TableRow
                       key={h.data}
-                      className={`${isHoje(h.data) ? "bg-green-50 font-semibold" : ""} ${!h.deve_trabalhar ? "opacity-60" : ""}`}
+                      className={isHoje(h.data) ? "bg-green-50 font-semibold" : ""}
                     >
                       <TableCell className="text-sm whitespace-nowrap">
                         {formatarDataLocal(h.data)}
@@ -170,21 +172,15 @@ export default function MinhaEscala() {
                         )}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {h.deve_trabalhar ? formatarHora(h.entrada) : "--:--"}
+                        {formatarHora(h.entrada)}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {h.deve_trabalhar ? formatarHora(h.saida) : "--:--"}
+                        {formatarHora(h.saida)}
                       </TableCell>
                       <TableCell className="text-center">
-                        {h.deve_trabalhar ? (
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                            <Sun className="w-3 h-3 mr-1" /> Trabalho
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <Moon className="w-3 h-3 mr-1" /> Folga
-                          </Badge>
-                        )}
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                          <Sun className="w-3 h-3 mr-1" /> Trabalho
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
