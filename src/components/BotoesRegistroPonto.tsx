@@ -282,6 +282,25 @@ export default function BotoesRegistroPonto({
     }
   }, [funcionarioId]);
 
+  // Verifica se o dia de hoje está previsto na escala do funcionário
+  useEffect(() => {
+    if (!funcionarioId) return;
+    (async () => {
+      const hoje = formatInTimeZone(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
+      const { data, error } = await supabase.rpc('preencher_horarios_por_escala', {
+        p_funcionario_id: funcionarioId,
+        p_data_inicio: hoje,
+        p_data_fim: hoje,
+      });
+      if (error || !data || (data as any[]).length === 0) {
+        // Sem escala definida: não bloqueia o registro
+        setDiaPrevistoEscala(null);
+        return;
+      }
+      setDiaPrevistoEscala(!!(data as any[])[0].deve_trabalhar);
+    })();
+  }, [funcionarioId]);
+
   // Tick de 1s enquanto houver intervalo em andamento (contador regressivo)
   useEffect(() => {
     if (!status.pausaAberta) return;
