@@ -85,7 +85,7 @@ export default function MinhaEscala() {
   const isHoje = (data: string) => data === hojeISO();
 
   const diasTrabalhados = horarios.filter((h) => h.deve_trabalhar).length;
-  const diasFolga = horarios.filter((h) => !h.deve_trabalhar).length;
+  const horariosTrabalho = horarios.filter((h) => h.deve_trabalhar);
 
   const handleVoltar = () => {
     navigate(`/funcionario-access`);
