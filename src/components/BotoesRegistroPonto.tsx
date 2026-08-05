@@ -598,6 +598,25 @@ export default function BotoesRegistroPonto({
    * abre o dialog de validação facial antes de registrar.
    */
   const registrarPonto = (tipo: TipoRegistro) => {
+    // Bloqueios de jornada
+    if (jornadaConcluida) {
+      toast({
+        variant: 'destructive',
+        title: 'JORNADA DE TRABALHO CONCLUÍDA',
+        description: 'Todos os registros do dia já foram efetuados.',
+      });
+      return;
+    }
+    if (tipo === 'entrada' && diaNaoPrevisto) {
+      toast({
+        variant: 'destructive',
+        title: `${funcionarioNome.toUpperCase()}, ATENÇÃO`,
+        description:
+          'DIA DE TRABALHO NÃO PREVISTO NA ESCALA DE TRABALHO. ENTRE EM CONTATO COM A ADMINISTRAÇÃO.',
+        duration: 12000,
+      });
+      return;
+    }
     if (temBiometriaCadastrada) {
       setTipoPendente(tipo);
       setBiometriaOpen(true);
