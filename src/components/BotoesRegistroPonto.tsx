@@ -597,6 +597,11 @@ export default function BotoesRegistroPonto({
    * Entrypoint dos botões. Se o funcionário tem biometria cadastrada,
    * abre o dialog de validação facial antes de registrar.
    */
+  /** Jornada do dia já encerrada (entrada e saída registradas). */
+  const jornadaConcluida = status.temSaida;
+  /** Dia não previsto na escala e sem jornada iniciada. */
+  const diaNaoPrevisto = diaPrevistoEscala === false && !status.temEntrada;
+
   const registrarPonto = (tipo: TipoRegistro) => {
     // Bloqueios de jornada
     if (jornadaConcluida) {
