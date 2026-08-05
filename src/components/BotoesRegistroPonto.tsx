@@ -95,6 +95,8 @@ export default function BotoesRegistroPonto({
   const avisoFimRef = React.useRef(false);
   const [confirmSaidaAberto, setConfirmSaidaAberto] = useState(false);
   const [horarioEntradaEscala, setHorarioEntradaEscala] = useState<string | null>(null);
+  /** Se o dia de hoje está previsto na escala do funcionário (null = ainda carregando/sem escala). */
+  const [diaPrevistoEscala, setDiaPrevistoEscala] = useState<boolean | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [justificativaAberta, setJustificativaAberta] = useState(false);
   const [justificativaTexto, setJustificativaTexto] = useState('');
