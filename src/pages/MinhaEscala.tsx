@@ -126,13 +126,15 @@ export default function MinhaEscala() {
             <Card className="border-green-200">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-green-700">{diasTrabalhados}</p>
-                <p className="text-xs text-muted-foreground">Dias de trabalho</p>
+                <p className="text-xs text-muted-foreground">Dias escalados</p>
               </CardContent>
             </Card>
-            <Card className="border-gray-200">
+            <Card className="border-green-100">
               <CardContent className="p-3 text-center">
-                <p className="text-2xl font-bold text-gray-500">{diasFolga}</p>
-                <p className="text-xs text-muted-foreground">Dias de folga</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {horariosTrabalho.reduce((acc, h) => acc + (h.entrada && h.saida ? 1 : 0), 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Dias com horário definido</p>
               </CardContent>
             </Card>
           </div>
