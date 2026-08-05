@@ -679,8 +679,19 @@ export default function BotoesRegistroPonto({
         </div>
       )}
 
+      {/* Dia não previsto na escala — registro bloqueado */}
+      {diaNaoPrevisto && (
+        <div className="text-center p-6 bg-destructive/10 rounded-xl border-2 border-destructive/30">
+          <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-2" />
+          <p className="text-base font-bold text-destructive uppercase leading-snug">
+            {funcionarioNome}, atenção, dia de trabalho não previsto na escala de
+            trabalho. Entre em contato com a administração.
+          </p>
+        </div>
+      )}
+
       {/* Botão Principal de ENTRADA (destaque) */}
-      {proximoPrincipal && proximoPrincipal.tipo === 'entrada' && (
+      {proximoPrincipal && proximoPrincipal.tipo === 'entrada' && !diaNaoPrevisto && (
         <Button
           onClick={() => registrarPonto('entrada')}
           disabled={registrando !== null || (geofenceAtiva && !validacao.permitido)}
@@ -701,12 +712,17 @@ export default function BotoesRegistroPonto({
         </Button>
       )}
 
-      {/* Jornada completa */}
-      {status.temSaida && (
-        <div className="text-center p-6 bg-primary/10 rounded-xl border border-primary/20">
+      {/* Jornada concluída — registro bloqueado */}
+      {jornadaConcluida && (
+        <div className="text-center p-6 bg-primary/10 rounded-xl border-2 border-primary/30">
           <Check className="w-12 h-12 text-primary mx-auto mb-2" />
-          <p className="text-lg font-semibold text-primary">Jornada Completa!</p>
-          <p className="text-sm text-muted-foreground">Todos os registros do dia foram feitos.</p>
+          <p className="text-lg font-bold text-primary uppercase">
+            Jornada de trabalho concluída
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Todos os registros do dia já foram efetuados. Novos registros estão
+            bloqueados.
+          </p>
         </div>
       )}
 
