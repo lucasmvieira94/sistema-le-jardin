@@ -15,6 +15,8 @@ export type Escala = {
   saida: string;
   intervalo_inicio?: string;
   intervalo_fim?: string;
+  intervalo_minutos?: number;
+  intervalo_pre_assinalado?: boolean;
   observacoes?: string;
   created_at: string;
 };
@@ -22,7 +24,9 @@ export type Escala = {
 async function fetchEscalas(): Promise<Escala[]> {
   const { data, error } = await supabase
     .from("escalas")
-    .select("id, nome, jornada_trabalho, entrada, saida, intervalo_inicio, intervalo_fim, observacoes, created_at")
+    .select(
+      "id, nome, jornada_trabalho, entrada, saida, intervalo_inicio, intervalo_fim, intervalo_minutos, intervalo_pre_assinalado, observacoes, created_at"
+    )
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
@@ -86,6 +90,7 @@ export default function EscalasList({ refreshFlag, onEdit }: EscalasListProps) {
                 <TableHead>Jornada</TableHead>
                 <TableHead>Entrada</TableHead>
                 <TableHead>Saída</TableHead>
+                <TableHead>Intervalo</TableHead>
                 <TableHead>Criada em</TableHead>
                 <TableHead className="w-32">Ações</TableHead>
               </TableRow>
@@ -97,6 +102,10 @@ export default function EscalasList({ refreshFlag, onEdit }: EscalasListProps) {
                   <TableCell>{escala.jornada_trabalho}</TableCell>
                   <TableCell>{escala.entrada.slice(0,5)}</TableCell>
                   <TableCell>{escala.saida.slice(0,5)}</TableCell>
+                  <TableCell>
+                    {escala.intervalo_minutos ?? 60} min
+                    {escala.intervalo_pre_assinalado ? " (pré-assinalado)" : ""}
+                  </TableCell>
                   <TableCell>
                     {new Date(escala.created_at).toLocaleString("pt-BR", {
                       day: "2-digit",
