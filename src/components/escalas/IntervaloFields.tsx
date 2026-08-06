@@ -7,9 +7,11 @@ type Props = {
   register: UseFormRegister<any>;
   errors: FieldErrors<any>;
   control?: Control<any>;
+  /** Duração padrão da empresa, usada quando a escala não define a própria */
+  padraoEmpresa?: number;
 };
 
-export default function IntervaloFields({ register, errors, control }: Props) {
+export default function IntervaloFields({ register, errors, control, padraoEmpresa = 60 }: Props) {
   const intervaloMsg =
     typeof errors.intervaloFim?.message === "string"
       ? errors.intervaloFim.message
@@ -66,14 +68,16 @@ export default function IntervaloFields({ register, errors, control }: Props) {
         <Input
           type="number"
           min={0}
-          max={240}
+          max={480}
           step={5}
           {...register("intervaloMinutos")}
-          placeholder="60"
+          placeholder={`${padraoEmpresa} (padrão da empresa)`}
         />
         <p className="text-xs text-muted-foreground mt-1">
-          Tempo permitido de intervalo por dia. O funcionário verá um contador
-          regressivo e os minutos excedentes serão abatidos das horas extras.
+          Tempo de intervalo desta escala (0 a 480 min). Deixe em branco para
+          usar o padrão da empresa ({padraoEmpresa} min). O funcionário verá um
+          contador regressivo e os minutos excedentes serão abatidos das horas
+          extras.
         </p>
       </div>
     </div>
