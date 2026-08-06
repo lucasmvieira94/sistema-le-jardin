@@ -11,6 +11,8 @@ export interface EscalaData {
   saida: string;
   intervalo_inicio?: string;
   intervalo_fim?: string;
+  intervalo_minutos?: number;
+  intervalo_pre_assinalado?: boolean;
   observacoes?: string;
 }
 
