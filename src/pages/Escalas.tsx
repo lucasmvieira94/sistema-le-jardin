@@ -57,6 +57,7 @@ export default function Escalas() {
         </Button>
       ) : (
         <EscalaCadastroForm
+          key={editingEscala?.id ?? "novo"}
           escala={editingEscala}
           onCreated={handleEscalaCreated}
           onCancel={handleCancel}
