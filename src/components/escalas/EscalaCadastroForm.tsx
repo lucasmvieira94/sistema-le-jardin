@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,6 +27,9 @@ const diasSemanaTodos = [
   "Sábado",
 ];
 
+// Duração de intervalo padrão usada apenas se a empresa não tiver configuração
+const FALLBACK_INTERVALO_MINUTOS = 60;
+
 // Schema para escalas como templates reutilizáveis
 const escalaSchema = z.object({
   nomeEscala: z.string().min(2, "Nome obrigatório"),
@@ -36,7 +39,12 @@ const escalaSchema = z.object({
   intervaloInicio: z.string().optional(),
   intervaloFim: z.string().optional(),
   intervaloPreAssinalado: z.boolean().optional().default(false),
-  intervaloMinutos: z.coerce.number().int().min(0).max(240).optional().default(60),
+  // Cada escala define seu próprio tempo de intervalo (até 8h).
+  // Vazio = utiliza o padrão da empresa.
+  intervaloMinutos: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+    z.number().int().min(0).max(480).optional()
+  ),
   observacoes: z.string().optional(),
 })
 .refine((data) => {
@@ -52,16 +60,22 @@ const escalaSchema = z.object({
   ];
   
   if (jornadasComIntervaloObrigatorio.includes(data.jornadaTrabalho)) {
+    // A janela informada deve comportar a duração de intervalo da própria escala
+    const minimoJanela = Math.max(
+      data.intervaloMinutos ?? FALLBACK_INTERVALO_MINUTOS,
+      FALLBACK_INTERVALO_MINUTOS
+    );
     return (
       !!data.intervaloInicio &&
       !!data.intervaloFim &&
       data.intervaloFim > data.intervaloInicio &&
-      getIntervaloMinutos(data.intervaloInicio, data.intervaloFim) >= 60
+      getIntervaloMinutos(data.intervaloInicio, data.intervaloFim) >= minimoJanela
     );
   }
   return true;
 }, {
-  message: "Obrigatório ao menos 1h de intervalo para esta jornada",
+  message:
+    "A janela de intervalo deve ser igual ou maior que a duração definida (mínimo legal de 1h para esta jornada)",
   path: ["intervaloFim"],
 });
 
@@ -98,7 +112,20 @@ type Props = {
 
 export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Props) {
   const isEditing = !!escala;
-  
+  // Padrão da empresa usado quando a escala não define duração própria
+  const [padraoEmpresa, setPadraoEmpresa] = useState<number>(FALLBACK_INTERVALO_MINUTOS);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("configuracoes_empresa")
+        .select("intervalo_minimo_minutos")
+        .maybeSingle();
+      const padrao = Number((data as any)?.intervalo_minimo_minutos);
+      if (Number.isFinite(padrao) && padrao > 0) setPadraoEmpresa(padrao);
+    })();
+  }, []);
+
   const form = useForm<EscalaCadastro>({
     resolver: zodResolver(escalaSchema),
     defaultValues: {
@@ -109,7 +136,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       intervaloInicio: escala?.intervalo_inicio?.slice(0, 5) || "",
       intervaloFim: escala?.intervalo_fim?.slice(0, 5) || "",
       intervaloPreAssinalado: escala?.intervalo_pre_assinalado ?? false,
-      intervaloMinutos: escala?.intervalo_minutos ?? 60,
+      intervaloMinutos: escala?.intervalo_minutos ?? undefined,
       observacoes: escala?.observacoes || "",
     }
   });
@@ -123,7 +150,8 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
       intervalo_inicio: data.intervaloInicio || null,
       intervalo_fim: data.intervaloFim || null,
       intervalo_pre_assinalado: !!data.intervaloPreAssinalado,
-      intervalo_minutos: Number(data.intervaloMinutos ?? 60),
+      // Sem definição própria => usa o padrão da empresa
+      intervalo_minutos: Number(data.intervaloMinutos ?? padraoEmpresa),
       observacoes: data.observacoes || null,
     };
 
@@ -191,6 +219,7 @@ export default function EscalaCadastroForm({ escala, onCreated, onCancel }: Prop
         register={form.register}
         errors={form.formState.errors}
         control={form.control}
+        padraoEmpresa={padraoEmpresa}
       />
       <ObservacoesField register={form.register} />
       <div className="pt-2 flex justify-end gap-2">
