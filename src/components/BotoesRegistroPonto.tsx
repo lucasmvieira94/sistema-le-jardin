@@ -346,6 +346,12 @@ export default function BotoesRegistroPonto({
       setTemBiometriaCadastrada(!!(data as any)?.biometria_facial && ((data as any)?.exigir_biometria ?? true));
       const escalaId = (data as any)?.escala_id;
       setTenantId((data as any)?.tenant_id ?? null);
+      // Padrão da empresa usado quando a escala não define duração própria
+      const { data: cfg } = await supabase
+        .from('configuracoes_empresa')
+        .select('intervalo_minimo_minutos')
+        .maybeSingle();
+      const padraoEmpresa = Number((cfg as any)?.intervalo_minimo_minutos) || 60;
       if (escalaId) {
         const { data: esc } = await supabase
           .from('escalas')
@@ -353,11 +359,12 @@ export default function BotoesRegistroPonto({
           .eq('id', escalaId)
           .single();
         setIntervaloPreAssinalado(!!(esc as any)?.intervalo_pre_assinalado);
-        setIntervaloMinutos(Number((esc as any)?.intervalo_minutos ?? 60));
+        const minutosEscala = Number((esc as any)?.intervalo_minutos);
+        setIntervaloMinutos(Number.isFinite(minutosEscala) && minutosEscala > 0 ? minutosEscala : padraoEmpresa);
         setHorarioEntradaEscala((esc as any)?.entrada ?? null);
       } else {
         setIntervaloPreAssinalado(false);
-        setIntervaloMinutos(60);
+        setIntervaloMinutos(padraoEmpresa);
         setHorarioEntradaEscala(null);
       }
     })();
