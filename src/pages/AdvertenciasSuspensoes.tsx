@@ -249,6 +249,39 @@ export default function AdvertenciasSuspensoes() {
       </Dialog>
 
       {/* Lista */}
+      {/* Confirmação de exclusão com auditoria */}
+      <AlertDialog open={!!exclusaoReg} onOpenChange={(open) => !open && setExclusaoReg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro disciplinar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {exclusaoReg && (
+                <>
+                  Esta ação removerá permanentemente o registro de{" "}
+                  <strong>{TIPO_LABELS[exclusaoReg.tipo]?.label || exclusaoReg.tipo}</strong> de{" "}
+                  <strong>{exclusaoReg.funcionarios?.nome_completo}</strong> (
+                  {format(new Date(exclusaoReg.data_ocorrencia + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}).
+                  A exclusão ficará registrada no log de auditoria com o usuário responsável.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (exclusaoReg) excluirRegistro(exclusaoReg);
+              }}
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="animate-spin" /> Carregando...
