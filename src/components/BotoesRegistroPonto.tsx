@@ -895,13 +895,29 @@ export default function BotoesRegistroPonto({
 
       {/* Aviso quando o intervalo é pré-assinalado */}
       {status.temEntrada && !status.temSaida && intervaloPreAssinalado && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary flex items-start gap-2">
-          <Coffee className="w-4 h-4 mt-0.5 shrink-0" />
-          <span>
-            Sua escala usa <b>intervalo pré-assinalado</b>. O intervalo já está
-            previsto na escala e será descontado automaticamente. Não é
-            necessário registrar início/fim do intervalo.
-          </span>
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary space-y-2">
+          <div className="flex items-center gap-2">
+            <Coffee className="w-5 h-5 shrink-0" />
+            <p className="font-semibold">
+              Intervalo pré-assinalado — sem registro manual
+            </p>
+          </div>
+          <p className="text-[13px] leading-snug text-primary/90">
+            A sua escala foi cadastrada com o intervalo <b>pré-assinalado</b> de{' '}
+            <b>{intervaloMinutos} min</b>. Isso significa que o descanso já está
+            previsto e é <b>descontado automaticamente</b> da sua jornada, conforme
+            o art. 74, §2º da CLT.
+          </p>
+          <p className="text-[13px] leading-snug text-primary/90">
+            Por isso os botões de <b>iniciar</b> e <b>finalizar intervalo</b> não
+            aparecem para você: registrá-lo manualmente causaria desconto em
+            duplicidade nas horas trabalhadas. Basta registrar a{' '}
+            <b>entrada</b> e a <b>saída</b>.
+          </p>
+          <p className="text-[12px] text-muted-foreground">
+            Se você não conseguir usufruir do intervalo, comunique a administração
+            para o ajuste manual da folha de ponto.
+          </p>
         </div>
       )}
 
