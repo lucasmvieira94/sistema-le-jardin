@@ -398,6 +398,16 @@ export default function BotoesRegistroPonto({
    * após o callback de validação facial bem-sucedida.
    */
   const executarRegistro = async (tipo: TipoRegistro) => {
+    // Escalas com intervalo pré-assinalado não permitem registro manual de intervalo
+    if (intervaloPreAssinalado && (tipo === 'pausa_inicio' || tipo === 'pausa_fim')) {
+      toast({
+        variant: 'destructive',
+        title: 'Intervalo pré-assinalado',
+        description:
+          'Sua escala já possui o intervalo pré-assinalado e ele é descontado automaticamente. Por isso não há registro manual de início/fim de intervalo.',
+      });
+      return;
+    }
     // Validação de geofence antes de qualquer ação
     const validacao = validarGeofence(geofenceConfig, latitude, longitude);
     if (!validacao.permitido) {
