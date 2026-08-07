@@ -5,7 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer, PenLine } from "lucide-react";
+import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer, PenLine, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
+import { useAuditLog } from "@/hooks/useAuditLog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -54,7 +66,37 @@ export default function AdvertenciasSuspensoes() {
   const [historicoFunc, setHistoricoFunc] = useState<{ id: string; nome: string } | null>(null);
   const [impressaoReg, setImpressaoReg] = useState<AdvertenciaRow | null>(null);
   const [assinaturaReg, setAssinaturaReg] = useState<AdvertenciaRow | null>(null);
+  const [exclusaoReg, setExclusaoReg] = useState<AdvertenciaRow | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   const { isAdmin, loading: roleLoading } = useUserRole();
+  const { logEvent } = useAuditLog();
+
+  /** Exclui um registro disciplinar e grava o evento na auditoria. */
+  async function excluirRegistro(reg: AdvertenciaRow) {
+    setExcluindo(true);
+    const { error } = await supabase
+      .from("advertencias_suspensoes")
+      .delete()
+      .eq("id", reg.id);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      // Auditoria: mantém rastro do documento removido (LGPD / CLT)
+      await logEvent("advertencias_suspensoes", "DELETE", reg, null);
+      toast({
+        title: "Registro excluído",
+        description: "A exclusão foi registrada na auditoria do sistema.",
+      });
+      await fetchRegistros();
+    }
+    setExcluindo(false);
+    setExclusaoReg(null);
+  }
 
   async function fetchRegistros() {
     setLoading(true);
@@ -207,6 +249,39 @@ export default function AdvertenciasSuspensoes() {
       </Dialog>
 
       {/* Lista */}
+      {/* Confirmação de exclusão com auditoria */}
+      <AlertDialog open={!!exclusaoReg} onOpenChange={(open) => !open && setExclusaoReg(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro disciplinar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {exclusaoReg && (
+                <>
+                  Esta ação removerá permanentemente o registro de{" "}
+                  <strong>{TIPO_LABELS[exclusaoReg.tipo]?.label || exclusaoReg.tipo}</strong> de{" "}
+                  <strong>{exclusaoReg.funcionarios?.nome_completo}</strong> (
+                  {format(new Date(exclusaoReg.data_ocorrencia + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}).
+                  A exclusão ficará registrada no log de auditoria com o usuário responsável.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (exclusaoReg) excluirRegistro(exclusaoReg);
+              }}
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="animate-spin" /> Carregando...
@@ -275,6 +350,15 @@ export default function AdvertenciasSuspensoes() {
                           })}
                         >
                           <History className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8 text-destructive border-destructive/40 hover:bg-destructive/10"
+                          title="Excluir registro"
+                          onClick={() => setExclusaoReg(reg)}
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </td>
