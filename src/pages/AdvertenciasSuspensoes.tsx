@@ -318,6 +318,15 @@ export default function AdvertenciasSuspensoes() {
                         >
                           <History className="w-4 h-4" />
                         </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-8 h-8 text-destructive border-destructive/40 hover:bg-destructive/10"
+                          title="Excluir registro"
+                          onClick={() => setExclusaoReg(reg)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
