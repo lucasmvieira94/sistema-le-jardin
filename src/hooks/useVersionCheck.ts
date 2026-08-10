@@ -119,14 +119,43 @@ export function useVersionCheck(): VersionCheckState {
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
+    /**
+     * Atualização diária forçada: uma vez por dia (UTC-3), na primeira abertura
+     * do app (admin ou portal do funcionário), limpa caches/SW e recarrega,
+     * garantindo que ninguém fique preso em uma build antiga.
+     */
+    const checkDailyRefresh = async () => {
+      if (CURRENT_VERSION === 'dev') return;
+      try {
+        const hoje = getDiaAtualSaoPaulo();
+        const ultima = localStorage.getItem(DAILY_REFRESH_KEY);
+        if (deveForcarAtualizacaoDiaria(ultima, hoje)) {
+          localStorage.setItem(DAILY_REFRESH_KEY, hoje);
+          await applyUpdate();
+          return;
+        }
+        if (ultima !== hoje) localStorage.setItem(DAILY_REFRESH_KEY, hoje);
+      } catch {
+        /* localStorage indisponível — segue apenas com version.json */
+      }
+    };
+
+    checkDailyRefresh();
+
     // Verificação inicial logo após montar
     checkVersion();
     intervalId = setInterval(checkVersion, CHECK_INTERVAL_MS);
 
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') checkVersion();
+      if (document.visibilityState === 'visible') {
+        checkDailyRefresh();
+        checkVersion();
+      }
     };
-    const handleOnline = () => checkVersion();
+    const handleOnline = () => {
+      checkDailyRefresh();
+      checkVersion();
+    };
 
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('online', handleOnline);
@@ -155,7 +184,7 @@ export function useVersionCheck(): VersionCheckState {
       window.removeEventListener('online', handleOnline);
       if (intervalId) clearInterval(intervalId);
     };
-  }, [checkVersion]);
+  }, [checkVersion, applyUpdate]);
 
   return { updateAvailable, remoteVersion, currentVersion: CURRENT_VERSION, applyUpdate };
 }
