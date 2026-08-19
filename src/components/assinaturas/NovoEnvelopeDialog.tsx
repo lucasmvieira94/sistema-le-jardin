@@ -62,9 +62,9 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
     queryFn: async () => {
       const { data, error } = await supabase
         .from('funcionarios')
-        .select('id, nome, cpf, email, telefone')
+        .select('id, nome_completo, cpf, email, telefone')
         .eq('ativo', true)
-        .order('nome');
+        .order('nome_completo');
       if (error) throw error;
       return data ?? [];
     },
@@ -79,7 +79,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
     setSignatarios((prev) =>
       prev.map((s, idx) =>
         idx === i
-          ? { ...s, nome: f.nome, cpf: f.cpf, email: f.email, telefone: f.telefone ?? '', papel: 'funcionario', funcionario_id: f.id }
+          ? { ...s, nome: f.nome_completo, cpf: f.cpf, email: f.email, telefone: f.telefone ?? '', papel: 'funcionario', funcionario_id: f.id }
           : s,
       ),
     );
@@ -219,7 +219,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
                         <SelectTrigger><SelectValue placeholder="Selecionar (opcional)" /></SelectTrigger>
                         <SelectContent>
                           {(funcionarios ?? []).map((f) => (
-                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                            <SelectItem key={f.id} value={f.id}>{f.nome_completo}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
