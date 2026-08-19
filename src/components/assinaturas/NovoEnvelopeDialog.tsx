@@ -3,7 +3,7 @@
  * Permite montar o documento, adicionar signatários (empresa, funcionários e
  * externos) e escolher o método de confirmação de autoria de cada um.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenantContext } from '@/contexts/TenantContext';
@@ -29,7 +29,15 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** Pré-preenchimento opcional (ex.: abrir a partir de um contrato). */
-  inicial?: Partial<{ titulo: string; tipo: string; conteudo_html: string; referencia_id: string; referencia_tabela: string }>;
+  inicial?: Partial<{
+    titulo: string;
+    tipo: string;
+    conteudo_html: string;
+    referencia_id: string;
+    referencia_tabela: string;
+    /** Signatários já conhecidos do documento de origem. */
+    signatarios: SignatarioInput[];
+  }>;
 }
 
 const vazio = (): SignatarioInput => ({
@@ -55,6 +63,21 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
   const [conteudo, setConteudo] = useState('');
   const [incluirEmpresa, setIncluirEmpresa] = useState(true);
   const [signatarios, setSignatarios] = useState<SignatarioInput[]>([vazio()]);
+
+  /**
+   * Sincroniza o pré-preenchimento sempre que o diálogo é aberto a partir de um
+   * documento já gerado pelo sistema (contrato, advertência, recibo...).
+   */
+  useEffect(() => {
+    if (!open) return;
+    setTitulo(inicial?.titulo ?? '');
+    setTipo(inicial?.tipo ?? 'outro');
+    setSignatarios(
+      inicial?.signatarios && inicial.signatarios.length > 0 ? inicial.signatarios : [vazio()],
+    );
+    setIncluirEmpresa(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, inicial?.titulo, inicial?.tipo, inicial?.referencia_id]);
 
   const { data: funcionarios } = useQuery({
     queryKey: ['funcionarios-assinatura'],

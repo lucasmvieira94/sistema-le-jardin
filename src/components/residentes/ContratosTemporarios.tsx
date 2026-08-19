@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { hojeExtenso, formatarData as formatarDataBR } from "@/utils/dateUtils";
 import { useDocumentoAutenticidade, rodapeAutenticidadeHTML } from "@/hooks/useDocumentoAutenticidade";
+import EnviarParaAssinaturaButton from "@/components/assinaturas/EnviarParaAssinaturaButton";
 
 interface Solicitacao {
   id: string;
@@ -508,6 +509,30 @@ export default function ContratosTemporarios() {
                             <Button size="sm" variant="outline" onClick={() => imprimirContrato(s)} title="Imprimir contrato">
                               <Printer className="w-3.5 h-3.5 mr-1" /> Imprimir
                             </Button>
+                          )}
+                          {s.status === "contrato_gerado" && (
+                            <EnviarParaAssinaturaButton
+                              titulo={`Contrato temporário — ${s.contratante_nome ?? "Contratante"}`}
+                              tipo="contrato_temporario"
+                              referenciaId={s.id}
+                              referenciaTabela="solicitacoes_contrato_temporario"
+                              label="Assinar"
+                              obterConteudoHtml={() => generateTemporaryContractHTML(s, empresaConfig)}
+                              signatarios={
+                                s.contratante_nome
+                                  ? [
+                                      {
+                                        nome: s.contratante_nome,
+                                        cpf: s.contratante_cpf,
+                                        email: s.contratante_email,
+                                        telefone: s.contratante_telefone,
+                                        papel: "cliente",
+                                        metodo: s.contratante_email ? "otp_email" : "otp_sms",
+                                      },
+                                    ]
+                                  : undefined
+                              }
+                            />
                           )}
                           {(s.status === "aguardando_contratante" || s.status === "aguardando_empresa") && (
                             <Button size="sm" variant="destructive" onClick={() => cancelarSolicitacao(s.id)}>

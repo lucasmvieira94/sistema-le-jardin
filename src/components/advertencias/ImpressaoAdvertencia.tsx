@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, X, ShieldCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDocumentoAutenticidade, rodapeAutenticidadeHTML, type DocumentoAutenticidade } from "@/hooks/useDocumentoAutenticidade";
+import EnviarParaAssinaturaButton from "@/components/assinaturas/EnviarParaAssinaturaButton";
 
 const TIPO_LABELS: Record<string, string> = {
   advertencia_verbal: "ADVERTÊNCIA VERBAL",
@@ -164,6 +165,41 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
           <Button onClick={handlePrint} className="gap-2">
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
+          <EnviarParaAssinaturaButton
+            titulo={`${TIPO_LABELS[advertencia.tipo] || "Documento disciplinar"} — ${advertencia.funcionarios.nome_completo}`}
+            tipo="advertencia"
+            referenciaId={advertencia.id}
+            referenciaTabela="advertencias_suspensoes"
+            size="default"
+            label="Enviar para assinatura"
+            obterConteudoHtml={() =>
+              (printRef.current?.innerHTML ?? "") + (auth ? rodapeAutenticidadeHTML(auth) : "")
+            }
+            signatarios={[
+              {
+                nome: advertencia.funcionarios.nome_completo,
+                cpf: advertencia.funcionarios.cpf ?? null,
+                papel: "funcionario",
+                metodo: "otp_email",
+              },
+              ...(advertencia.testemunha_1
+                ? [{
+                    nome: advertencia.testemunha_1,
+                    cpf: advertencia.cpf_testemunha_1 ?? null,
+                    papel: "testemunha" as const,
+                    metodo: "otp_email" as const,
+                  }]
+                : []),
+              ...(advertencia.testemunha_2
+                ? [{
+                    nome: advertencia.testemunha_2,
+                    cpf: advertencia.cpf_testemunha_2 ?? null,
+                    papel: "testemunha" as const,
+                    metodo: "otp_email" as const,
+                  }]
+                : []),
+            ]}
+          />
           <Button variant="outline" size="icon" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
