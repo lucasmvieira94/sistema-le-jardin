@@ -28,7 +28,8 @@ import {
   Syringe,
   CreditCard,
   Building2,
-  Wallet
+  Wallet,
+  FileSignature,
 } from "lucide-react";
 import {
   Sidebar,
@@ -92,6 +93,7 @@ export function AppSidebar() {
     { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações", adminOnly: true },
     { path: "/analise-feedback", icon: BarChart3, label: "Análise de Feedback", adminOnly: true },
     { path: "/gestao-intercorrencias", icon: AlertTriangle, label: "Intercorrências", adminOnly: true },
+    { path: "/assinaturas", icon: FileSignature, label: "Assinaturas Eletrônicas", adminOnly: true },
     { path: "/configuracoes/assinatura", icon: CreditCard, label: "Minha Assinatura", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];

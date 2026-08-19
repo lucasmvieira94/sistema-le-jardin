@@ -67,6 +67,8 @@ import Financeiro from "./pages/Financeiro";
 import Contracheques from "./pages/Contracheques";
 import MeusContracheques from "./pages/MeusContracheques";
 import MinhasFolhasPonto from "./pages/MinhasFolhasPonto";
+import Assinaturas from "./pages/Assinaturas";
+import AssinaturaPublica from "./pages/AssinaturaPublica";
 
 // SaaS / Plataforma
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
@@ -98,6 +100,7 @@ const App = () => {
               <Route path="/" element={<FuncionarioAccess />} />
               <Route path="/funcionario-access" element={<FuncionarioAccess />} />
               <Route path="/registro-ponto" element={<RegistroPonto />} />
+              <Route path="/assinar/:token" element={<AssinaturaPublica />} />
               <Route path="/prontuario" element={<Prontuario />} />
               <Route path="/temperatura-medicamentos" element={<ControleTemperaturaPublico />} />
               <Route path="/controle-fraldas-publico" element={<ControleFraldasPublico />} />
@@ -150,6 +153,7 @@ const App = () => {
               <Route path="/gestao-gamificacao" element={<ProtectedRoute><ModuleGuard modulo="gamificacao"><GestaoGamificacao /></ModuleGuard></ProtectedRoute>} />
               <Route path="/controle-vacinas" element={<ProtectedRoute><ModuleGuard modulo="vacinas"><ControleVacinas /></ModuleGuard></ProtectedRoute>} />
               <Route path="/relatorios-ia" element={<ProtectedRoute><ModuleGuard modulo="relatorios_ia"><RelatoriosIA /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
               <Route path="/configuracoes/assinatura" element={<ProtectedRoute><MinhaAssinatura /></ProtectedRoute>} />
             </Route>
 

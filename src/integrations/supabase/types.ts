@@ -500,6 +500,259 @@ export type Database = {
           },
         ]
       }
+      assinatura_envelopes: {
+        Row: {
+          arquivo_path: string | null
+          cancelado_em: string | null
+          concluido_em: string | null
+          conteudo_html: string | null
+          created_at: string
+          criado_por: string | null
+          documento_emitido_id: string | null
+          expira_em: string
+          hash_documento: string
+          id: string
+          mensagem: string | null
+          motivo_cancelamento: string | null
+          referencia_id: string | null
+          referencia_tabela: string | null
+          status: string
+          tenant_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_path?: string | null
+          cancelado_em?: string | null
+          concluido_em?: string | null
+          conteudo_html?: string | null
+          created_at?: string
+          criado_por?: string | null
+          documento_emitido_id?: string | null
+          expira_em?: string
+          hash_documento: string
+          id?: string
+          mensagem?: string | null
+          motivo_cancelamento?: string | null
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          status?: string
+          tenant_id?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_path?: string | null
+          cancelado_em?: string | null
+          concluido_em?: string | null
+          conteudo_html?: string | null
+          created_at?: string
+          criado_por?: string | null
+          documento_emitido_id?: string | null
+          expira_em?: string
+          hash_documento?: string
+          id?: string
+          mensagem?: string | null
+          motivo_cancelamento?: string | null
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          status?: string
+          tenant_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinatura_envelopes_documento_emitido_id_fkey"
+            columns: ["documento_emitido_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_emitidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinatura_envelopes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assinatura_eventos: {
+        Row: {
+          created_at: string
+          envelope_id: string
+          evento: string
+          id: string
+          ip_origem: string | null
+          metadata: Json
+          signatario_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          envelope_id: string
+          evento: string
+          id?: string
+          ip_origem?: string | null
+          metadata?: Json
+          signatario_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          envelope_id?: string
+          evento?: string
+          id?: string
+          ip_origem?: string | null
+          metadata?: Json
+          signatario_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinatura_eventos_envelope_id_fkey"
+            columns: ["envelope_id"]
+            isOneToOne: false
+            referencedRelation: "assinatura_envelopes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinatura_eventos_signatario_id_fkey"
+            columns: ["signatario_id"]
+            isOneToOne: false
+            referencedRelation: "assinatura_signatarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assinatura_signatarios: {
+        Row: {
+          assinado_em: string | null
+          convite_enviado_em: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          envelope_id: string
+          evidencias: Json
+          funcionario_id: string | null
+          geolocalizacao: Json | null
+          hash_assinatura: string | null
+          id: string
+          ip_origem: string | null
+          metodo: string
+          motivo_recusa: string | null
+          nome: string
+          ordem: number
+          otp_enviado_em: string | null
+          otp_expira_em: string | null
+          otp_hash: string | null
+          otp_tentativas: number
+          papel: string
+          recusado_em: string | null
+          rubrica_base64: string | null
+          status: string
+          telefone: string | null
+          tenant_id: string | null
+          token: string
+          token_expira_em: string
+          updated_at: string
+          user_agent: string | null
+          visualizado_em: string | null
+        }
+        Insert: {
+          assinado_em?: string | null
+          convite_enviado_em?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          envelope_id: string
+          evidencias?: Json
+          funcionario_id?: string | null
+          geolocalizacao?: Json | null
+          hash_assinatura?: string | null
+          id?: string
+          ip_origem?: string | null
+          metodo?: string
+          motivo_recusa?: string | null
+          nome: string
+          ordem?: number
+          otp_enviado_em?: string | null
+          otp_expira_em?: string | null
+          otp_hash?: string | null
+          otp_tentativas?: number
+          papel?: string
+          recusado_em?: string | null
+          rubrica_base64?: string | null
+          status?: string
+          telefone?: string | null
+          tenant_id?: string | null
+          token: string
+          token_expira_em?: string
+          updated_at?: string
+          user_agent?: string | null
+          visualizado_em?: string | null
+        }
+        Update: {
+          assinado_em?: string | null
+          convite_enviado_em?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          envelope_id?: string
+          evidencias?: Json
+          funcionario_id?: string | null
+          geolocalizacao?: Json | null
+          hash_assinatura?: string | null
+          id?: string
+          ip_origem?: string | null
+          metodo?: string
+          motivo_recusa?: string | null
+          nome?: string
+          ordem?: number
+          otp_enviado_em?: string | null
+          otp_expira_em?: string | null
+          otp_hash?: string | null
+          otp_tentativas?: number
+          papel?: string
+          recusado_em?: string | null
+          rubrica_base64?: string | null
+          status?: string
+          telefone?: string | null
+          tenant_id?: string | null
+          token?: string
+          token_expira_em?: string
+          updated_at?: string
+          user_agent?: string | null
+          visualizado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinatura_signatarios_envelope_id_fkey"
+            columns: ["envelope_id"]
+            isOneToOne: false
+            referencedRelation: "assinatura_envelopes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinatura_signatarios_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinatura_signatarios_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinaturas: {
         Row: {
           ciclo: string
@@ -848,6 +1101,10 @@ export type Database = {
           adicional_hora_extra_100: number | null
           adicional_hora_extra_50: number | null
           adicional_noturno: number | null
+          assinatura_empresa_base64: string | null
+          assinatura_empresa_cargo: string | null
+          assinatura_empresa_cpf: string | null
+          assinatura_empresa_nome: string | null
           cidade: string | null
           cnpj: string | null
           cobrar_juros_multa: boolean
@@ -874,6 +1131,10 @@ export type Database = {
           adicional_hora_extra_100?: number | null
           adicional_hora_extra_50?: number | null
           adicional_noturno?: number | null
+          assinatura_empresa_base64?: string | null
+          assinatura_empresa_cargo?: string | null
+          assinatura_empresa_cpf?: string | null
+          assinatura_empresa_nome?: string | null
           cidade?: string | null
           cnpj?: string | null
           cobrar_juros_multa?: boolean
@@ -900,6 +1161,10 @@ export type Database = {
           adicional_hora_extra_100?: number | null
           adicional_hora_extra_50?: number | null
           adicional_noturno?: number | null
+          assinatura_empresa_base64?: string | null
+          assinatura_empresa_cargo?: string | null
+          assinatura_empresa_cpf?: string | null
+          assinatura_empresa_nome?: string | null
           cidade?: string | null
           cnpj?: string | null
           cobrar_juros_multa?: boolean

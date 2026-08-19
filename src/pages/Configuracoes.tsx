@@ -10,6 +10,7 @@ import { GestaoPermissoes } from "@/components/configuracoes/GestaoPermissoes";
 import { ConviteGestor } from "@/components/configuracoes/ConviteGestor";
 import { LogotipoEmpresa } from "@/components/configuracoes/LogotipoEmpresa";
 import { ConfiguracaoGeofence } from "@/components/configuracoes/ConfiguracaoGeofence";
+import { AssinaturaDigitalConfig } from "@/components/configuracoes/AssinaturaDigitalConfig";
 
 export default function Configuracoes() {
   const [loading, setLoading] = useState(true);
@@ -302,6 +303,8 @@ export default function Configuracoes() {
         />
 
         {/* Gestão de Permissões */}
+        <AssinaturaDigitalConfig />
+
         <GestaoPermissoes ref={gestaoPermissoesRef} />
 
         {/* Convite para Gestores */}

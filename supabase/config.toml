@@ -113,3 +113,9 @@ verify_jwt = false
 [functions.verificar-documento]
 verify_jwt = false
 
+
+[functions.assinatura-envelope]
+verify_jwt = false
+
+[functions.assinatura-publica]
+verify_jwt = false
