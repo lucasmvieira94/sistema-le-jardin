@@ -9,6 +9,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
 import { useDocumentoAutenticidade, rodapeAutenticidadeHTML, type DocumentoAutenticidade } from "@/hooks/useDocumentoAutenticidade";
+import EnviarParaAssinaturaButton from "@/components/assinaturas/EnviarParaAssinaturaButton";
 
 interface ContratoPDFGeneratorProps {
   open: boolean;
@@ -513,6 +514,26 @@ export default function ContratoPDFGenerator({
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
               </Button>
+              <EnviarParaAssinaturaButton
+                titulo={`Contrato nº ${contrato.numero_contrato} — ${residente.nome_completo}`}
+                tipo="contrato_residente"
+                referenciaId={contrato.id ?? null}
+                referenciaTabela="contratos_residentes"
+                label="Enviar para assinatura"
+                obterConteudoHtml={() =>
+                  generateContractHTML() + (auth ? rodapeAutenticidadeHTML(auth) : "")
+                }
+                signatarios={[
+                  {
+                    nome: contrato.contratante_nome,
+                    cpf: contrato.contratante_cpf ?? null,
+                    email: contrato.contratante_email ?? null,
+                    telefone: contrato.contratante_telefone ?? null,
+                    papel: "responsavel",
+                    metodo: contrato.contratante_email ? "otp_email" : "otp_sms",
+                  },
+                ]}
+              />
               <Button size="sm" onClick={handleDownloadPDF}>
                 <FileDown className="w-4 h-4 mr-2" />
                 Baixar PDF
