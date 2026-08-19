@@ -28,7 +28,7 @@ import {
   Syringe,
   CreditCard,
   Building2,
-  Wallet
+  Wallet,
   FileSignature,
 } from "lucide-react";
 import {
