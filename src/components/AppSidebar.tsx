@@ -29,6 +29,7 @@ import {
   CreditCard,
   Building2,
   Wallet
+  FileSignature,
 } from "lucide-react";
 import {
   Sidebar,
