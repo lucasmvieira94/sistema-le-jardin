@@ -236,6 +236,15 @@ export default function AssinaturaPublica() {
               <p className="text-[11px] text-muted-foreground break-all">
                 Hash da assinatura: {concluido?.hash ?? '—'}
               </p>
+              <Button onClick={baixarAssinado} disabled={baixando} className="mt-2">
+                {baixando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+                Baixar documento assinado (PDF)
+              </Button>
+              {copiaEnviada && (
+                <p className="text-xs text-muted-foreground">
+                  Uma cópia do documento assinado também foi enviada para o seu e-mail.
+                </p>
+              )}
             </CardContent>
           </Card>
         ) : recusou ? (
