@@ -186,6 +186,11 @@ Deno.serve(async (req) => {
           envelope_id: env.id, signatario_id: sig.id, evento: 'visualizado', ip_origem: ip, user_agent: ua,
         });
       }
+      const { data: todos } = await admin
+        .from('assinatura_signatarios')
+        .select('*')
+        .eq('envelope_id', env.id)
+        .order('ordem', { ascending: true });
       return json({
         envelope: {
           id: env.id, titulo: env.titulo, tipo: env.tipo, conteudo_html: env.conteudo_html,
@@ -200,6 +205,7 @@ Deno.serve(async (req) => {
         },
         expirado,
         cancelado: env.status === 'cancelado',
+        signatarios: (todos ?? []).map(publico),
       });
     }
 
@@ -310,7 +316,45 @@ Deno.serve(async (req) => {
         metadata: { metodo: sig.metodo, hash_assinatura: hashAssinatura, geolocalizacao: geolocalizacao ?? null },
       });
 
-      return json({ ok: true, hash_assinatura: hashAssinatura, assinado_em: assinadoEm });
+      // Cópia do documento assinado enviada ao signatário externo
+      const { data: todos } = await admin
+        .from('assinatura_signatarios')
+        .select('*')
+        .eq('envelope_id', env.id)
+        .order('ordem', { ascending: true });
+      const lista = (todos ?? []).map(publico);
+
+      let copia_enviada = false;
+      if (sig.email) {
+        try {
+          await enviarEmail(
+            sig.email,
+            `Documento assinado — ${env.titulo}`,
+            `<div style="font-family:Arial,sans-serif;color:#1f2937;max-width:720px;margin:0 auto">
+               <h2 style="color:#065f46">Sua via do documento assinado</h2>
+               <p>Olá, <strong>${sig.nome}</strong>. Segue abaixo a via integral do documento
+               <strong>${env.titulo}</strong>, já com as assinaturas registradas.</p>
+               <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px">${env.conteudo_html ?? ''}</div>
+               ${blocoAssinaturasHTML(env.hash_documento, lista)}
+             </div>`,
+          );
+          copia_enviada = true;
+          await admin.from('assinatura_eventos').insert({
+            envelope_id: env.id, signatario_id: sig.id, evento: 'copia_enviada',
+            metadata: { canal: 'email' },
+          });
+        } catch (e) {
+          console.error('Falha ao enviar cópia assinada:', (e as Error).message);
+        }
+      }
+
+      return json({
+        ok: true,
+        hash_assinatura: hashAssinatura,
+        assinado_em: assinadoEm,
+        copia_enviada,
+        signatarios: lista,
+      });
     }
 
     return json({ error: 'Ação inválida' }, 400);
