@@ -91,6 +91,62 @@ async function enviarWhatsApp(telefone: string, mensagem: string) {
 const OTP_VALIDADE_MIN = 10;
 const OTP_MAX_TENTATIVAS = 5;
 
+const METODOS: Record<string, string> = {
+  otp_email: 'Código por e-mail',
+  otp_sms: 'Código por WhatsApp',
+  biometria_facial: 'Biometria facial',
+  rubrica_empresa: 'Rubrica institucional da empresa',
+};
+
+const fmtBr = (iso?: string | null) =>
+  iso ? `${new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (UTC-3)` : '—';
+
+/** Dados públicos (sem OTP/token) dos signatários, usados na via assinada. */
+const publico = (s: any) => ({
+  id: s.id,
+  nome: s.nome,
+  cpf: s.cpf,
+  papel: s.papel,
+  metodo: s.metodo,
+  status: s.status,
+  ordem: s.ordem,
+  assinado_em: s.assinado_em,
+  ip_origem: s.ip_origem,
+  user_agent: s.user_agent,
+  hash_assinatura: s.hash_assinatura,
+  rubrica_base64: s.rubrica_base64,
+  motivo_recusa: s.motivo_recusa,
+});
+
+/** Bloco HTML de assinaturas anexado à cópia enviada por e-mail. */
+function blocoAssinaturasHTML(hashDoc: string, lista: any[]) {
+  const itens = lista
+    .map(
+      (s) => `
+      <div style="border:1px solid #d1d5db;border-radius:6px;padding:10px;margin-bottom:8px">
+        <div style="font-weight:bold">${s.nome} — ${s.papel}</div>
+        ${s.rubrica_base64 ? `<img src="${s.rubrica_base64}" style="max-height:60px;margin:6px 0" />` : ''}
+        <div style="font-size:12px;color:#374151;line-height:1.5">
+          CPF: ${s.cpf ?? '—'}<br/>
+          Método: ${METODOS[s.metodo] ?? s.metodo}<br/>
+          Assinado em: ${fmtBr(s.assinado_em)}<br/>
+          IP: ${s.ip_origem ?? '—'}<br/>
+          <span style="word-break:break-all">Hash: ${s.hash_assinatura ?? '—'}</span>
+        </div>
+      </div>`,
+    )
+    .join('');
+  return `
+    <div style="margin-top:20px;border-top:2px solid #111;padding-top:12px">
+      <h3 style="font-size:15px">ASSINATURAS ELETRÔNICAS</h3>
+      ${itens}
+      <p style="font-size:11px;color:#374151;word-break:break-all">
+        Hash SHA-256 do documento: ${hashDoc}<br/>
+        Assinado nos termos da MP 2.200-2/2001 (art. 10, §2º) e da Lei 14.063/2020.
+      </p>
+    </div>`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
