@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, ShieldCheck, FileSignature, CheckCircle2, XCircle, AlertTriangle, ScanFace } from 'lucide-react';
 import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometricaDialog';
+import { gerarPdfDocumentoAssinado, type SignatarioPdf } from '@/utils/documentoAssinadoPDF';
+import { FileDown } from 'lucide-react';
 
 interface Dados {
   envelope: {
@@ -35,6 +37,7 @@ interface Dados {
   };
   expirado: boolean;
   cancelado: boolean;
+  signatarios?: SignatarioPdf[];
 }
 
 async function chamar(payload: Record<string, unknown>) {
@@ -61,6 +64,8 @@ export default function AssinaturaPublica() {
   const [motivoRecusa, setMotivoRecusa] = useState('');
   const [geo, setGeo] = useState<{ latitude: number; longitude: number; precisao?: number } | null>(null);
   const [concluido, setConcluido] = useState<{ hash: string; em: string } | null>(null);
+  const [copiaEnviada, setCopiaEnviada] = useState(false);
+  const [baixando, setBaixando] = useState(false);
 
   const carregar = useCallback(async () => {
     if (!token) return;
@@ -113,6 +118,7 @@ export default function AssinaturaPublica() {
         geolocalizacao: geo,
       });
       setConcluido({ hash: r.hash_assinatura, em: r.assinado_em });
+      setCopiaEnviada(!!r.copia_enviada);
       toast.success('Documento assinado com sucesso');
       carregar();
     } catch (e: any) {
@@ -130,6 +136,25 @@ export default function AssinaturaPublica() {
       carregar();
     } catch (e: any) {
       toast.error(e.message);
+    }
+  };
+
+  /** Baixa a via completa (documento + assinaturas e evidências). */
+  const baixarAssinado = async () => {
+    if (!dados) return;
+    setBaixando(true);
+    try {
+      await gerarPdfDocumentoAssinado({
+        titulo: dados.envelope.titulo,
+        tipo: dados.envelope.tipo,
+        conteudo_html: dados.envelope.conteudo_html,
+        hash_documento: dados.envelope.hash_documento,
+        signatarios: dados.signatarios ?? [],
+      });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Falha ao gerar o PDF');
+    } finally {
+      setBaixando(false);
     }
   };
 
@@ -211,6 +236,15 @@ export default function AssinaturaPublica() {
               <p className="text-[11px] text-muted-foreground break-all">
                 Hash da assinatura: {concluido?.hash ?? '—'}
               </p>
+              <Button onClick={baixarAssinado} disabled={baixando} className="mt-2">
+                {baixando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+                Baixar documento assinado (PDF)
+              </Button>
+              {copiaEnviada && (
+                <p className="text-xs text-muted-foreground">
+                  Uma cópia do documento assinado também foi enviada para o seu e-mail.
+                </p>
+              )}
             </CardContent>
           </Card>
         ) : recusou ? (

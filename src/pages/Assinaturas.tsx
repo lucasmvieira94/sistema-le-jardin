@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import NovoEnvelopeDialog from '@/components/assinaturas/NovoEnvelopeDialog';
 import { gerarCertificadoAssinaturas } from '@/utils/certificadoAssinaturaPDF';
+import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
 import {
   METODO_LABEL, STATUS_LABEL, TIPO_LABEL, linkAssinatura,
   useCancelarEnvelope, useEnvelopes, useEventosEnvelope, useReenviarConvite,
@@ -43,6 +44,7 @@ export default function Assinaturas() {
   const [detalhe, setDetalhe] = useState<Envelope | null>(null);
   const [cancelarAlvo, setCancelarAlvo] = useState<Envelope | null>(null);
   const [motivo, setMotivo] = useState('');
+  const [baixando, setBaixando] = useState<string | null>(null);
 
   const { data: eventos } = useEventosEnvelope(detalhe?.id);
 
@@ -70,6 +72,24 @@ export default function Assinaturas() {
       setMotivo('');
     } catch (e: any) {
       toast.error(e.message);
+    }
+  };
+
+  /** Baixa a via do documento com as assinaturas e evidências. */
+  const baixarAssinado = async (e: Envelope) => {
+    setBaixando(e.id);
+    try {
+      await gerarPdfDocumentoAssinado({
+        titulo: e.titulo,
+        tipo: e.tipo,
+        conteudo_html: e.conteudo_html ?? '',
+        hash_documento: e.hash_documento,
+        signatarios: [...(e.assinatura_signatarios ?? [])].sort((a, b) => a.ordem - b.ordem),
+      });
+    } catch (err: any) {
+      toast.error(err.message ?? 'Falha ao gerar o PDF assinado');
+    } finally {
+      setBaixando(null);
     }
   };
 
@@ -168,6 +188,17 @@ export default function Assinaturas() {
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => gerarCertificadoAssinaturas(e)}>
                       <FileDown className="w-4 h-4 mr-1" /> Manifesto (PDF)
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => baixarAssinado(e)}
+                      disabled={baixando === e.id || assinados === 0}
+                      title={assinados === 0 ? 'Nenhuma assinatura registrada ainda' : 'Baixar documento assinado'}
+                    >
+                      {baixando === e.id
+                        ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        : <FileDown className="w-4 h-4 mr-1" />}
+                      PDF assinado
                     </Button>
                     {!['cancelado', 'concluido'].includes(e.status) && (
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setCancelarAlvo(e)}>

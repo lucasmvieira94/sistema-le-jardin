@@ -213,7 +213,15 @@ Deno.serve(async (req) => {
     const criados: any[] = [];
     const falhasEnvio: string[] = [];
 
-    for (const [i, s] of signatarios.entries()) {
+    // A empresa assina PRIMEIRO: os signatários com rubrica institucional são
+    // processados antes do envio dos convites externos, garantindo que o
+    // documento já chegue ao signatário externo assinado pela empresa.
+    const ordenados = [...signatarios].sort(
+      (a: any, b: any) =>
+        (a.metodo === 'rubrica_empresa' ? 0 : 1) - (b.metodo === 'rubrica_empresa' ? 0 : 1),
+    );
+
+    for (const [i, s] of ordenados.entries()) {
       const tk = gerarToken();
       const metodo = s.metodo || 'otp_email';
       const ehEmpresa = metodo === 'rubrica_empresa';
