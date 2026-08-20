@@ -189,6 +189,17 @@ export default function Assinaturas() {
                     <Button size="sm" variant="outline" onClick={() => gerarCertificadoAssinaturas(e)}>
                       <FileDown className="w-4 h-4 mr-1" /> Manifesto (PDF)
                     </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => baixarAssinado(e)}
+                      disabled={baixando === e.id || assinados === 0}
+                      title={assinados === 0 ? 'Nenhuma assinatura registrada ainda' : 'Baixar documento assinado'}
+                    >
+                      {baixando === e.id
+                        ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        : <FileDown className="w-4 h-4 mr-1" />}
+                      PDF assinado
+                    </Button>
                     {!['cancelado', 'concluido'].includes(e.status) && (
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setCancelarAlvo(e)}>
                         <Ban className="w-4 h-4 mr-1" /> Cancelar
