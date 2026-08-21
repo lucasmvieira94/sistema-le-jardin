@@ -176,6 +176,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
       }
       onOpenChange(false);
       setTitulo(''); setConteudo(''); setMensagem(''); setSignatarios([vazio()]);
+      setPdfHtml(''); setPdfNome(''); setPdfPaginas(0);
     } catch (e: any) {
       toast.error(e.message || 'Falha ao criar o envelope');
     }
