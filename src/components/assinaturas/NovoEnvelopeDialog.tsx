@@ -18,7 +18,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Plus, Trash2, Building2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Building2, FileUp, X } from 'lucide-react';
+import { pdfParaHtml, MAX_PAGINAS_PDF } from '@/utils/pdfParaHtml';
+
 import { toast } from 'sonner';
 import {
   METODO_LABEL, TIPO_LABEL, useCriarEnvelope,
@@ -64,6 +66,12 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
   const [incluirEmpresa, setIncluirEmpresa] = useState(true);
   const [signatarios, setSignatarios] = useState<SignatarioInput[]>([vazio()]);
 
+  /** PDF anexado convertido em HTML (uma imagem por página). */
+  const [pdfHtml, setPdfHtml] = useState('');
+  const [pdfNome, setPdfNome] = useState('');
+  const [pdfPaginas, setPdfPaginas] = useState(0);
+  const [convertendo, setConvertendo] = useState(false);
+
   /**
    * Sincroniza o pré-preenchimento sempre que o diálogo é aberto a partir de um
    * documento já gerado pelo sistema (contrato, advertência, recibo...).
@@ -76,8 +84,30 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
       inicial?.signatarios && inicial.signatarios.length > 0 ? inicial.signatarios : [vazio()],
     );
     setIncluirEmpresa(true);
+    setPdfHtml(''); setPdfNome(''); setPdfPaginas(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, inicial?.titulo, inicial?.tipo, inicial?.referencia_id]);
+
+  /** Converte o PDF selecionado em páginas de imagem para o envelope. */
+  const anexarPdf = async (file?: File | null) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') return toast.error('Selecione um arquivo PDF');
+    if (file.size > 15 * 1024 * 1024) return toast.error('O PDF deve ter no máximo 15 MB');
+    setConvertendo(true);
+    try {
+      const { html, paginas } = await pdfParaHtml(file);
+      setPdfHtml(html);
+      setPdfNome(file.name);
+      setPdfPaginas(paginas);
+      if (!titulo.trim()) setTitulo(file.name.replace(/\.pdf$/i, ''));
+      toast.success(`PDF anexado (${paginas} página${paginas > 1 ? 's' : ''})`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Não foi possível ler o PDF');
+    } finally {
+      setConvertendo(false);
+    }
+  };
+
 
   const { data: funcionarios } = useQuery({
     queryKey: ['funcionarios-assinatura'],
@@ -109,7 +139,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
   };
 
   const salvar = async () => {
-    const html = inicial?.conteudo_html ?? textoParaHtml(conteudo);
+    const html = inicial?.conteudo_html ?? (pdfHtml || textoParaHtml(conteudo));
     if (!titulo.trim() || !html.trim() || html === '<p></p>') {
       toast.error('Informe o título e o conteúdo do documento');
       return;
@@ -146,6 +176,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
       }
       onOpenChange(false);
       setTitulo(''); setConteudo(''); setMensagem(''); setSignatarios([vazio()]);
+      setPdfHtml(''); setPdfNome(''); setPdfPaginas(0);
     } catch (e: any) {
       toast.error(e.message || 'Falha ao criar o envelope');
     }
@@ -181,16 +212,60 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
           </div>
 
           {!inicial?.conteudo_html && (
-            <div>
-              <Label>Conteúdo do documento</Label>
-              <Textarea
-                rows={8}
-                value={conteudo}
-                onChange={(e) => setConteudo(e.target.value)}
-                placeholder="Cole ou digite o texto completo do documento..."
-              />
+            <div className="space-y-3">
+              <Card className={pdfHtml ? 'border-primary' : ''}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="text-sm">
+                      <p className="font-medium flex items-center gap-2">
+                        <FileUp className="w-4 h-4 text-primary" /> Anexar documento em PDF
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Até {MAX_PAGINAS_PDF} páginas e 15 MB. O PDF vira o conteúdo do envelope e é selado com hash.
+                      </p>
+                    </div>
+                    {pdfHtml ? (
+                      <Button
+                        type="button" size="sm" variant="ghost" className="text-destructive"
+                        onClick={() => { setPdfHtml(''); setPdfNome(''); setPdfPaginas(0); }}
+                      >
+                        <X className="w-4 h-4 mr-1" /> Remover
+                      </Button>
+                    ) : (
+                      <Input
+                        type="file" accept="application/pdf" className="max-w-xs"
+                        disabled={convertendo}
+                        onChange={(e) => anexarPdf(e.target.files?.[0])}
+                      />
+                    )}
+                  </div>
+                  {convertendo && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Processando o PDF...
+                    </p>
+                  )}
+                  {pdfHtml && (
+                    <p className="text-xs text-primary">
+                      {pdfNome} • {pdfPaginas} página{pdfPaginas > 1 ? 's' : ''} pronto para assinatura
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {!pdfHtml && (
+                <div>
+                  <Label>Conteúdo do documento</Label>
+                  <Textarea
+                    rows={8}
+                    value={conteudo}
+                    onChange={(e) => setConteudo(e.target.value)}
+                    placeholder="Cole ou digite o texto completo do documento..."
+                  />
+                </div>
+              )}
             </div>
           )}
+
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
@@ -295,7 +370,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={salvar} disabled={criar.isPending}>
+          <Button onClick={salvar} disabled={criar.isPending || convertendo}>
             {criar.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Enviar para assinatura
           </Button>
