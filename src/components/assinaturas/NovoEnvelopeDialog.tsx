@@ -64,6 +64,12 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
   const [incluirEmpresa, setIncluirEmpresa] = useState(true);
   const [signatarios, setSignatarios] = useState<SignatarioInput[]>([vazio()]);
 
+  /** PDF anexado convertido em HTML (uma imagem por página). */
+  const [pdfHtml, setPdfHtml] = useState('');
+  const [pdfNome, setPdfNome] = useState('');
+  const [pdfPaginas, setPdfPaginas] = useState(0);
+  const [convertendo, setConvertendo] = useState(false);
+
   /**
    * Sincroniza o pré-preenchimento sempre que o diálogo é aberto a partir de um
    * documento já gerado pelo sistema (contrato, advertência, recibo...).
@@ -76,8 +82,30 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
       inicial?.signatarios && inicial.signatarios.length > 0 ? inicial.signatarios : [vazio()],
     );
     setIncluirEmpresa(true);
+    setPdfHtml(''); setPdfNome(''); setPdfPaginas(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, inicial?.titulo, inicial?.tipo, inicial?.referencia_id]);
+
+  /** Converte o PDF selecionado em páginas de imagem para o envelope. */
+  const anexarPdf = async (file?: File | null) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') return toast.error('Selecione um arquivo PDF');
+    if (file.size > 15 * 1024 * 1024) return toast.error('O PDF deve ter no máximo 15 MB');
+    setConvertendo(true);
+    try {
+      const { html, paginas } = await pdfParaHtml(file);
+      setPdfHtml(html);
+      setPdfNome(file.name);
+      setPdfPaginas(paginas);
+      if (!titulo.trim()) setTitulo(file.name.replace(/\.pdf$/i, ''));
+      toast.success(`PDF anexado (${paginas} página${paginas > 1 ? 's' : ''})`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Não foi possível ler o PDF');
+    } finally {
+      setConvertendo(false);
+    }
+  };
+
 
   const { data: funcionarios } = useQuery({
     queryKey: ['funcionarios-assinatura'],
