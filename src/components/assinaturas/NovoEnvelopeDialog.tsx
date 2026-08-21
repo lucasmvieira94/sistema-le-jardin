@@ -139,7 +139,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
   };
 
   const salvar = async () => {
-    const html = inicial?.conteudo_html ?? textoParaHtml(conteudo);
+    const html = inicial?.conteudo_html ?? (pdfHtml || textoParaHtml(conteudo));
     if (!titulo.trim() || !html.trim() || html === '<p></p>') {
       toast.error('Informe o título e o conteúdo do documento');
       return;
