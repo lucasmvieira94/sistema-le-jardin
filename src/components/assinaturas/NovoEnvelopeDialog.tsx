@@ -18,7 +18,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Plus, Trash2, Building2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Building2, FileUp, X } from 'lucide-react';
+import { pdfParaHtml, MAX_PAGINAS_PDF } from '@/utils/pdfParaHtml';
+
 import { toast } from 'sonner';
 import {
   METODO_LABEL, TIPO_LABEL, useCriarEnvelope,
