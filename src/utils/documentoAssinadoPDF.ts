@@ -136,14 +136,61 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
     'text-align:justify',
   ].join(';');
 
-  // Evita que imagens/tabelas estourem a largura útil da página.
+  // Replica o CSS usado na janela de impressão dos documentos do sistema,
+  // para que títulos, subtítulos, caixas e assinaturas mantenham a hierarquia
+  // visual original (o innerHTML capturado depende dessas classes).
   const estilo = document.createElement('style');
   estilo.textContent = `
     .doc-pdf-root img { max-width:100%; height:auto; }
     .doc-pdf-root table { width:100%; border-collapse:collapse; table-layout:fixed; }
     .doc-pdf-root td, .doc-pdf-root th { word-break:break-word; }
-    .doc-pdf-root * { max-width:100%; }
+
+    .doc-pdf-root p { margin:0 0 6px; }
+    .doc-pdf-root strong, .doc-pdf-root b { font-weight:bold; }
+
+    /* Títulos genéricos */
+    .doc-pdf-root h1 { font-size:15.6pt; font-weight:bold; text-align:center; letter-spacing:1px; margin:0 0 4px; }
+    .doc-pdf-root h2 { font-size:12.5pt; font-weight:normal; text-align:center; color:#333; margin:0 0 6px; }
+    .doc-pdf-root h3 { font-size:12.5pt; font-weight:bold; text-align:left; margin:10px 0 4px; }
+    .doc-pdf-root h4 { font-size:11.5pt; font-weight:bold; text-align:left; margin:8px 0 4px; }
+
+    /* Cabeçalho institucional */
+    .doc-pdf-root .header { text-align:center; margin-bottom:10px; border-bottom:1px solid #000; padding-bottom:6px; }
+    .doc-pdf-root .header img { max-height:50px; margin:0 auto 6px; display:block; }
+
+    /* Tipo/título do documento */
+    .doc-pdf-root .tipo-doc,
+    .doc-pdf-root .titulo-contrato {
+      text-align:center; font-size:14pt; font-weight:bold; margin:10px 0;
+      text-decoration:underline; letter-spacing:1px;
+    }
+    .doc-pdf-root .subtitulo, .doc-pdf-root .clausula-titulo {
+      font-weight:bold; text-align:left; margin:10px 0 4px; text-decoration:none;
+    }
+
+    /* Caixas de dados */
+    .doc-pdf-root .info-box { border:1px solid #333; padding:8px 12px; margin:8px 0; }
+    .doc-pdf-root .info-row { display:flex; margin-bottom:3px; }
+    .doc-pdf-root .info-label { font-weight:bold; min-width:170px; }
+    .doc-pdf-root .info-value { flex:1; }
+    .doc-pdf-root .suspensao-box { border:1px solid #333; padding:8px; margin:8px 0; background:#f9f9f9; }
+    .doc-pdf-root .recusa-box { border:1px dashed #666; padding:6px; margin:8px 0; font-size:10.5pt; }
+    .doc-pdf-root .hash-box { margin-top:12px; padding:6px; border:1px solid #ccc; font-size:8.4pt; color:#555; text-align:center; word-break:break-all; }
+
+    /* Blocos de texto */
+    .doc-pdf-root .descricao { margin:10px 0; text-align:justify; }
+    .doc-pdf-root .descricao p { text-indent:2em; }
+    .doc-pdf-root .legal-text { margin:12px 0; font-size:10.5pt; text-align:justify; border-top:1px solid #ccc; padding-top:8px; }
+    .doc-pdf-root .data-local { text-align:right; margin:12px 0; font-size:11.5pt; }
+
+    /* Assinaturas do documento original */
+    .doc-pdf-root .assinaturas { margin-top:26px; }
+    .doc-pdf-root .assinatura-row { display:flex; justify-content:space-between; margin-bottom:26px; }
+    .doc-pdf-root .assinatura-item { text-align:center; width:46%; }
+    .doc-pdf-root .assinatura-linha { border-top:1px solid #000; padding-top:3px; margin-top:26px; font-size:10.5pt; text-align:center; }
+    .doc-pdf-root .assinatura-linha p { margin:0; text-indent:0; }
   `;
+
   container.className = 'doc-pdf-root';
   container.appendChild(estilo);
 
