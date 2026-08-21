@@ -211,16 +211,60 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
           </div>
 
           {!inicial?.conteudo_html && (
-            <div>
-              <Label>Conteúdo do documento</Label>
-              <Textarea
-                rows={8}
-                value={conteudo}
-                onChange={(e) => setConteudo(e.target.value)}
-                placeholder="Cole ou digite o texto completo do documento..."
-              />
+            <div className="space-y-3">
+              <Card className={pdfHtml ? 'border-primary' : ''}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="text-sm">
+                      <p className="font-medium flex items-center gap-2">
+                        <FileUp className="w-4 h-4 text-primary" /> Anexar documento em PDF
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Até {MAX_PAGINAS_PDF} páginas e 15 MB. O PDF vira o conteúdo do envelope e é selado com hash.
+                      </p>
+                    </div>
+                    {pdfHtml ? (
+                      <Button
+                        type="button" size="sm" variant="ghost" className="text-destructive"
+                        onClick={() => { setPdfHtml(''); setPdfNome(''); setPdfPaginas(0); }}
+                      >
+                        <X className="w-4 h-4 mr-1" /> Remover
+                      </Button>
+                    ) : (
+                      <Input
+                        type="file" accept="application/pdf" className="max-w-xs"
+                        disabled={convertendo}
+                        onChange={(e) => anexarPdf(e.target.files?.[0])}
+                      />
+                    )}
+                  </div>
+                  {convertendo && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Processando o PDF...
+                    </p>
+                  )}
+                  {pdfHtml && (
+                    <p className="text-xs text-primary">
+                      {pdfNome} • {pdfPaginas} página{pdfPaginas > 1 ? 's' : ''} pronto para assinatura
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {!pdfHtml && (
+                <div>
+                  <Label>Conteúdo do documento</Label>
+                  <Textarea
+                    rows={8}
+                    value={conteudo}
+                    onChange={(e) => setConteudo(e.target.value)}
+                    placeholder="Cole ou digite o texto completo do documento..."
+                  />
+                </div>
+              )}
             </div>
           )}
+
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
