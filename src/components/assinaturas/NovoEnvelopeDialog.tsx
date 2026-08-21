@@ -370,7 +370,7 @@ export default function NovoEnvelopeDialog({ open, onOpenChange, inicial }: Prop
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={salvar} disabled={criar.isPending}>
+          <Button onClick={salvar} disabled={criar.isPending || convertendo}>
             {criar.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Enviar para assinatura
           </Button>
