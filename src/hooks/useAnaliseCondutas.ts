@@ -8,7 +8,10 @@ export type TipoAlertaConduta =
   | "atrasos_recorrentes"
   | "falta"
   | "saida_nao_registrada"
-  | "intervalo_nao_registrado";
+  | "intervalo_nao_registrado"
+  | "intervalo_incompleto"
+  | "intervalo_insuficiente";
+
 
 export interface AlertaConduta {
   id: string;
@@ -185,23 +188,76 @@ export function useAnaliseCondutas(diasAnalise = 30) {
                 });
               }
 
-              // Intervalo não registrado (quando escala não é pré-assinalada)
+              // ===== Análise de intervalo (somente escalas SEM intervalo pré-assinalado) =====
               if (!escala.intervalo_pre_assinalado) {
-                const pausas = Array.isArray(reg.intervalos_pausas)
+                const pausas: any[] = Array.isArray(reg.intervalos_pausas)
                   ? reg.intervalos_pausas
                   : [];
-                const semIntervalo = pausas.length === 0 && !reg.intervalo_inicio;
-                if (semIntervalo && reg.saida) {
+
+                // Pausa iniciada e não finalizada
+                const pausaAberta = pausas.some((p) => p?.inicio && !p?.fim);
+                const intervaloLegadoAberto = !!reg.intervalo_inicio && !reg.intervalo_fim;
+
+                // Total de minutos efetivamente registrados
+                let minutosIntervalo = 0;
+                for (const p of pausas) {
+                  if (p?.inicio && p?.fim) {
+                    let d = diffMinutos(p.inicio, p.fim);
+                    if (d < 0) d += 24 * 60;
+                    minutosIntervalo += d;
+                  }
+                }
+                if (pausas.length === 0 && reg.intervalo_inicio && reg.intervalo_fim) {
+                  let d = diffMinutos(reg.intervalo_inicio, reg.intervalo_fim);
+                  if (d < 0) d += 24 * 60;
+                  minutosIntervalo += d;
+                }
+
+                // Mínimo exigido pela CLT conforme duração da jornada prevista
+                let jornadaMin = diffMinutos(escala.entrada, escala.saida || escala.entrada);
+                if (jornadaMin < 0) jornadaMin += 24 * 60;
+                const minimoExigido =
+                  jornadaMin > 360
+                    ? Number(escala.intervalo_minutos) || 60
+                    : jornadaMin > 240
+                    ? 15
+                    : 0;
+
+                const nenhumRegistro = minutosIntervalo === 0 && !pausaAberta && !intervaloLegadoAberto;
+
+                if (pausaAberta || intervaloLegadoAberto) {
+                  novosAlertas.push({
+                    id: `interv-aberto-${func.id}-${diaStr}`,
+                    tipo: "intervalo_incompleto",
+                    funcionario_id: func.id,
+                    funcionario_nome: func.nome_completo,
+                    data: diaStr,
+                    descricao: `Iniciou o intervalo mas não registrou o retorno`,
+                    detalhes: { minutos_registrados: minutosIntervalo, minimo_exigido: minimoExigido },
+                  });
+                } else if (minimoExigido > 0 && nenhumRegistro) {
                   novosAlertas.push({
                     id: `interv-${func.id}-${diaStr}`,
                     tipo: "intervalo_nao_registrado",
                     funcionario_id: func.id,
                     funcionario_nome: func.nome_completo,
                     data: diaStr,
-                    descricao: `Não registrou intervalo`,
+                    descricao: `Não registrou intervalo (mínimo exigido: ${minimoExigido} min)`,
+                    detalhes: { minimo_exigido: minimoExigido },
+                  });
+                } else if (minimoExigido > 0 && minutosIntervalo > 0 && minutosIntervalo < minimoExigido) {
+                  novosAlertas.push({
+                    id: `interv-insuf-${func.id}-${diaStr}`,
+                    tipo: "intervalo_insuficiente",
+                    funcionario_id: func.id,
+                    funcionario_nome: func.nome_completo,
+                    data: diaStr,
+                    descricao: `Intervalo de ${minutosIntervalo} min abaixo do mínimo de ${minimoExigido} min`,
+                    detalhes: { minutos_registrados: minutosIntervalo, minimo_exigido: minimoExigido },
                   });
                 }
               }
+
             }
           }
         }
