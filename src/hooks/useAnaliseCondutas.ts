@@ -8,7 +8,10 @@ export type TipoAlertaConduta =
   | "atrasos_recorrentes"
   | "falta"
   | "saida_nao_registrada"
-  | "intervalo_nao_registrado";
+  | "intervalo_nao_registrado"
+  | "intervalo_incompleto"
+  | "intervalo_insuficiente";
+
 
 export interface AlertaConduta {
   id: string;
