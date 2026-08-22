@@ -63,7 +63,7 @@ async function enviarEmail(para: string, assunto: string, html: string) {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: Deno.env.get('RESEND_FROM') || 'Assinatura Digital <onboarding@resend.dev>',
+      from: Deno.env.get('RESEND_FROM') || 'Senex Care <nao-responda@senexcare.app>',
       to: [para], subject: assunto, html,
     }),
   });

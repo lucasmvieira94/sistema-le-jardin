@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
         `;
 
         const env = await resend.emails.send({
-          from: "Senex Care <no-reply@resend.dev>",
+          from: Deno.env.get("RESEND_FROM") || "Senex Care <nao-responda@senexcare.app>",
           to: [destinatario],
           subject: assunto,
           html,

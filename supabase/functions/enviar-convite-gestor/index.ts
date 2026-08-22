@@ -60,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     const nomeEmpresa = config?.nome_empresa || 'Sistema de Gestão';
-    const dominioEmail = config?.dominio_email || 'onboarding@resend.dev';
+    const dominioEmail = config?.dominio_email || 'nao-responda@senexcare.app';
     
     const linkConvite = `${Deno.env.get("SUPABASE_URL")}/auth/v1/signup?redirect_to=${encodeURIComponent(`${req.headers.get("origin")}/auth?convite=${funcionario_id}`)}`;
 
