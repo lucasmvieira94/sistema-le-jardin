@@ -353,7 +353,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "Relatórios IA <onboarding@resend.dev>",
+      from: Deno.env.get("RESEND_FROM") || "Senex Care <nao-responda@senexcare.app>",
       to: [emailGestor],
       subject: `📊 Relatório Semanal com IA - ${dataInicio} a ${dataFim}`,
       html: emailHtml,
