@@ -18,6 +18,8 @@ const TIPO_META: Record<TipoAlertaConduta, { label: string; icon: any; cor: stri
   falta: { label: "Falta", icon: XCircle, cor: "border-red-500 text-red-700 bg-red-50" },
   saida_nao_registrada: { label: "Saída não registrada", icon: LogOutIcon, cor: "border-orange-500 text-orange-700 bg-orange-50" },
   intervalo_nao_registrado: { label: "Intervalo não registrado", icon: Coffee, cor: "border-blue-500 text-blue-700 bg-blue-50" },
+  intervalo_incompleto: { label: "Intervalo em aberto", icon: Coffee, cor: "border-purple-500 text-purple-700 bg-purple-50" },
+  intervalo_insuficiente: { label: "Intervalo insuficiente", icon: Coffee, cor: "border-cyan-500 text-cyan-700 bg-cyan-50" },
 };
 
 export default function AnaliseCondutas() {

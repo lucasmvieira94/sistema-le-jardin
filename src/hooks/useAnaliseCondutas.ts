@@ -87,7 +87,7 @@ export function useAnaliseCondutas(diasAnalise = 30) {
 
         const { data: funcionarios } = await supabase
           .from("funcionarios")
-          .select("id, nome_completo, data_inicio_vigencia, escala_id, escalas:escala_id(entrada, saida, jornada_trabalho, intervalo_pre_assinalado)")
+          .select("id, nome_completo, data_inicio_vigencia, escala_id, escalas:escala_id(entrada, saida, jornada_trabalho, intervalo_pre_assinalado, intervalo_minutos)")
           .eq("ativo", true);
 
         const { data: registros } = await supabase
