@@ -24,19 +24,19 @@ Deno.serve(async (req) => {
     const from = Deno.env.get('RESEND_FROM') || 'Senex Care <nao-responda@senexcare.app>';
     if (!key) return json({ ok: false, etapa: 'config', error: 'RESEND_API_KEY não configurada' }, 500);
 
-    // 1) Diagnóstico dos domínios cadastrados na conta Resend
+    // 1) Diagnóstico dos domínios (opcional: chaves "sending only" não têm essa permissão)
+    let dominios: unknown = 'indisponível (API key com permissão apenas de envio)';
     const domRes = await fetch('https://api.resend.com/domains', {
       headers: { Authorization: `Bearer ${key}` },
     });
     const domBody = await domRes.text();
-    if (!domRes.ok) {
-      return json({ ok: false, etapa: 'dominios', status: domRes.status, details: domBody }, domRes.status);
+    if (domRes.ok) {
+      dominios = (JSON.parse(domBody)?.data ?? []).map((d: any) => ({
+        name: d.name,
+        status: d.status,
+        region: d.region,
+      }));
     }
-    const dominios = (JSON.parse(domBody)?.data ?? []).map((d: any) => ({
-      name: d.name,
-      status: d.status,
-      region: d.region,
-    }));
 
     // 2) Envio de teste (opcional)
     const { para } = await req.json().catch(() => ({ para: null }));
