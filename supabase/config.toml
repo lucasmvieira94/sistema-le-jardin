@@ -119,6 +119,3 @@ verify_jwt = false
 
 [functions.assinatura-publica]
 verify_jwt = false
-
-[functions.teste-email-resend]
-verify_jwt = false
