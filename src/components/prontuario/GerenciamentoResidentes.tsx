@@ -966,10 +966,10 @@ export default function GerenciamentoResidentes() {
                   </TableCell>
                 </TableRow>
               ))}
-              {residentes.length === 0 && (
+              {residentesFiltrados.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    Nenhum residente cadastrado
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    Nenhum residente encontrado com os filtros selecionados
                   </TableCell>
                 </TableRow>
               )}
