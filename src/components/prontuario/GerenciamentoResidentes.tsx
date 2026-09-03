@@ -881,6 +881,45 @@ export default function GerenciamentoResidentes() {
       </CardHeader>
 
       <CardContent>
+        {/* Filtros de exibição */}
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, prontuário ou quarto..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v as typeof filtroStatus)}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Situação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ativos">Somente ativos</SelectItem>
+              <SelectItem value="inativos">Somente inativos</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filtroContrato} onValueChange={(v) => setFiltroContrato(v as typeof filtroContrato)}>
+            <SelectTrigger className="w-full md:w-56">
+              <SelectValue placeholder="Contrato" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os contratos</SelectItem>
+              <SelectItem value="em_dia">Em dia</SelectItem>
+              <SelectItem value="proximo_renovacao">Próximo de renovação</SelectItem>
+              <SelectItem value="vencido">Vencido</SelectItem>
+              <SelectItem value="sem_contrato">Sem contrato</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <p className="text-xs text-muted-foreground mb-2">
+          Exibindo {residentesFiltrados.length} de {residentes.length} residente(s)
+        </p>
+
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -890,11 +929,12 @@ export default function GerenciamentoResidentes() {
                 <TableHead>Quarto</TableHead>
                 <TableHead>Idade</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Contrato</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {residentes.map((residente) => (
+              {residentesFiltrados.map((residente) => (
                 <TableRow key={residente.id}>
                   <TableCell className="font-medium">
                     {residente.nome_completo}
