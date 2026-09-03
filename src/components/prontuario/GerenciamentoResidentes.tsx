@@ -920,6 +920,24 @@ export default function GerenciamentoResidentes() {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    {(() => {
+                      const info = statusContratoDe(residente.id);
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="outline" className={CONTRATO_STATUS_CLASSES[info.key]}>
+                            {info.label}
+                          </Badge>
+                          {info.contrato?.data_fim_contrato && (
+                            <span className="text-[11px] text-muted-foreground">
+                              até {format(new Date(info.contrato.data_fim_contrato + "T12:00:00"), "dd/MM/yyyy")}
+                              {info.diasRestantes !== null && info.diasRestantes >= 0 && ` (${info.diasRestantes}d)`}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
