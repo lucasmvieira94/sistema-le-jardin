@@ -74,8 +74,15 @@ export default function GerenciamentoResidentes() {
     observacoes_gerais: ""
   });
 
+  // Filtros de exibição (por padrão, somente residentes ativos)
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<"ativos" | "inativos" | "todos">("ativos");
+  const [filtroContrato, setFiltroContrato] = useState<"todos" | ContratoStatusKey>("todos");
+  const [contratos, setContratos] = useState<ContratoResumo[]>([]);
+
   useEffect(() => {
     fetchResidentes();
+    fetchContratos();
   }, []);
 
   const fetchResidentes = async () => {
@@ -97,6 +104,34 @@ export default function GerenciamentoResidentes() {
       setLoading(false);
     }
   };
+
+  /** Contratos de todos os residentes, usados para calcular o status contratual. */
+  const fetchContratos = async () => {
+    const { data, error } = await supabase
+      .from('contratos_residentes')
+      .select('id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato');
+
+    if (!error) setContratos((data || []) as ContratoResumo[]);
+  };
+
+  const statusContratoDe = (residenteId: string) =>
+    calcularStatusContrato(contratos.filter((c) => c.residente_id === residenteId));
+
+  const residentesFiltrados = residentes.filter((r) => {
+    if (filtroStatus === "ativos" && !r.ativo) return false;
+    if (filtroStatus === "inativos" && r.ativo) return false;
+
+    const termo = busca.trim().toLowerCase();
+    if (termo) {
+      const alvo = `${r.nome_completo ?? ""} ${r.numero_prontuario ?? ""} ${r.quarto ?? ""}`.toLowerCase();
+      if (!alvo.includes(termo)) return false;
+    }
+
+    if (filtroContrato !== "todos" && statusContratoDe(r.id).key !== filtroContrato) return false;
+
+    return true;
+  });
+
 
   const gerarNumeroProntuario = async () => {
     try {
