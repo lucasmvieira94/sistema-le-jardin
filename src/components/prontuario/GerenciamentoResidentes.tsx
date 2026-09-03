@@ -10,7 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown, ClipboardList } from "lucide-react";
+import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown, ClipboardList, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  calcularStatusContrato,
+  CONTRATO_STATUS_CLASSES,
+  type ContratoResumo,
+  type ContratoStatusKey,
+} from "@/utils/contratoStatus";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
@@ -67,8 +74,15 @@ export default function GerenciamentoResidentes() {
     observacoes_gerais: ""
   });
 
+  // Filtros de exibição (por padrão, somente residentes ativos)
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<"ativos" | "inativos" | "todos">("ativos");
+  const [filtroContrato, setFiltroContrato] = useState<"todos" | ContratoStatusKey>("todos");
+  const [contratos, setContratos] = useState<ContratoResumo[]>([]);
+
   useEffect(() => {
     fetchResidentes();
+    fetchContratos();
   }, []);
 
   const fetchResidentes = async () => {
@@ -90,6 +104,34 @@ export default function GerenciamentoResidentes() {
       setLoading(false);
     }
   };
+
+  /** Contratos de todos os residentes, usados para calcular o status contratual. */
+  const fetchContratos = async () => {
+    const { data, error } = await supabase
+      .from('contratos_residentes')
+      .select('id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato');
+
+    if (!error) setContratos((data || []) as ContratoResumo[]);
+  };
+
+  const statusContratoDe = (residenteId: string) =>
+    calcularStatusContrato(contratos.filter((c) => c.residente_id === residenteId));
+
+  const residentesFiltrados = residentes.filter((r) => {
+    if (filtroStatus === "ativos" && !r.ativo) return false;
+    if (filtroStatus === "inativos" && r.ativo) return false;
+
+    const termo = busca.trim().toLowerCase();
+    if (termo) {
+      const alvo = `${r.nome_completo ?? ""} ${r.numero_prontuario ?? ""} ${r.quarto ?? ""}`.toLowerCase();
+      if (!alvo.includes(termo)) return false;
+    }
+
+    if (filtroContrato !== "todos" && statusContratoDe(r.id).key !== filtroContrato) return false;
+
+    return true;
+  });
+
 
   const gerarNumeroProntuario = async () => {
     try {
@@ -881,6 +923,45 @@ export default function GerenciamentoResidentes() {
       </CardHeader>
 
       <CardContent>
+        {/* Filtros de exibição */}
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, prontuário ou quarto..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v as typeof filtroStatus)}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Situação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ativos">Somente ativos</SelectItem>
+              <SelectItem value="inativos">Somente inativos</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filtroContrato} onValueChange={(v) => setFiltroContrato(v as typeof filtroContrato)}>
+            <SelectTrigger className="w-full md:w-56">
+              <SelectValue placeholder="Contrato" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os contratos</SelectItem>
+              <SelectItem value="em_dia">Em dia</SelectItem>
+              <SelectItem value="proximo_renovacao">Próximo de renovação</SelectItem>
+              <SelectItem value="vencido">Vencido</SelectItem>
+              <SelectItem value="sem_contrato">Sem contrato</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <p className="text-xs text-muted-foreground mb-2">
+          Exibindo {residentesFiltrados.length} de {residentes.length} residente(s)
+        </p>
+
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -890,11 +971,12 @@ export default function GerenciamentoResidentes() {
                 <TableHead>Quarto</TableHead>
                 <TableHead>Idade</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Contrato</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {residentes.map((residente) => (
+              {residentesFiltrados.map((residente) => (
                 <TableRow key={residente.id}>
                   <TableCell className="font-medium">
                     {residente.nome_completo}
@@ -918,6 +1000,24 @@ export default function GerenciamentoResidentes() {
                     >
                       {residente.ativo ? "Ativo" : "Inativo"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const info = statusContratoDe(residente.id);
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="outline" className={CONTRATO_STATUS_CLASSES[info.key]}>
+                            {info.label}
+                          </Badge>
+                          {info.contrato?.data_fim_contrato && (
+                            <span className="text-[11px] text-muted-foreground">
+                              até {format(new Date(info.contrato.data_fim_contrato + "T12:00:00"), "dd/MM/yyyy")}
+                              {info.diasRestantes !== null && info.diasRestantes >= 0 && ` (${info.diasRestantes}d)`}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -966,10 +1066,10 @@ export default function GerenciamentoResidentes() {
                   </TableCell>
                 </TableRow>
               ))}
-              {residentes.length === 0 && (
+              {residentesFiltrados.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                    Nenhum residente cadastrado
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    Nenhum residente encontrado com os filtros selecionados
                   </TableCell>
                 </TableRow>
               )}
