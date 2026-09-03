@@ -21,6 +21,8 @@ export default function Index() {
         <AlertasMedicamentos />
         <AlertasFraldas />
         <AlertasContasPagar />
+        <AlertasContratosResidentes />
+
       </div>
       
       {/* Alertas de Prontuários em Atraso */}
