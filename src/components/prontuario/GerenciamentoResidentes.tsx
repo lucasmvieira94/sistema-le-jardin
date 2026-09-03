@@ -10,7 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown, ClipboardList } from "lucide-react";
+import { Users, Plus, Edit, Eye, Upload, Download, UserX, UserCheck, FileText, FileDown, ClipboardList, Search } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  calcularStatusContrato,
+  CONTRATO_STATUS_CLASSES,
+  type ContratoResumo,
+  type ContratoStatusKey,
+} from "@/utils/contratoStatus";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import * as XLSX from 'xlsx';
