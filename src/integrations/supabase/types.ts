@@ -3610,10 +3610,14 @@ export type Database = {
           data_registro: string
           descricao: string
           funcionario_id: string
+          funcionario_nome: string | null
           horario_registro: string
           id: string
+          imutavel: boolean
+          justificativa_retificacao: string | null
           observacoes: string | null
           residente_id: string
+          retifica_registro_id: string | null
           tenant_id: string | null
           tipo_registro: string
           titulo: string
@@ -3625,10 +3629,14 @@ export type Database = {
           data_registro?: string
           descricao: string
           funcionario_id: string
+          funcionario_nome?: string | null
           horario_registro?: string
           id?: string
+          imutavel?: boolean
+          justificativa_retificacao?: string | null
           observacoes?: string | null
           residente_id: string
+          retifica_registro_id?: string | null
           tenant_id?: string | null
           tipo_registro: string
           titulo: string
@@ -3640,10 +3648,14 @@ export type Database = {
           data_registro?: string
           descricao?: string
           funcionario_id?: string
+          funcionario_nome?: string | null
           horario_registro?: string
           id?: string
+          imutavel?: boolean
+          justificativa_retificacao?: string | null
           observacoes?: string | null
           residente_id?: string
+          retifica_registro_id?: string | null
           tenant_id?: string | null
           tipo_registro?: string
           titulo?: string
@@ -3669,6 +3681,13 @@ export type Database = {
             columns: ["residente_id"]
             isOneToOne: false
             referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prontuario_registros_retifica_registro_id_fkey"
+            columns: ["retifica_registro_id"]
+            isOneToOne: false
+            referencedRelation: "prontuario_registros"
             referencedColumns: ["id"]
           },
           {
@@ -4974,6 +4993,22 @@ export type Database = {
       redefinir_prontuarios_automatico: { Args: never; Returns: undefined }
       redefinir_prontuarios_com_horario: { Args: never; Returns: undefined }
       redefinir_status_prontuarios_diarios: { Args: never; Returns: undefined }
+      registrar_lancamento_prontuario: {
+        Args: {
+          p_conteudo: Json
+          p_funcionario_id: string
+          p_justificativa?: string
+          p_residente_id: string
+          p_retifica_id?: string
+          p_titulo?: string
+        }
+        Returns: {
+          ciclo_id: string
+          message: string
+          registro_id: string
+          success: boolean
+        }[]
+      }
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
