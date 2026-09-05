@@ -1,64 +1,44 @@
-# Contracheques dos Funcionários
+# Prontuário em ciclo de 24 horas com lançamentos imutáveis
 
-Novo módulo para o gestor subir **um único PDF contendo todos os contracheques do mês** e o sistema separar as páginas por funcionário automaticamente, disponibilizando cada holerite na área do funcionário (acesso por PIN).
+## O que muda na prática
 
-## Fluxo do Gestor
+Hoje o prontuário do dia é um formulário único que qualquer cuidadora pode reescrever, e quem clica em "Finalizar" tranca o dia inteiro — inclusive para o turno da noite. Isso quebra a auditoria: não dá para saber quem escreveu o quê, e o turno noturno pode ficar sem espaço para registrar.
 
-1. Nova página `/contracheques` no painel admin (menu lateral, na seção Funcionários).
-2. Formulário simples:
-   - **Mês/Ano de referência** (ex.: 10/2026)
-   - **Arquivo PDF consolidado** (drag & drop)
-3. Ao enviar:
-   - O PDF é processado no navegador (extração de texto por página com `pdfjs-dist`).
-   - Para cada página, o sistema procura o nome de um funcionário ativo do tenant (match case-insensitive, ignora acentos).
-   - Páginas consecutivas do mesmo funcionário são agrupadas em um único holerite.
-   - Cada holerite é recortado em um PDF individual (`pdf-lib`) e salvo em Storage.
-   - É criado um registro em `contracheques` vinculando funcionário + mês + arquivo.
-4. Tela mostra o resultado: quantos foram distribuídos, quantas páginas não identificadas (listadas para reprocessar/atribuir manualmente).
-5. Ações extras: reenviar (substitui o do mesmo mês), excluir holerite individual, atribuir página órfã manualmente a um funcionário.
+Nova forma de trabalho:
 
-## Fluxo do Funcionário
+- O prontuário de cada residente fica aberto das 00h00 às 23h59 do dia.
+- As cuidadoras dos dois turnos (08h-20h e 20h-08h) adicionam quantos lançamentos quiserem ao longo do dia.
+- Cada lançamento enviado fica gravado com data, hora e nome da autora, e não pode mais ser apagado nem alterado.
+- Se algo saiu errado, a cuidadora adiciona uma **retificação** ligada ao lançamento original. O texto original continua visível, com a correção logo abaixo.
+- Ninguém tranca o dia manualmente. À meia-noite o dia anterior é fechado automaticamente e passa a ser somente leitura.
 
-1. Novo botão **"Meus Contracheques"** no portal do funcionário (rota `/meus-contracheques`, acesso por PIN, sessão de 2h já existente).
-2. Lista dos contracheques do funcionário logado, ordenados por mês (mais recente primeiro).
-3. Cada linha: mês de referência, data de disponibilização, botão **Visualizar** (abre PDF em nova aba via signed URL) e **Baixar**.
+## Como fica a tela da cuidadora
 
-## Estrutura Técnica
+1. Escolhe o residente (a lista passa a mostrar "Aberto até 23h59" e quantos lançamentos já existem no dia, em vez de "Não iniciado / Finalizado").
+2. Vê a linha do tempo do dia: cada lançamento com hora, autora e conteúdo; retificações aparecem recuadas sob o registro corrigido.
+3. Preenche o formulário de campos configurados e envia. Após enviar, aquele lançamento aparece na linha do tempo já bloqueado, e o formulário volta em branco para o próximo.
+4. Em cada lançamento próprio do dia há a ação "Retificar", que abre um campo de correção com justificativa obrigatória.
+5. Dias anteriores aparecem apenas para leitura, com aviso de prontuário encerrado.
 
-### Banco (migration)
+O botão "Finalizar prontuário" e o código de 4 dígitos de finalização deixam de existir no fluxo da cuidadora. A gestão continua vendo tudo em Controle de Prontuários e Supervisor de Prontuários, agora em formato de linha do tempo por dia.
 
-Tabela `contracheques`:
-- `funcionario_id` (FK funcionarios)
-- `mes` (int 1–12), `ano` (int)
-- `path` (caminho no Storage)
-- `tamanho_bytes`, `paginas`
-- `enviado_por` (uuid do gestor)
-- unique (`tenant_id`, `funcionario_id`, `mes`, `ano`)
+## Detalhes técnicos
 
-RLS:
-- Gestor autenticado (mesmo tenant) faz tudo.
-- Função `get_meus_contracheques(p_funcionario_id uuid)` `SECURITY DEFINER` retorna somente os do funcionário — chamada da área pública com o `funcionario_id` da sessão PIN (padrão já usado no projeto).
+Banco (migração):
+- `prontuario_registros`: novas colunas `imutavel boolean default true`, `retifica_registro_id uuid` (auto-referência), `justificativa_retificacao text`, `funcionario_nome text` (carimbo do autor no momento do envio).
+- Trigger `impedir_alteracao_registro_prontuario`: bloqueia `UPDATE`/`DELETE` em registros com `imutavel = true`, exceto pela rotina de sistema; grava tentativa em `audit_log`.
+- Trigger de escrita: rejeita `INSERT` em ciclo com `status = 'encerrado'` ou `data_ciclo <> data atual (America/Sao_Paulo)`.
+- Nova função `registrar_lancamento_prontuario(p_residente_id, p_funcionario_id, p_conteudo jsonb, p_retifica_id, p_justificativa)` — `SECURITY DEFINER`, cria o ciclo do dia se faltar (`status = 'em_andamento'`), insere o lançamento e devolve o id. Mantém compatibilidade com o acesso anônimo via PIN.
+- `redefinir_prontuarios_com_horario()`: reescrita para fechar (`encerrado`) todos os ciclos com `data_ciclo < hoje`, marcando `data_encerramento` e o motivo `fechamento_automatico`; permanece acionada pelo cron de `cronometro-prontuarios`.
+- `finalizar_prontuario_diario` e `salvar_prontuario_simples` deixam de ser usadas pelo app; ficam apenas para o fechamento em massa da gestão (`finalizar_todos_prontuarios_abertos`).
+- Migração de dados: os registros existentes de `tipo_registro = 'prontuario_completo'` continuam válidos e são exibidos como o primeiro lançamento do respectivo dia.
 
-### Storage
+Frontend:
+- `NovoFormularioProntuario.tsx`: remove o auto-save que sobrescreve o registro único e a finalização por código; passa a enviar lançamentos via a nova função. Rascunho local (`localStorage`) para não perder digitação antes do envio.
+- Novo `LinhaTempoProntuario.tsx`: lista de lançamentos do ciclo com hora, autora, badge de turno (diurno/noturno) e retificações aninhadas; ação "Retificar" com justificativa.
+- `Prontuario.tsx` / `ResidentesList.tsx`: status por residente passa a ser "Aberto (N lançamentos)" ou "Encerrado"; some a barra de progresso por campos obrigatórios e o bloqueio do botão por finalização.
+- `ControleProntuarios.tsx`, `SupervisorProntuarios.tsx`, `MeusProntuarios.tsx`, `ProntuarioDetalhado.tsx`, `CicloDetalhado.tsx`: leitura em linha do tempo; impressão/PDF do dia lista os lançamentos em ordem cronológica com autoria.
+- `AssistenteProntuarioIA.tsx` e `analisar-prontuarios`: passam a consolidar todos os lançamentos do período, não só o último registro.
 
-Bucket privado `contracheques`, layout `{tenant_id}/{funcionario_id}/{ano}-{mes}.pdf`. Políticas RLS em `storage.objects` restringindo por bucket + tenant. URLs sempre assinadas (5 min).
-
-### Frontend
-
-- `src/pages/Contracheques.tsx` — página admin (upload + resultado).
-- `src/components/contracheques/UploadContrachequesForm.tsx` — processa PDF no cliente.
-- `src/pages/MeusContracheques.tsx` — página pública do funcionário.
-- `src/hooks/useContracheques.ts` — queries/mutations.
-- Bibliotecas: `pdfjs-dist` (extrair texto), `pdf-lib` (recortar páginas).
-- Rota admin registrada em `AdminLayout` / `App.tsx`; rota pública registrada em `PublicLayout`; botão no `FuncionarioAccess`.
-
-### Matching de nomes
-
-- Normaliza (lowercase, remove acentos, colapsa espaços) o nome do funcionário e o texto da página.
-- Considera match quando o nome completo aparece na página; empate resolvido pelo nome mais longo (mais específico).
-- Páginas sem match viram "órfãs" e podem ser atribuídas manualmente.
-
-## Observações
-
-- Processamento roda no navegador do gestor (sem edge function), então PDFs grandes (>50 MB) podem ser lentos — mostro barra de progresso.
-- Se o layout do holerite mudar e o nome não aparecer no texto (PDF escaneado), o funcionário não será identificado; nesse caso a UI oferece atribuição manual.
+Testes:
+- Testes unitários da consolidação de lançamentos e da regra de janela do ciclo (dia atual aberto, dias anteriores bloqueados, virada de meia-noite em UTC-3).
