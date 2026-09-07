@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
-import { FileHeart, UserPlus, CheckCircle, Clock, FileX, Calendar, ArrowLeft } from "lucide-react";
+import { FileHeart, UserPlus, CheckCircle, Clock, Calendar, ArrowLeft, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { hojeISO, formatarDataCompleta } from "@/utils/dateUtils";
+import { TIPOS_LANCAMENTO } from "@/utils/prontuarioLancamentos";
 import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioProntuario";
-import ResidentesList from "@/components/prontuario/ResidentesList";
 
 export default function Prontuario() {
   const location = useLocation();
