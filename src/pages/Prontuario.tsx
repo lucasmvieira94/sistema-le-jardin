@@ -298,23 +298,15 @@ export default function Prontuario() {
               recarregarStatusProntuarios();
             }}
             onStatusChange={async (residenteId, status, cicloId) => {
-              // Calcular progresso baseado nos campos obrigatórios preenchidos
-              let progresso = 0;
-              
-              if (status === 'encerrado') {
-                progresso = 100; // Finalizado = 100%
-              } else if (status === 'nao_iniciado') {
-                progresso = 0; // Não iniciado = 0%
-              } else if (cicloId) {
-                // Para 'em_andamento' e 'completo', calcular baseado nos campos
-                progresso = await calcularProgressoBaseadoCampos(cicloId);
-              }
-              
-              const statusFinal = derivarStatusPeloProgresso(status, progresso);
+              const lancamentos = cicloId ? await contarLancamentos(cicloId) : 0;
 
               setProntuariosStatus(prev => ({
                 ...prev,
-                [residenteId]: { status: statusFinal, cicloId, progresso }
+                [residenteId]: {
+                  status: status === 'encerrado' ? 'encerrado' : 'aberto',
+                  cicloId,
+                  lancamentos,
+                }
               }));
             }}
           />
