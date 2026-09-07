@@ -41,170 +41,44 @@ export default function Prontuario() {
     }
   }, [location, navigate]);
 
-  const calcularProgressoBaseadoCampos = async (cicloId: string) => {
-    try {
-      // Buscar campos obrigatórios configurados
-      const { data: camposObrigatorios, error: camposError } = await supabase
-        .from('formulario_campos_config')
-        .select('id, label, tipo')
-        .eq('ativo', true)
-        .eq('obrigatorio', true);
+  // Conta quantos lançamentos já existem no ciclo do dia
+  const contarLancamentos = async (cicloId: string) => {
+    const { count } = await supabase
+      .from('prontuario_registros')
+      .select('id', { count: 'exact', head: true })
+      .eq('ciclo_id', cicloId)
+      .in('tipo_registro', TIPOS_LANCAMENTO as unknown as string[]);
 
-      if (camposError || !camposObrigatorios || camposObrigatorios.length === 0) {
-        return 0; // Se não há campos obrigatórios ou erro, progresso 0
-      }
-
-      // Buscar registro do prontuário para este ciclo
-      const { data: registro, error: registroError } = await supabase
-        .from('prontuario_registros')
-        .select('descricao')
-        .eq('ciclo_id', cicloId)
-        .eq('tipo_registro', 'prontuario_completo')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (registroError || !registro) {
-        return 0; // Se não há dados salvos, progresso 0
-      }
-
-      // Analisar dados preenchidos
-      let dadosPreenchidos;
-      try {
-        dadosPreenchidos = JSON.parse(registro.descricao);
-      } catch (e) {
-        return 0; // Se não consegue parsear, progresso 0
-      }
-
-      // Contar campos obrigatórios preenchidos
-      let camposPreenchidos = 0;
-      
-      for (const campo of camposObrigatorios) {
-        const chaveFormulario = `campo_${campo.id}`;
-        const valor = dadosPreenchidos[chaveFormulario];
-        
-        // Verificar se o campo está preenchido baseado no tipo
-        let preenchido = false;
-        
-        switch (campo.tipo) {
-          case 'text':
-          case 'textarea':
-            preenchido = valor && typeof valor === 'string' && valor.trim().length > 0;
-            break;
-          case 'radio':
-          case 'select':
-            preenchido = valor && typeof valor === 'string' && valor.trim().length > 0;
-            break;
-          case 'checkbox':
-            preenchido = Array.isArray(valor) && valor.length > 0;
-            break;
-          case 'slider':
-            preenchido = Array.isArray(valor) && valor.length > 0 && valor[0] !== undefined;
-            break;
-          default:
-            preenchido = valor !== undefined && valor !== null && valor !== '';
-        }
-        
-        if (preenchido) {
-          camposPreenchidos++;
-        }
-      }
-
-      // Calcular progresso percentual
-      const progressoPercentual = Math.round((camposPreenchidos / camposObrigatorios.length) * 100);
-      console.log(`🎯 Progresso calculado: ${camposPreenchidos}/${camposObrigatorios.length} campos obrigatórios = ${progressoPercentual}%`);
-      
-      return progressoPercentual;
-    } catch (error) {
-      console.error('Erro ao calcular progresso baseado em campos:', error);
-      return 0;
-    }
-  };
-
-  const derivarStatusPeloProgresso = (statusBanco: string, progresso: number) => {
-    if (statusBanco === 'encerrado') return 'encerrado';
-    if (progresso >= 100) return 'completo';
-    if (statusBanco === 'nao_iniciado' && progresso === 0) return 'nao_iniciado';
-    return progresso > 0 || statusBanco === 'em_andamento' ? 'em_andamento' : statusBanco;
+    return count || 0;
   };
 
   const verificarStatusProntuarios = async (residentesData: any[]) => {
-    const statusMap: Record<string, {status: string, cicloId: string | null, progresso?: number}> = {};
-    
+    const statusMap: Record<string, {status: string, cicloId: string | null, lancamentos?: number}> = {};
+
     for (const residente of residentesData) {
       try {
-        // Buscar diretamente do banco de dados para ter informações atualizadas
-        const { data: ciclo, error } = await supabase
+        const { data: ciclo } = await supabase
           .from('prontuario_ciclos')
-          .select('id, status, data_inicio_efetivo')
+          .select('id, status')
           .eq('residente_id', residente.id)
           .eq('data_ciclo', hojeISO())
           .maybeSingle();
 
-        if (!error && ciclo) {
-          // Calcular progresso baseado nos campos obrigatórios preenchidos
-          let progresso = 0;
-          
-          if (ciclo.status === 'encerrado') {
-            progresso = 100; // Finalizado = 100%
-          } else if (ciclo.status === 'nao_iniciado') {
-            progresso = 0; // Não iniciado = 0%
-          } else {
-            // Para 'em_andamento' e 'completo', calcular baseado nos campos
-            progresso = await calcularProgressoBaseadoCampos(ciclo.id);
-          }
-          
-          const statusFinal = derivarStatusPeloProgresso(ciclo.status, progresso);
-
+        if (ciclo) {
           statusMap[residente.id] = {
-            status: statusFinal,
+            status: ciclo.status === 'encerrado' ? 'encerrado' : 'aberto',
             cicloId: ciclo.id,
-            progresso
+            lancamentos: await contarLancamentos(ciclo.id),
           };
         } else {
-          // Se não encontrou ciclo, verificar com a função RPC como fallback
-          const { data: verificacao, error: rpcError } = await supabase
-            .rpc('verificar_prontuario_diario_existente', { 
-              p_residente_id: residente.id 
-            });
-          
-          if (!rpcError && verificacao?.[0]) {
-            const cicloInfo = verificacao[0];
-            
-            let progresso = 0;
-            if (cicloInfo.status === 'encerrado') {
-              progresso = 100;
-            } else if (cicloInfo.status === 'nao_iniciado') {
-              progresso = 0;
-            } else if (cicloInfo.ciclo_id) {
-              progresso = await calcularProgressoBaseadoCampos(cicloInfo.ciclo_id);
-            }
-            
-            const statusFinal = derivarStatusPeloProgresso(cicloInfo.status || 'nao_iniciado', progresso);
-
-            statusMap[residente.id] = {
-              status: statusFinal,
-              cicloId: cicloInfo.ciclo_id,
-              progresso
-            };
-          } else {
-            statusMap[residente.id] = {
-              status: 'nao_iniciado',
-              cicloId: null,
-              progresso: 0
-            };
-          }
+          statusMap[residente.id] = { status: 'aberto', cicloId: null, lancamentos: 0 };
         }
       } catch (err) {
         console.error('Erro ao verificar status do prontuário:', err);
-        statusMap[residente.id] = {
-          status: 'nao_iniciado',
-          cicloId: null,
-          progresso: 0
-        };
+        statusMap[residente.id] = { status: 'aberto', cicloId: null, lancamentos: 0 };
       }
     }
-    
+
     setProntuariosStatus(statusMap);
   };
 
