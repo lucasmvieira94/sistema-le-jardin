@@ -108,62 +108,26 @@ export default function Prontuario() {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'nao_iniciado':
-        return (
-          <Badge className="flex items-center gap-1 bg-red-500 text-white">
-            <FileX className="w-3 h-3" />
-            Não Iniciado
-          </Badge>
-        );
-      case 'em_andamento':
-        return (
-          <Badge className="flex items-center gap-1 bg-yellow-500 text-white">
-            <Clock className="w-3 h-3" />
-            Em Andamento
-          </Badge>
-        );
-      case 'completo':
-        return (
-          <Badge className="flex items-center gap-1 bg-green-500 text-white">
-            <CheckCircle className="w-3 h-3" />
-            Completo
-          </Badge>
-        );
-      case 'encerrado':
-        return (
-          <Badge className="flex items-center gap-1 bg-green-600 text-white">
-            <CheckCircle className="w-3 h-3" />
-            Concluído
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="flex items-center gap-1 bg-red-500 text-white">
-            <FileX className="w-3 h-3" />
-            Não Iniciado
-          </Badge>
-        );
+    if (status === 'encerrado') {
+      return (
+        <Badge className="flex items-center gap-1 bg-gray-500 text-white">
+          <CheckCircle className="w-3 h-3" />
+          Encerrado
+        </Badge>
+      );
     }
+
+    return (
+      <Badge className="flex items-center gap-1 bg-emerald-600 text-white">
+        <Unlock className="w-3 h-3" />
+        Aberto até 23h59
+      </Badge>
+    );
   };
 
-  const getButtonText = (status: string) => {
-    switch (status) {
-      case 'nao_iniciado':
-        return 'Iniciar Prontuário';
-      case 'em_andamento':
-        return 'Continuar Prontuário';
-      case 'completo':
-        return 'Finalizar Prontuário';
-      case 'encerrado':
-        return 'Ver Prontuário';
-      default:
-        return 'Iniciar Prontuário';
-    }
-  };
-
-  const isButtonDisabled = (status: string) => {
-    return status === 'encerrado';
+  const getButtonText = (status: string, lancamentos: number) => {
+    if (status === 'encerrado') return 'Ver prontuário';
+    return lancamentos > 0 ? 'Adicionar informações' : 'Registrar informações';
   };
 
   // Se não tem funcionário ID, não renderiza nada (vai redirecionar)
