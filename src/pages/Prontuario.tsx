@@ -19,7 +19,7 @@ export default function Prontuario() {
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
   const [selectedResidente, setSelectedResidente] = useState<string | null>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
-  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, progresso?: number}>>({});
+  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, lancamentos?: number}>>({});
 
   // Verificar se já tem dados do funcionário na URL
   useEffect(() => {
