@@ -19,7 +19,7 @@ export default function Prontuario() {
   const [funcionarioNome, setFuncionarioNome] = useState<string>("");
   const [selectedResidente, setSelectedResidente] = useState<string | null>(null);
   const [residentes, setResidentes] = useState<any[]>([]);
-  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, progresso?: number}>>({});
+  const [prontuariosStatus, setProntuariosStatus] = useState<Record<string, {status: string, cicloId: string | null, lancamentos?: number}>>({});
 
   // Verificar se já tem dados do funcionário na URL
   useEffect(() => {
@@ -180,31 +180,25 @@ export default function Prontuario() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-6xl mx-auto">
                 {residentes.map((residente) => {
-                  const statusInfo = prontuariosStatus[residente.id] || { status: 'nao_iniciado', cicloId: null, progresso: 0 };
-                  const isDisabled = isButtonDisabled(statusInfo.status);
+                  const statusInfo = prontuariosStatus[residente.id] || { status: 'aberto', cicloId: null, lancamentos: 0 };
+                  const lancamentos = statusInfo.lancamentos || 0;
                   const hoje = formatarDataCompleta(hojeISO());
-                  
+
                   return (
                     <div
                       key={residente.id}
-                      onClick={() => !isDisabled && setSelectedResidente(residente.id)}
-                      className={`p-3 sm:p-4 bg-white rounded-lg border border-gray-200 transition-all ${
-                        isDisabled 
-                          ? 'cursor-not-allowed opacity-70' 
-                          : 'hover:border-primary hover:shadow-md cursor-pointer active:scale-95'
-                      } group`}
+                      onClick={() => setSelectedResidente(residente.id)}
+                      className="p-3 sm:p-4 bg-white rounded-lg border border-gray-200 transition-all hover:border-primary hover:shadow-md cursor-pointer active:scale-95 group"
                     >
                       {/* Data do dia */}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 pb-2 border-b border-gray-100">
                         <Calendar className="w-3 h-3" />
                         <span className="capitalize">{hoje}</span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex-1">
-                          <h3 className={`font-semibold text-lg text-gray-900 transition-colors ${
-                            !isDisabled && 'group-hover:text-primary'
-                          }`}>
+                          <h3 className="font-semibold text-lg text-gray-900 transition-colors group-hover:text-primary">
                             {residente.nome_completo}
                           </h3>
                         </div>
@@ -212,34 +206,25 @@ export default function Prontuario() {
                           {getStatusBadge(statusInfo.status)}
                         </div>
                       </div>
-                      
-                      {/* Barra de progresso */}
-                      {statusInfo.status !== 'nao_iniciado' && (
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span>Progresso do preenchimento</span>
-                            <span>{statusInfo.progresso || 0}%</span>
-                          </div>
-                          <Progress value={statusInfo.progresso || 0} className="h-2" />
-                        </div>
-                      )}
-                      
+
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+                        <Clock className="w-3 h-3" />
+                        {lancamentos === 0
+                          ? 'Nenhum registro hoje'
+                          : `${lancamentos} ${lancamentos === 1 ? 'registro' : 'registros'} hoje`}
+                      </p>
+
                       <div className="mt-3">
-                        <Button 
-                          variant={isDisabled ? "secondary" : "outline"}
-                          size="sm" 
-                          disabled={isDisabled}
-                          className={`w-full transition-colors ${
-                            !isDisabled && 'group-hover:bg-primary group-hover:text-white'
-                          }`}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full transition-colors group-hover:bg-primary group-hover:text-white"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!isDisabled) {
-                              setSelectedResidente(residente.id);
-                            }
+                            setSelectedResidente(residente.id);
                           }}
                         >
-                          {getButtonText(statusInfo.status)}
+                          {getButtonText(statusInfo.status, lancamentos)}
                         </Button>
                       </div>
                     </div>

@@ -82,7 +82,7 @@ export default function ProntuarioCiclos({ funcionarioId }: ProntuarioCiclosProp
           // Para prontuários encerrados, verificar se existe registro completo
           if (ciclo.status === 'encerrado') {
             preenchidos = registros?.filter(r => 
-              r.tipo_registro === 'prontuario_completo' && 
+              ['prontuario_completo', 'lancamento', 'retificacao'].includes(r.tipo_registro) && 
               r.funcionario_id && 
               r.descricao && 
               r.descricao.trim() !== ''
