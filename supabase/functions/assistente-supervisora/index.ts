@@ -116,7 +116,7 @@ serve(async (req) => {
       supabase.from('prontuario_registros')
         .select('id, residente_id, data_registro, tipo_registro, funcionario_id, horario_registro')
         .gte('data_registro', dataLimite7d)
-        .eq('tipo_registro', 'prontuario_completo')
+        .in('tipo_registro', ['prontuario_completo', 'lancamento', 'retificacao'])
         .order('data_registro', { ascending: false })
         .limit(200),
 

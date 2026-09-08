@@ -189,7 +189,8 @@ export default function ControleProntuarios() {
               funcionarios (nome_completo)
             `)
             .eq('ciclo_id', ciclo.id)
-            .eq('tipo_registro', 'prontuario_completo');
+            .in('tipo_registro', ['prontuario_completo', 'lancamento', 'retificacao'])
+            .order('created_at', { ascending: false });
 
           if (registrosError) {
             console.error('Erro ao buscar registros:', registrosError);

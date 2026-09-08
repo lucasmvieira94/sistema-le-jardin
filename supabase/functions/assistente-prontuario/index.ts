@@ -52,7 +52,7 @@ serve(async (req) => {
         .from('prontuario_registros')
         .select('descricao, data_registro, tipo_registro, horario_registro')
         .eq('residente_id', residenteId)
-        .eq('tipo_registro', 'prontuario_completo')
+        .in('tipo_registro', ['prontuario_completo', 'lancamento', 'retificacao'])
         .gte('data_registro', dataLimite.toISOString().split('T')[0])
         .order('data_registro', { ascending: false })
         .limit(7);
