@@ -175,7 +175,7 @@ export default function Financeiro() {
         email,
         nomeResponsavel: residente?.responsavel_nome ?? null,
         residenteNome: residente?.nome_completo ?? "",
-        competencia: competenciaLabel(dados.competencia),
+        competencia: rotuloCompetencia(dados.competencia),
         valorPago: fmtBRL(dados.valorPago),
         dataPagamento: new Date(`${dados.dataPagamento}T12:00:00`).toLocaleDateString("pt-BR"),
         numeroRecibo: dados.numeroRecibo,
