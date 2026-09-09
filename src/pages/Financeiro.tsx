@@ -273,10 +273,11 @@ export default function Financeiro() {
       toast({ title: "Erro ao registrar pagamento", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Pagamento registrado", description: "Gerando recibo em PDF..." });
-    // Recibo desse pagamento
+    toast({ title: "Pagamento registrado", description: "Gerando recibo e enviando por e-mail..." });
+    // Recibo desse pagamento: sem download automático, apenas envio por e-mail.
+    const numeroRecibo = `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`;
     try {
-      await gerarReciboPDF({
+      const recibo = await gerarReciboPDF({
         residenteNome: residenteNome(pagDialog.m.residente_id),
         residenteId: pagDialog.m.residente_id,
         mensalidadeId: pagDialog.m.id,
