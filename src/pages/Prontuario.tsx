@@ -138,6 +138,7 @@ export default function Prontuario() {
 
   return (
     <div className="min-h-screen bg-background">
+      <TutorialProntuarioDialog funcionarioId={funcionarioId} />
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-50">
         <div className="container mx-auto px-2 sm:px-4 py-3">
