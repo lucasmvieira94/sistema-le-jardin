@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { hojeISO, formatarDataCompleta } from "@/utils/dateUtils";
 import { TIPOS_LANCAMENTO } from "@/utils/prontuarioLancamentos";
 import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioProntuario";
+import TutorialProntuarioDialog from "@/components/prontuario/TutorialProntuarioDialog";
 
 export default function Prontuario() {
   const location = useLocation();
