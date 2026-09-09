@@ -116,7 +116,7 @@ export default function Financeiro() {
         .order("data_vencimento", { ascending: true }),
       supabase
         .from("residentes")
-        .select("id, nome_completo, numero_prontuario")
+        .select("id, nome_completo, numero_prontuario, responsavel_nome, responsavel_email")
         .eq("ativo", true)
         .order("nome_completo"),
       (supabase as any)
