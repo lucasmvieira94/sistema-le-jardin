@@ -41,7 +41,13 @@ type Mensalidade = {
   observacoes: string | null;
 };
 
-type Residente = { id: string; nome_completo: string; numero_prontuario: string | null };
+type Residente = {
+  id: string;
+  nome_completo: string;
+  numero_prontuario: string | null;
+  responsavel_nome?: string | null;
+  responsavel_email?: string | null;
+};
 
 const STATUS_COLORS: Record<string, string> = {
   pendente: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
