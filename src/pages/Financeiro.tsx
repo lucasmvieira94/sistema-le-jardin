@@ -150,6 +150,51 @@ export default function Financeiro() {
   const residenteNome = (id: string) =>
     residentes.find((r) => r.id === id)?.nome_completo ?? "—";
 
+  const competenciaLabel = (c: string) => {
+    const [y, mo] = c.split("-");
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    return `${meses[Number(mo) - 1] ?? ""}/${y}`;
+  };
+
+  /**
+   * Envia o recibo em PDF (base64) para o e-mail do responsável do residente.
+   * Não realiza download — o arquivo segue apenas como anexo do e-mail.
+   */
+  const enviarReciboPorEmail = async (
+    residenteId: string,
+    recibo: { base64: string; filename: string },
+    dados: { competencia: string; valorPago: number; dataPagamento: string; numeroRecibo: string },
+  ) => {
+    const residente = residentes.find((r) => r.id === residenteId);
+    const email = residente?.responsavel_email?.trim();
+    if (!email) {
+      toast({
+        title: "Recibo não enviado",
+        description: `Nenhum e-mail cadastrado para o responsável de ${residente?.nome_completo ?? "residente"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    const { error } = await supabase.functions.invoke("enviar-recibo-email", {
+      body: {
+        email,
+        nomeResponsavel: residente?.responsavel_nome ?? null,
+        residenteNome: residente?.nome_completo ?? "",
+        competencia: competenciaLabel(dados.competencia),
+        valorPago: fmtBRL(dados.valorPago),
+        dataPagamento: new Date(`${dados.dataPagamento}T12:00:00`).toLocaleDateString("pt-BR"),
+        numeroRecibo: dados.numeroRecibo,
+        pdfBase64: recibo.base64,
+        filename: recibo.filename,
+      },
+    });
+    if (error) {
+      toast({ title: "Falha ao enviar recibo por e-mail", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Recibo enviado", description: `Enviado para ${email}.` });
+  };
+
   const filtradas = useMemo(
     () => filtroStatus === "todos" ? mensalidades : mensalidades.filter((m) => m.status === filtroStatus),
     [mensalidades, filtroStatus]
