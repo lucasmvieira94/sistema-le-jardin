@@ -60,6 +60,13 @@ const STATUS_COLORS: Record<string, string> = {
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+/** Converte "2026-09-01" em "Setembro/2026". */
+const rotuloCompetencia = (c: string) => {
+  const [y, mo] = c.split("-");
+  const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  return `${meses[Number(mo) - 1] ?? ""}/${y}`;
+};
+
 const competenciaAtual = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
