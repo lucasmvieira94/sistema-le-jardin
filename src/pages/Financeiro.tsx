@@ -298,8 +298,15 @@ export default function Financeiro() {
           Number(pagDialog.m.valor_juros || 0) + jurosAplicar,
         valorPago: valorRecebido,
         formaPagamento: pagForma,
-        numeroRecibo: `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`,
+        numeroRecibo,
         observacoes: pagObs,
+      }, { entrega: "base64" });
+
+      await enviarReciboPorEmail(pagDialog.m.residente_id, recibo, {
+        competencia: pagDialog.m.competencia,
+        valorPago: valorRecebido,
+        dataPagamento: pagData,
+        numeroRecibo,
       });
     } catch (e: any) {
       toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
