@@ -41,7 +41,13 @@ type Mensalidade = {
   observacoes: string | null;
 };
 
-type Residente = { id: string; nome_completo: string; numero_prontuario: string | null };
+type Residente = {
+  id: string;
+  nome_completo: string;
+  numero_prontuario: string | null;
+  responsavel_nome?: string | null;
+  responsavel_email?: string | null;
+};
 
 const STATUS_COLORS: Record<string, string> = {
   pendente: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
@@ -53,6 +59,13 @@ const STATUS_COLORS: Record<string, string> = {
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Converte "2026-09-01" em "Setembro/2026". */
+const rotuloCompetencia = (c: string) => {
+  const [y, mo] = c.split("-");
+  const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  return `${meses[Number(mo) - 1] ?? ""}/${y}`;
+};
 
 const competenciaAtual = () => {
   const d = new Date();
@@ -116,7 +129,7 @@ export default function Financeiro() {
         .order("data_vencimento", { ascending: true }),
       supabase
         .from("residentes")
-        .select("id, nome_completo, numero_prontuario")
+        .select("id, nome_completo, numero_prontuario, responsavel_nome, responsavel_email")
         .eq("ativo", true)
         .order("nome_completo"),
       (supabase as any)
@@ -143,6 +156,46 @@ export default function Financeiro() {
 
   const residenteNome = (id: string) =>
     residentes.find((r) => r.id === id)?.nome_completo ?? "—";
+
+
+  /**
+   * Envia o recibo em PDF (base64) para o e-mail do responsável do residente.
+   * Não realiza download — o arquivo segue apenas como anexo do e-mail.
+   */
+  const enviarReciboPorEmail = async (
+    residenteId: string,
+    recibo: { base64: string; filename: string },
+    dados: { competencia: string; valorPago: number; dataPagamento: string; numeroRecibo: string },
+  ) => {
+    const residente = residentes.find((r) => r.id === residenteId);
+    const email = residente?.responsavel_email?.trim();
+    if (!email) {
+      toast({
+        title: "Recibo não enviado",
+        description: `Nenhum e-mail cadastrado para o responsável de ${residente?.nome_completo ?? "residente"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    const { error } = await supabase.functions.invoke("enviar-recibo-email", {
+      body: {
+        email,
+        nomeResponsavel: residente?.responsavel_nome ?? null,
+        residenteNome: residente?.nome_completo ?? "",
+        competencia: rotuloCompetencia(dados.competencia),
+        valorPago: fmtBRL(dados.valorPago),
+        dataPagamento: new Date(`${dados.dataPagamento}T12:00:00`).toLocaleDateString("pt-BR"),
+        numeroRecibo: dados.numeroRecibo,
+        pdfBase64: recibo.base64,
+        filename: recibo.filename,
+      },
+    });
+    if (error) {
+      toast({ title: "Falha ao enviar recibo por e-mail", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Recibo enviado", description: `Enviado para ${email}.` });
+  };
 
   const filtradas = useMemo(
     () => filtroStatus === "todos" ? mensalidades : mensalidades.filter((m) => m.status === filtroStatus),
@@ -220,10 +273,11 @@ export default function Financeiro() {
       toast({ title: "Erro ao registrar pagamento", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Pagamento registrado", description: "Gerando recibo em PDF..." });
-    // Recibo desse pagamento
+    toast({ title: "Pagamento registrado", description: "Gerando recibo e enviando por e-mail..." });
+    // Recibo desse pagamento: sem download automático, apenas envio por e-mail.
+    const numeroRecibo = `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`;
     try {
-      await gerarReciboPDF({
+      const recibo = await gerarReciboPDF({
         residenteNome: residenteNome(pagDialog.m.residente_id),
         residenteId: pagDialog.m.residente_id,
         mensalidadeId: pagDialog.m.id,
@@ -244,8 +298,15 @@ export default function Financeiro() {
           Number(pagDialog.m.valor_juros || 0) + jurosAplicar,
         valorPago: valorRecebido,
         formaPagamento: pagForma,
-        numeroRecibo: `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`,
+        numeroRecibo,
         observacoes: pagObs,
+      }, { entrega: "base64" });
+
+      await enviarReciboPorEmail(pagDialog.m.residente_id, recibo, {
+        competencia: pagDialog.m.competencia,
+        valorPago: valorRecebido,
+        dataPagamento: pagData,
+        numeroRecibo,
       });
     } catch (e: any) {
       toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
