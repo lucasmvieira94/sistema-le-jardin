@@ -150,11 +150,6 @@ export default function Financeiro() {
   const residenteNome = (id: string) =>
     residentes.find((r) => r.id === id)?.nome_completo ?? "—";
 
-  const competenciaLabel = (c: string) => {
-    const [y, mo] = c.split("-");
-    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-    return `${meses[Number(mo) - 1] ?? ""}/${y}`;
-  };
 
   /**
    * Envia o recibo em PDF (base64) para o e-mail do responsável do residente.
