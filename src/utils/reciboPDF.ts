@@ -470,5 +470,13 @@ export async function gerarReciboPDF(
     );
   } catch {}
 
-  doc.save(`recibo-${r.numeroRecibo}.pdf`);
+  const filename = `recibo-${r.numeroRecibo}.pdf`;
+  // base64 puro (sem o prefixo data:application/pdf;base64,)
+  const base64 = doc.output("datauristring").split(",")[1] ?? "";
+
+  if ((opcoes.entrega ?? "download") === "download") {
+    doc.save(filename);
+  }
+
+  return { base64, filename };
 }
