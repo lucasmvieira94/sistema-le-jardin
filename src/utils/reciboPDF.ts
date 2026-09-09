@@ -58,7 +58,23 @@ async function carregarLogoDataUrl(url: string): Promise<{ data: string; w: numb
   }
 }
 
-export async function gerarReciboPDF(r: ReciboPagamento) {
+export type ReciboOpcoes = {
+  /**
+   * "download" (padrão) salva o arquivo no navegador.
+   * "base64" apenas devolve o PDF em base64, sem baixar — usado no envio por e-mail.
+   */
+  entrega?: "download" | "base64";
+};
+
+export type ReciboResultado = {
+  base64: string;
+  filename: string;
+};
+
+export async function gerarReciboPDF(
+  r: ReciboPagamento,
+  opcoes: ReciboOpcoes = {}
+): Promise<ReciboResultado> {
   const { data: empresa } = await supabase
     .from("configuracoes_empresa")
     .select("nome_empresa, cnpj, endereco, cidade, logo_url")
