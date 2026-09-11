@@ -10,6 +10,7 @@ import careLogo from "@/assets/logo-senex-care-new.png";
 import PainelLembretes from "@/components/lembretes/PainelLembretes";
 import ChatLembretes from "@/components/lembretes/ChatLembretes";
 import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
+import TutorialProntuarioDialog from "@/components/prontuario/TutorialProntuarioDialog";
 import { toast } from "@/components/ui/use-toast";
 
 const SESSION_KEY = 'funcionario_session';
@@ -385,6 +386,7 @@ export default function FuncionarioAccess() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4">
+      <TutorialProntuarioDialog funcionarioId={funcionarioId} />
       <div className="container mx-auto max-w-2xl">
         {/* Header com saudação */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4 sm:mb-6">
