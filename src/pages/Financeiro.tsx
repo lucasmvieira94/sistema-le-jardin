@@ -315,7 +315,7 @@ export default function Financeiro() {
         numeroRecibo,
       });
     } catch (e: any) {
-      toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
+      toast({ title: "Falha ao gerar ou enviar recibo", description: e?.message ?? String(e), variant: "destructive" });
     }
     setPagDialog({ open: false, m: null });
     carregar();
