@@ -66,10 +66,6 @@ const handler = async (req: Request): Promise<Response> => {
       return json({ error: "Documento autenticado não encontrado" }, 400);
     }
 
-    const resendKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendKey) return json({ error: "Serviço de e-mail não configurado" }, 500);
-    const resend = new Resend(resendKey);
-
     const pdfBuffer = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0));
     const pdfSha256 = await calcularSha256Hex(pdfBuffer);
     const dadosAuditoria = {
@@ -84,6 +80,31 @@ const handler = async (req: Request): Promise<Response> => {
       ip_origem: extrairIp(req.headers),
       user_agent: req.headers.get("user-agent"),
     };
+
+    // O registro nasce antes da chamada externa para que até interrupções ou
+    // falhas inesperadas deixem uma trilha rastreável.
+    const { data: auditoria, error: auditoriaInicialError } = await admin
+      .from("recibos_envios_auditoria")
+      .insert({
+        ...dadosAuditoria,
+        status: "falhou",
+        erro_detalhes: "Tentativa iniciada; envio ainda não confirmado.",
+      })
+      .select("id")
+      .single();
+    if (auditoriaInicialError || !auditoria) {
+      console.error("Falha ao iniciar auditoria do recibo:", auditoriaInicialError);
+      return json({ error: "Não foi possível iniciar a auditoria do envio" }, 500);
+    }
+
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) {
+      await admin.from("recibos_envios_auditoria")
+        .update({ erro_detalhes: "Serviço de e-mail não configurado." })
+        .eq("id", auditoria.id);
+      return json({ error: "Serviço de e-mail não configurado" }, 500);
+    }
+    const resend = new Resend(resendKey);
 
     const html = `
       <div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
@@ -110,21 +131,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (error) {
       console.error("Falha Resend:", error);
-      const { error: auditError } = await admin.from("recibos_envios_auditoria").insert({
-        ...dadosAuditoria,
-        status: "falhou",
+      const { error: auditError } = await admin.from("recibos_envios_auditoria").update({
         erro_detalhes: JSON.stringify(error).slice(0, 4000),
-      });
+      }).eq("id", auditoria.id);
       if (auditError) console.error("Falha ao registrar auditoria do recibo:", auditError);
       return json({ error: "Falha no envio", details: error }, 502);
     }
 
-    const { error: auditError } = await admin.from("recibos_envios_auditoria").insert({
-      ...dadosAuditoria,
+    const { error: auditError } = await admin.from("recibos_envios_auditoria").update({
       status: "enviado",
       provedor_id: data?.id ?? null,
       enviado_em: new Date().toISOString(),
-    });
+      erro_detalhes: null,
+    }).eq("id", auditoria.id);
     if (auditError) {
       console.error("Falha ao registrar auditoria do recibo:", auditError);
       return json({ error: "E-mail enviado, mas a auditoria não pôde ser registrada", details: auditError.message }, 500);
