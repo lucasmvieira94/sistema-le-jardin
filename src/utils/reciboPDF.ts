@@ -255,8 +255,13 @@ export async function gerarReciboPDF(
       });
       autenticidade = { id: regData.id, hash: regData.hash, urlVerificacao, qrDataUrl };
     }
-  } catch {
-    // Mesmo se o registro falhar, o recibo é emitido — o rodapé apenas será omitido.
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "falha desconhecida";
+    throw new Error(`Não foi possível autenticar o recibo: ${message}`);
+  }
+
+  if (!autenticidade) {
+    throw new Error("Não foi possível autenticar o recibo. Tente novamente antes de enviá-lo.");
   }
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
