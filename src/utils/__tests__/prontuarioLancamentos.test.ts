@@ -4,6 +4,7 @@ import {
   consolidarLancamentos,
   hojeCicloISO,
   montarLinhaTempo,
+  obterChavesPreenchidas,
   turnoDoHorario,
   type LancamentoProntuario,
 } from "../prontuarioLancamentos";
@@ -87,5 +88,36 @@ describe("consolidação", () => {
     ]);
 
     expect(consolidado).toEqual({ humor: "alegre", dor: "3" });
+  });
+});
+
+describe("bloqueio de perguntas respondidas", () => {
+  it("identifica somente respostas originais preenchidas", () => {
+    const chaves = obterChavesPreenchidas([
+      base({ id: "a", descricao: '{"campo_humor":"Alegre","campo_vazio":""}' }),
+      base({ id: "b", descricao: '{"campo_dor":0,"campo_negacao":false}' }),
+      base({
+        id: "c",
+        tipo_registro: "retificacao",
+        retifica_registro_id: "a",
+        descricao: '{"campo_novo":"não deve bloquear"}',
+      }),
+    ]);
+
+    expect([...chaves].sort()).toEqual(["campo_dor", "campo_humor", "campo_negacao"]);
+  });
+
+  it("mantém a pergunta bloqueada após uma retificação", () => {
+    const chaves = obterChavesPreenchidas([
+      base({ id: "original", descricao: '{"campo_pressao":"12/8"}' }),
+      base({
+        id: "retificacao",
+        tipo_registro: "retificacao",
+        retifica_registro_id: "original",
+        descricao: '{"texto":"13/8"}',
+      }),
+    ]);
+
+    expect(chaves.has("campo_pressao")).toBe(true);
   });
 });

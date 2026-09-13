@@ -31,6 +31,7 @@ import {
   cicloAceitaLancamento,
   hojeCicloISO,
   montarLinhaTempo,
+  obterChavesPreenchidas,
   type LancamentoProntuario,
 } from "@/utils/prontuarioLancamentos";
 
@@ -81,7 +82,8 @@ const isValorPreenchido = (valor: any, tipo?: string): boolean => {
   }
   if (typeof valor === "number") return Number.isFinite(valor);
   if (typeof valor === "object") return Object.values(valor).some((item) => isValorPreenchido(item));
-  return Boolean(valor);
+  if (typeof valor === "boolean") return true;
+  return false;
 };
 
 export default function NovoFormularioProntuario({
@@ -115,6 +117,7 @@ export default function NovoFormularioProntuario({
   }, [camposConfigurados]);
 
   const linhaTempo = useMemo(() => montarLinhaTempo(registros), [registros]);
+  const chavesPreenchidas = useMemo(() => obterChavesPreenchidas(registros), [registros]);
 
   /** Carrega os lançamentos já registrados no ciclo do dia. */
   const carregarRegistros = useCallback(
@@ -233,6 +236,18 @@ export default function NovoFormularioProntuario({
     }
   }, [valores, chaveRascunho]);
 
+  // Descarta valores antigos do rascunho quando outra cuidadora já respondeu
+  // à mesma pergunta antes da atualização da tela.
+  useEffect(() => {
+    if (chavesPreenchidas.size === 0) return;
+    setValores((anteriores) => {
+      const permitidos = Object.fromEntries(
+        Object.entries(anteriores).filter(([chave]) => !chavesPreenchidas.has(chave)),
+      );
+      return Object.keys(permitidos).length === Object.keys(anteriores).length ? anteriores : permitidos;
+    });
+  }, [chavesPreenchidas]);
+
   const setCampo = (chave: string, valor: any) => {
     setValores((prev) => ({ ...prev, [chave]: valor }));
   };
@@ -240,11 +255,12 @@ export default function NovoFormularioProntuario({
   const dadosPreenchidos = useMemo(() => {
     const resultado: Record<string, any> = {};
     Object.entries(valores).forEach(([chave, valor]) => {
+      if (chavesPreenchidas.has(chave)) return;
       const campo = camposConfigurados.find((c) => `campo_${c.id}` === chave);
       if (isValorPreenchido(valor, campo?.tipo)) resultado[chave] = valor;
     });
     return resultado;
-  }, [valores, camposConfigurados]);
+  }, [valores, camposConfigurados, chavesPreenchidas]);
 
   const enviarLancamento = async () => {
     if (Object.keys(dadosPreenchidos).length === 0) {
@@ -335,7 +351,15 @@ export default function NovoFormularioProntuario({
   };
 
   const renderCampoConfigurado = (campo: any, valor: any, onChange: (valor: any) => void) => {
-    const isDisabled = !cicloAberto;
+    const chaveCampo = `campo_${campo.id}`;
+    const jaPreenchido = chavesPreenchidas.has(chaveCampo);
+    const isDisabled = !cicloAberto || jaPreenchido;
+    const avisoPreenchido = jaPreenchido ? (
+      <p className="flex items-center gap-1 text-xs text-muted-foreground" role="status">
+        <Lock className="h-3 w-3" />
+        Respondido neste ciclo. Para corrigir, use Retificar no registro acima.
+      </p>
+    ) : null;
 
     switch (campo.tipo) {
       case "text":
@@ -353,6 +377,7 @@ export default function NovoFormularioProntuario({
               className="mt-1 text-sm sm:text-base"
               disabled={isDisabled}
             />
+            {avisoPreenchido}
           </div>
         );
 
@@ -372,6 +397,7 @@ export default function NovoFormularioProntuario({
               rows={campo.configuracoes?.rows || 3}
               disabled={isDisabled}
             />
+            {avisoPreenchido}
           </div>
         );
 
@@ -397,6 +423,7 @@ export default function NovoFormularioProntuario({
                 </div>
               ))}
             </RadioGroup>
+            {avisoPreenchido}
           </div>
         );
 
@@ -425,6 +452,7 @@ export default function NovoFormularioProntuario({
                 </div>
               ))}
             </div>
+            {avisoPreenchido}
           </div>
         );
 
@@ -453,6 +481,7 @@ export default function NovoFormularioProntuario({
                 <span>{campo.configuracoes?.max || 100}</span>
               </div>
             </div>
+            {avisoPreenchido}
           </div>
         );
 
@@ -465,7 +494,9 @@ export default function NovoFormularioProntuario({
             </Label>
             <Select value={valor || ""} onValueChange={(value) => onChange(value)} disabled={isDisabled}>
               <SelectTrigger className="mt-1 text-sm sm:text-base">
-                <SelectValue placeholder={isDisabled ? "Prontuário encerrado" : "Selecione uma opção"} />
+                <SelectValue
+                  placeholder={jaPreenchido ? "Respondido neste ciclo" : isDisabled ? "Prontuário encerrado" : "Selecione uma opção"}
+                />
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {(campo.opcoes || []).map((opcao: string) => (
@@ -475,6 +506,7 @@ export default function NovoFormularioProntuario({
                 ))}
               </SelectContent>
             </Select>
+            {avisoPreenchido}
           </div>
         );
 
