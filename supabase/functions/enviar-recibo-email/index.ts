@@ -65,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
           <tr><td style="padding:6px 0;color:#6b7280">Data do pagamento</td><td style="text-align:right"><strong>${dataPagamento}</strong></td></tr>
           <tr><td style="padding:6px 0;color:#6b7280">Valor pago</td><td style="text-align:right"><strong>${valorPago}</strong></td></tr>
         </table>
-        <p>O recibo em PDF está anexo a este e-mail, com código de autenticidade e QR Code para verificação.</p>
+        <p>O recibo oficial do sistema está anexo a este e-mail, assinado eletronicamente pela empresa e protegido por código de autenticidade e QR Code para verificação.</p>
         <p style="color:#6b7280;font-size:12px;margin-top:24px">Este é um envio automático. Não responda a esta mensagem.</p>
       </div>`;
 
