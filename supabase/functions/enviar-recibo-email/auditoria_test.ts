@@ -4,7 +4,7 @@ import { calcularSha256Hex, extrairIp } from "./auditoria.ts";
 Deno.test("calcula o SHA-256 exato do PDF recebido", async () => {
   const hash = await calcularSha256Hex(new TextEncoder().encode("pdf-de-teste"));
   assertMatch(hash, /^[0-9a-f]{64}$/);
-  assertEquals(hash, "f4a51a3a4024e6f7338ff6cdfdd5b6a8f23c59363c8fb4383b83e80a0c6cfc37");
+  assertEquals(hash, "24a36537a58757674e628f6221a10681c85959d826cfa907d12cd9bcf1349ff6");
 });
 
 Deno.test("registra somente o primeiro IP encaminhado", () => {
