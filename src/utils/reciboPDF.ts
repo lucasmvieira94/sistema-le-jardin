@@ -456,6 +456,12 @@ export async function gerarReciboPDF(
 
   // Local e data
   y += 16;
+  // Reserva espaço para assinatura e para o bloco fixo de autenticidade.
+  // Recibos extensos continuam em uma nova página sem sobreposição.
+  if (y > pageH - 92) {
+    doc.addPage();
+    y = 24;
+  }
   const localData = `${cidade || "_______________"}, ${formatarData(r.dataPagamento)}.`;
   doc.text(localData, pageW / 2, y, { align: "center" });
 
