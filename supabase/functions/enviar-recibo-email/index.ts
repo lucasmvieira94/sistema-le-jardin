@@ -1,25 +1,19 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "https://esm.sh/resend@4.0.0";
+import { createClient, corsHeaders } from "npm:@supabase/supabase-js@2";
+import { Resend } from "npm:resend@4.0.0";
+import { z } from "npm:zod@3.23.8";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-interface EnviarReciboRequest {
-  email: string;
-  nomeResponsavel?: string | null;
-  residenteNome: string;
-  competencia: string; // rótulo já formatado, ex.: "Setembro/2026"
-  valorPago: string; // já formatado em BRL
-  dataPagamento: string; // já formatado dd/mm/aaaa
-  numeroRecibo: string;
-  pdfBase64: string;
-  filename: string;
-}
+const EnviarReciboSchema = z.object({
+  email: z.string().email().max(320),
+  nomeResponsavel: z.string().max(255).nullable().optional(),
+  residenteNome: z.string().min(1).max(255),
+  competencia: z.string().min(1).max(50),
+  valorPago: z.string().min(1).max(50),
+  dataPagamento: z.string().min(1).max(30),
+  numeroRecibo: z.string().min(1).max(100),
+  pdfBase64: z.string().min(1).max(15_000_000),
+  filename: z.string().min(1).max(255),
+});
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -28,7 +22,8 @@ const json = (body: unknown, status = 200) =>
   });
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Método não permitido" }, 405);
 
   try {
     // Somente usuários autenticados (gestão) podem disparar o envio.
@@ -46,11 +41,15 @@ const handler = async (req: Request): Promise<Response> => {
       if (error || !user) return json({ error: "Não autorizado" }, 401);
     }
 
-    const body: EnviarReciboRequest = await req.json();
-    const { email, nomeResponsavel, residenteNome, competencia, valorPago, dataPagamento, numeroRecibo, pdfBase64, filename } = body;
+    const parsed = EnviarReciboSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return json({ error: "Dados do recibo inválidos", details: parsed.error.flatten().fieldErrors }, 400);
+    }
+    const { email, nomeResponsavel, residenteNome, competencia, valorPago, dataPagamento, numeroRecibo, pdfBase64, filename } = parsed.data;
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "E-mail inválido" }, 400);
-    if (!pdfBase64) return json({ error: "PDF ausente" }, 400);
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) return json({ error: "Serviço de e-mail não configurado" }, 500);
+    const resend = new Resend(resendKey);
 
     const pdfBuffer = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0));
 
@@ -69,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p style="color:#6b7280;font-size:12px;margin-top:24px">Este é um envio automático. Não responda a esta mensagem.</p>
       </div>`;
 
-    const resposta = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: Deno.env.get("RESEND_FROM") || "Senex Care <nao-responda@senexcare.app>",
       to: [email],
       subject: `Recibo de pagamento — ${residenteNome} (${competencia})`,
@@ -77,12 +76,12 @@ const handler = async (req: Request): Promise<Response> => {
       attachments: [{ filename: filename || `recibo-${numeroRecibo}.pdf`, content: pdfBuffer }],
     });
 
-    if ((resposta as any)?.error) {
-      console.error("Falha Resend:", (resposta as any).error);
-      return json({ error: "Falha no envio", details: (resposta as any).error }, 502);
+    if (error) {
+      console.error("Falha Resend:", error);
+      return json({ error: "Falha no envio", details: error }, 502);
     }
 
-    return json({ success: true, id: (resposta as any)?.data?.id ?? null });
+    return json({ success: true, id: data?.id ?? null });
   } catch (e: any) {
     console.error("enviar-recibo-email:", e);
     return json({ error: e?.message ?? String(e) }, 500);

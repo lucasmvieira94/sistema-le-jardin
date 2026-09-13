@@ -60,11 +60,14 @@ async function carregarLogoDataUrl(url: string): Promise<{ data: string; w: numb
 
 export type ReciboOpcoes = {
   /**
-   * "download" (padrão) salva o arquivo no navegador.
-   * "base64" apenas devolve o PDF em base64, sem baixar — usado no envio por e-mail.
+   * "base64" (padrão) apenas devolve o PDF, sem baixar.
+   * "download" deve ser informado explicitamente em ações manuais.
    */
   entrega?: "download" | "base64";
 };
+
+export const deveBaixarRecibo = (opcoes: ReciboOpcoes = {}) =>
+  opcoes.entrega === "download";
 
 export type ReciboResultado = {
   base64: string;
@@ -474,7 +477,7 @@ export async function gerarReciboPDF(
   // base64 puro (sem o prefixo data:application/pdf;base64,)
   const base64 = doc.output("datauristring").split(",")[1] ?? "";
 
-  if ((opcoes.entrega ?? "download") === "download") {
+  if (deveBaixarRecibo(opcoes)) {
     doc.save(filename);
   }
 
