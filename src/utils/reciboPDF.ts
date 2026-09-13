@@ -72,6 +72,8 @@ export const deveBaixarRecibo = (opcoes: ReciboOpcoes = {}) =>
 export type ReciboResultado = {
   base64: string;
   filename: string;
+  documentoId: string;
+  autenticidadeHash: string;
 };
 
 export type AssinaturaEmpresa = {
@@ -587,5 +589,10 @@ export async function gerarReciboPDF(
     doc.save(filename);
   }
 
-  return { base64, filename };
+  return {
+    base64,
+    filename,
+    documentoId: autenticidade.id,
+    autenticidadeHash: autenticidade.hash,
+  };
 }
