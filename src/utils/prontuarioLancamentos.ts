@@ -89,6 +89,35 @@ function parseConteudo(descricao: string): Record<string, unknown> {
   }
 }
 
+function valorFoiPreenchido(valor: unknown): boolean {
+  if (valor === undefined || valor === null) return false;
+  if (typeof valor === "string") return valor.trim().length > 0;
+  if (Array.isArray(valor)) return valor.some((item) => valorFoiPreenchido(item));
+  if (typeof valor === "number") return Number.isFinite(valor);
+  if (typeof valor === "boolean") return true;
+  if (typeof valor === "object") return Object.values(valor).some((item) => valorFoiPreenchido(item));
+  return false;
+}
+
+/**
+ * Retorna as perguntas que já receberam uma resposta original no ciclo.
+ * Retificações não abrem a pergunta novamente: a correção permanece vinculada
+ * ao registro original na linha do tempo.
+ */
+export function obterChavesPreenchidas(registros: LancamentoProntuario[]): Set<string> {
+  const chaves = new Set<string>();
+
+  registros
+    .filter((registro) => !registro.retifica_registro_id && registro.tipo_registro !== "retificacao")
+    .forEach((registro) => {
+      Object.entries(parseConteudo(registro.descricao)).forEach(([chave, valor]) => {
+        if (valorFoiPreenchido(valor)) chaves.add(chave);
+      });
+    });
+
+  return chaves;
+}
+
 /**
  * Monta a linha do tempo do ciclo: lançamentos em ordem cronológica, com as
  * retificações aninhadas sob o registro original.
