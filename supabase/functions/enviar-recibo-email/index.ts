@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { Resend } from "npm:resend@4.0.0";
 import { z } from "npm:zod@3.23.8";
+import { calcularSha256Hex, extrairIp } from "./auditoria.ts";
 
 const EnviarReciboSchema = z.object({
   email: z.string().email().max(320),
@@ -14,6 +15,8 @@ const EnviarReciboSchema = z.object({
   numeroRecibo: z.string().min(1).max(100),
   pdfBase64: z.string().min(1).max(15_000_000),
   filename: z.string().min(1).max(255),
+  documentoId: z.string().uuid(),
+  autenticidadeHash: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 const json = (body: unknown, status = 200) =>
@@ -30,29 +33,78 @@ const handler = async (req: Request): Promise<Response> => {
     // Somente usuários autenticados (gestão) podem disparar o envio.
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Não autorizado" }, 401);
-    const token = authHeader.replace("Bearer ", "");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    if (token !== serviceKey) {
-      const authClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-        { global: { headers: { Authorization: authHeader } } },
-      );
-      const { data: { user }, error } = await authClient.auth.getUser();
-      if (error || !user) return json({ error: "Não autorizado" }, 401);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !anonKey || !serviceKey) {
+      return json({ error: "Serviço indisponível" }, 500);
     }
+    const authClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) return json({ error: "Não autorizado" }, 401);
 
     const parsed = EnviarReciboSchema.safeParse(await req.json());
     if (!parsed.success) {
       return json({ error: "Dados do recibo inválidos", details: parsed.error.flatten().fieldErrors }, 400);
     }
-    const { email, nomeResponsavel, residenteNome, competencia, valorPago, dataPagamento, numeroRecibo, pdfBase64, filename } = parsed.data;
+    const {
+      email, nomeResponsavel, residenteNome, competencia, valorPago,
+      dataPagamento, numeroRecibo, pdfBase64, filename, documentoId,
+      autenticidadeHash,
+    } = parsed.data;
 
-    const resendKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendKey) return json({ error: "Serviço de e-mail não configurado" }, 500);
-    const resend = new Resend(resendKey);
+    const admin = createClient(supabaseUrl, serviceKey);
+    const { data: documento, error: documentoError } = await admin
+      .from("documentos_emitidos")
+      .select("id, hash_sha256")
+      .eq("id", documentoId)
+      .eq("hash_sha256", autenticidadeHash)
+      .maybeSingle();
+    if (documentoError || !documento) {
+      return json({ error: "Documento autenticado não encontrado" }, 400);
+    }
 
     const pdfBuffer = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0));
+    const pdfSha256 = await calcularSha256Hex(pdfBuffer);
+    const dadosAuditoria = {
+      documento_id: documento.id,
+      numero_recibo: numeroRecibo,
+      destinatario_email: email.toLowerCase(),
+      destinatario_nome: nomeResponsavel ?? null,
+      residente_nome: residenteNome,
+      pdf_sha256: pdfSha256,
+      nome_arquivo: filename,
+      enviado_por: user.id,
+      ip_origem: extrairIp(req.headers),
+      user_agent: req.headers.get("user-agent"),
+    };
+
+    // O registro nasce antes da chamada externa para que até interrupções ou
+    // falhas inesperadas deixem uma trilha rastreável.
+    const { data: auditoria, error: auditoriaInicialError } = await admin
+      .from("recibos_envios_auditoria")
+      .insert({
+        ...dadosAuditoria,
+        status: "falhou",
+        erro_detalhes: "Tentativa iniciada; envio ainda não confirmado.",
+      })
+      .select("id")
+      .single();
+    if (auditoriaInicialError || !auditoria) {
+      console.error("Falha ao iniciar auditoria do recibo:", auditoriaInicialError);
+      return json({ error: "Não foi possível iniciar a auditoria do envio" }, 500);
+    }
+
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendKey) {
+      await admin.from("recibos_envios_auditoria")
+        .update({ erro_detalhes: "Serviço de e-mail não configurado." })
+        .eq("id", auditoria.id);
+      return json({ error: "Serviço de e-mail não configurado" }, 500);
+    }
+    const resend = new Resend(resendKey);
 
     const html = `
       <div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
@@ -79,10 +131,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (error) {
       console.error("Falha Resend:", error);
+      const { error: auditError } = await admin.from("recibos_envios_auditoria").update({
+        erro_detalhes: JSON.stringify(error).slice(0, 4000),
+      }).eq("id", auditoria.id);
+      if (auditError) console.error("Falha ao registrar auditoria do recibo:", auditError);
       return json({ error: "Falha no envio", details: error }, 502);
     }
 
-    return json({ success: true, id: data?.id ?? null });
+    const { error: auditError } = await admin.from("recibos_envios_auditoria").update({
+      status: "enviado",
+      provedor_id: data?.id ?? null,
+      enviado_em: new Date().toISOString(),
+      erro_detalhes: null,
+    }).eq("id", auditoria.id);
+    if (auditError) {
+      console.error("Falha ao registrar auditoria do recibo:", auditError);
+      return json({ error: "E-mail enviado, mas a auditoria não pôde ser registrada", details: auditError.message }, 500);
+    }
+
+    return json({ success: true, id: data?.id ?? null, pdfSha256 });
   } catch (e: any) {
     console.error("enviar-recibo-email:", e);
     return json({ error: e?.message ?? String(e) }, 500);

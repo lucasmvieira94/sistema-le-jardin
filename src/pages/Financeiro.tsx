@@ -165,7 +165,7 @@ export default function Financeiro() {
    */
   const enviarReciboPorEmail = async (
     residenteId: string,
-    recibo: { base64: string; filename: string },
+    recibo: { base64: string; filename: string; documentoId: string; autenticidadeHash: string },
     dados: { competencia: string; valorPago: number; dataPagamento: string; numeroRecibo: string },
   ) => {
     const residente = residentes.find((r) => r.id === residenteId);
@@ -189,6 +189,8 @@ export default function Financeiro() {
         numeroRecibo: dados.numeroRecibo,
         pdfBase64: recibo.base64,
         filename: recibo.filename,
+        documentoId: recibo.documentoId,
+        autenticidadeHash: recibo.autenticidadeHash,
       },
     });
     if (error) {

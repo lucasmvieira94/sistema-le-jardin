@@ -3787,6 +3787,71 @@ export type Database = {
           },
         ]
       }
+      recibos_envios_auditoria: {
+        Row: {
+          created_at: string
+          destinatario_email: string
+          destinatario_nome: string | null
+          documento_id: string
+          enviado_em: string | null
+          enviado_por: string | null
+          erro_detalhes: string | null
+          id: string
+          ip_origem: string | null
+          nome_arquivo: string
+          numero_recibo: string
+          pdf_sha256: string
+          provedor_id: string | null
+          residente_nome: string
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          destinatario_email: string
+          destinatario_nome?: string | null
+          documento_id: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          erro_detalhes?: string | null
+          id?: string
+          ip_origem?: string | null
+          nome_arquivo: string
+          numero_recibo: string
+          pdf_sha256: string
+          provedor_id?: string | null
+          residente_nome: string
+          status: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          destinatario_email?: string
+          destinatario_nome?: string | null
+          documento_id?: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          erro_detalhes?: string | null
+          id?: string
+          ip_origem?: string | null
+          nome_arquivo?: string
+          numero_recibo?: string
+          pdf_sha256?: string
+          provedor_id?: string | null
+          residente_nome?: string
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recibos_envios_auditoria_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_emitidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registro_tentativas: {
         Row: {
           bloqueado_ate: string | null
