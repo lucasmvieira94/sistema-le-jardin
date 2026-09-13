@@ -22,6 +22,7 @@ import LucratividadeDashboard from "@/components/financeiro/LucratividadeDashboa
 import { formatarData } from "@/utils/dateUtils";
 import { gerarReciboPDF } from "@/utils/reciboPDF";
 import { calcularJurosMulta, CONFIG_PADRAO, type ConfigJurosMulta } from "@/utils/jurosMulta";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 type Mensalidade = {
   id: string;
@@ -177,7 +178,7 @@ export default function Financeiro() {
       });
       return;
     }
-    const { error } = await supabase.functions.invoke("enviar-recibo-email", {
+    const { data, error } = await supabase.functions.invoke("enviar-recibo-email", {
       body: {
         email,
         nomeResponsavel: residente?.responsavel_nome ?? null,
@@ -191,8 +192,13 @@ export default function Financeiro() {
       },
     });
     if (error) {
-      toast({ title: "Falha ao enviar recibo por e-mail", description: error.message, variant: "destructive" });
-      return;
+      const detalhes = error instanceof FunctionsHttpError
+        ? await error.context.text()
+        : error.message;
+      throw new Error(detalhes || "Não foi possível enviar o recibo por e-mail.");
+    }
+    if (!data?.success) {
+      throw new Error(data?.error || "O serviço de e-mail não confirmou o envio.");
     }
     toast({ title: "Recibo enviado", description: `Enviado para ${email}.` });
   };
@@ -300,7 +306,7 @@ export default function Financeiro() {
         formaPagamento: pagForma,
         numeroRecibo,
         observacoes: pagObs,
-      }, { entrega: "base64" });
+      });
 
       await enviarReciboPorEmail(pagDialog.m.residente_id, recibo, {
         competencia: pagDialog.m.competencia,
@@ -309,7 +315,7 @@ export default function Financeiro() {
         numeroRecibo,
       });
     } catch (e: any) {
-      toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
+      toast({ title: "Falha ao gerar ou enviar recibo", description: e?.message ?? String(e), variant: "destructive" });
     }
     setPagDialog({ open: false, m: null });
     carregar();
@@ -334,7 +340,7 @@ export default function Financeiro() {
         formaPagamento: m.forma_pagamento,
         numeroRecibo: `${m.id.slice(0, 8).toUpperCase()}-${(m.data_pagamento ?? "").replace(/-/g, "")}`,
         observacoes: m.observacoes,
-      });
+      }, { entrega: "download" });
     } catch (e: any) {
       toast({ title: "Falha ao gerar recibo", description: e?.message ?? String(e), variant: "destructive" });
     }
