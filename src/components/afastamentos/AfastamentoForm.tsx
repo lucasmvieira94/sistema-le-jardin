@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,6 +9,10 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  criarValoresIniciaisAfastamento,
+  type AfastamentoFormValues,
+} from "@/utils/afastamentoForm";
 
 interface Funcionario {
   id: string;
@@ -22,23 +26,15 @@ interface TipoAfastamento {
   remunerado: boolean;
 }
 
-interface FormData {
-  funcionario_id: string;
-  tipo_afastamento_id: string;
-  tipo_periodo: "horas" | "dias";
-  data_inicio: string;
-  hora_inicio?: string;
-  quantidade_horas?: number;
-  quantidade_dias?: number;
-  observacoes?: string;
-}
-
 interface AfastamentoFormProps {
   onAfastamentoAdded?: () => void;
 }
 
 export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormProps) {
-  const form = useForm<FormData>();
+  const form = useForm<AfastamentoFormValues>({
+    defaultValues: criarValoresIniciaisAfastamento(),
+  });
+  const funcionarioTriggerRef = useRef<HTMLButtonElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [tiposAfastamento, setTiposAfastamento] = useState<TipoAfastamento[]>([]);
@@ -86,7 +82,7 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
     return `${novasHoras.toString().padStart(2, '0')}:${novosMinutos.toString().padStart(2, '0')}`;
   }
 
-  async function onSubmit(values: FormData) {
+  async function onSubmit(values: AfastamentoFormValues) {
     setIsSubmitting(true);
     
     try {
@@ -121,9 +117,10 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
         description: "O afastamento foi registrado com sucesso e já está disponível na folha de ponto.",
       });
 
-      form.reset();
+      form.reset(criarValoresIniciaisAfastamento());
       setTipoPeriodo("dias");
       onAfastamentoAdded?.();
+      window.requestAnimationFrame(() => funcionarioTriggerRef.current?.focus());
     } catch (err: any) {
       toast({
         variant: "destructive",
@@ -147,7 +144,7 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
               <FormLabel>Funcionário</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger ref={funcionarioTriggerRef}>
                     <SelectValue placeholder="Selecione o funcionário" />
                   </SelectTrigger>
                 </FormControl>
@@ -198,8 +195,16 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
             <FormItem>
               <FormLabel>Período</FormLabel>
               <Select onValueChange={(value) => {
-                field.onChange(value);
-                setTipoPeriodo(value as "horas" | "dias");
+                const novoPeriodo = value as "horas" | "dias";
+                field.onChange(novoPeriodo);
+                setTipoPeriodo(novoPeriodo);
+
+                if (novoPeriodo === "dias") {
+                  form.setValue("hora_inicio", "");
+                  form.setValue("quantidade_horas", undefined);
+                } else {
+                  form.setValue("quantidade_dias", undefined);
+                }
               }} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
