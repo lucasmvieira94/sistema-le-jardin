@@ -17,6 +17,15 @@ export type EncaixeAssinatura = {
 
 type FundoRgb = { r: number; g: number; b: number };
 
+function mediana(valores: number[]): number {
+  if (valores.length === 0) return 255;
+  const ordenados = [...valores].sort((a, b) => a - b);
+  const meio = Math.floor(ordenados.length / 2);
+  return ordenados.length % 2 === 0
+    ? (ordenados[meio - 1] + ordenados[meio]) / 2
+    : ordenados[meio];
+}
+
 /** Estima a cor do papel pelas quatro extremidades da imagem. */
 export function estimarFundo(
   pixels: Uint8ClampedArray,
@@ -39,14 +48,12 @@ export function estimarFundo(
   }
 
   if (amostras.length === 0) return { r: 255, g: 255, b: 255 };
-  const total = amostras.reduce(
-    (soma, cor) => ({ r: soma.r + cor.r, g: soma.g + cor.g, b: soma.b + cor.b }),
-    { r: 0, g: 0, b: 0 },
-  );
   return {
-    r: total.r / amostras.length,
-    g: total.g / amostras.length,
-    b: total.b / amostras.length,
+    // A mediana evita que um traço ou uma sombra em um canto contamine a
+    // referência do papel usada para remover o fundo.
+    r: mediana(amostras.map((cor) => cor.r)),
+    g: mediana(amostras.map((cor) => cor.g)),
+    b: mediana(amostras.map((cor) => cor.b)),
   };
 }
 
@@ -60,6 +67,7 @@ export function removerFundoAssinatura(
   altura: number,
 ): number {
   const fundo = estimarFundo(pixels, largura, altura);
+  const luminosidadeFundo = fundo.r * 0.299 + fundo.g * 0.587 + fundo.b * 0.114;
   let pixelsDoTraco = 0;
 
   for (let indice = 0; indice < pixels.length; indice += 4) {
@@ -70,7 +78,14 @@ export function removerFundoAssinatura(
     const dg = pixels[indice + 1] - fundo.g;
     const db = pixels[indice + 2] - fundo.b;
     const distancia = Math.sqrt(dr * dr + dg * dg + db * db);
-    const alphaTratado = Math.max(0, Math.min(1, (distancia - 14) / 68)) * alphaOriginal;
+    const luminosidade = pixels[indice] * 0.299 + pixels[indice + 1] * 0.587 + pixels[indice + 2] * 0.114;
+    const escurecimento = Math.max(0, luminosidadeFundo - luminosidade);
+    const diferencaCromatica = distancia * 0.72;
+    const intensidadeTraco = Math.max(escurecimento, diferencaCromatica);
+
+    // Variações leves do papel e sombras de fotografia são descartadas por
+    // completo. A transição curta preserva o antialiasing nas bordas do traço.
+    const alphaTratado = Math.max(0, Math.min(1, (intensidadeTraco - 42) / 58)) * alphaOriginal;
 
     pixels[indice + 3] = Math.round(alphaTratado * 255);
     if (alphaTratado >= 0.12) pixelsDoTraco += 1;

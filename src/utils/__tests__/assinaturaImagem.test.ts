@@ -34,6 +34,28 @@ describe('tratamento da imagem da assinatura', () => {
     expect(pixels[centro + 3]).toBeGreaterThan(240);
   });
 
+  it('remove sombras e tons quase brancos do papel', () => {
+    const pixels = imagemBranca(5, 5);
+    const sombra = (2 * 5 + 2) * 4;
+    pixels[sombra] = 225;
+    pixels[sombra + 1] = 223;
+    pixels[sombra + 2] = 220;
+
+    expect(removerFundoAssinatura(pixels, 5, 5)).toBe(0);
+    expect(pixels[sombra + 3]).toBe(0);
+  });
+
+  it('preserva traço azul sobre papel branco', () => {
+    const pixels = imagemBranca(5, 5);
+    const centro = (2 * 5 + 2) * 4;
+    pixels[centro] = 30;
+    pixels[centro + 1] = 70;
+    pixels[centro + 2] = 150;
+
+    expect(removerFundoAssinatura(pixels, 5, 5)).toBe(1);
+    expect(pixels[centro + 3]).toBeGreaterThan(240);
+  });
+
   it('encontra apenas os limites reais dos traços', () => {
     const pixels = new Uint8ClampedArray(8 * 6 * 4);
     pixels[(2 * 8 + 1) * 4 + 3] = 255;
