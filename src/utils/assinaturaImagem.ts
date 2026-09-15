@@ -8,6 +8,13 @@ export type LimitesAssinatura = {
   base: number;
 };
 
+export type EncaixeAssinatura = {
+  x: number;
+  y: number;
+  largura: number;
+  altura: number;
+};
+
 type FundoRgb = { r: number; g: number; b: number };
 
 /** Estima a cor do papel pelas quatro extremidades da imagem. */
@@ -96,6 +103,27 @@ export function encontrarLimitesAssinatura(
   return direita < esquerda ? null : { esquerda, topo, direita, base };
 }
 
+/** Calcula o encaixe centralizado, com margem e sem distorcer a assinatura. */
+export function calcularEncaixeAssinatura(
+  larguraOriginal: number,
+  alturaOriginal: number,
+  larguraDestino = ASSINATURA_LARGURA,
+  alturaDestino = ASSINATURA_ALTURA,
+  margem = 24,
+): EncaixeAssinatura {
+  const larguraUtil = Math.max(1, larguraDestino - margem * 2);
+  const alturaUtil = Math.max(1, alturaDestino - margem * 2);
+  const escala = Math.min(larguraUtil / larguraOriginal, alturaUtil / alturaOriginal, 3);
+  const largura = Math.max(1, Math.round(larguraOriginal * escala));
+  const altura = Math.max(1, Math.round(alturaOriginal * escala));
+  return {
+    x: Math.round((larguraDestino - largura) / 2),
+    y: Math.round((alturaDestino - altura) / 2),
+    largura,
+    altura,
+  };
+}
+
 function carregarImagem(origem: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const imagem = new Image();
@@ -132,12 +160,7 @@ export async function tratarImagemAssinatura(origem: string): Promise<string> {
 
   const larguraRecorte = limites.direita - limites.esquerda + 1;
   const alturaRecorte = limites.base - limites.topo + 1;
-  const margem = 24;
-  const larguraUtil = ASSINATURA_LARGURA - margem * 2;
-  const alturaUtil = ASSINATURA_ALTURA - margem * 2;
-  const escalaSaida = Math.min(larguraUtil / larguraRecorte, alturaUtil / alturaRecorte, 3);
-  const larguraSaida = Math.max(1, Math.round(larguraRecorte * escalaSaida));
-  const alturaSaida = Math.max(1, Math.round(alturaRecorte * escalaSaida));
+  const encaixe = calcularEncaixeAssinatura(larguraRecorte, alturaRecorte);
 
   const saida = document.createElement('canvas');
   saida.width = ASSINATURA_LARGURA;
@@ -152,10 +175,10 @@ export async function tratarImagemAssinatura(origem: string): Promise<string> {
     limites.topo,
     larguraRecorte,
     alturaRecorte,
-    Math.round((ASSINATURA_LARGURA - larguraSaida) / 2),
-    Math.round((ASSINATURA_ALTURA - alturaSaida) / 2),
-    larguraSaida,
-    alturaSaida,
+    encaixe.x,
+    encaixe.y,
+    encaixe.largura,
+    encaixe.altura,
   );
 
   return saida.toDataURL('image/png');

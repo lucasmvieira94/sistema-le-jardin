@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { encontrarLimitesAssinatura, estimarFundo, removerFundoAssinatura } from '../assinaturaImagem';
+import {
+  calcularEncaixeAssinatura,
+  encontrarLimitesAssinatura,
+  estimarFundo,
+  removerFundoAssinatura,
+} from '../assinaturaImagem';
 
 function imagemBranca(largura: number, altura: number) {
   const pixels = new Uint8ClampedArray(largura * altura * 4);
@@ -39,6 +44,15 @@ describe('tratamento da imagem da assinatura', () => {
       topo: 2,
       direita: 6,
       base: 4,
+    });
+  });
+
+  it('redimensiona proporcionalmente, centraliza e respeita as margens', () => {
+    expect(calcularEncaixeAssinatura(1200, 200)).toEqual({
+      x: 24,
+      y: 79,
+      largura: 852,
+      altura: 142,
     });
   });
 

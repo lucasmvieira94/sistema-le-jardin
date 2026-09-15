@@ -120,6 +120,7 @@ export function AssinaturaDigitalConfig() {
     const origem = URL.createObjectURL(file);
     await prepararAssinatura(origem);
     URL.revokeObjectURL(origem);
+    e.target.value = '';
   };
 
   const salvar = async () => {
