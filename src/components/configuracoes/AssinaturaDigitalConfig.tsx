@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, PenLine, Upload, Eraser, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { tratarImagemAssinatura } from '@/utils/assinaturaImagem';
 
 export function AssinaturaDigitalConfig() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,6 +25,7 @@ export function AssinaturaDigitalConfig() {
   const [base64, setBase64] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [processando, setProcessando] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -45,14 +47,17 @@ export function AssinaturaDigitalConfig() {
 
   /** Converte coordenadas do ponteiro para o sistema interno do canvas. */
   const ponto = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = canvasRef.current!;
+    const c = canvasRef.current;
+    if (!c) return null;
     const r = c.getBoundingClientRect();
     return { x: ((e.clientX - r.left) / r.width) * c.width, y: ((e.clientY - r.top) / r.height) * c.height };
   };
 
   const iniciar = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const ctx = canvasRef.current!.getContext('2d')!;
-    const { x, y } = ponto(e);
+    const ctx = canvasRef.current?.getContext('2d');
+    const coordenadas = ponto(e);
+    if (!ctx || !coordenadas) return;
+    const { x, y } = coordenadas;
     desenhando.current = true;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
@@ -63,8 +68,10 @@ export function AssinaturaDigitalConfig() {
 
   const mover = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!desenhando.current) return;
-    const ctx = canvasRef.current!.getContext('2d')!;
-    const { x, y } = ponto(e);
+    const ctx = canvasRef.current?.getContext('2d');
+    const coordenadas = ponto(e);
+    if (!ctx || !coordenadas) return;
+    const { x, y } = coordenadas;
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -73,17 +80,33 @@ export function AssinaturaDigitalConfig() {
 
   const limpar = () => {
     const c = canvasRef.current;
-    if (c) c.getContext('2d')!.clearRect(0, 0, c.width, c.height);
+    const ctx = c?.getContext('2d');
+    if (c && ctx) ctx.clearRect(0, 0, c.width, c.height);
     setBase64(null);
+    if (fileRef.current) fileRef.current.value = '';
   };
 
-  const capturarDesenho = () => {
-    const c = canvasRef.current!;
-    setBase64(c.toDataURL('image/png'));
-    toast.success('Rubrica capturada. Clique em salvar para confirmar.');
+  const prepararAssinatura = async (origem: string) => {
+    setProcessando(true);
+    try {
+      const imagemTratada = await tratarImagemAssinatura(origem);
+      setBase64(imagemTratada);
+      toast.success('Assinatura limpa, recortada e ajustada. Confira a prévia antes de salvar.');
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : 'Não foi possível tratar a assinatura.';
+      toast.error(mensagem);
+    } finally {
+      setProcessando(false);
+    }
   };
 
-  const enviarArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const capturarDesenho = async () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    await prepararAssinatura(c.toDataURL('image/png'));
+  };
+
+  const enviarArquivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
@@ -94,9 +117,10 @@ export function AssinaturaDigitalConfig() {
       toast.error('Imagem muito grande (máx. 1MB)');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => setBase64(String(reader.result));
-    reader.readAsDataURL(file);
+    const origem = URL.createObjectURL(file);
+    await prepararAssinatura(origem);
+    URL.revokeObjectURL(origem);
+    e.target.value = '';
   };
 
   const salvar = async () => {
@@ -167,27 +191,37 @@ export function AssinaturaDigitalConfig() {
             onPointerLeave={parar}
           />
           <div className="flex flex-wrap gap-2 mt-2">
-            <Button type="button" size="sm" variant="outline" onClick={capturarDesenho}>
-              <PenLine className="w-4 h-4 mr-1" /> Usar desenho
+            <Button type="button" size="sm" variant="outline" onClick={capturarDesenho} disabled={processando}>
+              {processando ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PenLine className="w-4 h-4 mr-1" />}
+              Usar desenho
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={limpar}>
               <Eraser className="w-4 h-4 mr-1" /> Limpar
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-              <Upload className="w-4 h-4 mr-1" /> Enviar imagem
+            <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={processando}>
+              {processando ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+              {processando ? 'Tratando imagem...' : 'Enviar imagem'}
             </Button>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={enviarArquivo} />
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={enviarArquivo} />
           </div>
         </div>
 
         {base64 && (
-          <div className="border rounded-md p-3">
-            <p className="text-xs text-muted-foreground mb-2">Pré-visualização da rubrica</p>
-            <img src={base64} alt="Rubrica da empresa" className="max-h-24" />
+          <div className="border rounded-md p-3 space-y-3">
+            <div>
+              <p className="text-sm font-medium">Pré-visualização da assinatura tratada</p>
+              <p className="text-xs text-muted-foreground">Fundo removido, margens recortadas e tamanho ajustado para os documentos.</p>
+            </div>
+            <div className="flex min-h-28 items-center justify-center overflow-hidden rounded-md border bg-muted/40 p-3">
+              <img src={base64} alt="Assinatura institucional tratada" className="h-auto max-h-24 max-w-full object-contain" />
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={limpar}>
+              <Eraser className="w-4 h-4 mr-1" /> Descartar e enviar outra
+            </Button>
           </div>
         )}
 
-        <Button onClick={salvar} disabled={salvando}>
+        <Button onClick={salvar} disabled={salvando || processando}>
           {salvando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           Salvar rubrica
         </Button>
