@@ -126,7 +126,9 @@ const handler = async (req: Request): Promise<Response> => {
       to: [email],
       subject: `Recibo de pagamento — ${residenteNome} (${competencia})`,
       html,
-      attachments: [{ filename: filename || `recibo-${numeroRecibo}.pdf`, content: pdfBuffer }],
+      // A API do Resend exige uma string Base64 no campo `content`.
+      // `pdfBuffer` é mantido apenas para calcular o hash exato dos bytes enviados.
+      attachments: [{ filename: filename || `recibo-${numeroRecibo}.pdf`, content: pdfBase64 }],
     });
 
     if (error) {
