@@ -1,5 +1,5 @@
 import { assertEquals, assertMatch } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { calcularSha256Hex, extrairIp } from "./auditoria.ts";
+import { calcularSha256Hex, criarAnexoRecibo, extrairIp } from "./auditoria.ts";
 
 Deno.test("calcula o SHA-256 exato do PDF recebido", async () => {
   const hash = await calcularSha256Hex(new TextEncoder().encode("pdf-de-teste"));
@@ -10,4 +10,10 @@ Deno.test("calcula o SHA-256 exato do PDF recebido", async () => {
 Deno.test("registra somente o primeiro IP encaminhado", () => {
   const headers = new Headers({ "x-forwarded-for": "203.0.113.10, 10.0.0.1" });
   assertEquals(extrairIp(headers), "203.0.113.10");
+});
+
+Deno.test("envia o anexo ao Resend como string Base64", () => {
+  const anexo = criarAnexoRecibo("recibo.pdf", "JVBERi0xLjQ=");
+  assertEquals(anexo, { filename: "recibo.pdf", content: "JVBERi0xLjQ=" });
+  assertEquals(typeof anexo.content, "string");
 });
