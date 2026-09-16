@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { Resend } from "npm:resend@4.0.0";
 import { z } from "npm:zod@3.23.8";
-import { calcularSha256Hex, extrairIp } from "./auditoria.ts";
+import { calcularSha256Hex, criarAnexoRecibo, extrairIp } from "./auditoria.ts";
 
 const EnviarReciboSchema = z.object({
   email: z.string().email().max(320),
@@ -128,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
       html,
       // A API do Resend exige uma string Base64 no campo `content`.
       // `pdfBuffer` é mantido apenas para calcular o hash exato dos bytes enviados.
-      attachments: [{ filename: filename || `recibo-${numeroRecibo}.pdf`, content: pdfBase64 }],
+      attachments: [criarAnexoRecibo(filename || `recibo-${numeroRecibo}.pdf`, pdfBase64)],
     });
 
     if (error) {

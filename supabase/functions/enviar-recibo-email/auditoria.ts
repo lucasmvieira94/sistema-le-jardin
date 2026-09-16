@@ -9,3 +9,7 @@ export async function calcularSha256Hex(bytes: Uint8Array): Promise<string> {
 export function extrairIp(headers: Headers): string | null {
   return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
 }
+
+export function criarAnexoRecibo(filename: string, pdfBase64: string) {
+  return { filename, content: pdfBase64 };
+}
