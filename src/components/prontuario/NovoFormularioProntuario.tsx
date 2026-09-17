@@ -98,6 +98,7 @@ export default function NovoFormularioProntuario({
   const [enviando, setEnviando] = useState(false);
   const [residenteData, setResidenteData] = useState<any>(null);
   const [camposConfigurados, setCamposConfigurados] = useState<any[]>([]);
+  const [erroCampos, setErroCampos] = useState<string | null>(null);
   const [cicloId, setCicloId] = useState<string | null>(null);
   const [cicloStatus, setCicloStatus] = useState<string>("nao_iniciado");
   const [registros, setRegistros] = useState<LancamentoProntuario[]>([]);
@@ -196,20 +197,29 @@ export default function NovoFormularioProntuario({
   // Campos configurados
   useEffect(() => {
     const carregarCampos = async () => {
+      setErroCampos(null);
       const { data, error } = await supabase
         .from("formulario_campos_config")
         .select("*")
         .eq("ativo", true)
-        .order("secao, ordem" as any);
+        .order("secao", { ascending: true })
+        .order("ordem", { ascending: true });
 
       if (error) {
         console.error("Erro ao carregar campos configurados:", error);
+        setCamposConfigurados([]);
+        setErroCampos("Não foi possível carregar as perguntas do prontuário. Tente novamente.");
+        toast({
+          title: "Erro ao carregar o prontuário",
+          description: "As perguntas não foram carregadas. Reabra o prontuário e tente novamente.",
+          variant: "destructive",
+        });
         return;
       }
       setCamposConfigurados(data || []);
     };
     carregarCampos();
-  }, []);
+  }, [toast]);
 
   // Rascunho local (não perder digitação antes do envio)
   useEffect(() => {
@@ -644,9 +654,11 @@ export default function NovoFormularioProntuario({
             <Card className="mx-2 sm:mx-0">
               <CardContent className="p-6 sm:p-8 text-center">
                 <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-base sm:text-lg font-medium mb-2">Configuração não encontrada</h3>
+                <h3 className="text-base sm:text-lg font-medium mb-2">
+                  {erroCampos ? "Não foi possível carregar o formulário" : "Configuração não encontrada"}
+                </h3>
                 <p className="text-sm sm:text-base text-muted-foreground">
-                  Nenhum campo foi configurado para o formulário.
+                  {erroCampos || "Nenhum campo foi configurado para o formulário."}
                 </p>
               </CardContent>
             </Card>
@@ -664,7 +676,7 @@ export default function NovoFormularioProntuario({
             </p>
             <Button
               onClick={enviarLancamento}
-              disabled={enviando || loading || Object.keys(dadosPreenchidos).length === 0}
+              disabled={enviando || loading || Boolean(erroCampos) || Object.keys(dadosPreenchidos).length === 0}
               className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold"
               size="lg"
             >
