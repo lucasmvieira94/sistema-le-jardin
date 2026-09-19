@@ -10,7 +10,16 @@ import { useRateLimit } from '@/hooks/useRateLimit';
 import { validateFuncionarioCode } from '@/utils/validation';
 
 interface CodigoFuncionarioInputProps {
-  onFuncionarioValidado: (funcionarioId: string, nome: string) => void;
+  onFuncionarioValidado: (
+    funcionarioId: string,
+    nome: string,
+    acesso?: {
+      registraPonto: boolean;
+      acessoSupervisor: boolean;
+      exigirBiometria: boolean;
+      biometriaFacial: number[] | null;
+    },
+  ) => void;
 }
 
 export default function CodigoFuncionarioInput({ onFuncionarioValidado }: CodigoFuncionarioInputProps) {
@@ -60,7 +69,7 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
     try {
       console.log('🔍 Validando funcionário usando função segura...');
       const { data: validacao, error } = await supabase
-        .rpc("validar_codigo_funcionario", { p_codigo: codigo });
+        .rpc("validar_acesso_funcionario", { p_codigo: codigo });
 
       console.log('📋 Resultado da validação:', { validacao, error });
 
@@ -86,7 +95,14 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
 
       const funcionario = validacao[0];
       console.log('✅ Funcionário validado:', funcionario);
-      onFuncionarioValidado(funcionario.funcionario_id, funcionario.nome_completo);
+      onFuncionarioValidado(funcionario.funcionario_id, funcionario.nome_completo, {
+        registraPonto: funcionario.registra_ponto ?? true,
+        acessoSupervisor: funcionario.acesso_supervisor ?? false,
+        exigirBiometria: funcionario.exigir_biometria ?? true,
+        biometriaFacial: Array.isArray(funcionario.biometria_facial)
+          ? funcionario.biometria_facial as number[]
+          : null,
+      });
     } catch (err) {
       console.error('❌ Erro geral na validação:', err);
       toast({

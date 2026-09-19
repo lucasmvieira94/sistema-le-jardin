@@ -11,6 +11,7 @@ interface ValidacaoBiometricaDialogProps {
   onOpenChange: (open: boolean) => void;
   funcionarioId: string;
   funcionarioNome: string;
+  descriptorInicial?: number[] | null;
   contexto: 'registro_ponto' | 'login_portal' | 'prontuario' | 'intercorrencia';
   /** Disparado quando a validação foi bem-sucedida. O componente fecha sozinho. */
   onValidado: () => void;
@@ -31,6 +32,7 @@ export default function ValidacaoBiometricaDialog({
   onOpenChange,
   funcionarioId,
   funcionarioNome,
+  descriptorInicial,
   contexto,
   onValidado,
   onCancelado,
@@ -45,6 +47,11 @@ export default function ValidacaoBiometricaDialog({
   // Carrega o descriptor salvo do funcionário
   useEffect(() => {
     if (!open) return;
+    if (descriptorInicial?.length) {
+      setDescriptorSalvo(descriptorInicial);
+      setStatus('analisando');
+      return;
+    }
     (async () => {
       const { data, error } = await supabase
         .from('funcionarios')
@@ -59,7 +66,7 @@ export default function ValidacaoBiometricaDialog({
       setDescriptorSalvo(data.biometria_facial as unknown as number[]);
       setStatus('analisando');
     })();
-  }, [open, funcionarioId]);
+  }, [open, funcionarioId, descriptorInicial]);
 
   const registrarLog = async (sucesso: boolean, distancia: number | null) => {
     try {
