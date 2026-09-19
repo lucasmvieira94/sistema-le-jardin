@@ -113,6 +113,7 @@ export default function FuncionarioAccess() {
     nome: string;
     registraPonto: boolean;
     acessoSupervisor: boolean;
+    biometriaFacial: number[];
   }>(null);
   const [biometriaOpen, setBiometriaOpen] = useState(false);
 
@@ -168,32 +169,24 @@ export default function FuncionarioAccess() {
     fetchCompanyConfig();
   }, []);
 
-  const handleFuncionarioValidado = async (id: string, nome: string) => {
-    let registraPonto = true;
-    let acessoSupervisor = false;
-    let temBiometria = false;
-
-    try {
-      const { data, error } = await supabase
-        .from('funcionarios')
-        .select('registra_ponto, acesso_supervisor, biometria_facial, exigir_biometria')
-        .eq('id', id)
-        .single();
-      
-      if (error) {
-        console.error('Erro ao buscar dados do funcionário:', error);
-      } else {
-        registraPonto = data.registra_ponto;
-        acessoSupervisor = (data as any).acesso_supervisor ?? false;
-        temBiometria = !!(data as any).biometria_facial && ((data as any).exigir_biometria ?? true);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar funcionário:', error);
-    }
+  const handleFuncionarioValidado = (
+    id: string,
+    nome: string,
+    acesso?: {
+      registraPonto: boolean;
+      acessoSupervisor: boolean;
+      exigirBiometria: boolean;
+      biometriaFacial: number[] | null;
+    },
+  ) => {
+    const registraPonto = acesso?.registraPonto ?? true;
+    const acessoSupervisor = acesso?.acessoSupervisor ?? false;
+    const biometriaFacial = acesso?.biometriaFacial ?? null;
+    const temBiometria = !!biometriaFacial && (acesso?.exigirBiometria ?? true);
 
     // Se possui biometria cadastrada, exige validação facial antes de liberar a sessão
     if (temBiometria) {
-      setPendingBiometria({ id, nome, registraPonto, acessoSupervisor });
+      setPendingBiometria({ id, nome, registraPonto, acessoSupervisor, biometriaFacial });
       setBiometriaOpen(true);
       return;
     }
@@ -375,6 +368,7 @@ export default function FuncionarioAccess() {
           onOpenChange={setBiometriaOpen}
           funcionarioId={pendingBiometria.id}
           funcionarioNome={pendingBiometria.nome}
+          descriptorInicial={pendingBiometria.biometriaFacial}
           contexto="login_portal"
           onValidado={concluirLoginAposBiometria}
           onCancelado={cancelarLogin}

@@ -5093,6 +5093,18 @@ export type Database = {
         }[]
       }
       somar_pausas: { Args: { p_pausas: Json }; Returns: string }
+      validar_acesso_funcionario: {
+        Args: { p_codigo: string }
+        Returns: {
+          acesso_supervisor: boolean
+          biometria_facial: Json
+          exigir_biometria: boolean
+          funcionario_id: string
+          nome_completo: string
+          registra_ponto: boolean
+          valid: boolean
+        }[]
+      }
       validar_codigo_funcionario: {
         Args: { p_codigo: string }
         Returns: {
