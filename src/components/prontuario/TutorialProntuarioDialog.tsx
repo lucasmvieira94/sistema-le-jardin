@@ -8,13 +8,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Clock, ListChecks, Lock, PencilLine } from "lucide-react";
+import { Clock, ListChecks, Lock, PencilLine, ShieldCheck } from "lucide-react";
 
 /**
  * Versão do tutorial. Ao alterar o conteúdo, incremente a versão
  * para que o aviso volte a ser exibido uma única vez para cada usuário.
  */
-const TUTORIAL_VERSAO = "v1";
+const TUTORIAL_VERSAO = "v2";
 
 const storageKey = (funcionarioId: string) =>
   `tutorial-prontuario-${TUTORIAL_VERSAO}-${funcionarioId}`;
@@ -57,7 +57,7 @@ export default function TutorialProntuarioDialog({
     <AlertDialog open={aberto}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>Como usar o novo prontuário eletrônico</AlertDialogTitle>
+          <AlertDialogTitle>Orientações para preencher o prontuário</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4 text-left text-sm text-muted-foreground">
               <p>
@@ -69,46 +69,53 @@ export default function TutorialProntuarioDialog({
                 <li className="flex gap-3">
                   <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   <span>
-                    <strong className="text-foreground">Aberto o dia todo:</strong> você
-                    pode registrar informações a qualquer momento do seu turno, quantas
-                    vezes forem necessárias.
+                    <strong className="text-foreground">Ciclo diário:</strong> o prontuário
+                    fica aberto das 00h00 às 23h59 e é encerrado automaticamente à meia-noite.
                   </span>
                 </li>
                 <li className="flex gap-3">
                   <ListChecks className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   <span>
-                    <strong className="text-foreground">Linha do tempo:</strong> cada envio
-                    vira um registro com data, hora e o seu nome, formando o histórico do
-                    residente no dia.
+                    <strong className="text-foreground">Histórico identificado:</strong> cada
+                    envio fica registrado com data, hora e o seu nome na linha do tempo do
+                    residente.
                   </span>
                 </li>
                 <li className="flex gap-3">
                   <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   <span>
-                    <strong className="text-foreground">Registro não se apaga:</strong>{" "}
-                    depois de salvo, o registro não pode ser excluído nem alterado, para
-                    garantir a segurança da informação.
+                    <strong className="text-foreground">Registro definitivo:</strong> depois
+                    de salvo, o lançamento não pode ser editado nem excluído.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  <span>
+                    <strong className="text-foreground">Uma resposta por pergunta:</strong>{" "}
+                    após responder uma pergunta, ela fica bloqueada durante o ciclo. Não é
+                    possível preencher por cima nem criar outra resposta para a mesma informação.
                   </span>
                 </li>
                 <li className="flex gap-3">
                   <PencilLine className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
                   <span>
-                    <strong className="text-foreground">Precisa corrigir?</strong> Use a
-                    opção de retificação: você escreve a informação correta e a
-                    justificativa, e as duas ficam visíveis no histórico.
+                    <strong className="text-foreground">Precisa corrigir?</strong> Use
+                    exclusivamente a opção <strong className="text-foreground">Retificar</strong>{" "}
+                    na linha do tempo. A justificativa é obrigatória, e o registro original
+                    permanece preservado junto da correção.
                   </span>
                 </li>
               </ul>
 
-              <p>
-                À meia-noite o prontuário do dia é encerrado automaticamente e passa a
-                ficar disponível somente para leitura.
+              <p className="font-medium text-foreground">
+                Revise cuidadosamente as respostas antes de salvar. Após o envio, qualquer
+                correção deverá ser registrada como retificação.
               </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={confirmar}>Entendi</AlertDialogAction>
+          <AlertDialogAction onClick={confirmar}>Li e entendi</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
