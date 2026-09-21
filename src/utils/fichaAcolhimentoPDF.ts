@@ -86,6 +86,15 @@ export async function baixarFichaAcolhimentoPDF(
   }
 
   const empresa = data as EmpresaPDF | null;
+  const doc = gerarDocumentoFichaAcolhimento(ficha, residenteNome, empresa);
+  doc.save(criarNomeArquivoFicha(residenteNome, ficha.created_at));
+}
+
+export function gerarDocumentoFichaAcolhimento(
+  ficha: FichaAcolhimentoPDFData,
+  residenteNome: string,
+  empresa: EmpresaPDF | null,
+): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
@@ -222,5 +231,5 @@ export async function baixarFichaAcolhimentoPDF(
     author: empresa?.nome_empresa?.trim() || "Senex Care",
     creator: "Senex Care",
   });
-  doc.save(criarNomeArquivoFicha(residenteNome, ficha.created_at));
+  return doc;
 }
