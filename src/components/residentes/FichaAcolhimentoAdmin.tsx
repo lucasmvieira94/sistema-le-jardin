@@ -10,6 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { formatarDataHora } from "@/utils/dateUtils";
 import {
+  baixarFichaAcolhimentoPDF,
+  podeBaixarFichaAcolhimento,
+} from "@/utils/fichaAcolhimentoPDF";
+import {
   Loader2,
   Link2,
   Copy,
@@ -18,6 +22,7 @@ import {
   ClipboardList,
   Plus,
   ShieldCheck,
+  Download,
 } from "lucide-react";
 import {
   CAMPOS_HISTORICO_SAUDE,
@@ -58,6 +63,7 @@ export default function FichaAcolhimentoAdmin({ residenteId, residenteNome }: Pr
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [baixandoId, setBaixandoId] = useState<string | null>(null);
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
 
@@ -156,6 +162,22 @@ export default function FichaAcolhimentoAdmin({ residenteId, residenteNome }: Pr
     }
   };
 
+  const baixarPDF = async (ficha: Ficha) => {
+    setBaixandoId(ficha.id);
+    try {
+      await baixarFichaAcolhimentoPDF(ficha, residenteNome);
+      toast({ title: "Download concluído", description: "A ficha de acolhimento foi gerada em PDF." });
+    } catch (e: any) {
+      toast({
+        title: "Erro ao gerar a ficha",
+        description: e?.message || "Não foi possível gerar o PDF.",
+        variant: "destructive",
+      });
+    } finally {
+      setBaixandoId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -204,6 +226,22 @@ export default function FichaAcolhimentoAdmin({ residenteId, residenteNome }: Pr
                     <Badge variant="destructive">Link expirado</Badge>
                   )}
                 </CardTitle>
+                {podeBaixarFichaAcolhimento(f.status) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => baixarPDF(f)}
+                    disabled={baixandoId === f.id}
+                  >
+                    {baixandoId === f.id ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {baixandoId === f.id ? "Gerando..." : "Baixar PDF"}
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
