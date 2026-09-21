@@ -52,7 +52,7 @@ export function criarNomeArquivoFicha(residenteNome: string, createdAt: string):
   const data = new Date(createdAt);
   const dataSegura = Number.isNaN(data.getTime())
     ? "sem-data"
-    : formatarDataHora(createdAt).slice(0, 10).replaceAll("/", "-");
+    : formatarDataHora(createdAt).slice(0, 10).replace(/\//g, "-");
   return `ficha-acolhimento-${nomeSeguro}-${dataSegura}.pdf`;
 }
 
