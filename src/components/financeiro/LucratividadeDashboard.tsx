@@ -8,6 +8,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
 import { CATEGORIAS } from "@/hooks/financeiro/useContasPagar";
+import { calcularMovimentoMensal } from "@/utils/lucratividade";
 
 const fmtBRL = (v: number) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const labelCat = (v: string) => CATEGORIAS.find((c) => c.value === v)?.label ?? v;
@@ -51,23 +52,15 @@ export default function LucratividadeDashboard() {
   const mesAnteriorKey = mesAnteriorDate.toISOString().slice(0, 7);
 
   const dadosMensais = useMemo(() => {
-    const map: Record<string, { receita: number; despesa: number }> = {};
+    const competencias: string[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      map[d.toISOString().slice(0, 7)] = { receita: 0, despesa: 0 };
+      competencias.push(d.toISOString().slice(0, 7));
     }
-    mensalidades.forEach((m) => {
-      const k = monthKey(m.competencia);
-      if (map[k]) map[k].receita += Number(m.valor_pago || 0);
-    });
-    contas.forEach((c) => {
-      if (c.status !== "pago" || !c.data_pagamento) return;
-      const k = monthKey(c.data_pagamento);
-      if (map[k]) map[k].despesa += Number(c.valor || 0);
-    });
-    return Object.entries(map).map(([k, v]) => ({
-      mes: monthLabel(k), key: k,
-      receita: v.receita, despesa: v.despesa, lucro: v.receita - v.despesa,
+    return competencias.map((competencia) => ({
+      mes: monthLabel(competencia),
+      key: competencia,
+      ...calcularMovimentoMensal(mensalidades, contas, competencia),
     }));
   }, [mensalidades, contas]);
 
