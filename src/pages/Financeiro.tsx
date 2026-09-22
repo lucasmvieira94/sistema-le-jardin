@@ -22,6 +22,7 @@ import LucratividadeDashboard from "@/components/financeiro/LucratividadeDashboa
 import { formatarData } from "@/utils/dateUtils";
 import { gerarReciboPDF } from "@/utils/reciboPDF";
 import { calcularJurosMulta, CONFIG_PADRAO, type ConfigJurosMulta } from "@/utils/jurosMulta";
+import { filtrarPagamentos, type MeioPagamento } from "@/utils/filtroPagamentos";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 
 type Mensalidade = {
@@ -94,12 +95,13 @@ export default function Financeiro() {
   const [mensalidades, setMensalidades] = useState<Mensalidade[]>([]);
   const [residentes, setResidentes] = useState<Residente[]>([]);
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroMeioPagamento, setFiltroMeioPagamento] = useState<"todos" | MeioPagamento>("todos");
   const [configMora, setConfigMora] = useState<ConfigJurosMulta>(CONFIG_PADRAO);
 
   // Dialog: registrar pagamento
   const [pagDialog, setPagDialog] = useState<{ open: boolean; m: Mensalidade | null }>({ open: false, m: null });
   const [pagValor, setPagValor] = useState("");
-  const [pagForma, setPagForma] = useState<"pix" | "boleto" | "dinheiro">("pix");
+  const [pagForma, setPagForma] = useState<MeioPagamento>("pix");
   const [pagData, setPagData] = useState(new Date().toISOString().slice(0, 10));
   const [pagObs, setPagObs] = useState("");
   const [pagMulta, setPagMulta] = useState(0);
@@ -206,8 +208,8 @@ export default function Financeiro() {
   };
 
   const filtradas = useMemo(
-    () => filtroStatus === "todos" ? mensalidades : mensalidades.filter((m) => m.status === filtroStatus),
-    [mensalidades, filtroStatus]
+    () => filtrarPagamentos(mensalidades, filtroStatus, filtroMeioPagamento),
+    [mensalidades, filtroStatus, filtroMeioPagamento]
   );
 
   const kpis = useMemo(() => {
@@ -533,19 +535,36 @@ export default function Financeiro() {
 
       {/* Filtros + Tabela */}
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Cobranças · {competenciaLabel}</CardTitle>
-          <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os status</SelectItem>
-              <SelectItem value="pendente">Pendente</SelectItem>
-              <SelectItem value="parcial">Parcial</SelectItem>
-              <SelectItem value="pago">Pago</SelectItem>
-              <SelectItem value="vencido">Vencido</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os status</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="parcial">Parcial</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="vencido">Vencido</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={filtroMeioPagamento}
+              onValueChange={(value) => setFiltroMeioPagamento(value as "todos" | MeioPagamento)}
+            >
+              <SelectTrigger className="w-full sm:w-48" aria-label="Filtrar por meio de pagamento">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os meios</SelectItem>
+                <SelectItem value="pix">PIX</SelectItem>
+                <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                <SelectItem value="transferencia">Transferência</SelectItem>
+                <SelectItem value="cartao">Cartão</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -554,7 +573,9 @@ export default function Financeiro() {
             </div>
           ) : filtradas.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm">
-              Nenhuma cobrança nesta competência. Use "Gerar mensalidades do mês" para criar a partir dos contratos ativos.
+              {filtroStatus !== "todos" || filtroMeioPagamento !== "todos"
+                ? "Nenhum pagamento corresponde aos filtros selecionados."
+                : 'Nenhuma cobrança nesta competência. Use "Gerar mensalidades do mês" para criar a partir dos contratos ativos.'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -684,12 +705,13 @@ export default function Financeiro() {
             )}
             <div>
               <Label>Forma de pagamento</Label>
-              <Select value={pagForma} onValueChange={(v) => setPagForma(v as any)}>
+              <Select value={pagForma} onValueChange={(v) => setPagForma(v as MeioPagamento)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
                   <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="transferencia">Transferência</SelectItem>
+                  <SelectItem value="cartao">Cartão</SelectItem>
                 </SelectContent>
               </Select>
             </div>
