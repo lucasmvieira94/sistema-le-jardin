@@ -261,6 +261,116 @@ export type Database = {
           },
         ]
       }
+      afastamentos_anexos: {
+        Row: {
+          afastamento_id: string
+          created_at: string
+          criado_por: string | null
+          documento_id: string | null
+          formato_original: string
+          hash_original: string
+          hash_pdf: string
+          id: string
+          nome_original: string
+          pdf_path: string
+          revogado_em: string | null
+          tamanho_original: number
+          tamanho_pdf: number
+          tenant_id: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          afastamento_id: string
+          created_at?: string
+          criado_por?: string | null
+          documento_id?: string | null
+          formato_original: string
+          hash_original: string
+          hash_pdf: string
+          id?: string
+          nome_original: string
+          pdf_path: string
+          revogado_em?: string | null
+          tamanho_original: number
+          tamanho_pdf: number
+          tenant_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          afastamento_id?: string
+          created_at?: string
+          criado_por?: string | null
+          documento_id?: string | null
+          formato_original?: string
+          hash_original?: string
+          hash_pdf?: string
+          id?: string
+          nome_original?: string
+          pdf_path?: string
+          revogado_em?: string | null
+          tamanho_original?: number
+          tamanho_pdf?: number
+          tenant_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamentos_anexos_afastamento_id_fkey"
+            columns: ["afastamento_id"]
+            isOneToOne: false
+            referencedRelation: "afastamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afastamentos_anexos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_emitidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      afastamentos_anexos_acessos: {
+        Row: {
+          anexo_id: string
+          created_at: string
+          id: string
+          ip: string | null
+          resultado: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          anexo_id: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          resultado: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          anexo_id?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          resultado?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamentos_anexos_acessos_anexo_id_fkey"
+            columns: ["anexo_id"]
+            isOneToOne: false
+            referencedRelation: "afastamentos_anexos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agendamentos_relatorios_ia: {
         Row: {
           ativo: boolean | null
@@ -5155,6 +5265,7 @@ export type Database = {
         | "advertencia"
         | "recibo_pagamento"
         | "recibo_despesa"
+        | "anexo_afastamento"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -5320,6 +5431,7 @@ export const Constants = {
         "advertencia",
         "recibo_pagamento",
         "recibo_despesa",
+        "anexo_afastamento",
       ],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [
