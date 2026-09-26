@@ -1,0 +1,13 @@
+ALTER TABLE public.afastamentos_anexos ALTER COLUMN tenant_id SET NOT NULL;
+DROP POLICY "Admin consulta anexos da instituicao" ON public.afastamentos_anexos;
+DROP POLICY "Admin cria anexos da instituicao" ON public.afastamentos_anexos;
+DROP POLICY "Admin revoga anexos da instituicao" ON public.afastamentos_anexos;
+CREATE POLICY "Admin consulta anexos da instituicao" ON public.afastamentos_anexos FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin') AND tenant_id=public.get_current_tenant_id());
+CREATE POLICY "Admin cria anexos da instituicao" ON public.afastamentos_anexos FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(),'admin') AND tenant_id=public.get_current_tenant_id() AND criado_por=auth.uid() AND EXISTS (SELECT 1 FROM public.afastamentos f WHERE f.id=afastamento_id AND f.tenant_id=tenant_id));
+CREATE POLICY "Admin revoga anexos da instituicao" ON public.afastamentos_anexos FOR UPDATE TO authenticated USING (public.has_role(auth.uid(),'admin') AND tenant_id=public.get_current_tenant_id()) WITH CHECK (public.has_role(auth.uid(),'admin') AND tenant_id=public.get_current_tenant_id());
+DROP POLICY "Admin consulta acessos aos anexos" ON public.afastamentos_anexos_acessos;
+CREATE POLICY "Admin consulta acessos aos anexos" ON public.afastamentos_anexos_acessos FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin') AND EXISTS (SELECT 1 FROM public.afastamentos_anexos a WHERE a.id=anexo_id AND a.tenant_id=public.get_current_tenant_id()));
+CREATE OR REPLACE FUNCTION public.proteger_anexo_afastamento() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF (to_jsonb(NEW) - 'revogado_em' - 'updated_at') IS DISTINCT FROM (to_jsonb(OLD) - 'revogado_em' - 'updated_at') OR (OLD.revogado_em IS NOT NULL AND NEW.revogado_em IS NULL) THEN RAISE EXCEPTION 'O documento autenticado é imutável'; END IF; RETURN NEW; END; $$;
+CREATE TRIGGER proteger_anexo_afastamento BEFORE UPDATE ON public.afastamentos_anexos FOR EACH ROW EXECUTE FUNCTION public.proteger_anexo_afastamento();
+CREATE OR REPLACE FUNCTION public.proteger_afastamento_documentado() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF EXISTS (SELECT 1 FROM public.afastamentos_anexos a WHERE a.afastamento_id=OLD.id) THEN RAISE EXCEPTION 'O afastamento possui documento auditado e não pode ser excluído'; END IF; RETURN OLD; END; $$;
+CREATE TRIGGER proteger_afastamento_documentado BEFORE DELETE ON public.afastamentos FOR EACH ROW EXECUTE FUNCTION public.proteger_afastamento_documentado();

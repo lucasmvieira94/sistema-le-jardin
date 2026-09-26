@@ -276,7 +276,7 @@ export type Database = {
           revogado_em: string | null
           tamanho_original: number
           tamanho_pdf: number
-          tenant_id: string | null
+          tenant_id: string
           token: string
           updated_at: string
         }
@@ -294,7 +294,7 @@ export type Database = {
           revogado_em?: string | null
           tamanho_original: number
           tamanho_pdf: number
-          tenant_id?: string | null
+          tenant_id: string
           token?: string
           updated_at?: string
         }
@@ -312,7 +312,7 @@ export type Database = {
           revogado_em?: string | null
           tamanho_original?: number
           tamanho_pdf?: number
-          tenant_id?: string | null
+          tenant_id?: string
           token?: string
           updated_at?: string
         }
