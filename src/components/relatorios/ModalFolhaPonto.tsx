@@ -101,7 +101,7 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios, func
 
     setExporting('excel');
     try {
-      await exportToExcel(data.dados, data.totais, mes, ano);
+      await exportToExcel(data.dados, data.totais, mes, ano, funcionarioId);
       toast({
         title: "Excel gerado com sucesso!"
       });

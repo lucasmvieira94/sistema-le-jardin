@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
 import { supabase } from '@/integrations/supabase/client';
+import { linkAnexo } from './anexoAfastamento';
 import {
   renderCabecalhoEmpresa,
   renderTitulo,
@@ -49,6 +50,38 @@ function formatTime(time: string | null): string {
 function formatInterval(interval: string): string {
   if (!interval || interval === '00:00:00') return '00:00';
   return interval.slice(0, 5);
+}
+
+interface AfastamentoPlanilha { funcionario_id: string; funcionario_nome: string; inicio: string; fim: string; tipo: string; token: string | null }
+
+export async function buscarAfastamentosPlanilha(funcionarioIds: string[], mes: number, ano: number): Promise<AfastamentoPlanilha[]> {
+  if (!funcionarioIds.length) return [];
+  const inicio = `${ano}-${String(mes).padStart(2, '0')}-01`;
+  const fim = `${ano}-${String(mes).padStart(2, '0')}-${new Date(ano, mes, 0).getDate()}`;
+  const { data, error } = await supabase.from('afastamentos').select('id, funcionario_id, data_inicio, data_fim, funcionarios(nome_completo), tipos_afastamento(descricao)')
+    .in('funcionario_id', funcionarioIds).lte('data_inicio', fim).or(`data_fim.gte.${inicio},data_fim.is.null`);
+  if (error) throw error;
+  const ids = (data ?? []).map(row => row.id);
+  const { data: anexos, error: anexosError } = ids.length ? await supabase.from('afastamentos_anexos').select('afastamento_id, token').in('afastamento_id', ids).is('revogado_em', null) : { data: [], error: null };
+  if (anexosError) throw anexosError;
+  const tokens = new Map((anexos ?? []).map(item => [item.afastamento_id, item.token]));
+  return (data ?? []).map(row => ({ funcionario_id: row.funcionario_id, funcionario_nome: row.funcionarios?.nome_completo ?? '', inicio: row.data_inicio, fim: row.data_fim ?? row.data_inicio, tipo: row.tipos_afastamento?.descricao ?? 'Afastamento', token: tokens.get(row.id) ?? null }));
+}
+
+export function adicionarAfastamentosPlanilha(sheet: XLSX.WorkSheet, rows: AfastamentoPlanilha[], startRow: number, incluirFuncionario = false): void {
+  XLSX.utils.sheet_add_aoa(sheet, [[], ['AFASTAMENTOS'], [
+    ...(incluirFuncionario ? ['Funcionário'] : []), 'Início', 'Fim', 'Tipo', 'Documento'
+  ]], { origin: startRow });
+  let row = startRow + 3;
+  for (const item of rows) {
+    XLSX.utils.sheet_add_aoa(sheet, [[...(incluirFuncionario ? [item.funcionario_nome] : []), item.inicio, item.fim, item.tipo, item.token ? 'Abrir documento autenticado' : 'Sem documento anexado']], { origin: row });
+    if (item.token) {
+      const cell = XLSX.utils.encode_cell({ r: row, c: incluirFuncionario ? 4 : 3 });
+      sheet[cell].l = { Target: linkAnexo(item.token), Tooltip: 'Abrir PDF autenticado do afastamento' };
+    }
+    row++;
+  }
+  if (!rows.length) XLSX.utils.sheet_add_aoa(sheet, [['Nenhum afastamento no período']], { origin: row });
 }
 
 // Exportação individual PDF (layout inspirado na apropriação de horas)
@@ -141,7 +174,8 @@ export async function exportToExcel(
   dados: FolhaPontoData[],
   totais: TotaisFolhaPonto,
   mes: number,
-  ano: number
+  ano: number,
+  funcionarioId?: string
 ) {
   if (dados.length === 0) return;
   
@@ -192,6 +226,8 @@ export async function exportToExcel(
   );
 
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const afastamentos = funcionarioId ? await buscarAfastamentosPlanilha([funcionarioId], mes, ano) : [];
+  adicionarAfastamentosPlanilha(worksheet, afastamentos, worksheetData.length);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Folha de Ponto');
 
@@ -203,7 +239,8 @@ export async function exportMultipleFuncionariosToExcel(
   funcionariosDados: Array<{ dados: FolhaPontoData[], totais: TotaisFolhaPonto }>,
   resumoGeral: Array<{ nome: string, cpf: string, horas_trabalhadas: string, horas_extras: string, horas_noturnas: string, faltas: number }>,
   mes: number,
-  ano: number
+  ano: number,
+  funcionarioIds: string[] = []
 ) {
   if (funcionariosDados.length === 0) return;
 
@@ -236,6 +273,8 @@ export async function exportMultipleFuncionariosToExcel(
   );
 
   const resumoWorksheet = XLSX.utils.aoa_to_sheet(resumoWorksheetData);
+  const afastamentos = await buscarAfastamentosPlanilha(funcionarioIds, mes, ano);
+  adicionarAfastamentosPlanilha(resumoWorksheet, afastamentos, resumoWorksheetData.length, true);
   XLSX.utils.book_append_sheet(workbook, resumoWorksheet, 'Resumo Geral');
 
   // Abas individuais
@@ -286,6 +325,7 @@ export async function exportMultipleFuncionariosToExcel(
       );
 
       const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+      adicionarAfastamentosPlanilha(worksheet, afastamentos.filter(row => row.funcionario_id === funcionarioIds[funcionariosDados.indexOf(funcionarioData)]), worksheetData.length);
       const sheetName = funcionario.funcionario_nome.substring(0, 31);
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     }
