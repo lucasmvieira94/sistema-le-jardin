@@ -5,7 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Link2, Ban, Paperclip } from "lucide-react";
+import AnexoInput from './AnexoInput';
+import { AnexoAfastamento, linkAnexo, registrarAnexoAfastamento, revogarAnexo } from '@/utils/anexoAfastamento';
+import { useTenantContext } from '@/contexts/TenantContext';
 import { toast } from "@/components/ui/use-toast";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import EditarAfastamentoDialog from "./EditarAfastamentoDialog";
@@ -46,6 +49,12 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
   const [editId, setEditId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [anexos, setAnexos] = useState<Record<string, AnexoAfastamento>>({});
+  const [uploadId, setUploadId] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [progresso, setProgresso] = useState('');
+  const { tenantId } = useTenantContext();
   const { logEvent } = useAuditLog();
 
   useImperativeHandle(ref, () => ({
@@ -86,11 +95,35 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
       })) || [];
 
       setAfastamentos(formattedData);
+      const { data: anexosData, error: anexosError } = await supabase.from('afastamentos_anexos')
+        .select('id, afastamento_id, nome_original, hash_pdf, token, revogado_em, documento_id')
+        .is('revogado_em', null);
+      if (anexosError) throw anexosError;
+      setAnexos(Object.fromEntries((anexosData ?? []).map(item => [item.afastamento_id, item])));
     } catch (error) {
       console.error("Erro ao buscar afastamentos:", error);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function saveAnexo() {
+    if (!uploadId || !uploadFile || !tenantId) return;
+    setBusy(true);
+    try {
+      await registrarAnexoAfastamento(uploadFile, uploadId, tenantId, setProgresso);
+      toast({ title: 'Documento convertido e autenticado' });
+      setUploadId(null);
+      setUploadFile(null);
+      await fetchAfastamentos();
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Não foi possível anexar', description: error instanceof Error ? error.message : 'Tente novamente.' });
+    } finally { setBusy(false); setProgresso(''); }
+  }
+
+  async function revoke(id: string) {
+    try { await revogarAnexo(id); await fetchAfastamentos(); toast({ title: 'Link revogado' }); }
+    catch (error) { toast({ variant: 'destructive', title: 'Falha ao revogar', description: error instanceof Error ? error.message : '' }); }
   }
 
   async function deleteAfastamento(id: string) {
@@ -150,6 +183,7 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
               <TableHead>Data/Hora</TableHead>
               <TableHead>Duração</TableHead>
               <TableHead>Observações</TableHead>
+              <TableHead>Documento</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,7 +206,9 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setDeleteId(afastamento.id)}
-                      className="text-red-600 hover:text-red-700"
+                      disabled={!!anexos[afastamento.id]}
+                      title={anexos[afastamento.id] ? 'Revogue o documento antes de excluir; afastamentos documentados preservam a auditoria.' : 'Excluir'}
+                      className="text-destructive hover:text-destructive"
                       aria-label="Excluir"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -215,6 +251,13 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
                 <TableCell className="max-w-xs truncate">
                   {afastamento.observacoes || "-"}
                 </TableCell>
+                <TableCell>
+                  {anexos[afastamento.id] ? <div className="flex items-center gap-1">
+                    <Button asChild variant="ghost" size="icon" title="Abrir PDF autenticado"><a href={linkAnexo(anexos[afastamento.id].token)} target="_blank" rel="noopener noreferrer"><Link2 className="w-4 h-4" /></a></Button>
+                    <Button variant="ghost" size="icon" title="Revogar link" onClick={() => revoke(anexos[afastamento.id].id)}><Ban className="w-4 h-4" /></Button>
+                    <span className="text-xs text-muted-foreground max-w-28 truncate" title={anexos[afastamento.id].nome_original}>{anexos[afastamento.id].nome_original}</span>
+                  </div> : <Button variant="outline" size="sm" onClick={() => { setUploadId(afastamento.id); setUploadFile(null); }}><Paperclip className="w-4 h-4 mr-1" />Anexar</Button>}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -227,6 +270,15 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
         afastamentoId={editId}
         onSaved={fetchAfastamentos}
       />
+
+      <AlertDialog open={!!uploadId} onOpenChange={open => { if (!open && !busy) { setUploadId(null); setUploadFile(null); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Anexar documento</AlertDialogTitle><AlertDialogDescription>O arquivo será convertido para PDF, autenticado e disponibilizado por link.</AlertDialogDescription></AlertDialogHeader>
+          <AnexoInput onChange={setUploadFile} value={uploadFile} disabled={busy} />
+          {progresso && <p role="status" className="text-sm text-muted-foreground">{progresso}</p>}
+          <AlertDialogFooter><AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel><Button disabled={!uploadFile || busy} onClick={saveAnexo}>Salvar documento</Button></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>

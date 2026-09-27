@@ -218,7 +218,11 @@ export default function ModalFolhaPontoGeral({ open, onOpenChange, funcionarios 
         return;
       }
 
-      await exportMultipleFuncionariosToExcel(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano);
+      const ids = dadosCompletos.funcionariosDados.map(item =>
+        (item.dados[0] as FolhaPontoData & { funcionario_id?: string })?.funcionario_id ??
+        funcionarios.find(f => f.nome_completo === item.dados[0]?.funcionario_nome)?.id ?? ''
+      );
+      await exportMultipleFuncionariosToExcel(dadosCompletos.funcionariosDados, dadosCompletos.resumoGeral, mes, ano, ids.filter(Boolean));
       toast({ title: "Excel gerado com sucesso!", description: `Planilha com ${dadosCompletos.funcionariosDados.length} funcionários exportada` });
     } catch (error) {
       console.error('Erro na exportação Excel:', error);

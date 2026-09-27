@@ -33,6 +33,7 @@ import VerificarDocumento from "./pages/VerificarDocumento";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 import Landing from "./pages/Landing";
+import AnexoAfastamentoPublico from "./pages/AnexoAfastamentoPublico";
 
 // Páginas protegidas (admin)
 import Index from "./pages/Index";
@@ -120,6 +121,7 @@ const App = () => {
               <Route path="/minhas-folhas-ponto" element={<MinhasFolhasPonto />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/verificar-documento" element={<VerificarDocumento />} />
+              <Route path="/anexo-afastamento/:token" element={<AnexoAfastamentoPublico />} />
               <Route path="/landing" element={<Landing />} />
             </Route>
 

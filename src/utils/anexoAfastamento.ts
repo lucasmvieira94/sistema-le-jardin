@@ -105,6 +105,7 @@ export async function converterAnexoParaPdf(file: File, onProgress?: (message: s
   if (!crossOriginIsolated) throw new Error('A conversão de Word requer uma conexão segura com isolamento entre sites. Tente abrir o aplicativo no domínio oficial.');
   onProgress?.('Preparando conversão do documento…');
   const { WorkerBrowserConverter } = await import('@matbee/libreoffice-converter/browser');
+  const inputFormat = ext as 'doc' | 'docx' | 'odt';
   const converter = new WorkerBrowserConverter({
     sofficeJs: '/office-wasm/soffice.js',
     sofficeWasm: wasmAsset.url,
@@ -115,7 +116,7 @@ export async function converterAnexoParaPdf(file: File, onProgress?: (message: s
   });
   try {
     await converter.initialize();
-    const result = await converter.convert(await file.arrayBuffer(), { outputFormat: 'pdf', inputFormat: ext }, file.name);
+    const result = await converter.convert(await file.arrayBuffer(), { outputFormat: 'pdf', inputFormat }, file.name);
     const blob = new Blob([new Uint8Array(result.data)], { type: 'application/pdf' });
     if (new TextDecoder().decode(await blob.slice(0, 5).arrayBuffer()) !== '%PDF-') throw new Error('Falha na conversão do documento.');
     return blob;
@@ -134,19 +135,17 @@ export async function registrarAnexoAfastamento(file: File, afastamentoId: strin
   const hashOriginal = await hashArquivo(file);
   const pdf = await converterAnexoParaPdf(file, onProgress);
   if (pdf.size > MAX_BYTES) throw new Error('O PDF convertido excede o limite de 20 MB.');
-  const hashPdf = await hashArquivo(pdf);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Entre como gestor para anexar o documento.');
   const path = `${tenantId}/${afastamentoId}/${crypto.randomUUID()}.pdf`;
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, pdf, { contentType: 'application/pdf', upsert: false });
   if (uploadError) throw uploadError;
   try {
-    const { error } = await supabase.from('afastamentos_anexos').insert({
-      afastamento_id: afastamentoId, tenant_id: tenantId, criado_por: user.id,
-      nome_original: file.name, formato_original: ext, tamanho_original: file.size,
-      hash_original: hashOriginal, pdf_path: path, tamanho_pdf: pdf.size, hash_pdf: hashPdf,
+    const { error, data } = await supabase.functions.invoke('registrar-anexo-afastamento', {
+      body: { afastamentoId, tenantId, path, nomeOriginal: file.name,
+        formatoOriginal: ext, tamanhoOriginal: file.size, hashOriginal },
     });
-    if (error) throw error;
+    if (error || !data?.id) throw error ?? new Error('Não foi possível autenticar o PDF.');
   } catch (error) {
     await supabase.storage.from(BUCKET).remove([path]);
     throw error;

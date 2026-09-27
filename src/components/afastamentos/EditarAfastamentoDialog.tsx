@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import AnexoInput from './AnexoInput';
+import { registrarAnexoAfastamento } from '@/utils/anexoAfastamento';
+import { useTenantContext } from '@/contexts/TenantContext';
 
 interface TipoAfastamento {
   id: number;
@@ -36,6 +39,9 @@ export default function EditarAfastamentoDialog({
   const { logEvent } = useAuditLog();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [anexo, setAnexo] = useState<File | null>(null);
+  const [progresso, setProgresso] = useState('');
+  const { tenantId } = useTenantContext();
   const [tipos, setTipos] = useState<TipoAfastamento[]>([]);
   const [original, setOriginal] = useState<any>(null);
   const [form, setForm] = useState({
@@ -103,7 +109,14 @@ export default function EditarAfastamentoDialog({
       if (error) throw error;
 
       await logEvent("afastamentos", "UPDATE", original, { id: afastamentoId, ...payload });
+      if (anexo) {
+        if (!tenantId) throw new Error('Instituição não identificada.');
+        try { await registrarAnexoAfastamento(anexo, afastamentoId, tenantId, setProgresso); }
+        catch (cause) { onSaved(); throw new Error(`Alterações salvas, mas o documento não foi anexado: ${cause instanceof Error ? cause.message : ''}`); }
+      }
 
+      setAnexo(null);
+      setProgresso('');
       toast({ title: "Afastamento atualizado", description: "Alterações salvas com sucesso." });
       onSaved();
       onOpenChange(false);
@@ -228,6 +241,8 @@ export default function EditarAfastamentoDialog({
                 onChange={(e) => setForm((f) => ({ ...f, observacoes: e.target.value }))}
               />
             </div>
+            <AnexoInput onChange={setAnexo} value={anexo} disabled={saving} />
+            {progresso && <p role="status" className="text-sm text-muted-foreground">{progresso}</p>}
           </div>
         )}
         <DialogFooter>

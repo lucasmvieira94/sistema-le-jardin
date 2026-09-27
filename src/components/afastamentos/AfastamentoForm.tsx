@@ -9,6 +9,10 @@ import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import AnexoInput from './AnexoInput';
+import { registrarAnexoAfastamento } from '@/utils/anexoAfastamento';
+import { useTenantContext } from '@/contexts/TenantContext';
+import { useAuditLog } from '@/hooks/useAuditLog';
 import {
   criarValoresIniciaisAfastamento,
   type AfastamentoFormValues,
@@ -39,6 +43,10 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [tiposAfastamento, setTiposAfastamento] = useState<TipoAfastamento[]>([]);
   const [tipoPeriodo, setTipoPeriodo] = useState<"horas" | "dias">("dias");
+  const [anexo, setAnexo] = useState<File | null>(null);
+  const [progresso, setProgresso] = useState('');
+  const { tenantId } = useTenantContext();
+  const { logEvent } = useAuditLog();
 
   useEffect(() => {
     fetchFuncionarios();
@@ -95,7 +103,8 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
         horaFim = calcularHoraFim(values.hora_inicio, values.quantidade_horas);
       }
 
-      const { error } = await supabase.from("afastamentos").insert([
+      if (!tenantId) throw new Error('Instituição não identificada.');
+      const { error, data: inserted } = await supabase.from("afastamentos").insert([
         {
           funcionario_id: values.funcionario_id,
           tipo_afastamento_id: Number(values.tipo_afastamento_id),
@@ -107,10 +116,19 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
           quantidade_horas: values.quantidade_horas || null,
           quantidade_dias: values.quantidade_dias || null,
           observacoes: values.observacoes || null,
+          tenant_id: tenantId,
         },
-      ]);
+      ]).select('id').single();
 
-      if (error) throw error;
+      if (error || !inserted) throw error ?? new Error('Não foi possível salvar o afastamento.');
+      await logEvent('afastamentos', 'INSERT', null, { id: inserted.id, ...values, tenant_id: tenantId });
+      if (anexo) {
+        try { await registrarAnexoAfastamento(anexo, inserted.id, tenantId, setProgresso); }
+        catch (cause) {
+          setProgresso('');
+          throw new Error(`Afastamento salvo, mas o documento não foi anexado. Adicione-o na lista. ${cause instanceof Error ? cause.message : ''}`);
+        }
+      }
 
       toast({
         title: "Afastamento registrado!",
@@ -118,10 +136,13 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
       });
 
       form.reset(criarValoresIniciaisAfastamento());
+      setAnexo(null);
+      setProgresso('');
       setTipoPeriodo("dias");
       onAfastamentoAdded?.();
       window.requestAnimationFrame(() => funcionarioTriggerRef.current?.focus());
     } catch (err: any) {
+      onAfastamentoAdded?.();
       toast({
         variant: "destructive",
         title: "Erro ao registrar afastamento",
@@ -301,6 +322,8 @@ export default function AfastamentoForm({ onAfastamentoAdded }: AfastamentoFormP
           )}
         />
 
+        <AnexoInput onChange={setAnexo} value={anexo} disabled={isSubmitting} />
+        {progresso && <p role="status" className="text-sm text-muted-foreground">{progresso}</p>}
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? (
             <Loader2 className="animate-spin mr-2 h-4 w-4" />
