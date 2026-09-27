@@ -105,6 +105,7 @@ export async function converterAnexoParaPdf(file: File, onProgress?: (message: s
   if (!crossOriginIsolated) throw new Error('A conversão de Word requer uma conexão segura com isolamento entre sites. Tente abrir o aplicativo no domínio oficial.');
   onProgress?.('Preparando conversão do documento…');
   const { WorkerBrowserConverter } = await import('@matbee/libreoffice-converter/browser');
+  const inputFormat = ext as 'doc' | 'docx' | 'odt';
   const converter = new WorkerBrowserConverter({
     sofficeJs: '/office-wasm/soffice.js',
     sofficeWasm: wasmAsset.url,
@@ -115,7 +116,7 @@ export async function converterAnexoParaPdf(file: File, onProgress?: (message: s
   });
   try {
     await converter.initialize();
-    const result = await converter.convert(await file.arrayBuffer(), { outputFormat: 'pdf', inputFormat: ext }, file.name);
+    const result = await converter.convert(await file.arrayBuffer(), { outputFormat: 'pdf', inputFormat }, file.name);
     const blob = new Blob([new Uint8Array(result.data)], { type: 'application/pdf' });
     if (new TextDecoder().decode(await blob.slice(0, 5).arrayBuffer()) !== '%PDF-') throw new Error('Falha na conversão do documento.');
     return blob;
