@@ -11,6 +11,7 @@ const TIPO_LABEL: Record<string, string> = {
   advertencia: 'Documento Disciplinar',
   recibo_pagamento: 'Recibo de Pagamento',
   recibo_despesa: 'Recibo de Pagamento de Despesa',
+  anexo_afastamento: 'Documento de Afastamento',
 }
 
 function mascararNome(nome: string): string {

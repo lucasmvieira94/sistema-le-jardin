@@ -134,19 +134,17 @@ export async function registrarAnexoAfastamento(file: File, afastamentoId: strin
   const hashOriginal = await hashArquivo(file);
   const pdf = await converterAnexoParaPdf(file, onProgress);
   if (pdf.size > MAX_BYTES) throw new Error('O PDF convertido excede o limite de 20 MB.');
-  const hashPdf = await hashArquivo(pdf);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Entre como gestor para anexar o documento.');
   const path = `${tenantId}/${afastamentoId}/${crypto.randomUUID()}.pdf`;
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, pdf, { contentType: 'application/pdf', upsert: false });
   if (uploadError) throw uploadError;
   try {
-    const { error } = await supabase.from('afastamentos_anexos').insert({
-      afastamento_id: afastamentoId, tenant_id: tenantId, criado_por: user.id,
-      nome_original: file.name, formato_original: ext, tamanho_original: file.size,
-      hash_original: hashOriginal, pdf_path: path, tamanho_pdf: pdf.size, hash_pdf: hashPdf,
+    const { error, data } = await supabase.functions.invoke('registrar-anexo-afastamento', {
+      body: { afastamentoId, tenantId, path, nomeOriginal: file.name,
+        formatoOriginal: ext, tamanhoOriginal: file.size, hashOriginal },
     });
-    if (error) throw error;
+    if (error || !data?.id) throw error ?? new Error('Não foi possível autenticar o PDF.');
   } catch (error) {
     await supabase.storage.from(BUCKET).remove([path]);
     throw error;
