@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { adicionarEstoqueFralda, mensagemEntradaEstoque } from "@/utils/estoqueFraldas";
 import { toast } from "sonner";
 import { useTenant } from "@/hooks/useTenant";
 

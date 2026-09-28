@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { adicionarEstoqueFralda, mensagemEntradaEstoque } from "@/utils/estoqueFraldas";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
