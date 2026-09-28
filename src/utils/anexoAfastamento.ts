@@ -1,11 +1,10 @@
 import { jsPDF } from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
-import wasmAsset from '@/assets/soffice.wasm.asset.json';
-import dataAsset from '@/assets/soffice.data.asset.json';
 
-export const TIPOS_ANEXO = '.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.heic,.heif,.svg,.doc,.docx,.odt';
+export const TIPOS_ANEXO = '.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.heic,.heif,.svg,.docx,.odt,.txt,.rtf';
 const MAX_BYTES = 20 * 1024 * 1024;
 const EXTENSOES = new Set(TIPOS_ANEXO.split(',').map(tipo => tipo.slice(1)));
+const EDITAVEIS = new Set(['docx', 'odt', 'txt', 'rtf']);
 const BUCKET = 'afastamentos-documentos';
 
 export interface AnexoAfastamento {
