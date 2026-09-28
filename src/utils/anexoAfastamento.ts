@@ -1,11 +1,10 @@
 import { jsPDF } from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
-import wasmAsset from '@/assets/soffice.wasm.asset.json';
-import dataAsset from '@/assets/soffice.data.asset.json';
 
-export const TIPOS_ANEXO = '.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.heic,.heif,.svg,.doc,.docx,.odt';
+export const TIPOS_ANEXO = '.pdf,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.heic,.heif,.svg,.docx,.odt,.txt,.rtf';
 const MAX_BYTES = 20 * 1024 * 1024;
 const EXTENSOES = new Set(TIPOS_ANEXO.split(',').map(tipo => tipo.slice(1)));
+const EDITAVEIS = new Set(['docx', 'odt', 'txt', 'rtf']);
 const BUCKET = 'afastamentos-documentos';
 
 export interface AnexoAfastamento {
@@ -93,6 +92,51 @@ async function imagemParaPdf(file: File, ext: string): Promise<Blob> {
   }
 }
 
+/** Extracts the readable text of editable documents without executing embedded content. */
+export async function textoDoDocumento(file: File, ext: string): Promise<string> {
+  if (ext === 'txt') return (await file.text()).trim();
+  if (ext === 'rtf') {
+    // Minimal RTF reading: drop control words and groups, keep visible text.
+    const bruto = await file.text();
+    return bruto.replace(/\\'[0-9a-f]{2}/gi, ' ').replace(/\\[a-z]+-?\d* ?/gi, ' ').replace(/[{}]/g, '').replace(/[ \t]+/g, ' ').trim();
+  }
+  if (ext === 'docx') {
+    const mammoth = await import('mammoth/mammoth.browser');
+    const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return value.trim();
+  }
+  const { unzipSync, strFromU8 } = await import('fflate');
+  const arquivos = unzipSync(new Uint8Array(await file.arrayBuffer()));
+  const conteudo = arquivos['content.xml'];
+  if (!conteudo) throw new Error('Arquivo OpenDocument inválido.');
+  return strFromU8(conteudo)
+    .replace(/<text:(p|h)[^>]*>/g, '\n')
+    .replace(/<text:tab\/>/g, '\t')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&apos;/g, "'").replace(/&quot;/g, '"')
+    .trim();
+}
+
+/** Renders extracted text as an A4 PDF preserving paragraphs and page breaks. */
+export function textoParaPdf(texto: string, titulo: string): Blob {
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  const largura = pdf.internal.pageSize.getWidth() - 30;
+  const alturaMax = pdf.internal.pageSize.getHeight() - 20;
+  pdf.setFont('helvetica', 'bold').setFontSize(12);
+  pdf.text(pdf.splitTextToSize(titulo, largura), 15, 18);
+  pdf.setFont('helvetica', 'normal').setFontSize(11);
+  let y = 30;
+  for (const paragrafo of texto.split(/\n+/)) {
+    for (const linha of pdf.splitTextToSize(paragrafo.trim() || ' ', largura)) {
+      if (y > alturaMax) { pdf.addPage(); y = 20; }
+      pdf.text(linha, 15, y);
+      y += 6;
+    }
+    y += 2;
+  }
+  return pdf.output('blob');
+}
+
 export async function converterAnexoParaPdf(file: File, onProgress?: (message: string) => void): Promise<Blob> {
   const ext = validarAnexo(file);
   if (ext === 'pdf') {
@@ -100,29 +144,15 @@ export async function converterAnexoParaPdf(file: File, onProgress?: (message: s
     if (header !== '%PDF-') throw new Error('O arquivo PDF é inválido.');
     return file;
   }
-  if (!['doc', 'docx', 'odt'].includes(ext)) return imagemParaPdf(file, ext);
-
-  if (!crossOriginIsolated) throw new Error('A conversão de Word requer uma conexão segura com isolamento entre sites. Tente abrir o aplicativo no domínio oficial.');
-  onProgress?.('Preparando conversão do documento…');
-  const { WorkerBrowserConverter } = await import('@matbee/libreoffice-converter/browser');
-  const inputFormat = ext as 'doc' | 'docx' | 'odt';
-  const converter = new WorkerBrowserConverter({
-    sofficeJs: '/office-wasm/soffice.js',
-    sofficeWasm: wasmAsset.url,
-    sofficeData: dataAsset.url,
-    sofficeWorkerJs: '/office-wasm/soffice.worker.js',
-    browserWorkerJs: '/office-wasm/browser.worker.global.js',
-    onProgress: (progress) => onProgress?.(`Convertendo documento… ${progress.percent}%`),
-  });
-  try {
-    await converter.initialize();
-    const result = await converter.convert(await file.arrayBuffer(), { outputFormat: 'pdf', inputFormat }, file.name);
-    const blob = new Blob([new Uint8Array(result.data)], { type: 'application/pdf' });
-    if (new TextDecoder().decode(await blob.slice(0, 5).arrayBuffer()) !== '%PDF-') throw new Error('Falha na conversão do documento.');
-    return blob;
-  } finally {
-    await converter.destroy();
+  if (!EDITAVEIS.has(ext)) {
+    onProgress?.('Convertendo imagem para PDF…');
+    return imagemParaPdf(file, ext);
   }
+  onProgress?.('Lendo o documento…');
+  const texto = await textoDoDocumento(file, ext);
+  if (!texto) throw new Error('O documento está vazio ou não pôde ser lido. Salve-o como PDF e envie novamente.');
+  onProgress?.('Gerando PDF…');
+  return textoParaPdf(texto, file.name.replace(/\.[^.]+$/, ''));
 }
 
 export function linkAnexo(token: string): string {

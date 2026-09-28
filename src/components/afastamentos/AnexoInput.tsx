@@ -14,6 +14,6 @@ export default function AnexoInput({ onChange, value, disabled }: { onChange: (f
     }} />
     {value && <p className="text-xs text-muted-foreground truncate">{value.name}</p>}
     {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-    <p className="text-xs text-muted-foreground">PDF, imagens, DOC, DOCX ou ODT. Até 20 MB. Convertido para PDF.</p>
+    <p className="text-xs text-muted-foreground">PDF, imagens, DOCX, ODT, TXT ou RTF. Até 20 MB. Tudo é convertido para PDF e autenticado.</p>
   </div>;
 }
