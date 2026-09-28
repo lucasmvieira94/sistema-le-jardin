@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { adicionarEstoqueFralda, mensagemEntradaEstoque } from "@/utils/estoqueFraldas";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,16 +68,21 @@ export const CadastroEstoquePublico = ({
   // Mutation para criar estoque
   const criarEstoque = useMutation({
     mutationFn: async (dados: any) => {
-      const { data, error } = await supabase
-        .from("estoque_fraldas")
-        .insert([dados])
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      // Soma ao estoque já existente do mesmo tipo/marca/tamanho, evitando duplicidade
+      const r = await adicionarEstoqueFralda({
+        tenant_id: dados.tenant_id,
+        residente_id: dados.residente_id,
+        tipo_fralda: dados.tipo_fralda,
+        marca: dados.marca,
+        tamanho: dados.tamanho,
+        quantidade: dados.quantidade_atual,
+        observacoes: dados.observacoes,
+      });
+      return { ...r, quantidade: dados.quantidade_atual as number };
     },
-    onSuccess: () => {
+    onSuccess: (r) => {
       queryClient.invalidateQueries({ queryKey: ["estoque-fraldas"] });
+      toast.success(mensagemEntradaEstoque(r, r.quantidade));
       onSuccess();
     },
     onError: (error) => {

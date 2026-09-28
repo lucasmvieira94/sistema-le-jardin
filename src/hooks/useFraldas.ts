@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { adicionarEstoqueFralda, mensagemEntradaEstoque } from "@/utils/estoqueFraldas";
 import { toast } from "sonner";
 import { useTenant } from "@/hooks/useTenant";
 
@@ -127,19 +128,24 @@ export const useFraldas = () => {
       if (!tenantId) {
         throw new Error("Tenant não identificado. Por favor, faça login novamente.");
       }
-      const { data: result, error } = await supabase
-        .from("estoque_fraldas")
-        .insert([{ ...data, tenant_id: tenantId }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return result;
+      // Soma ao registro existente (mesmo residente/tipo/marca/tamanho) ou cria um novo
+      const quantidade = Number(data.quantidade_atual);
+      const result = await adicionarEstoqueFralda({
+        tenant_id: tenantId,
+        residente_id: data.residente_id ?? null,
+        tipo_fralda: data.tipo_fralda,
+        marca: data.marca ?? null,
+        tamanho: data.tamanho,
+        quantidade,
+        observacoes: data.observacoes ?? null,
+        quantidade_minima: data.quantidade_minima ?? null,
+      });
+      return { ...result, quantidade };
     },
-    onSuccess: () => {
+    onSuccess: (r) => {
       queryClient.invalidateQueries({ queryKey: ["estoque-fraldas", tenantId] });
       queryClient.invalidateQueries({ queryKey: ["alertas-estoque-fraldas", tenantId] });
-      toast.success("Estoque de fralda cadastrado com sucesso!");
+      toast.success(mensagemEntradaEstoque(r, r.quantidade));
     },
     onError: (error) => {
       toast.error("Erro ao cadastrar estoque: " + error.message);

@@ -4815,6 +4815,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adicionar_estoque_fralda: {
+        Args: {
+          p_marca: string
+          p_observacoes?: string
+          p_quantidade: number
+          p_quantidade_minima?: number
+          p_residente_id: string
+          p_tamanho: string
+          p_tenant_id: string
+          p_tipo_fralda: string
+        }
+        Returns: Json
+      }
       buscar_prontuarios_em_atraso: {
         Args: never
         Returns: {
