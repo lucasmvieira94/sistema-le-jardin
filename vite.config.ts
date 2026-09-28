@@ -37,6 +37,14 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // The local preview does not serve hosted binary assets itself; proxy them
+    // from the published asset host so LibreOffice receives WASM, not index.html.
+    proxy: {
+      '/__l5e/assets-v1': {
+        target: 'https://senexcare.app',
+        changeOrigin: true,
+      },
+    },
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
