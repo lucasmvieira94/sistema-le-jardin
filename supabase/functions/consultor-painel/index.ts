@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
   let total = 0;
   try {
     for (const t of tenants) total += await analisarTenant(db, apiKey, t);
-    await db.from("consultor_painel_execucoes").update({ trava_ate: null, pausado_motivo: null, ultima_execucao: new Date().toISOString() }).eq("chave", chave);
+    await db.from("consultor_painel_execucoes").update({ trava_ate: null, pausado_motivo: null, ...(agendado ? { ultima_execucao: new Date().toISOString() } : {}) }).eq("chave", chave);
     return json({ sugestoes: total, empresas: tenants.length });
   } catch (e) {
     const status = e instanceof GatewayError ? e.status : 500;
