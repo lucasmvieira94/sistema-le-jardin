@@ -5099,6 +5099,22 @@ export type Database = {
         Returns: undefined
       }
       marcar_contas_atrasadas: { Args: never; Returns: number }
+      monitorar_prontuarios_dia: {
+        Args: { p_data?: string }
+        Returns: {
+          ciclo_id: string
+          diurno: number
+          lancamentos: number
+          noturno: number
+          quarto: string
+          residente_id: string
+          residente_nome: string
+          retificacoes: number
+          status: string
+          ultima_autora: string
+          ultimo_lancamento: string
+        }[]
+      }
       obter_alertas_estoque_fraldas: {
         Args: never
         Returns: {
