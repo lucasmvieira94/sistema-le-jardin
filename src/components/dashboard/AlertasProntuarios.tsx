@@ -1,211 +1,67 @@
+/**
+ * Resumo do prontuário do dia (ciclo 00h00–23h59, UTC-3): lançamentos por
+ * residente, divididos por turno, e retificações.
+ */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, FileHeart, ExternalLink } from "lucide-react";
-import { hojeISO, formatarData } from "@/utils/dateUtils";
-import { useNavigate } from "react-router-dom";
-
-interface ProntuarioAtrasado {
-  id: string;
-  data_ciclo: string;
-  residente: {
-    nome_completo: string;
-    numero_prontuario: string;
-    quarto?: string;
-  };
-  registros_preenchidos: number;
-  registros_totais: number;
-}
+import { FileHeart } from "lucide-react";
+import { horaFormatada, type MonitoramentoResidente } from "@/utils/prontuarioLancamentos";
 
 export default function AlertasProntuarios() {
-  const [prontuarios, setProntuarios] = useState<ProntuarioAtrasado[]>([]);
+  const [itens, setItens] = useState<MonitoramentoResidente[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  const fetchProntuarios = async () => {
-    try {
-      setLoading(true);
-      
-      // Buscar ciclos em andamento de hoje e dias anteriores
-      const hoje = hojeISO();
-      
-      const { data: ciclos, error } = await supabase
-        .from('prontuario_ciclos')
-        .select(`
-          *,
-          residente:residentes!inner (
-            nome_completo,
-            numero_prontuario,
-            quarto
-          )
-        `)
-        .eq('status', 'em_andamento')
-        .order('data_ciclo', { ascending: false });
-
-      if (error) throw error;
-
-      // Para cada ciclo, contar registros
-      const prontuariosComContadores = await Promise.all(
-        (ciclos || []).map(async (ciclo) => {
-          const { data: registros, error: registrosError } = await supabase
-            .from('prontuario_registros')
-            .select('funcionario_id, descricao')
-            .eq('ciclo_id', ciclo.id);
-
-          if (registrosError) {
-            console.error('Erro ao buscar registros:', registrosError);
-            return null;
-          }
-
-          const totais = registros?.length || 0;
-          const preenchidos = registros?.filter(r => 
-            r.funcionario_id && r.descricao && r.descricao.trim() !== ''
-          ).length || 0;
-
-          return {
-            id: ciclo.id,
-            data_ciclo: ciclo.data_ciclo,
-            residente: ciclo.residente,
-            registros_preenchidos: preenchidos,
-            registros_totais: totais
-          };
-        })
-      );
-
-      setProntuarios(prontuariosComContadores.filter(Boolean) as ProntuarioAtrasado[]);
-    } catch (error) {
-      console.error('Erro ao carregar prontuários:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchProntuarios();
-    
-    // Atualizar a cada 5 minutos
-    const interval = setInterval(fetchProntuarios, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
+    const carregar = async () => {
+      const { data, error } = await supabase.rpc("monitorar_prontuarios_dia" as never);
+      if (error) console.error("Erro ao carregar prontuários do dia:", error);
+      setItens(((data as unknown) as MonitoramentoResidente[]) || []);
+      setLoading(false);
+    };
+    carregar();
+    const t = setInterval(carregar, 5 * 60 * 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const handleVisualizarProntuario = (residenteId: string) => {
-    navigate(`/prontuario?residente=${residenteId}`);
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <FileHeart className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">Prontuários em Andamento</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (prontuarios.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <FileHeart className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg">Prontuários em Andamento</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">
-              Nenhum prontuário em andamento
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const hoje = hojeISO();
+  const total = itens.reduce((s, i) => s + i.lancamentos, 0);
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <FileHeart className="w-5 h-5 text-primary" />
-          <CardTitle className="text-lg">
-            Prontuários em Andamento ({prontuarios.length})
-          </CardTitle>
+          <CardTitle className="text-lg">Prontuários de hoje — aberto até 23h59</CardTitle>
         </div>
+        {!loading && (
+          <p className="text-xs text-muted-foreground">{total} lançamento(s) em {itens.length} residente(s)</p>
+        )}
       </CardHeader>
-      
-      <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-        {prontuarios.slice(0, 6).map((prontuario) => {
-          const isAtrasado = prontuario.data_ciclo < hoje;
-          const progresso = prontuario.registros_totais > 0 ? 
-            Math.round((prontuario.registros_preenchidos / prontuario.registros_totais) * 100) : 0;
-
-          return (
-            <div
-              key={prontuario.id}
-              className={`border rounded-lg p-3 ${
-                isAtrasado ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-sm">
-                    {prontuario.residente.nome_completo}
-                  </h4>
-                  {isAtrasado && (
-                    <Badge variant="destructive" className="text-xs">
-                      Atrasado
-                    </Badge>
-                  )}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleVisualizarProntuario(prontuario.residente.nome_completo)}
-                  className="h-7 px-2 text-xs"
-                >
-                  <ExternalLink className="w-3 h-3 mr-1" />
-                  Ver
-                </Button>
+      <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        ) : itens.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum residente ativo.</p>
+        ) : (
+          itens.map((m) => (
+            <div key={m.residente_id} className="border rounded-lg p-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <p className="font-medium text-sm">{m.residente_nome}</p>
+                <Badge variant={m.lancamentos > 0 ? "default" : "outline"} className="text-xs">
+                  {m.lancamentos} lançamento(s)
+                </Badge>
               </div>
-              
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <span>
-                  {formatarData(prontuario.data_ciclo).substring(0, 5)}
-                </span>
-                <span>•</span>
-                <span>
-                  Quarto: {prontuario.residente.quarto || 'N/A'}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {prontuario.registros_preenchidos}/{prontuario.registros_totais}
-                </span>
-                <div className="flex-1 bg-muted rounded-full h-1.5">
-                  <div 
-                    className="bg-primary h-1.5 rounded-full" 
-                    style={{ width: `${progresso}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs font-medium">{progresso}%</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Diurno: {m.diurno} • Noturno: {m.noturno}
+                {m.retificacoes > 0 && ` • Retificações: ${m.retificacoes}`}
+                {m.ultimo_lancamento && ` • Último: ${horaFormatada(m.ultimo_lancamento)}${m.ultima_autora ? ` por ${m.ultima_autora}` : ""}`}
+              </p>
             </div>
-          );
-        })}
+          ))
+        )}
       </CardContent>
     </Card>
   );

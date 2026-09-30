@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   cicloAceitaLancamento,
+  cicloPodeSerEncerrado,
+  pendenciasDoDia,
+  type MonitoramentoResidente,
   consolidarLancamentos,
   hojeCicloISO,
   montarLinhaTempo,
@@ -119,5 +122,31 @@ describe("bloqueio de perguntas respondidas", () => {
     ]);
 
     expect(chaves.has("campo_pressao")).toBe(true);
+  });
+});
+
+describe("encerramento e pendências", () => {
+  const m = (over: Partial<MonitoramentoResidente>): MonitoramentoResidente => ({
+    residente_id: "r", residente_nome: "Ana", quarto: null, ciclo_id: "c", status: "em_andamento",
+    lancamentos: 0, retificacoes: 0, diurno: 0, noturno: 0, ultimo_lancamento: null, ultima_autora: null, ...over,
+  });
+
+  it("nunca permite encerrar o dia corrente", () => {
+    expect(cicloPodeSerEncerrado("2026-09-05", AGORA)).toBe(false);
+    expect(cicloPodeSerEncerrado("2026-09-04", AGORA)).toBe(true);
+  });
+
+  it("considera a virada em UTC-3 (21h30 BR ainda é o mesmo dia)", () => {
+    expect(cicloPodeSerEncerrado("2026-09-05", new Date("2026-09-06T00:30:00Z"))).toBe(false);
+  });
+
+  it("aponta residente sem lançamento", () => {
+    expect(pendenciasDoDia(m({}), AGORA)).toEqual(["sem_lancamento"]);
+  });
+
+  it("aponta turno diurno pendente somente após 20h", () => {
+    const so_noturno = m({ lancamentos: 1, noturno: 1 });
+    expect(pendenciasDoDia(so_noturno, AGORA)).toEqual([]);
+    expect(pendenciasDoDia(so_noturno, new Date("2026-09-05T23:30:00Z"))).toEqual(["diurno_pendente"]);
   });
 });

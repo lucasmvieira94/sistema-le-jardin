@@ -135,7 +135,7 @@ export default function FinalizarTodosProntuarios({ onSuccess }: FinalizarTodosP
             <div className="space-y-4">
               <Alert variant="destructive">
                 <AlertDescription>
-                  <strong>Atenção!</strong> Esta ação encerrará <strong>todos</strong> os prontuários com status "em andamento" ou "não iniciado". Esta ação não pode ser desfeita.
+                  <strong>Atenção!</strong> Esta ação encerra os prontuários ainda abertos de <strong>dias anteriores</strong>. O prontuário de hoje continua aberto até 23h59 e é encerrado automaticamente à meia-noite. Esta ação não pode ser desfeita.
                 </AlertDescription>
               </Alert>
 
