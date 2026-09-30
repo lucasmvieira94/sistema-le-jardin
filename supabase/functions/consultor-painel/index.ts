@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
   const db = createClient(url, serviceKey);
 
   // Identifica o chamador
-  const token = (req.headers.get("Authorization") || "").replace("Bearer ", "");
+  const token = (req.headers.get("Authorization") || "").replace("Bearer ", "") || req.headers.get("apikey") || "";
   if (!token) return json({ error: "Não autorizado" }, 401);
   let tenants: (string | null)[] = [];
   let manual = false;
