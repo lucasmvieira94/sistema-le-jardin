@@ -1,8 +1,11 @@
 import { Outlet } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useRegistrarPaginas } from "@/hooks/useRegistrarUso";
 
 export function AdminLayout() {
+  // Uso anônimo das páginas administrativas (base do Consultor do painel)
+  useRegistrarPaginas();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
