@@ -179,7 +179,16 @@ Deno.serve(async (req) => {
   if (!token) return json({ error: "Não autorizado" }, 401);
   let tenants: (string | null)[] = [];
   let manual = false;
-  if (token === serviceKey) {
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  // O agendamento semanal usa a chave pública; só roda se a última execução tiver mais de 6 dias.
+  const agendado = token === serviceKey || (!!anonKey && token === anonKey);
+  if (agendado && token !== serviceKey) {
+    const { data: est } = await db.from("consultor_painel_execucoes").select("ultima_execucao").eq("chave", "global").maybeSingle();
+    if (est?.ultima_execucao && Date.now() - new Date(est.ultima_execucao).getTime() < 6 * 86_400_000) {
+      return json({ ignorado: "Análise semanal já realizada" });
+    }
+  }
+  if (agendado) {
     const { data } = await db.from("uso_sistema_eventos").select("tenant_id")
       .gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString()).limit(5000);
     tenants = [...new Set((data || []).map((d: any) => d.tenant_id))].slice(0, MAX_TENANTS);
