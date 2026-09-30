@@ -1399,6 +1399,30 @@ export type Database = {
           },
         ]
       }
+      consultor_painel_execucoes: {
+        Row: {
+          chave: string
+          pausado_motivo: string | null
+          trava_ate: string | null
+          ultima_execucao: string | null
+          updated_at: string
+        }
+        Insert: {
+          chave: string
+          pausado_motivo?: string | null
+          trava_ate?: string | null
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chave?: string
+          pausado_motivo?: string | null
+          trava_ate?: string | null
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contas_pagar: {
         Row: {
           anexo_url: string | null
@@ -1793,6 +1817,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dashboard_preferencias: {
+        Row: {
+          created_at: string
+          ocultos: string[]
+          ordem: string[]
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ocultos?: string[]
+          ordem?: string[]
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ocultos?: string[]
+          ordem?: string[]
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dashboard_sugestoes_ia: {
+        Row: {
+          analisado_em: string
+          created_at: string
+          decidido_em: string | null
+          decidido_por: string | null
+          id: string
+          motivo: string
+          posicao: number | null
+          quadro: string
+          status: string
+          tenant_id: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          analisado_em?: string
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          id?: string
+          motivo: string
+          posicao?: number | null
+          quadro: string
+          status?: string
+          tenant_id?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          analisado_em?: string
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          id?: string
+          motivo?: string
+          posicao?: number | null
+          quadro?: string
+          status?: string
+          tenant_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       desligamentos_historico: {
         Row: {
@@ -4726,6 +4822,33 @@ export type Database = {
           },
         ]
       }
+      uso_sistema_eventos: {
+        Row: {
+          alvo: string
+          created_at: string
+          id: number
+          tenant_id: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          alvo: string
+          created_at?: string
+          id?: never
+          tenant_id?: string | null
+          tipo: string
+          user_id?: string
+        }
+        Update: {
+          alvo?: string
+          created_at?: string
+          id?: never
+          tenant_id?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vacinas_residentes: {
         Row: {
           created_at: string
@@ -5085,6 +5208,7 @@ export type Database = {
         }[]
       }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
+      limpar_uso_sistema_antigo: { Args: never; Returns: undefined }
       log_audit_event: {
         Args: {
           p_dados_anteriores?: Json
