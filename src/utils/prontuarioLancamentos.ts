@@ -173,3 +173,40 @@ export function consolidarLancamentos(
 
   return consolidado;
 }
+
+/** Linha retornada pela RPC `monitorar_prontuarios_dia`. */
+export interface MonitoramentoResidente {
+  residente_id: string;
+  residente_nome: string;
+  quarto: string | null;
+  ciclo_id: string | null;
+  status: string;
+  lancamentos: number;
+  retificacoes: number;
+  diurno: number;
+  noturno: number;
+  ultimo_lancamento: string | null;
+  ultima_autora: string | null;
+}
+
+export type PendenciaDia = "sem_lancamento" | "diurno_pendente";
+
+/** O dia corrente nunca pode ser encerrado manualmente. */
+export function cicloPodeSerEncerrado(dataCiclo: string, agora: Date = new Date()): boolean {
+  return dataCiclo < hojeCicloISO(agora);
+}
+
+/**
+ * Pendências do dia corrente para um residente:
+ * - sem nenhum lançamento;
+ * - turno diurno (08h-20h) encerrado sem lançamento diurno (só após 20h).
+ */
+export function pendenciasDoDia(m: MonitoramentoResidente, agora: Date = new Date()): PendenciaDia[] {
+  const pend: PendenciaDia[] = [];
+  if (m.lancamentos === 0) pend.push("sem_lancamento");
+  const hora = Number(
+    new Intl.DateTimeFormat("pt-BR", { timeZone: TIMEZONE_BR, hour: "2-digit", hour12: false }).format(agora),
+  );
+  if (m.lancamentos > 0 && hora >= 20 && m.diurno === 0) pend.push("diurno_pendente");
+  return pend;
+}
