@@ -3,6 +3,8 @@ import {
   cicloAceitaLancamento,
   cicloPodeSerEncerrado,
   pendenciasDoDia,
+  noturnoAnteriorPendente,
+  ontemCicloISO,
   type MonitoramentoResidente,
   consolidarLancamentos,
   hojeCicloISO,
@@ -148,5 +150,22 @@ describe("encerramento e pendências", () => {
     const so_noturno = m({ lancamentos: 1, noturno: 1 });
     expect(pendenciasDoDia(so_noturno, AGORA)).toEqual([]);
     expect(pendenciasDoDia(so_noturno, new Date("2026-09-05T23:30:00Z"))).toEqual(["diurno_pendente"]);
+  });
+});
+
+describe("turno noturno do dia anterior", () => {
+  const base: MonitoramentoResidente = {
+    residente_id: "r", residente_nome: "Ana", quarto: null, ciclo_id: "c", status: "encerrado",
+    lancamentos: 1, retificacoes: 0, diurno: 1, noturno: 0, ultimo_lancamento: null, ultima_autora: null,
+  };
+  it("calcula ontem em UTC-3", () => {
+    expect(ontemCicloISO(new Date("2026-09-06T01:00:00Z"))).toBe("2026-09-04");
+  });
+  it("só cobra após 08h", () => {
+    expect(noturnoAnteriorPendente(base, new Date("2026-09-05T10:00:00Z"))).toBe(false);
+    expect(noturnoAnteriorPendente(base, new Date("2026-09-05T12:00:00Z"))).toBe(true);
+  });
+  it("não cobra quando houve registro noturno", () => {
+    expect(noturnoAnteriorPendente({ ...base, noturno: 2 }, new Date("2026-09-05T12:00:00Z"))).toBe(false);
   });
 });
