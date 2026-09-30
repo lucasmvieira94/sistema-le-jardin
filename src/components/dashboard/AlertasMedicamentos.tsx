@@ -46,7 +46,7 @@ export default function AlertasMedicamentos() {
   }, []);
 
   const handleAcessarMedicamentos = () => {
-    navigate('/medicamentos');
+    navigate('/controle-medicamentos');
   };
 
   if (loading) {
