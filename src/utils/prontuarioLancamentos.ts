@@ -189,7 +189,27 @@ export interface MonitoramentoResidente {
   ultima_autora: string | null;
 }
 
-export type PendenciaDia = "sem_lancamento" | "diurno_pendente";
+export type PendenciaDia = "sem_lancamento" | "diurno_pendente" | "noturno_pendente";
+
+/** Data (YYYY-MM-DD) do dia anterior no fuso de Brasília. */
+export function ontemCicloISO(agora: Date = new Date()): string {
+  return hojeCicloISO(new Date(agora.getTime() - 24 * 60 * 60 * 1000));
+}
+
+/**
+ * Turno noturno do dia anterior (20h de ontem às 08h de hoje) sem registro.
+ * Só é cobrado depois das 08h de hoje, quando o turno já terminou.
+ */
+export function noturnoAnteriorPendente(
+  ontem: MonitoramentoResidente | undefined,
+  agora: Date = new Date(),
+): boolean {
+  const hora = Number(
+    new Intl.DateTimeFormat("pt-BR", { timeZone: TIMEZONE_BR, hour: "2-digit", hour12: false }).format(agora),
+  );
+  if (hora < 8) return false;
+  return !ontem || ontem.noturno === 0;
+}
 
 /** O dia corrente nunca pode ser encerrado manualmente. */
 export function cicloPodeSerEncerrado(dataCiclo: string, agora: Date = new Date()): boolean {
