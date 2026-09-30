@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
 import { FileText, Search, Eye, Edit, Calendar, User as UserIcon, LogOut, Save, X, Settings, Download } from "lucide-react";
 import FinalizarTodosProntuarios from "@/components/prontuario/FinalizarTodosProntuarios";
+import AlertasProntuariosAtraso from "@/components/dashboard/AlertasProntuariosAtraso";
 import ConfiguracoesProntuario from "@/components/prontuario/ConfiguracoesProntuario";
 import ProntuarioDetalhado from "@/components/prontuario/ProntuarioDetalhado";
 import { format } from "date-fns";
@@ -620,6 +621,8 @@ export default function ControleProntuarios() {
           </TabsList>
 
           <TabsContent value="prontuarios" className="space-y-6">
+            {/* Pendências do dia com filtro por tipo */}
+            <AlertasProntuariosAtraso mostrarBotaoVer={false} />
             {/* Filtros */}
             <Card>
               <CardHeader>
