@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { Clock, Search, Bot, X } from "lucide-react";
+import { Clock, Search, Bot, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -91,6 +91,36 @@ export default function ApropriacaoHoras() {
     setTimeout(() => setMostrarTabela(true), 50);
   };
 
+  /**
+   * Revisão forçada: refaz no banco os lançamentos de afastamentos do período
+   * (dias faltando ou desatualizados) e recarrega a tabela.
+   */
+  const [revisando, setRevisando] = useState(false);
+  const handleRevisar = async (todos: boolean) => {
+    if (!dataInicio || !dataFim || dataInicio > dataFim) {
+      toast({ variant: "destructive", title: "Período inválido" });
+      return;
+    }
+    setRevisando(true);
+    const { data, error } = await (supabase as any).rpc("revisar_apropriacao_horas", {
+      p_inicio: dataInicio, p_fim: dataFim, p_funcionario_id: todos ? null : funcionarioSelecionado || null,
+    });
+    setRevisando(false);
+    if (error) {
+      toast({ variant: "destructive", title: "Não foi possível revisar", description: error.message });
+      return;
+    }
+    const r = data as { afastamentos_reprocessados: number; dias_restaurados: number; lancamentos_sem_afastamento: number };
+    toast({
+      title: "Apropriação revisada",
+      description:
+        `${r.afastamentos_reprocessados} afastamento(s) conferido(s), ${r.dias_restaurados} dia(s) que não apareciam foram restaurados.` +
+        (r.lancamentos_sem_afastamento ? ` Atenção: ${r.lancamentos_sem_afastamento} abono(s)/falta(s) no período sem afastamento lançado — confira manualmente.` : ""),
+    });
+    setMostrarTabela(false);
+    setTimeout(() => setMostrarTabela(true), 50);
+  };
+
   const handleFuncionarioChange = (value: string) => {
     setFuncionarioSelecionado(value);
     setMostrarTabela(false);
@@ -171,6 +201,20 @@ export default function ApropriacaoHoras() {
                   {carregando ? "Carregando..." : "Buscar"}
                 </Button>
               </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 border-t pt-4">
+              <p className="text-sm text-muted-foreground flex-1">
+                Algum afastamento lançado não aparece? A revisão confere os afastamentos do período e refaz os lançamentos.
+              </p>
+              <Button variant="outline" disabled={revisando || !funcionarioSelecionado} onClick={() => handleRevisar(false)}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${revisando ? "animate-spin" : ""}`} />
+                Revisar este funcionário
+              </Button>
+              <Button variant="outline" disabled={revisando} onClick={() => handleRevisar(true)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Revisar todos
+              </Button>
             </div>
           </div>
 
