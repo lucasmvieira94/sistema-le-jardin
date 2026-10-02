@@ -2789,6 +2789,60 @@ export type Database = {
           },
         ]
       }
+      funcionarios_escalas_historico: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          data_fim: string | null
+          data_inicio: string
+          escala_id: number
+          funcionario_id: string
+          id: string
+          motivo: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          escala_id: number
+          funcionario_id: string
+          id?: string
+          motivo?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          escala_id?: number
+          funcionario_id?: string
+          id?: string
+          motivo?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_escalas_historico_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funcionarios_escalas_historico_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gamification_profiles: {
         Row: {
           created_at: string
@@ -4951,6 +5005,15 @@ export type Database = {
         }
         Returns: Json
       }
+      alterar_escala_funcionario: {
+        Args: {
+          p_data_inicio: string
+          p_escala_id: number
+          p_funcionario_id: string
+          p_motivo: string
+        }
+        Returns: string
+      }
       buscar_prontuarios_em_atraso: {
         Args: never
         Returns: {
@@ -5062,6 +5125,16 @@ export type Database = {
           motivo_discordancia: string
         }[]
       }
+      corrigir_periodo_escala: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_escala_id: number
+          p_id: string
+          p_justificativa: string
+        }
+        Returns: undefined
+      }
       criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
       eh_horario_noturno: {
@@ -5076,7 +5149,19 @@ export type Database = {
         Args: { p_ciclo_id: string; p_funcionario_id: string }
         Returns: boolean
       }
+      escala_vigente_em: {
+        Args: { p_data: string; p_funcionario_id: string }
+        Returns: {
+          escala_id: number
+          inicio_periodo: string
+        }[]
+      }
+      excluir_periodo_escala: {
+        Args: { p_id: string; p_justificativa: string }
+        Returns: undefined
+      }
       executar_criacao_prontuarios_manual: { Args: never; Returns: undefined }
+      exigir_admin_escala: { Args: never; Returns: undefined }
       finalizar_prontuario_atraso_gestor: {
         Args: {
           p_ciclo_id: string
@@ -5208,6 +5293,16 @@ export type Database = {
         }[]
       }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
+      lancar_periodo_escala: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_escala_id: number
+          p_funcionario_id: string
+          p_motivo: string
+        }
+        Returns: string
+      }
       limpar_uso_sistema_antigo: { Args: never; Returns: undefined }
       log_audit_event: {
         Args: {
@@ -5354,6 +5449,10 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      sincronizar_cache_escala: {
+        Args: { p_funcionario_id: string }
+        Returns: undefined
       }
       somar_pausas: { Args: { p_pausas: Json }; Returns: string }
       validar_acesso_funcionario: {
