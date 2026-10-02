@@ -5,6 +5,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useFolhaPonto } from "@/hooks/useFolhaPonto";
 import { calcularNivel, getNivelConfig, getProgressoNivel } from "@/hooks/useGamificacao";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
+import HistoricoEscalas from "@/components/escalas/HistoricoEscalas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -209,6 +210,9 @@ export default function FichaFuncionario() {
               )}
             </CardContent>
           </Card>
+          <div className="mt-4">
+            <HistoricoEscalas funcionarioId={funcionario.id} onAlterado={fetchAll} />
+          </div>
         </TabsContent>
 
         {/* AFASTAMENTOS */}
