@@ -100,3 +100,22 @@ describe("monitoramento do ponto", () => {
     expect(contarPorTipo(analisarPonto(base())).falta_nao_justificada).toBe(2);
   });
 });
+
+describe("monitoramento com histórico de escalas", () => {
+  it("lê cada dia pela escala vigente naquele dia", () => {
+    // Até 08/09 escala 5x2 diurna; a partir de 09/09 uma escala 12x36 iniciada em 09/09 (10/09 é folga)
+    const doze = { entrada: "07:00", saida: "19:00", jornada_trabalho: "12x36", intervalo_pre_assinalado: true, intervalo_minutos: 60 };
+    const historico = new Map([["f1", [
+      { funcionario_id: "f1", escala_id: 1, data_inicio: "2026-01-01", data_fim: "2026-09-08", escala: diurno.escala },
+      { funcionario_id: "f1", escala_id: 2, data_inicio: "2026-09-09", data_fim: null, escala: doze },
+    ]]]);
+    const r = tipos(base({ dias: 2, historico, registros: [{ funcionario_id: "f1", data: "2026-09-09", entrada: "07:00", saida: "19:00" }] }));
+    // 08/09 (terça, 5x2) sem registro -> falta; 09/09 trabalhado; 10/09 folga da 12x36
+    expect(r).toEqual(["falta_nao_justificada@2026-09-08"]);
+  });
+
+  it("dia antes do primeiro período não gera falta", () => {
+    const historico = new Map([["f1", [{ funcionario_id: "f1", escala_id: 1, data_inicio: "2026-09-10", data_fim: null, escala: diurno.escala }]]]);
+    expect(tipos(base({ historico }))).toEqual(["falta_nao_justificada@2026-09-10"]);
+  });
+});
