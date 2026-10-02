@@ -12,6 +12,8 @@ import ChatLembretes from "@/components/lembretes/ChatLembretes";
 import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
 import AvisosPendentesDialog from "@/components/avisos/AvisosPendentesDialog";
 import { toast } from "@/components/ui/use-toast";
+import { FileSignature } from "lucide-react";
+import { useDocumentosFuncionario } from "@/hooks/useDocumentosFuncionario";
 
 const SESSION_KEY = 'funcionario_session';
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas em ms
@@ -116,6 +118,8 @@ export default function FuncionarioAccess() {
     biometriaFacial: number[];
   }>(null);
   const [biometriaOpen, setBiometriaOpen] = useState(false);
+  const { data: documentosFuncionario = [] } = useDocumentosFuncionario(funcionarioId);
+  const docsPendentes = documentosFuncionario.filter((d) => d.status === "pendente").length;
 
   // Auto-expire session every minute
   useEffect(() => {
@@ -283,6 +287,10 @@ export default function FuncionarioAccess() {
 
   const navigateToVacinas = () => {
     navigate(`/controle-vacinas-publico?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
+  };
+
+  const navigateToMeusDocumentos = () => {
+    navigate(`/meus-documentos?funcionario_id=${funcionarioId}&funcionario_nome=${encodeURIComponent(funcionarioNome)}`);
   };
 
   const navigateToContracheques = () => {
@@ -465,6 +473,7 @@ export default function FuncionarioAccess() {
                 <FeatureCard title="Minhas Folhas de Ponto" description="Folhas mensais publicadas pelo gestor" icon={Clock} color="blue" buttonLabel="Ver Folhas" onClick={navigateToMinhasFolhasPonto} />
               )}
               <FeatureCard title="Minha Escala" description="Seus dias escalados no mês" icon={CalendarDays} color="teal" buttonLabel="Ver Escala" onClick={navigateToMinhaEscala} />
+              <FeatureCard title="Meus Documentos" description={docsPendentes > 0 ? `${docsPendentes} documento(s) para assinar` : "Assine com biometria facial"} icon={FileSignature} color={docsPendentes > 0 ? "red" : "indigo"} buttonLabel={docsPendentes > 0 ? "Assinar agora" : "Ver Documentos"} onClick={navigateToMeusDocumentos} featured={docsPendentes > 0} />
               <FeatureCard title="Meus Contracheques" description="Baixe seus holerites por mês" icon={Receipt} color="emerald" buttonLabel="Ver Contracheques" onClick={navigateToContracheques} />
               <FeatureCard title="Meu Desempenho" description="Pontos, nível e prêmios" icon={Trophy} color="yellow" buttonLabel="Ver Desempenho" onClick={navigateToGamificacao} />
             </div>
