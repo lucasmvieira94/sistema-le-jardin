@@ -10,6 +10,7 @@ import {
   type FuncionarioMonit,
   type PendenciaPonto,
 } from "@/utils/monitoramentoPonto";
+import { agruparPorFuncionario } from "@/utils/escalaVigente";
 
 const isoMenosDias = (dias: number) =>
   new Date(agoraParedeBR(new Date()) - dias * 86_400_000).toISOString().slice(0, 10);
@@ -30,7 +31,7 @@ export function useMonitoramentoPonto(dias = 7) {
       const anoAnt = m === 1 ? y - 1 : y;
       const db = supabase as any;
 
-      const [func, regs, afast, just, folhas] = await Promise.all([
+      const [func, regs, afast, just, folhas, hist] = await Promise.all([
         db.from("funcionarios")
           .select("id, nome_completo, data_inicio_vigencia, escalas:escala_id(entrada, saida, jornada_trabalho, intervalo_pre_assinalado, intervalo_minutos)")
           .eq("ativo", true),
@@ -42,8 +43,12 @@ export function useMonitoramentoPonto(dias = 7) {
           .lte("data_inicio", hoje).gte("data_fim", inicio),
         db.from("justificativas_atraso").select("funcionario_id, data").gte("data", inicio),
         db.from("folhas_ponto").select("funcionario_id, mes, ano, confirmado").eq("mes", mesAnt).eq("ano", anoAnt),
+        // Períodos de escala que tocam a janela analisada
+        db.from("funcionarios_escalas_historico")
+          .select("id, funcionario_id, escala_id, data_inicio, data_fim, escala:escala_id(entrada, saida, jornada_trabalho, intervalo_pre_assinalado, intervalo_minutos)")
+          .lte("data_inicio", hoje).or(`data_fim.is.null,data_fim.gte.${inicio}`),
       ]);
-      const falha = [func, regs, afast, just, folhas].find((r) => r.error);
+      const falha = [func, regs, afast, just, folhas, hist].find((r) => r.error);
       if (falha) throw falha.error;
 
       const funcionarios: FuncionarioMonit[] = (func.data || []).map((f: any) => ({
@@ -59,6 +64,7 @@ export function useMonitoramentoPonto(dias = 7) {
         funcionarios, registros: regs.data || [], afastamentos,
         justificativas: new Set((just.data || []).map((j: any) => `${j.funcionario_id}|${j.data}`)),
         folhas: folhas.data || [], dias,
+        historico: agruparPorFuncionario(hist.data || []),
       }));
     } catch (e: any) {
       console.error("[useMonitoramentoPonto]", e);
