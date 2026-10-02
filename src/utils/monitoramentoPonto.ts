@@ -15,6 +15,8 @@
  * Brasília é convertida em milissegundos como se fosse UTC.
  */
 
+import { periodoNaData, type PeriodoEscala } from "./escalaVigente";
+
 export const TIMEZONE_BR = "America/Sao_Paulo";
 export const TOLERANCIA_ATRASO_MIN = 15;
 export const TOLERANCIA_SAIDA_MIN = 120;
@@ -92,6 +94,8 @@ export interface EntradaMonitoramento {
   folhas: FolhaMonit[];
   dias: number;
   agora?: Date;
+  /** Histórico de escalas por funcionário (escala resolvida por data). */
+  historico?: Map<string, PeriodoEscala<EscalaMonit>[]>;
 }
 
 export interface PendenciaPonto {
@@ -196,16 +200,27 @@ export function analisarPonto(e: EntradaMonitoramento): PendenciaPonto[] {
     out.push({ id: `${tipo}-${f.id}-${data}`, tipo, funcionario_id: f.id, funcionario_nome: f.nome_completo, data, descricao });
 
   for (const f of e.funcionarios) {
-    const esc = f.escala;
+    const historicoFunc = e.historico?.get(f.id) ?? [];
     const afast = e.afastamentos.filter((a) => a.funcionario_id === f.id);
     const afastadoEm = (d: string) => afast.some((a) => d >= a.data_inicio && d <= (a.data_fim || a.data_inicio));
 
     for (let i = 0; i <= e.dias; i++) {
       const dia = isoDeParede(agoraMs - i * DIA_MS);
-      if (f.data_inicio_vigencia && dia < f.data_inicio_vigencia) continue;
+      // Escala vigente NESTE dia: histórico quando existe; senão o cadastro atual
+      let esc: EscalaMonit | null;
+      let inicio: string | null;
+      if (historicoFunc.length > 0) {
+        const periodo = periodoNaData(historicoFunc, dia);
+        esc = periodo?.escala ?? null;
+        inicio = periodo?.data_inicio ?? null;
+      } else {
+        esc = f.escala;
+        inicio = f.data_inicio_vigencia;
+        if (inicio && dia < inicio) continue;
+      }
       const reg = regPorChave.get(`${f.id}|${dia}`);
-      const temEscala = !!(esc?.entrada && f.data_inicio_vigencia);
-      const folga = temEscala ? estaEmFolga(esc!.jornada_trabalho, f.data_inicio_vigencia!, dia) : false;
+      const temEscala = !!(esc?.entrada && inicio);
+      const folga = temEscala ? estaEmFolga(esc!.jornada_trabalho, inicio!, dia) : false;
       const afastado = afastadoEm(dia);
 
       // Registro em dia de folga

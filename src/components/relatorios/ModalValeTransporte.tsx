@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Bus, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { calcularDiasTrabalhados, calcularUltimoDiaVT, nomeMes } from "@/utils/valeTransporteCalculator";
+import { calcularDiasTrabalhadosPorHistorico, calcularUltimoDiaVT, nomeMes } from "@/utils/valeTransporteCalculator";
 import { toast } from "@/components/ui/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -75,7 +75,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
       const { data, error } = await supabase
         .from("funcionarios")
         .select(
-          "id, nome_completo, funcao, recebe_vale_transporte, valor_diaria_vale_transporte, data_admissao, data_inicio_vigencia, data_desligamento, aviso_previo, tipo_aviso_previo, modalidade_reducao_aviso, data_inicio_aviso, data_fim_aviso, escala_id, escala:escalas(nome, jornada_trabalho)"
+          "id, nome_completo, funcao, recebe_vale_transporte, valor_diaria_vale_transporte, data_admissao, data_inicio_vigencia, data_desligamento, aviso_previo, tipo_aviso_previo, modalidade_reducao_aviso, data_inicio_aviso, data_fim_aviso, escala_id, escala:escalas(nome, jornada_trabalho), historico:funcionarios_escalas_historico(data_inicio, data_fim, escala:escala_id(nome, jornada_trabalho))"
         )
         .eq("recebe_vale_transporte", true)
         .order("nome_completo");
@@ -109,7 +109,11 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
       })
       .map((f) => {
       const jornada = f.escala?.jornada_trabalho || "40h_8h_segsex";
-      const dias = calcularDiasTrabalhados({
+      // Cada período de escala do mês é contado pela sua própria jornada
+      const periodos = ((f as any).historico || []).map((h: any) => ({
+        data_inicio: h.data_inicio, data_fim: h.data_fim, jornada: h.escala?.jornada_trabalho || "40h_8h_segsex",
+      }));
+      const dias = calcularDiasTrabalhadosPorHistorico({
         ano,
         mes,
         jornada,
@@ -121,7 +125,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         modalidadeReducaoAviso: f.modalidade_reducao_aviso,
         dataInicioAviso: f.data_inicio_aviso,
         dataFimAviso: f.data_fim_aviso,
-      });
+      }, periodos);
       const valorDiaria = Number(f.valor_diaria_vale_transporte || 0);
       const ultimoDiaVT = calcularUltimoDiaVT({
         ano,

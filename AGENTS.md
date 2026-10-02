@@ -5,3 +5,4 @@
 - A conversão de DOCX/ODT/TXT/RTF extrai o texto no navegador (mammoth/fflate) e o rediagrama em PDF com jsPDF; o conversor LibreOffice WASM foi descartado por exigir ~250 MB de download e isolamento entre sites.
 - Quadros do painel ficam no catálogo `src/components/dashboard/registroQuadros.ts` com ids estáveis, porque as preferências por usuário e as sugestões do agente de IA apontam para esses ids.
 - As regras de monitoramento do ponto ficam em funções puras (`src/utils/monitoramentoPonto.ts`), separadas da busca de dados, para que possam ser testadas sem acesso ao banco.
+- A escala de cada dia vem de `funcionarios_escalas_historico` (períodos sem sobreposição, alterados só por RPCs auditadas); `funcionarios.escala_id` é apenas cache da escala atual, para que trocas não reescrevam dias anteriores.

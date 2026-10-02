@@ -8,6 +8,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import CadastroFuncionarioForm from "@/components/CadastroFuncionarioForm";
 import CadastroBiometriaDialog from "@/components/biometria/CadastroBiometriaDialog";
+import HistoricoEscalas from "@/components/escalas/HistoricoEscalas";
 import { Switch } from "@/components/ui/switch";
 import { formatarTimestampDataHora } from "@/utils/formatTimestamp";
 
@@ -161,6 +162,13 @@ export default function EditarFuncionario() {
         onSuccess={handleSuccess}
         isEditing={true}
       />
+
+      {/* Escala por período: trocas não alteram os dias anteriores */}
+      {(funcionario as any)?.registra_ponto && (
+        <div className="mt-6">
+          <HistoricoEscalas funcionarioId={(funcionario as any).id} onAlterado={recarregarFuncionario} />
+        </div>
+      )}
 
       {funcionario && (
         <CadastroBiometriaDialog

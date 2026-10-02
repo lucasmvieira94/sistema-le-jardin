@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays, getDay, format, subDays } from "date-fns";
 import { parseDataLocal, hojeISO } from "@/utils/dateUtils";
+import { agruparPorFuncionario, periodoNaData } from "@/utils/escalaVigente";
 
 export type TipoAlertaConduta =
   | "atraso"
@@ -102,6 +103,14 @@ export function useAnaliseCondutas(diasAnalise = 30) {
           .lte("data_inicio", dataFimStr)
           .gte("data_fim", dataInicio);
 
+        // Histórico de escalas: cada dia é lido pela escala vigente naquele dia
+        const { data: historicoEscalas } = await (supabase as any)
+          .from("funcionarios_escalas_historico")
+          .select("funcionario_id, escala_id, data_inicio, data_fim, escala:escala_id(entrada, saida, jornada_trabalho, intervalo_pre_assinalado, intervalo_minutos)")
+          .lte("data_inicio", dataFimStr)
+          .or(`data_fim.is.null,data_fim.gte.${dataInicio}`);
+        const historicoPorFunc = agruparPorFuncionario<any>(historicoEscalas || []);
+
         const { data: justifs } = await supabase
           .from("justificativas_atraso")
           .select("*, funcionarios:funcionario_id(nome_completo)")
@@ -118,11 +127,7 @@ export function useAnaliseCondutas(diasAnalise = 30) {
         const contagemAtrasoPorFunc = new Map<string, number>();
 
         for (const func of funcionarios || []) {
-          const escala: any = (func as any).escalas;
-          if (!escala || !escala.entrada) continue;
-          const jornada = escala.jornada_trabalho || "5x2";
-          const inicioVig = (func as any).data_inicio_vigencia;
-          if (!inicioVig) continue;
+          const historicoFunc = historicoPorFunc.get(func.id) || [];
 
           // afastamentos do funcionário
           const afastFunc = (afastamentos || []).filter((a: any) => a.funcionario_id === func.id);
@@ -134,6 +139,21 @@ export function useAnaliseCondutas(diasAnalise = 30) {
             const dia = subDays(hoje, i);
             const diaStr = format(dia, "yyyy-MM-dd");
             if (diaStr === hojeISO()) continue; // ignora dia corrente (ainda em curso)
+
+            // Escala vigente neste dia (histórico) ou, sem histórico, a do cadastro
+            let escala: any;
+            let inicioVig: string | null;
+            if (historicoFunc.length > 0) {
+              const periodo = periodoNaData(historicoFunc, diaStr);
+              escala = periodo?.escala;
+              inicioVig = periodo?.data_inicio ?? null;
+            } else {
+              escala = (func as any).escalas;
+              inicioVig = (func as any).data_inicio_vigencia;
+              if (inicioVig && diaStr < inicioVig) continue;
+            }
+            if (!escala || !escala.entrada || !inicioVig) continue; // dia sem escala registrada
+            const jornada = escala.jornada_trabalho || "5x2";
 
             if (estaEmFolga(jornada, inicioVig, dia)) continue;
             if (afastadoEm(diaStr)) continue;

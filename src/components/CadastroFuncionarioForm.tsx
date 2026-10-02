@@ -59,6 +59,8 @@ function gerarCodigoAleatorio() {
 }
 
 export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, isEditing = false }: Props) {
+  /** Funcionário já tem escala: trocas passam pelo histórico de períodos. */
+  const escalaGerenciadaPorHistorico = !!isEditing && !!funcionarioData?.escala_id;
   const form = useForm<FormData>({
     defaultValues: funcionarioData ? {
       nome_completo: funcionarioData.nome_completo || '',
@@ -245,8 +247,11 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           data_admissao: sanitizedValues.data_admissao,
           funcao: sanitizedValues.funcao,
           registra_ponto: sanitizedValues.registra_ponto,
-          escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
-          data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
+          // Escala já existente só muda pelo histórico (vale a partir de uma data)
+          ...(escalaGerenciadaPorHistorico ? {} : {
+            escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
+            data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
+          }),
           acesso_supervisor: sanitizedValues.acesso_supervisor,
           recebe_vale_transporte: !!sanitizedValues.recebe_vale_transporte,
           valor_diaria_vale_transporte: sanitizedValues.valor_diaria_vale_transporte
@@ -405,7 +410,12 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         />
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
-          {form.watch("registra_ponto") && (
+          {form.watch("registra_ponto") && escalaGerenciadaPorHistorico && (
+            <p className="text-sm text-muted-foreground">
+              Para trocar a escala, use "Alterar escala" no histórico de escalas abaixo. A nova escala vale a partir da data escolhida, sem mudar os dias anteriores.
+            </p>
+          )}
+          {form.watch("registra_ponto") && !escalaGerenciadaPorHistorico && (
             <>
               <EscalaSelect control={form.control} escalas={escalas} required={true} />
               <DataInput 
