@@ -12,9 +12,9 @@ interface ValidacaoBiometricaDialogProps {
   funcionarioId: string;
   funcionarioNome: string;
   descriptorInicial?: number[] | null;
-  contexto: 'registro_ponto' | 'login_portal' | 'prontuario' | 'intercorrencia';
+  contexto: 'registro_ponto' | 'login_portal' | 'prontuario' | 'intercorrencia' | 'assinatura_documento';
   /** Disparado quando a validação foi bem-sucedida. O componente fecha sozinho. */
-  onValidado: () => void;
+  onValidado: (distancia: number) => void;
   /** Disparado quando o usuário cancela ou esgota tentativas. */
   onCancelado?: () => void;
 }
@@ -99,7 +99,7 @@ export default function ValidacaoBiometricaDialog({
         if (intervalRef.current) window.clearInterval(intervalRef.current);
         await registrarLog(true, dist);
         setTimeout(() => {
-          onValidado();
+          onValidado(dist);
           onOpenChange(false);
         }, 700);
       } else {
