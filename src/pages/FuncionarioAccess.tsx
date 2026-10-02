@@ -10,6 +10,7 @@ import careLogo from "@/assets/logo-senex-care-new.png";
 import PainelLembretes from "@/components/lembretes/PainelLembretes";
 import ChatLembretes from "@/components/lembretes/ChatLembretes";
 import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
+import AvisosPendentesDialog from "@/components/avisos/AvisosPendentesDialog";
 import { toast } from "@/components/ui/use-toast";
 
 const SESSION_KEY = 'funcionario_session';
@@ -548,6 +549,8 @@ export default function FuncionarioAccess() {
       </div>
       {/* Chat IA flutuante */}
       <ChatLembretes funcionarioId={funcionarioId} />
+      {/* Avisos com confirmação de recebimento obrigatória */}
+      <AvisosPendentesDialog funcionarioId={funcionarioId} />
     </div>
   );
 }
