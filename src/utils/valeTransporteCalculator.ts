@@ -86,7 +86,7 @@ function calcular12x36(
   const total = diasNoMes(ano, mes);
   let dias = 0;
   for (let d = 1; d <= total; d++) {
-    const data = new Date(ano, mes - 1, d);
+    const data = new Date(ano, mes - 1, d, 12); // meio-dia: compara com datas parseadas em T12:00
     if (fim && data > fim) continue;
     const diff = Math.floor(
       (data.getTime() - ref.getTime()) / (1000 * 60 * 60 * 24)
@@ -100,7 +100,7 @@ function calcularSegSex(ano: number, mes: number, inicio?: Date | null, fim?: Da
   const total = diasNoMes(ano, mes);
   let dias = 0;
   for (let d = 1; d <= total; d++) {
-    const data = new Date(ano, mes - 1, d);
+    const data = new Date(ano, mes - 1, d, 12); // meio-dia: compara com datas parseadas em T12:00
     if (inicio && data < inicio) continue;
     if (fim && data > fim) continue;
     const dow = data.getDay(); // 0=dom, 6=sab
@@ -113,7 +113,7 @@ function calcularSegSab(ano: number, mes: number, inicio?: Date | null, fim?: Da
   const total = diasNoMes(ano, mes);
   let dias = 0;
   for (let d = 1; d <= total; d++) {
-    const data = new Date(ano, mes - 1, d);
+    const data = new Date(ano, mes - 1, d, 12); // meio-dia: compara com datas parseadas em T12:00
     if (inicio && data < inicio) continue;
     if (fim && data > fim) continue;
     const dow = data.getDay();
