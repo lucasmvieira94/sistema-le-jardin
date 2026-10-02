@@ -6,3 +6,4 @@
 - Quadros do painel ficam no catálogo `src/components/dashboard/registroQuadros.ts` com ids estáveis, porque as preferências por usuário e as sugestões do agente de IA apontam para esses ids.
 - As regras de monitoramento do ponto ficam em funções puras (`src/utils/monitoramentoPonto.ts`), separadas da busca de dados, para que possam ser testadas sem acesso ao banco.
 - A escala de cada dia vem de `funcionarios_escalas_historico` (períodos sem sobreposição, alterados só por RPCs auditadas); `funcionarios.escala_id` é apenas cache da escala atual, para que trocas não reescrevam dias anteriores.
+- Assinaturas de documentos internos ficam em `documentos_internos_assinaturas` (imutável, uma por colaborador/documento) e são gravadas só pela RPC `assinar_documento_interno`, que exige biometria validada ou motivo de recusa; isso preserva a prova jurídica e funciona no portal por código sem login.
