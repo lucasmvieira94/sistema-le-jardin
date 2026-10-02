@@ -5108,6 +5108,7 @@ export type Database = {
           total_horas_trabalhadas: string
         }[]
       }
+      ciclo_jornada_dias: { Args: { p_jornada: string }; Returns: number }
       cleanup_expired_rotation_tokens: { Args: never; Returns: undefined }
       confirmar_folha_ponto: {
         Args: {
