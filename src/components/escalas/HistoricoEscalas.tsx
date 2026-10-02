@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { useToast } from "@/hooks/use-toast";
 import { CalendarClock, History, Pencil, Plus, Trash2 } from "lucide-react";
 import { formatarData, hojeISO } from "@/utils/dateUtils";
+import { formatarTimestampDataHora } from "@/utils/formatTimestamp";
 import {
   cicloJornadaDias,
   mudaRevezamento,
@@ -40,6 +41,8 @@ export default function HistoricoEscalas({ funcionarioId, onAlterado }: { funcio
   const [alvo, setAlvo] = useState<Periodo | null>(null);
   const [form, setForm] = useState({ escala_id: "", data_inicio: hojeISO(), data_fim: "", texto: "" });
   const [salvando, setSalvando] = useState(false);
+  /** Aviso enviado ao funcionário por período (confirmação de recebimento). */
+  const [avisos, setAvisos] = useState<Record<string, string | null>>({});
   const db = supabase as any;
 
   const carregar = useCallback(async () => {
@@ -52,6 +55,8 @@ export default function HistoricoEscalas({ funcionarioId, onAlterado }: { funcio
     ]);
     if (h.error) toast({ title: "Erro ao carregar histórico", description: h.error.message, variant: "destructive" });
     setPeriodos(ordenarHistorico(h.data || []) as Periodo[]);
+    const { data: av } = await db.from("avisos_funcionario").select("dados, confirmado_em").eq("funcionario_id", funcionarioId);
+    setAvisos(Object.fromEntries((av || []).map((a: any) => [a.dados?.periodo_id, a.confirmado_em])));
     setEscalas(e.data || []);
     setLoading(false);
   }, [funcionarioId]);
@@ -143,6 +148,11 @@ export default function HistoricoEscalas({ funcionarioId, onAlterado }: { funcio
                   {p.escala ? ` · ${p.escala.jornada_trabalho} · ${p.escala.entrada?.slice(0, 5) ?? "--"} às ${p.escala.saida?.slice(0, 5) ?? "--"}` : ""}
                 </p>
                 {p.motivo && <p className="text-xs text-muted-foreground">Motivo: {p.motivo}</p>}
+                {p.id in avisos && (
+                  <p className="text-xs text-muted-foreground">
+                    {avisos[p.id] ? `Funcionário confirmou o aviso em ${formatarTimestampDataHora(avisos[p.id]!)}` : "Aviso enviado ao funcionário, aguardando confirmação"}
+                  </p>
+                )}
               </div>
               <div className="flex gap-1 shrink-0">
                 <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Corrigir período" onClick={() => abrir("corrigir", p)}><Pencil className="w-3.5 h-3.5" /></Button>
