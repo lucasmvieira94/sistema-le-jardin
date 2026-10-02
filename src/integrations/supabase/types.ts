@@ -5211,6 +5211,10 @@ export type Database = {
           inicio_periodo: string
         }[]
       }
+      excluir_afastamento: {
+        Args: { p_id: string; p_justificativa: string }
+        Returns: boolean
+      }
       excluir_periodo_escala: {
         Args: { p_id: string; p_justificativa: string }
         Returns: undefined
@@ -5500,6 +5504,10 @@ export type Database = {
       registrar_tentativa_codigo: {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
+      }
+      revisar_apropriacao_horas: {
+        Args: { p_fim: string; p_funcionario_id?: string; p_inicio: string }
+        Returns: Json
       }
       rotate_employer_code: {
         Args: { p_new_code: string; p_old_code: string; p_tenant_id: string }

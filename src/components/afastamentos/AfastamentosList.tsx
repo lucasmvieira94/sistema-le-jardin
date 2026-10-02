@@ -12,6 +12,7 @@ import { useTenantContext } from '@/contexts/TenantContext';
 import { toast } from "@/components/ui/use-toast";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import EditarAfastamentoDialog from "./EditarAfastamentoDialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,8 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
   const [editId, setEditId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [justificativaExclusao, setJustificativaExclusao] = useState("");
+  const [excluindo, setExcluindo] = useState(false);
   const [anexos, setAnexos] = useState<Record<string, AnexoAfastamento>>({});
   const [uploadId, setUploadId] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -126,34 +129,30 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
     catch (error) { toast({ variant: 'destructive', title: 'Falha ao revogar', description: error instanceof Error ? error.message : '' }); }
   }
 
+  /**
+   * Exclusão auditada no banco: guarda cópia do afastamento, do documento e dos
+   * acessos ao link, remove os abonos/faltas gerados e exige justificativa.
+   */
   async function deleteAfastamento(id: string) {
+    if (justificativaExclusao.trim().length < 5) {
+      toast({ variant: "destructive", title: "Informe a justificativa (mínimo 5 caracteres)" });
+      return;
+    }
+    setExcluindo(true);
     try {
-      // Buscar registro completo para auditoria antes da exclusão
-      const { data: anterior } = await supabase
-        .from("afastamentos")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      const { error } = await supabase.from("afastamentos").delete().eq("id", id);
+      const { error } = await (supabase as any).rpc("excluir_afastamento", { p_id: id, p_justificativa: justificativaExclusao.trim() });
       if (error) throw error;
-
-      await logEvent("afastamentos", "DELETE", anterior, null);
-
       toast({
         title: "Afastamento excluído!",
-        description: "O afastamento foi excluído e registrado na auditoria.",
+        description: "Os lançamentos na apropriação de horas foram removidos e a exclusão ficou registrada na auditoria.",
       });
-
       fetchAfastamentos();
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao excluir afastamento",
-        description: error?.message,
-      });
-    } finally {
       setDeleteId(null);
+      setJustificativaExclusao("");
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erro ao excluir afastamento", description: error?.message });
+    } finally {
+      setExcluindo(false);
     }
   }
 
@@ -206,8 +205,7 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => setDeleteId(afastamento.id)}
-                      disabled={!!anexos[afastamento.id]}
-                      title={anexos[afastamento.id] ? 'Revogue o documento antes de excluir; afastamentos documentados preservam a auditoria.' : 'Excluir'}
+                      title="Excluir"
                       className="text-destructive hover:text-destructive"
                       aria-label="Excluir"
                     >
@@ -280,19 +278,27 @@ const AfastamentosList = forwardRef<AfastamentosListRef>((props, ref) => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => { if (!o) { setDeleteId(null); setJustificativaExclusao(""); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir afastamento?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O evento será registrado na auditoria.
+              Esta ação não pode ser desfeita. Os abonos/faltas lançados por este afastamento saem da apropriação de horas.
+              Uma cópia do afastamento e do documento anexado fica guardada na auditoria.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <Textarea
+            placeholder="Justificativa da exclusão (obrigatória)"
+            value={justificativaExclusao}
+            maxLength={500}
+            onChange={(e) => setJustificativaExclusao(e.target.value)}
+          />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId && deleteAfastamento(deleteId)}
+              disabled={excluindo || justificativaExclusao.trim().length < 5}
+              onClick={(e) => { e.preventDefault(); if (deleteId) deleteAfastamento(deleteId); }}
             >
               Excluir
             </AlertDialogAction>
