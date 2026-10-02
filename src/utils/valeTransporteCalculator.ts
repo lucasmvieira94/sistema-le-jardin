@@ -24,6 +24,8 @@ export interface CalcularDiasParams {
   modalidadeReducaoAviso?: string | null; // 'reducao_2h_entrada' | 'reducao_2h_saida' | 'reducao_7_dias_corridos'
   dataInicioAviso?: string | null;
   dataFimAviso?: string | null;
+  /** Último dia do período da escala (troca de escala no meio do mês). */
+  dataFimPeriodo?: string | null;
 }
 
 function parseData(d?: string | null): Date | null {
@@ -128,7 +130,9 @@ export function calcularDiasTrabalhados(p: CalcularDiasParams): number {
     : null;
 
   // Limita o cálculo ao último dia efetivamente trabalhado (considera aviso prévio)
-  const fim = calcularUltimoDiaVT(p);
+  let fim = calcularUltimoDiaVT(p);
+  const fimPeriodo = parseData(p.dataFimPeriodo);
+  if (fimPeriodo && (!fim || fimPeriodo < fim)) fim = fimPeriodo;
 
   const jornada = (p.jornada || "").toLowerCase();
 
@@ -150,4 +154,26 @@ export function nomeMes(mes: number): string {
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
   ][mes - 1];
+}
+/**
+ * Soma os dias trabalhados no mês respeitando o histórico de escalas:
+ * cada período é contado pela sua própria jornada, a partir do seu início.
+ * Sem histórico, usa a escala atual (comportamento anterior).
+ */
+export function calcularDiasTrabalhadosPorHistorico(
+  p: CalcularDiasParams,
+  periodos: { data_inicio: string; data_fim: string | null; jornada: string }[],
+): number {
+  if (!periodos.length) return calcularDiasTrabalhados(p);
+  const iniMes = `${p.ano}-${String(p.mes).padStart(2, "0")}-01`;
+  const fimMes = `${p.ano}-${String(p.mes).padStart(2, "0")}-${String(diasNoMes(p.ano, p.mes)).padStart(2, "0")}`;
+  return periodos
+    .filter((x) => x.data_inicio <= fimMes && (x.data_fim === null || x.data_fim >= iniMes))
+    .reduce((total, x) => total + calcularDiasTrabalhados({
+      ...p,
+      jornada: x.jornada,
+      dataInicioVigencia: x.data_inicio,
+      dataAdmissao: null,
+      dataFimPeriodo: x.data_fim,
+    }), 0);
 }
