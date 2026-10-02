@@ -59,6 +59,8 @@ function gerarCodigoAleatorio() {
 }
 
 export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, isEditing = false }: Props) {
+  /** Funcionário já tem escala: trocas passam pelo histórico de períodos. */
+  const escalaGerenciadaPorHistorico = !!isEditing && !!funcionarioData?.escala_id;
   const form = useForm<FormData>({
     defaultValues: funcionarioData ? {
       nome_completo: funcionarioData.nome_completo || '',
