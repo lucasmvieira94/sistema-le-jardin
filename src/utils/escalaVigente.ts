@@ -50,10 +50,31 @@ function sobrepoe(aIni: string, aFim: string | null, bIni: string, bFim: string 
  * Valida a troca de escala a partir de uma data (mesmas regras do banco):
  * não pode haver período começando nesta data ou depois, e a escala precisa mudar.
  */
+/** Tamanho do ciclo de revezamento em dias (0 = escala semanal fixa). */
+export function cicloJornadaDias(jornada: string | null | undefined): number {
+  return ({ "12x36": 2, "24x48": 3, "6x1": 7 } as Record<string, number>)[jornada || ""] ?? 0;
+}
+
+function diasEntre(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 86_400_000);
+}
+
+/**
+ * True quando iniciar um novo período da MESMA escala nesta data muda o dia do
+ * revezamento (ex.: 12x36 de dias pares para ímpares). O ciclo conta a partir do
+ * início de cada período, então basta a diferença não ser múltipla do ciclo.
+ */
+export function mudaRevezamento(jornada: string | null | undefined, inicioAtual: string, novaData: string): boolean {
+  const ciclo = cicloJornadaDias(jornada);
+  return ciclo > 0 && ((diasEntre(inicioAtual, novaData) % ciclo) + ciclo) % ciclo !== 0;
+}
+
 export function validarTrocaEscala(
   historico: PeriodoEscala[],
   novaEscalaId: number,
   dataInicio: string,
+  jornadaNova?: string | null,
+  motivo?: string,
 ): string | null {
   if (!dataInicio) return "Informe a data de início da nova escala.";
   if (!novaEscalaId) return "Selecione a nova escala.";
@@ -61,7 +82,14 @@ export function validarTrocaEscala(
     return "Já existe um período começando nesta data ou depois. Corrija ou exclua esse período no histórico.";
   }
   const atual = periodoNaData(historico, dataInicio);
-  if (atual && atual.escala_id === novaEscalaId) return "O funcionário já está nesta escala nesta data.";
+  if (atual && atual.escala_id === novaEscalaId) {
+    // Mesma escala só é aceita para mudar o dia do revezamento (mesmas regras do banco)
+    if (!cicloJornadaDias(jornadaNova)) return "O funcionário já está nesta escala nesta data.";
+    if (!mudaRevezamento(jornadaNova, atual.data_inicio, dataInicio)) {
+      return "Nesta data o funcionário já trabalharia pelo revezamento atual. Escolha um dia que mude a sequência.";
+    }
+    if (!motivo?.trim()) return "Informe o motivo da mudança de revezamento.";
+  }
   return null;
 }
 

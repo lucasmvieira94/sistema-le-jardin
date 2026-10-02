@@ -57,3 +57,30 @@ describe("vale-transporte com troca de escala", () => {
     expect(dias).toBe(10 + 14);
   });
 });
+
+import { mudaRevezamento } from "../escalaVigente";
+
+describe("mudança de revezamento na mesma escala", () => {
+  const h12: PeriodoEscala[] = [{ id: "x", funcionario_id: "f1", escala_id: 7, data_inicio: "2026-09-02", data_fim: null }];
+
+  it("12x36 de dia par para ímpar é aceita com motivo", () => {
+    expect(mudaRevezamento("12x36", "2026-09-02", "2026-10-05")).toBe(true);
+    expect(validarTrocaEscala(h12, 7, "2026-10-05", "12x36", "Pedido do funcionário")).toBeNull();
+    expect(validarTrocaEscala(h12, 7, "2026-10-05", "12x36", "")).toMatch(/motivo/);
+  });
+
+  it("rejeita data que mantém a mesma sequência", () => {
+    expect(mudaRevezamento("12x36", "2026-09-02", "2026-10-04")).toBe(false);
+    expect(validarTrocaEscala(h12, 7, "2026-10-04", "12x36", "x")).toMatch(/já trabalharia/);
+  });
+
+  it("escala semanal fixa não aceita a mesma escala", () => {
+    expect(validarTrocaEscala(h12, 7, "2026-10-05", "40h_8h_segsex", "x")).toMatch(/já está/);
+  });
+
+  it("24x48 e 6x1 usam o tamanho do ciclo", () => {
+    expect(mudaRevezamento("24x48", "2026-09-01", "2026-09-04")).toBe(false);
+    expect(mudaRevezamento("24x48", "2026-09-01", "2026-09-05")).toBe(true);
+    expect(mudaRevezamento("6x1", "2026-09-01", "2026-09-08")).toBe(false);
+  });
+});

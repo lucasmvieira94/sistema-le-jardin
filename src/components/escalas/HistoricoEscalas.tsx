@@ -18,7 +18,10 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarClock, History, Pencil, Plus, Trash2 } from "lucide-react";
 import { formatarData, hojeISO } from "@/utils/dateUtils";
 import {
+  cicloJornadaDias,
+  mudaRevezamento,
   ordenarHistorico,
+  periodoNaData,
   validarPeriodo,
   validarTrocaEscala,
   type PeriodoEscala,
@@ -66,10 +69,14 @@ export default function HistoricoEscalas({ funcionarioId, onAlterado }: { funcio
     });
   };
 
+  const escalaSelecionada = escalas.find((e) => String(e.id) === form.escala_id);
+  const periodoAtualNaData = modo === "trocar" ? periodoNaData(periodos, form.data_inicio) : null;
+  const ehMudancaRevezamento = !!periodoAtualNaData && String(periodoAtualNaData.escala_id) === form.escala_id;
+
   const salvar = async () => {
     const escalaId = Number(form.escala_id);
     let erro: string | null = null;
-    if (modo === "trocar") erro = validarTrocaEscala(periodos, escalaId, form.data_inicio);
+    if (modo === "trocar") erro = validarTrocaEscala(periodos, escalaId, form.data_inicio, escalaSelecionada?.jornada_trabalho, form.texto);
     if (modo === "lancar") erro = !form.data_fim ? "Informe a data de fim do período antigo." : validarPeriodo(periodos, { data_inicio: form.data_inicio, data_fim: form.data_fim });
     if (modo === "corrigir") erro = validarPeriodo(periodos, { id: alvo!.id, data_inicio: form.data_inicio, data_fim: form.data_fim || null });
     if ((modo === "lancar" || modo === "corrigir" || modo === "excluir") && !form.texto.trim()) erro = erro ?? "Informe o motivo/justificativa.";
@@ -86,7 +93,7 @@ export default function HistoricoEscalas({ funcionarioId, onAlterado }: { funcio
     const { error } = await chamadas[modo!]();
     setSalvando(false);
     if (error) { toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" }); return; }
-    toast({ title: modo === "trocar" ? "Escala alterada" : "Histórico atualizado" });
+    toast({ title: ehMudancaRevezamento ? "Revezamento alterado" : modo === "trocar" ? "Escala alterada" : "Histórico atualizado" });
     setModo(null);
     await carregar();
     onAlterado?.();
@@ -180,10 +187,21 @@ export default function HistoricoEscalas({ funcionarioId, onAlterado }: { funcio
                   </div>
                 )}
               </div>
+              {ehMudancaRevezamento && (
+                cicloJornadaDias(escalaSelecionada?.jornada_trabalho) === 0 ? (
+                  <p className="text-xs text-destructive">O funcionário já está nesta escala. Só escalas de revezamento (12x36, 24x48, 6x1) permitem mudar o dia.</p>
+                ) : mudaRevezamento(escalaSelecionada?.jornada_trabalho, periodoAtualNaData!.data_inicio, form.data_inicio) ? (
+                  <p className="text-xs rounded-md border bg-muted/40 p-2">
+                    Mudança de revezamento: mesma escala, mas a partir de {formatarData(form.data_inicio)} o funcionário passa a trabalhar nesse dia e segue a nova sequência. Os dias anteriores não mudam. Confira se não haverá dois plantões seguidos ou folga além do normal na transição.
+                  </p>
+                ) : (
+                  <p className="text-xs text-destructive">Nesta data ele já trabalharia pelo revezamento atual. Escolha um dia que mude a sequência (ex.: um dia de folga atual).</p>
+                )
+              )}
             </div>
           )}
           <div className="space-y-1">
-            <Label>{modo === "trocar" ? "Motivo (opcional)" : modo === "lancar" ? "Motivo" : "Justificativa"}</Label>
+            <Label>{modo === "trocar" ? (ehMudancaRevezamento ? "Motivo" : "Motivo (opcional)") : modo === "lancar" ? "Motivo" : "Justificativa"}</Label>
             <Textarea value={form.texto} maxLength={500} onChange={(e) => setForm({ ...form, texto: e.target.value })} />
           </div>
           <DialogFooter>
