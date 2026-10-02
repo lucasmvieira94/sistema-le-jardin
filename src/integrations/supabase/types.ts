@@ -1020,6 +1020,56 @@ export type Database = {
           },
         ]
       }
+      avisos_funcionario: {
+        Row: {
+          confirmado_em: string | null
+          created_at: string
+          criado_por: string | null
+          dados: Json
+          funcionario_id: string
+          id: string
+          mensagem: string
+          tenant_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          confirmado_em?: string | null
+          created_at?: string
+          criado_por?: string | null
+          dados?: Json
+          funcionario_id: string
+          id?: string
+          mensagem: string
+          tenant_id?: string | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          confirmado_em?: string | null
+          created_at?: string
+          criado_por?: string | null
+          dados?: Json
+          funcionario_id?: string
+          id?: string
+          mensagem?: string
+          tenant_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avisos_funcionario_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biometria_validacoes_log: {
         Row: {
           contexto: string
@@ -5110,6 +5160,10 @@ export type Database = {
       }
       ciclo_jornada_dias: { Args: { p_jornada: string }; Returns: number }
       cleanup_expired_rotation_tokens: { Args: never; Returns: undefined }
+      confirmar_aviso_funcionario: {
+        Args: { p_aviso_id: string; p_funcionario_id: string }
+        Returns: boolean
+      }
       confirmar_folha_ponto: {
         Args: {
           p_concorda: boolean
@@ -5305,6 +5359,16 @@ export type Database = {
         Returns: string
       }
       limpar_uso_sistema_antigo: { Args: never; Returns: undefined }
+      listar_avisos_pendentes_funcionario: {
+        Args: { p_funcionario_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          mensagem: string
+          tipo: string
+          titulo: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           p_dados_anteriores?: Json
