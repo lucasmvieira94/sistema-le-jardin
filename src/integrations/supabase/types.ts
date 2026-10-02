@@ -2077,6 +2077,116 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos_internos: {
+        Row: {
+          ativo: boolean
+          conteudo_html: string
+          created_at: string
+          criado_por: string | null
+          funcionario_ids: string[] | null
+          hash_documento: string
+          id: string
+          tenant_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          conteudo_html: string
+          created_at?: string
+          criado_por?: string | null
+          funcionario_ids?: string[] | null
+          hash_documento: string
+          id?: string
+          tenant_id?: string | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          conteudo_html?: string
+          created_at?: string
+          criado_por?: string | null
+          funcionario_ids?: string[] | null
+          hash_documento?: string
+          id?: string
+          tenant_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      documentos_internos_assinaturas: {
+        Row: {
+          assinado_em: string
+          created_at: string
+          distancia_biometrica: number | null
+          funcionario_id: string
+          hash_assinatura: string
+          hash_documento: string
+          id: string
+          ip_origem: string | null
+          metodo: string
+          motivo_recusa: string | null
+          referencia_id: string
+          status: string
+          tenant_id: string | null
+          threshold: number | null
+          tipo_documento: string
+          titulo: string
+          user_agent: string | null
+        }
+        Insert: {
+          assinado_em?: string
+          created_at?: string
+          distancia_biometrica?: number | null
+          funcionario_id: string
+          hash_assinatura: string
+          hash_documento: string
+          id?: string
+          ip_origem?: string | null
+          metodo?: string
+          motivo_recusa?: string | null
+          referencia_id: string
+          status: string
+          tenant_id?: string | null
+          threshold?: number | null
+          tipo_documento: string
+          titulo: string
+          user_agent?: string | null
+        }
+        Update: {
+          assinado_em?: string
+          created_at?: string
+          distancia_biometrica?: number | null
+          funcionario_id?: string
+          hash_assinatura?: string
+          hash_documento?: string
+          id?: string
+          ip_origem?: string | null
+          metodo?: string
+          motivo_recusa?: string | null
+          referencia_id?: string
+          status?: string
+          tenant_id?: string | null
+          threshold?: number | null
+          tipo_documento?: string
+          titulo?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_internos_assinaturas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entrada_medicamentos: {
         Row: {
           created_at: string | null
@@ -5064,6 +5174,24 @@ export type Database = {
         }
         Returns: string
       }
+      assinar_documento_interno: {
+        Args: {
+          p_aceite: boolean
+          p_distancia: number
+          p_funcionario_id: string
+          p_hash_documento: string
+          p_motivo_recusa: string
+          p_referencia_id: string
+          p_threshold: number
+          p_tipo_documento: string
+          p_user_agent: string
+        }
+        Returns: {
+          assinado_em: string
+          hash_assinatura: string
+          id: string
+        }[]
+      }
       buscar_prontuarios_em_atraso: {
         Args: never
         Returns: {
@@ -5370,6 +5498,24 @@ export type Database = {
           id: string
           mensagem: string
           tipo: string
+          titulo: string
+        }[]
+      }
+      listar_documentos_funcionario: {
+        Args: { p_funcionario_id: string }
+        Returns: {
+          arquivo_path: string
+          assinado_em: string
+          conteudo_html: string
+          criado_em: string
+          hash_assinatura: string
+          hash_documento: string
+          hash_referencia: string
+          motivo_recusa: string
+          referencia_id: string
+          status: string
+          subtitulo: string
+          tipo_documento: string
           titulo: string
         }[]
       }
