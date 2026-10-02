@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Bus, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { calcularDiasTrabalhados, calcularUltimoDiaVT, nomeMes } from "@/utils/valeTransporteCalculator";
+import { calcularDiasTrabalhadosPorHistorico, calcularUltimoDiaVT, nomeMes } from "@/utils/valeTransporteCalculator";
 import { toast } from "@/components/ui/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";

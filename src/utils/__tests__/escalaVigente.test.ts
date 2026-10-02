@@ -44,3 +44,16 @@ describe("escala vigente por data", () => {
     expect(validarPeriodo(hist, { data_inicio: "2026-02-01", data_fim: "2026-01-01" })).toMatch(/posterior/);
   });
 });
+
+import { calcularDiasTrabalhadosPorHistorico } from "../valeTransporteCalculator";
+
+describe("vale-transporte com troca de escala", () => {
+  it("conta cada período pela sua jornada", () => {
+    // set/2026: 1-14 seg-sex (10 dias úteis), 15-30 seg-sab (14 dias)
+    const dias = calcularDiasTrabalhadosPorHistorico({ ano: 2026, mes: 9, jornada: "" }, [
+      { data_inicio: "2026-01-01", data_fim: "2026-09-14", jornada: "40h_8h_segsex" },
+      { data_inicio: "2026-09-15", data_fim: null, jornada: "44h_8h_segsex_4h_sab" },
+    ]);
+    expect(dias).toBe(10 + 14);
+  });
+});
