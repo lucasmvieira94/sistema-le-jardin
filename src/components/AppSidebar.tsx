@@ -75,6 +75,7 @@ export function AppSidebar() {
     { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
     { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
     { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
+    { path: "/documentos-internos", icon: FileSignature, label: "Documentos Internos", adminOnly: true },
     { path: "/gestao-gamificacao", icon: Trophy, label: "Gamificação", adminOnly: true },
     { path: "/contracheques", icon: CreditCard, label: "Contracheques", adminOnly: true },
   ];

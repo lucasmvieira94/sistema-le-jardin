@@ -59,6 +59,8 @@ import NotificacoesWhatsApp from "./pages/NotificacoesWhatsApp";
 import GerenciamentoWhatsApp from "./pages/GerenciamentoWhatsApp";
 import AnaliseFeedback from "./pages/AnaliseFeedback";
 import AdvertenciasSuspensoes from "./pages/AdvertenciasSuspensoes";
+import MeusDocumentos from "./pages/MeusDocumentos";
+import DocumentosInternos from "./pages/DocumentosInternos";
 import GestaoIntercorrencias from "./pages/GestaoIntercorrencias";
 import Gamificacao from "./pages/Gamificacao";
 import GestaoGamificacao from "./pages/GestaoGamificacao";
@@ -119,6 +121,7 @@ const App = () => {
               <Route path="/controle-vacinas-publico" element={<ControleVacinasPublico />} />
               <Route path="/meus-contracheques" element={<MeusContracheques />} />
               <Route path="/minhas-folhas-ponto" element={<MinhasFolhasPonto />} />
+              <Route path="/meus-documentos" element={<MeusDocumentos />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/verificar-documento" element={<VerificarDocumento />} />
               <Route path="/anexo-afastamento/:token" element={<AnexoAfastamentoPublico />} />
@@ -151,6 +154,7 @@ const App = () => {
               <Route path="/gerenciamento-whatsapp" element={<ProtectedRoute><ModuleGuard modulo="whatsapp"><GerenciamentoWhatsApp /></ModuleGuard></ProtectedRoute>} />
               <Route path="/analise-feedback" element={<ProtectedRoute><AnaliseFeedback /></ProtectedRoute>} />
               <Route path="/advertencias-suspensoes" element={<ProtectedRoute><ModuleGuard modulo="advertencias"><AdvertenciasSuspensoes /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/documentos-internos" element={<ProtectedRoute><DocumentosInternos /></ProtectedRoute>} />
               <Route path="/gestao-intercorrencias" element={<ProtectedRoute><ModuleGuard modulo="intercorrencias"><GestaoIntercorrencias /></ModuleGuard></ProtectedRoute>} />
               <Route path="/gestao-gamificacao" element={<ProtectedRoute><ModuleGuard modulo="gamificacao"><GestaoGamificacao /></ModuleGuard></ProtectedRoute>} />
               <Route path="/controle-vacinas" element={<ProtectedRoute><ModuleGuard modulo="vacinas"><ControleVacinas /></ModuleGuard></ProtectedRoute>} />
