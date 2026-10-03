@@ -14,8 +14,9 @@ import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
 import { useDocumentosFuncionario, assinarDocumentoInterno } from '@/hooks/useDocumentosFuncionario';
 import { getFolhaPontoSignedUrl } from '@/hooks/useFolhasPonto';
 import { getContrachequeSignedUrl } from '@/hooks/useContracheques';
-import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometricaDialog';
-import { BIOMETRIA_THRESHOLD } from '@/lib/faceApi';
+import CapturaAssinaturaDialog from '@/components/biometria/CapturaAssinaturaDialog';
+import AutoCadastroBiometriaDialog from '@/components/biometria/AutoCadastroBiometriaDialog';
+import { useBiometriaStatus } from '@/hooks/useBiometriaFuncionario';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
 import {
   ROTULO_TIPO, conteudoCanonico, filtrarDocumentos, resumirDocumentos, rotuloRecusa, sha256Hex,
@@ -55,6 +56,9 @@ export default function MeusDocumentos() {
   const [motivo, setMotivo] = useState('');
   const [biometriaOpen, setBiometriaOpen] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
+  const { data: bio, refetch: recarregarBio } = useBiometriaStatus(funcionarioId);
+  const semBiometria = bio && !bio.cadastrada;
 
   const abrir = async (doc: DocumentoFuncionario) => {
     setAberto(doc); setAceite(false); setModoRecusa(false); setMotivo(''); setPdfUrl(null); setHash(null);
@@ -84,14 +88,14 @@ export default function MeusDocumentos() {
 
   const fechar = () => { if (!enviando) setAberto(null); };
 
-  const enviar = async (aceitou: boolean, distancia?: number) => {
+  /** Grava assinatura (com rosto) ou recusa. Erros são relançados para a tela de captura permitir nova tentativa. */
+  const enviar = async (aceitou: boolean, descriptor?: number[]) => {
     if (!aberto || !funcionarioId || !hash) return;
     setEnviando(true);
     try {
       const r = await assinarDocumentoInterno({
         funcionarioId, tipo: aberto.tipo_documento, referenciaId: aberto.referencia_id, hashDocumento: hash,
-        aceite: aceitou, motivoRecusa: aceitou ? undefined : motivo.trim(),
-        distancia, threshold: aceitou ? BIOMETRIA_THRESHOLD : undefined,
+        aceite: aceitou, motivoRecusa: aceitou ? undefined : motivo.trim(), descriptor,
       });
       toast({ title: aceitou ? 'Documento assinado com biometria' : 'Recusa registrada' });
       if (aceitou) {
@@ -102,6 +106,7 @@ export default function MeusDocumentos() {
       qc.invalidateQueries({ queryKey: ['documentos-funcionario', funcionarioId] });
       setAberto(null);
     } catch (e) {
+      if (aceitou) throw e;
       toast({ variant: 'destructive', title: 'Não foi possível concluir', description: (e as Error).message });
     } finally {
       setEnviando(false);
@@ -141,6 +146,18 @@ export default function MeusDocumentos() {
             <p className="text-sm opacity-90">{funcionarioNome}</p>
           </div>
         </div>
+
+        {semBiometria && (
+          <Card className="border-2 border-amber-400">
+            <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+              <div className="text-sm">
+                <div className="font-semibold">Cadastre seu rosto para assinar</div>
+                <div className="text-muted-foreground">Leva menos de 1 minuto e é feito uma única vez.</div>
+              </div>
+              <Button onClick={() => setCadastroOpen(true)}><ScanFace className="w-4 h-4 mr-1" /> Cadastrar agora</Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-3 gap-2">
           {[['Pendentes', resumo.pendentes, 'text-amber-700'], ['Assinados', resumo.assinados, 'text-emerald-700'], ['Recusados', resumo.recusados, 'text-red-700']].map(([l, v, c]) => (
@@ -268,7 +285,7 @@ export default function MeusDocumentos() {
                       <Button variant="outline" onClick={() => setModoRecusa(true)} disabled={carregando || enviando}>
                         {rotuloRecusa(aberto.tipo_documento)}
                       </Button>
-                      <Button disabled={!aceite || !hash || carregando || enviando} onClick={() => setBiometriaOpen(true)}>
+                      <Button disabled={!aceite || !hash || carregando || enviando} onClick={() => (semBiometria ? setCadastroOpen(true) : setBiometriaOpen(true))}>
                         {enviando ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <ScanFace className="w-4 h-4 mr-1" />}
                         Assinar com biometria
                       </Button>
@@ -288,13 +305,21 @@ export default function MeusDocumentos() {
       </Dialog>
 
       {funcionarioId && aberto && (
-        <ValidacaoBiometricaDialog
+        <CapturaAssinaturaDialog
           open={biometriaOpen}
           onOpenChange={setBiometriaOpen}
+          titulo={aberto.titulo}
+          onCapturado={(d) => enviar(true, d)}
+        />
+      )}
+
+      {funcionarioId && (
+        <AutoCadastroBiometriaDialog
+          open={cadastroOpen}
+          onOpenChange={setCadastroOpen}
           funcionarioId={funcionarioId}
           funcionarioNome={funcionarioNome}
-          contexto="assinatura_documento"
-          onValidado={(dist) => enviar(true, dist)}
+          onConcluido={() => recarregarBio()}
         />
       )}
     </div>

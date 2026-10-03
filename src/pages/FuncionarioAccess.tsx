@@ -12,7 +12,9 @@ import ChatLembretes from "@/components/lembretes/ChatLembretes";
 import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
 import AvisosPendentesDialog from "@/components/avisos/AvisosPendentesDialog";
 import { toast } from "@/components/ui/use-toast";
-import { FileSignature } from "lucide-react";
+import { FileSignature, ScanFace } from "lucide-react";
+import AutoCadastroBiometriaDialog from "@/components/biometria/AutoCadastroBiometriaDialog";
+import { useBiometriaStatus } from "@/hooks/useBiometriaFuncionario";
 import { useDocumentosFuncionario } from "@/hooks/useDocumentosFuncionario";
 
 const SESSION_KEY = 'funcionario_session';
@@ -120,6 +122,8 @@ export default function FuncionarioAccess() {
   const [biometriaOpen, setBiometriaOpen] = useState(false);
   const { data: documentosFuncionario = [] } = useDocumentosFuncionario(funcionarioId);
   const docsPendentes = documentosFuncionario.filter((d) => d.status === "pendente").length;
+  const { data: bioStatus, refetch: recarregarBioStatus } = useBiometriaStatus(funcionarioId);
+  const [autoCadastroOpen, setAutoCadastroOpen] = useState(false);
 
   // Auto-expire session every minute
   useEffect(() => {
@@ -473,6 +477,9 @@ export default function FuncionarioAccess() {
                 <FeatureCard title="Minhas Folhas de Ponto" description="Folhas mensais publicadas pelo gestor" icon={Clock} color="blue" buttonLabel="Ver Folhas" onClick={navigateToMinhasFolhasPonto} />
               )}
               <FeatureCard title="Minha Escala" description="Seus dias escalados no mês" icon={CalendarDays} color="teal" buttonLabel="Ver Escala" onClick={navigateToMinhaEscala} />
+              {bioStatus && !bioStatus.cadastrada && (
+                <FeatureCard title="Cadastrar meu rosto" description="Necessário para assinar documentos" icon={ScanFace} color="orange" buttonLabel="Cadastrar" onClick={() => setAutoCadastroOpen(true)} featured />
+              )}
               <FeatureCard title="Meus Documentos" description={docsPendentes > 0 ? `${docsPendentes} documento(s) para assinar` : "Assine com biometria facial"} icon={FileSignature} color={docsPendentes > 0 ? "red" : "indigo"} buttonLabel={docsPendentes > 0 ? "Assinar agora" : "Ver Documentos"} onClick={navigateToMeusDocumentos} featured={docsPendentes > 0} />
               <FeatureCard title="Meus Contracheques" description="Baixe seus holerites por mês" icon={Receipt} color="emerald" buttonLabel="Ver Contracheques" onClick={navigateToContracheques} />
               <FeatureCard title="Meu Desempenho" description="Pontos, nível e prêmios" icon={Trophy} color="yellow" buttonLabel="Ver Desempenho" onClick={navigateToGamificacao} />
@@ -535,6 +542,16 @@ export default function FuncionarioAccess() {
             <FeatureCard title="Feedback do Sistema" description="Avalie e sugira melhorias para o SENEXCARE" icon={MessageSquareHeart} color="amber" buttonLabel="Avaliar" onClick={navigateToFeedback} />
           </section>
 
+
+          {funcionarioId && (
+            <AutoCadastroBiometriaDialog
+              open={autoCadastroOpen}
+              onOpenChange={setAutoCadastroOpen}
+              funcionarioId={funcionarioId}
+              funcionarioNome={funcionarioNome}
+              onConcluido={() => recarregarBioStatus()}
+            />
+          )}
 
           {/* Botão de logout */}
           <div className="text-center mt-6 sm:mt-8 space-y-4">

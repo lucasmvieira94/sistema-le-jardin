@@ -5177,19 +5177,34 @@ export type Database = {
       assinar_documento_interno: {
         Args: {
           p_aceite: boolean
-          p_distancia: number
+          p_descriptor: Json
           p_funcionario_id: string
           p_hash_documento: string
           p_motivo_recusa: string
           p_referencia_id: string
-          p_threshold: number
           p_tipo_documento: string
           p_user_agent: string
         }
         Returns: {
           assinado_em: string
+          distancia: number
           hash_assinatura: string
           id: string
+        }[]
+      }
+      autocadastrar_biometria_funcionario: {
+        Args: {
+          p_amostras: Json
+          p_funcionario_id: string
+          p_user_agent: string
+        }
+        Returns: string
+      }
+      biometria_status_funcionario: {
+        Args: { p_funcionario_id: string }
+        Returns: {
+          cadastrada: boolean
+          cadastrada_em: string
         }[]
       }
       buscar_prontuarios_em_atraso: {
@@ -5320,6 +5335,7 @@ export type Database = {
       }
       criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
+      distancia_descriptor: { Args: { a: Json; b: Json }; Returns: number }
       eh_horario_noturno: {
         Args: {
           p_fim_noturno?: string
