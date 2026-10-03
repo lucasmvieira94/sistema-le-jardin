@@ -24,8 +24,8 @@ export interface AssinarDocumentoInput {
   hashDocumento: string;
   aceite: boolean;
   motivoRecusa?: string;
-  distancia?: number;
-  threshold?: number;
+  /** Rosto capturado agora; o servidor compara com o cadastro. */
+  descriptor?: number[];
 }
 
 export async function assinarDocumentoInterno(i: AssinarDocumentoInput) {
@@ -36,10 +36,9 @@ export async function assinarDocumentoInterno(i: AssinarDocumentoInput) {
     p_hash_documento: i.hashDocumento,
     p_aceite: i.aceite,
     p_motivo_recusa: i.motivoRecusa ?? null,
-    p_distancia: i.distancia ?? null,
-    p_threshold: i.threshold ?? null,
+    p_descriptor: i.descriptor ?? null,
     p_user_agent: navigator.userAgent,
   });
   if (error) throw error;
-  return (Array.isArray(data) ? data[0] : data) as { id: string; hash_assinatura: string; assinado_em: string };
+  return (Array.isArray(data) ? data[0] : data) as { id: string; hash_assinatura: string; assinado_em: string; distancia: number | null };
 }
