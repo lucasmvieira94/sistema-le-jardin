@@ -12,6 +12,8 @@
  */
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import QRCode from 'qrcode';
+import { rodapeDocumentoHTML } from './rodapeDocumento';
 
 export interface SignatarioPdf {
   nome: string;
@@ -33,6 +35,7 @@ export interface DocumentoAssinadoInput {
   conteudo_html: string;
   hash_documento: string;
   signatarios: SignatarioPdf[];
+  url_verificacao?: string | null;
 }
 
 const METODOS: Record<string, string> = {
@@ -53,8 +56,12 @@ export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput): string {
   const linhas = doc.signatarios
     .map(
       (s) => `
-      <div style="border-top:1px solid #999;padding:9px 4px;margin-bottom:4px;break-inside:avoid;page-break-inside:avoid;font-family:Arial,sans-serif">
-        <div style="font-size:9pt;line-height:1.5">Documento ${s.status === 'assinado' ? 'assinado eletronicamente' : s.status === 'recusado' ? 'com assinatura recusada' : 'aguardando assinatura'} por <strong>${esc(s.nome)}</strong> (${esc(s.papel)})${s.assinado_em ? ` em ${esc(fmt(s.assinado_em))}` : ''}.</div>
+      <div style="border-top:1px solid #999;padding:8px 4px;margin-bottom:4px;break-inside:avoid;page-break-inside:avoid;font-family:Arial,sans-serif;display:flex;gap:10px;align-items:flex-start">
+        <div style="width:76px;height:58px;flex:none;border:1px solid #777;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;color:#222">
+          <svg viewBox="0 0 28 34" width="23" height="29" aria-hidden="true"><path d="M4 1.5h13l7 7V32H4z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M17 1.5v7h7M9 15h10M9 20h7" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="23" width="10" height="8" rx="1.5" fill="#fff" stroke="currentColor" stroke-width="1.5"/><path d="M17 23v-2a2 2 0 0 1 4 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          <div style="line-height:1.05;text-align:left"><strong style="font-size:10px">SenexCare</strong><br/><span style="font-size:7px">assinatura<br/>eletrônica</span></div>
+        </div>
+        <div style="min-width:0;flex:1"><div style="font-size:9pt;line-height:1.5">Documento ${s.status === 'assinado' ? 'assinado eletronicamente' : s.status === 'recusado' ? 'com assinatura recusada' : 'aguardando assinatura'} por <strong>${esc(s.nome)}</strong> (${esc(s.papel)})${s.assinado_em ? ` em ${esc(fmt(s.assinado_em))}` : ''}.</div>
         ${
           s.rubrica_base64
             ? `<img src="${s.rubrica_base64}" style="max-height:60px;margin:6px 0" alt="Rubrica de ${esc(s.nome)}" />`
@@ -69,7 +76,7 @@ export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput): string {
           <div style="word-break:break-all">Dispositivo: ${esc(s.user_agent)}</div>
           <div style="word-break:break-all">Hash da assinatura: ${esc(s.hash_assinatura)}</div>
           ${s.motivo_recusa ? `<div>Motivo da recusa: ${esc(s.motivo_recusa)}</div>` : ''}
-        </div>
+        </div></div>
       </div>`,
     )
     .join('');
@@ -193,8 +200,30 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
   container.className = 'doc-pdf-root';
   container.appendChild(estilo);
 
+  const assinados = doc.signatarios.filter((s) => s.status === 'assinado' && s.assinado_em);
+  let verificacao = '';
+  if (doc.url_verificacao && assinados.length > 0) {
+    const qrDataUrl = await QRCode.toDataURL(doc.url_verificacao, {
+      width: 180,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    });
+    const principal = assinados[assinados.length - 1];
+    verificacao = rodapeDocumentoHTML({
+      id: doc.hash_documento.slice(0, 12).toUpperCase(),
+      hash: doc.hash_documento,
+      urlVerificacao: doc.url_verificacao,
+      qrDataUrl,
+    }, {
+      nome: principal.nome,
+      papel: principal.papel,
+      metodo: METODOS[principal.metodo] ?? principal.metodo,
+      assinadoEm: principal.assinado_em as string,
+    });
+  }
+
   const corpo = document.createElement('div');
-  corpo.innerHTML = doc.conteudo_html + blocoAssinaturasHTML(doc);
+  corpo.innerHTML = doc.conteudo_html + blocoAssinaturasHTML(doc) + verificacao;
   container.appendChild(corpo);
   document.body.appendChild(container);
 

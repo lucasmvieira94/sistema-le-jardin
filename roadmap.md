@@ -8,6 +8,6 @@
 - [x] Adicionar testes e validar a conversão no navegador
 - [x] Exibir o espelho individual de ponto em uma página A4 retrato
 - [x] Padronizar a apresentação de assinaturas e autenticação dos documentos com referência visual ao SEI, sem atribuir assinaturas não realizadas
-- [ ] Aplicar o novo modelo de assinatura a todas as novas emissões de documentos
-- [ ] Criar um ícone próprio do SenexCare para o bloco de assinatura eletrônica
-- [ ] Garantir todas as novas folhas de ponto em A4 retrato, inclusive a exportação consolidada
+- [x] Aplicar o novo modelo de assinatura a todas as novas emissões de documentos
+- [x] Criar um ícone próprio do SenexCare para o bloco de assinatura eletrônica
+- [x] Garantir todas as novas folhas de ponto em A4 retrato, inclusive a exportação consolidada

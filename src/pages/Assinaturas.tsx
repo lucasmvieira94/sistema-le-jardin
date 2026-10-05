@@ -86,6 +86,9 @@ export default function Assinaturas() {
         conteudo_html: e.conteudo_html ?? '',
         hash_documento: e.hash_documento,
         signatarios: [...(e.assinatura_signatarios ?? [])].sort((a, b) => a.ordem - b.ordem),
+        url_verificacao: e.assinatura_signatarios?.[0]?.token
+          ? linkAssinatura(e.assinatura_signatarios[0].token)
+          : null,
       });
     } catch (err: any) {
       toast.error(err.message ?? 'Falha ao gerar o PDF assinado');
@@ -192,7 +195,7 @@ export default function Assinaturas() {
                     <Button size="sm" variant="outline" onClick={() => setDetalhe(e)}>
                       <ShieldCheck className="w-4 h-4 mr-1" /> Auditoria
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => gerarCertificadoAssinaturas(e)}>
+                    <Button size="sm" variant="outline" onClick={() => void gerarCertificadoAssinaturas(e)}>
                       <FileDown className="w-4 h-4 mr-1" /> Manifesto (PDF)
                     </Button>
                     <Button

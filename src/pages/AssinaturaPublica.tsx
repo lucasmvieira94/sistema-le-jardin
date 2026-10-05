@@ -150,6 +150,7 @@ export default function AssinaturaPublica() {
         conteudo_html: dados.envelope.conteudo_html,
         hash_documento: dados.envelope.hash_documento,
         signatarios: dados.signatarios ?? [],
+        url_verificacao: token ? `${window.location.origin}/assinar/${token}` : null,
       });
     } catch (e: any) {
       toast.error(e.message ?? 'Falha ao gerar o PDF');

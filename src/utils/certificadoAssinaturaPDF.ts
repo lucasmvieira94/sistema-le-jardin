@@ -7,15 +7,17 @@
  * conforme MP 2.200-2/2001 art. 10, §2º e Lei 14.063/2020.
  */
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 import type { Envelope } from '@/hooks/useAssinaturas';
-import { METODO_LABEL, STATUS_LABEL, TIPO_LABEL } from '@/hooks/useAssinaturas';
+import { METODO_LABEL, STATUS_LABEL, TIPO_LABEL, linkAssinatura } from '@/hooks/useAssinaturas';
+import { renderRodapeDocumentoPDF } from './rodapeDocumento';
 
 const fmt = (iso?: string | null) =>
   iso
     ? new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' (UTC-3)'
     : '—';
 
-export function gerarCertificadoAssinaturas(envelope: Envelope) {
+export async function gerarCertificadoAssinaturas(envelope: Envelope) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const M = 18;
   const W = 210 - M * 2;
@@ -96,6 +98,29 @@ export function gerarCertificadoAssinaturas(envelope: Envelope) {
     W,
   );
   doc.text(nota, M, y);
+
+  const assinado = signatarios.find((s) => s.status === 'assinado' && s.assinado_em);
+  const tokenVerificacao = signatarios.find((s) => s.token)?.token;
+  if (assinado?.assinado_em && tokenVerificacao) {
+    const urlVerificacao = linkAssinatura(tokenVerificacao);
+    const qrDataUrl = await QRCode.toDataURL(urlVerificacao, {
+      width: 180,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    });
+    if (y > 210) doc.addPage();
+    renderRodapeDocumentoPDF(doc, {
+      id: envelope.hash_documento.slice(0, 12).toUpperCase(),
+      hash: envelope.hash_documento,
+      urlVerificacao,
+      qrDataUrl,
+    }, M, {
+      nome: assinado.nome,
+      papel: assinado.papel,
+      metodo: METODO_LABEL[assinado.metodo] ?? assinado.metodo,
+      assinadoEm: assinado.assinado_em,
+    });
+  }
 
   doc.save(`manifesto-assinaturas-${envelope.id.slice(0, 8)}.pdf`);
 }
