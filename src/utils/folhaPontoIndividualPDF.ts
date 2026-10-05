@@ -63,7 +63,19 @@ export async function publicarFolhaPontoFuncionario(params: {
 
   try {
     const bytes = await gerarFolhaPontoIndividualPDFBytes(dados, totais, mes, ano, dadosEmpresa);
-    const path = `${tenantId}/${funcionarioId}/${ano}-${String(mes).padStart(2, '0')}.pdf`;
+    // Caminho versionado: evita que o colaborador veja um PDF antigo em cache.
+    const competencia = `${ano}-${String(mes).padStart(2, '0')}`;
+    const path = `${tenantId}/${funcionarioId}/${competencia}-${Date.now()}.pdf`;
+
+    // Folha anterior da mesma competência (será substituída).
+    const { data: anterior } = await supabase
+      .from('folhas_ponto')
+      .select('path')
+      .eq('tenant_id', tenantId)
+      .eq('funcionario_id', funcionarioId)
+      .eq('mes', mes)
+      .eq('ano', ano)
+      .maybeSingle();
 
     const { error: upErr } = await supabase.storage
       .from('folhas-ponto')
@@ -73,6 +85,7 @@ export async function publicarFolhaPontoFuncionario(params: {
       });
     if (upErr) return { ok: false, error: upErr.message };
 
+    // Sobrescreve o registro e zera a confirmação: a nova versão precisa de nova ciência.
     const { error: dbErr } = await supabase.from('folhas_ponto').upsert(
       {
         tenant_id: tenantId,
@@ -83,10 +96,21 @@ export async function publicarFolhaPontoFuncionario(params: {
         paginas: 1,
         tamanho_bytes: bytes.byteLength,
         enviado_por: enviadoPor ?? null,
-      },
+        created_at: new Date().toISOString(),
+        confirmado: null,
+        confirmado_at: null,
+        motivo_discordancia: null,
+        primeira_abertura_at: null,
+      } as any,
       { onConflict: 'tenant_id,funcionario_id,mes,ano' }
     );
     if (dbErr) return { ok: false, error: dbErr.message };
+
+    // Remove o arquivo antigo para manter só a versão mais atual.
+    const pathAntigo = (anterior as any)?.path as string | undefined;
+    if (pathAntigo && pathAntigo !== path) {
+      await supabase.storage.from('folhas-ponto').remove([pathAntigo]);
+    }
 
     return { ok: true };
   } catch (e: any) {

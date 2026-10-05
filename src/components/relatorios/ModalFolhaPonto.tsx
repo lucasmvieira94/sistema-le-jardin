@@ -9,6 +9,9 @@ import { FileText, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useFolhaPonto } from "@/hooks/useFolhaPonto";
 import { exportToPDF, exportToExcel } from "@/utils/folhaPontoExport";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenantContext } from "@/contexts/TenantContext";
+import { publicarFolhaPontoFuncionario } from "@/utils/folhaPontoIndividualPDF";
 
 interface Funcionario {
   id: string;
@@ -29,6 +32,7 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios, func
   const [ano, setAno] = useState<number>(new Date().getFullYear());
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
   const [incluirInativos, setIncluirInativos] = useState(false);
+  const { tenantId } = useTenantContext();
 
   // Lista combinada de funcionários baseada no switch
   const listaFuncionarios = incluirInativos 
@@ -70,6 +74,18 @@ export default function ModalFolhaPonto({ open, onOpenChange, funcionarios, func
       toast({
         title: "PDF gerado com sucesso!"
       });
+      // Substitui a folha disponível no portal do colaborador pela versão atual.
+      if (tenantId) {
+        const { data: userData } = await supabase.auth.getUser();
+        const r = await publicarFolhaPontoFuncionario({
+          tenantId, funcionarioId, mes, ano,
+          dados: data.dados, totais: data.totais,
+          enviadoPor: userData.user?.id ?? null,
+        });
+        toast(r.ok
+          ? { title: "Folha atualizada no portal do colaborador" }
+          : { variant: "destructive", title: "Não foi possível atualizar a folha no portal", description: r.error });
+      }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast({
