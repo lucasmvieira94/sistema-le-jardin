@@ -515,7 +515,12 @@ export async function gerarReciboPDF(
 
   // ===== Rodapé de autenticidade (hash + QR) =====
   if (autenticidade) {
-    renderRodapeDocumentoPDF(doc, autenticidade, margin);
+    renderRodapeDocumentoPDF(doc, autenticidade, margin, {
+      nome: assinatura.nome,
+      papel: assinatura.cargo || `Representante de ${nomeEmpresa}`,
+      metodo: "Rubrica institucional da empresa",
+      assinadoEm: new Date().toISOString(),
+    });
   }
 
   // Rodapé

@@ -30,4 +30,10 @@ describe('espelho mensal A4 retrato', () => {
     expect(fim).toBeLessThan(pdf.internal.pageSize.getHeight() - 7);
     expect(pdf.internal.pageSize.getWidth()).toBeLessThan(pdf.internal.pageSize.getHeight());
   });
+
+  it('mantém a orientação retrato ao adicionar novas páginas', () => {
+    const pdf = new jsPDF('portrait');
+    pdf.addPage();
+    expect(pdf.internal.pageSize.getWidth()).toBeLessThan(pdf.internal.pageSize.getHeight());
+  });
 });

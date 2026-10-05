@@ -112,7 +112,7 @@ export async function exportMultipleFuncionariosToPDF(
 ) {
   if (funcionariosDados.length === 0) return;
 
-  const doc = new jsPDF('landscape');
+  const doc = new jsPDF('portrait');
   const dadosEmpresa = await buscarDadosEmpresa();
   const mesNome = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
@@ -147,12 +147,12 @@ export async function exportMultipleFuncionariosToPDF(
     headStyles: { fillColor: CORES.header, textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', halign: 'center' },
     alternateRowStyles: { fillColor: CORES.zebra },
     columnStyles: {
-      0: { cellWidth: 80 },
-      1: { cellWidth: 40 },
-      2: { halign: 'center', cellWidth: 32 },
-      3: { halign: 'center', cellWidth: 32 },
-      4: { halign: 'center', cellWidth: 32 },
-      5: { halign: 'center', cellWidth: 20 }
+      0: { cellWidth: 49 },
+      1: { cellWidth: 31 },
+      2: { halign: 'center', cellWidth: 28 },
+      3: { halign: 'center', cellWidth: 27 },
+      4: { halign: 'center', cellWidth: 27 },
+      5: { halign: 'center', cellWidth: 18 }
     },
     margin: { left: 10, right: 10 }
   });
