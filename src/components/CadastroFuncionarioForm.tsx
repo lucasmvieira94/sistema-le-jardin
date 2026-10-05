@@ -296,13 +296,17 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           codigo_4_digitos: codigo,
         };
 
-        const { error } = await supabase.from("funcionarios").insert([newFuncionario]);
-        if (error) {
-          throw error;
+        const { data: inserted, error } = await supabase
+          .from("funcionarios")
+          .insert([newFuncionario])
+          .select("id")
+          .single();
+        if (error || !inserted) {
+          throw error ?? new Error("Falha ao salvar o funcionário");
         }
 
         // Log audit event
-        await logEvent('funcionarios', 'INSERT', null, newFuncionario);
+        await logEvent('funcionarios', 'INSERT', null, { ...newFuncionario, id: inserted.id });
 
         // Enviar código via SMS usando Twilio
         const telefoneFormatado = '+55' + telefoneNumeros;
@@ -323,6 +327,11 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           form.reset();
         } else {
           toast({ variant: "destructive", title: "Funcionário cadastrado mas falha ao enviar SMS." });
+        }
+
+        // Redireciona para a ficha do funcionário recém-cadastrado
+        if (onSuccess) {
+          onSuccess({ ...newFuncionario, id: inserted.id });
         }
       }
     } catch (err: any) {
