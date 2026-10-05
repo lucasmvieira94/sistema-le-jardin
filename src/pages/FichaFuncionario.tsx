@@ -6,6 +6,7 @@ import { useFolhaPonto } from "@/hooks/useFolhaPonto";
 import { calcularNivel, getNivelConfig, getProgressoNivel } from "@/hooks/useGamificacao";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
 import HistoricoEscalas from "@/components/escalas/HistoricoEscalas";
+import WhatsAppShareButton from "@/components/whatsapp/WhatsAppShareButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -147,7 +148,16 @@ export default function FichaFuncionario() {
                 <Info label="Nome Completo" value={funcionario.nome_completo} />
                 <Info label="CPF" value={funcionario.cpf} />
                 <Info label="E-mail" value={funcionario.email} />
-                <Info label="Telefone" value={funcionario.telefone || "—"} />
+                <div className="flex items-end gap-2">
+                  <Info label="Telefone" value={funcionario.telefone || "—"} />
+                  {funcionario.telefone && (
+                    <WhatsAppShareButton
+                      telefone={funcionario.telefone}
+                      permitirSemTelefone={false}
+                      mensagem={`Olá, ${funcionario.nome_completo.split(" ")[0]}! Acesse o portal do colaborador Senex Care: ${window.location.origin}/funcionario`}
+                    />
+                  )}
+                </div>
                 <Info label="Função" value={funcionario.funcao} />
                 <Info label="Data de Nascimento" value={formatDate(funcionario.data_nascimento)} />
                 <Info label="Data de Admissão" value={formatDate(funcionario.data_admissao)} />

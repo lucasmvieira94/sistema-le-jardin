@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { MessageSquare, Bot, User, Clock, CheckCheck, X, Send } from 'lucide-react';
 import { ConversaWhatsApp, MensagemWhatsApp } from '@/hooks/useWhatsAppConversas';
+import WhatsAppShareButton from './WhatsAppShareButton';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -116,6 +117,7 @@ export function AreaConversa({
               {conversa.numero_whatsapp}
             </p>
           </div>
+          <WhatsAppShareButton telefone={conversa.numero_whatsapp} mensagem="" label="Abrir no WhatsApp" />
           <Badge variant={conversa.status === 'ativa' ? 'default' : 'secondary'}>
             {conversa.status}
           </Badge>
