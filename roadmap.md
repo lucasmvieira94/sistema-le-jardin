@@ -6,3 +6,5 @@
 - [x] Criar consulta pública por link duradouro e revogável
 - [x] Incluir afastamentos e hyperlinks nas planilhas individual e consolidada
 - [x] Adicionar testes e validar a conversão no navegador
+- [x] Exibir o espelho individual de ponto em uma página A4 retrato
+- [x] Padronizar a apresentação de assinaturas e autenticação dos documentos com referência visual ao SEI, sem atribuir assinaturas não realizadas

@@ -93,7 +93,7 @@ export async function exportToPDF(
 ) {
   if (dados.length === 0) return;
 
-  const doc = new jsPDF('landscape');
+  const doc = new jsPDF('portrait');
   const funcionario = dados[0];
   const dadosEmpresa = await buscarDadosEmpresa();
 

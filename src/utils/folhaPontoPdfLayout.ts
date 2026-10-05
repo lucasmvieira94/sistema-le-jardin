@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
 
 /**
- * Layout compartilhado dos PDFs de folha de ponto (individual e geral).
+ * Layout compartilhado dos PDFs de folha de ponto (individual em retrato e geral em paisagem).
  * Inspirado na tela de "Apropriação de Horas": cartões de KPI no topo,
  * tabela detalhada com intervalos/atrasos e coluna de situação.
  */
@@ -28,8 +28,8 @@ export const CORES = {
   erro: [185, 28, 28] as [number, number, number],
 };
 
-const PAGE_W = 297; // A4 paisagem
 const MARGIN = 10;
+const largura = (doc: jsPDF) => doc.internal.pageSize.getWidth();
 
 /* ---------- Helpers de tempo ---------- */
 export const fmtHora = (t: string | null) => (!t ? '--:--' : t.slice(0, 5));
@@ -90,7 +90,7 @@ export function renderCabecalhoEmpresa(
   doc.setTextColor(...CORES.titulo);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.text(empresa.nome_empresa, PAGE_W / 2, y, { align: 'center' });
+  doc.text(empresa.nome_empresa, largura(doc) / 2, y, { align: 'center' });
   y += 5.5;
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...CORES.suave);
@@ -99,19 +99,19 @@ export function renderCabecalhoEmpresa(
     .join('  •  ');
   if (linha) {
     doc.setFontSize(8);
-    doc.text(linha, PAGE_W / 2, y, { align: 'center' });
+    doc.text(linha, largura(doc) / 2, y, { align: 'center' });
     y += 4;
   }
   doc.setDrawColor(...CORES.borda);
   doc.setLineWidth(0.4);
-  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+  doc.line(MARGIN, y, largura(doc) - MARGIN, y);
   return y + 6;
 }
 
 /** Faixa de título da seção. */
 export function renderTitulo(doc: jsPDF, texto: string, subtitulo: string, y: number): number {
   doc.setFillColor(...CORES.header);
-  doc.roundedRect(MARGIN, y, PAGE_W - MARGIN * 2, 10, 1.5, 1.5, 'F');
+  doc.roundedRect(MARGIN, y, largura(doc) - MARGIN * 2, 10, 1.5, 1.5, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -119,7 +119,7 @@ export function renderTitulo(doc: jsPDF, texto: string, subtitulo: string, y: nu
   if (subtitulo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(subtitulo, PAGE_W - MARGIN - 4, y + 6.6, { align: 'right' });
+    doc.text(subtitulo, largura(doc) - MARGIN - 4, y + 6.6, { align: 'right' });
   }
   doc.setTextColor(...CORES.texto);
   return y + 14;
@@ -131,7 +131,7 @@ export function renderCards(
   cards: Array<{ label: string; valor: string }>,
   y: number
 ): number {
-  const total = PAGE_W - MARGIN * 2;
+  const total = largura(doc) - MARGIN * 2;
   const gap = 3;
   const w = (total - gap * (cards.length - 1)) / cards.length;
   cards.forEach((c, i) => {
@@ -173,9 +173,9 @@ function renderIdentificacao(doc: jsPDF, f: FolhaPontoData, mesNome: string, y: 
     styles: { fontSize: 8, cellPadding: 1, textColor: CORES.texto },
     columnStyles: {
       0: { fontStyle: 'bold', cellWidth: 24, textColor: CORES.suave },
-      1: { cellWidth: 105 },
-      2: { fontStyle: 'bold', cellWidth: 20, textColor: CORES.suave },
-      3: { cellWidth: 80 },
+      1: { cellWidth: (largura(doc) - MARGIN * 2) * 0.45 },
+      2: { fontStyle: 'bold', cellWidth: 16, textColor: CORES.suave },
+      3: { cellWidth: 'auto' },
     },
     margin: { left: MARGIN, right: MARGIN },
   });
@@ -211,6 +211,7 @@ export function renderFolhaFuncionario(
     year: 'numeric',
   });
 
+  const retrato = doc.internal.pageSize.getWidth() < 250;
   let y = MARGIN;
   if (opts.comCabecalhoEmpresa !== false) y = renderCabecalhoEmpresa(doc, empresa, y);
   y = renderTitulo(doc, 'FOLHA DE PONTO MENSAL', mesNome.toUpperCase(), y);
@@ -223,9 +224,7 @@ export function renderFolhaFuncionario(
   const semSaida = dados.filter((r) => r.entrada && !r.saida).length;
   const atrasos = dados.filter((r) => minutosAtraso(r) > 15).length;
 
-  y = renderCards(
-    doc,
-    [
+  const indicadores = [
       { label: 'Dias trabalhados', valor: String(totais.dias_trabalhados) },
       {
         label: 'Horas trabalhadas',
@@ -243,9 +242,23 @@ export function renderFolhaFuncionario(
       { label: 'Faltas / Abonos', valor: `${totais.total_faltas} / ${totais.total_abonos}` },
       { label: 'Sem saída', valor: String(semSaida) },
       { label: 'Atrasos > 15min', valor: String(atrasos) },
-    ],
-    y
-  );
+    ];
+  if (retrato) {
+    const colW = (largura(doc) - MARGIN * 2) / 4;
+    indicadores.forEach((card, i) => {
+      const x = MARGIN + (i % 4) * colW;
+      const yy = y + Math.floor(i / 4) * 10;
+      doc.setFillColor(...CORES.fundoCard);
+      doc.rect(x, yy, colW - 1, 9, 'F');
+      doc.setFont('helvetica', 'normal').setFontSize(5.8).setTextColor(...CORES.suave);
+      doc.text(card.label.toUpperCase(), x + 1.5, yy + 3);
+      doc.setFont('helvetica', 'bold').setFontSize(8).setTextColor(...CORES.titulo);
+      doc.text(card.valor, x + 1.5, yy + 7.5);
+    });
+    y += 23;
+  } else {
+    y = renderCards(doc, indicadores, y);
+  }
 
   const body = dados.map((row) => {
     const info = detalharData(row.data);
@@ -266,6 +279,57 @@ export function renderFolhaFuncionario(
       row.observacoes || '',
     ];
   });
+
+  if (retrato) {
+    // Uma linha por dia: preservar os horários e totais em A4 retrato.
+    // Observações extensas são abreviadas apenas no espelho; a planilha mantém o texto integral.
+    const corpo = dados.map((row) => {
+      const info = detalharData(row.data);
+      const nota = row.observacoes || '';
+      return [
+        `${String(row.dia).padStart(2, '0')} ${info.diaSemana}`,
+        fmtHora(row.entrada),
+        row.intervalo_inicio || row.intervalo_fim ? `${fmtHora(row.intervalo_inicio)}–${fmtHora(row.intervalo_fim)}` : '—',
+        fmtHora(row.saida),
+        fmtIntervalo(row.horas_trabalhadas),
+        fmtIntervalo(row.horas_extras_diurnas),
+        fmtIntervalo(row.horas_extras_noturnas),
+        situacaoDia(row),
+        nota.length > 32 ? `${nota.slice(0, 31)}…` : nota,
+      ];
+    });
+    // Calcula a altura disponível entre o quadro de indicadores e a área de assinaturas.
+    const alturaDisponivel = doc.internal.pageSize.getHeight() - 35 - y;
+    const alturaLinha = Math.min(6.1, (alturaDisponivel - 7) / (corpo.length + 1));
+    autoTable(doc, {
+      startY: y,
+      head: [['Dia', 'Entrada', 'Intervalo', 'Saída', 'H. trab.', 'H. extra', 'H. not.', 'Situação', 'Observações']],
+      body: corpo,
+      theme: 'grid',
+      styles: { fontSize: 6, cellPadding: 0.6, minCellHeight: alturaLinha, overflow: 'ellipsize', valign: 'middle', lineColor: CORES.borda, lineWidth: 0.1, textColor: CORES.texto },
+      headStyles: { fillColor: CORES.header, textColor: [255, 255, 255], fontSize: 6, fontStyle: 'bold', minCellHeight: 7 },
+      alternateRowStyles: { fillColor: CORES.zebra },
+      columnStyles: {
+        0: { cellWidth: 17 }, 1: { cellWidth: 18 }, 2: { cellWidth: 27 },
+        3: { cellWidth: 18 }, 4: { cellWidth: 18 }, 5: { cellWidth: 17 },
+        6: { cellWidth: 17 }, 7: { cellWidth: 24 }, 8: { cellWidth: 34 },
+      },
+      margin: { left: MARGIN, right: MARGIN, bottom: 35 },
+      rowPageBreak: 'avoid',
+      pageBreak: 'avoid',
+    });
+    const finalY = (doc as any).lastAutoTable.finalY;
+    // Folhas exportadas ainda não foram assinadas: não declarar assinatura eletrônica.
+    doc.setDrawColor(...CORES.suave).setLineWidth(0.25);
+    const assinaturaY = Math.max(finalY + 9, doc.internal.pageSize.getHeight() - 26);
+    const half = (largura(doc) - MARGIN * 2) / 2;
+    doc.line(MARGIN + 5, assinaturaY, MARGIN + half - 6, assinaturaY);
+    doc.line(MARGIN + half + 6, assinaturaY, largura(doc) - MARGIN - 5, assinaturaY);
+    doc.setFont('helvetica', 'normal').setFontSize(7).setTextColor(...CORES.suave);
+    doc.text('Assinatura do funcionário', MARGIN + half / 2, assinaturaY + 4, { align: 'center' });
+    doc.text('Assinatura do responsável', MARGIN + half * 1.5, assinaturaY + 4, { align: 'center' });
+    return assinaturaY + 5;
+  }
 
   autoTable(doc, {
     startY: y,
@@ -347,11 +411,11 @@ export function renderFolhaFuncionario(
   doc.setDrawColor(...CORES.suave);
   doc.setLineWidth(0.3);
   doc.line(MARGIN + 10, finalY + 12, MARGIN + 100, finalY + 12);
-  doc.line(PAGE_W - MARGIN - 100, finalY + 12, PAGE_W - MARGIN - 10, finalY + 12);
+  doc.line(largura(doc) - MARGIN - 100, finalY + 12, largura(doc) - MARGIN - 10, finalY + 12);
   doc.setFontSize(8);
   doc.setTextColor(...CORES.suave);
   doc.text('Assinatura do funcionário', MARGIN + 55, finalY + 16, { align: 'center' });
-  doc.text('Assinatura do responsável', PAGE_W - MARGIN - 55, finalY + 16, { align: 'center' });
+  doc.text('Assinatura do responsável', largura(doc) - MARGIN - 55, finalY + 16, { align: 'center' });
   doc.setTextColor(...CORES.texto);
 
   return finalY + 20;
@@ -367,7 +431,7 @@ export function renderRodapeNumeracao(doc: jsPDF, empresa: DadosEmpresaPDF | nul
     doc.setFontSize(7);
     doc.setTextColor(...CORES.suave);
     doc.text(`${empresa?.nome_empresa ?? ''} • Emitido em ${emitido}`, MARGIN, h - 6);
-    doc.text(`Página ${i} de ${total}`, PAGE_W - MARGIN, h - 6, { align: 'right' });
+    doc.text(`Página ${i} de ${total}`, largura(doc) - MARGIN, h - 6, { align: 'right' });
   }
   doc.setTextColor(...CORES.texto);
 }

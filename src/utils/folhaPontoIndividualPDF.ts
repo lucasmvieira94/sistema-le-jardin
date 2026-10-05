@@ -34,7 +34,7 @@ export async function gerarFolhaPontoIndividualPDFBytes(
   ano: number,
   dadosEmpresaPre?: DadosEmpresa | null
 ): Promise<Uint8Array> {
-  const doc = new jsPDF('landscape');
+  const doc = new jsPDF('portrait');
   const dadosEmpresa = dadosEmpresaPre ?? (await buscarDadosEmpresa());
 
   renderFolhaFuncionario(doc, dados, totais, mes, ano, dadosEmpresa);
