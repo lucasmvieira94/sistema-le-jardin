@@ -86,6 +86,9 @@ export default function Assinaturas() {
         conteudo_html: e.conteudo_html ?? '',
         hash_documento: e.hash_documento,
         signatarios: [...(e.assinatura_signatarios ?? [])].sort((a, b) => a.ordem - b.ordem),
+        url_verificacao: e.assinatura_signatarios?.[0]?.token
+          ? linkAssinatura(e.assinatura_signatarios[0].token)
+          : null,
       });
     } catch (err: any) {
       toast.error(err.message ?? 'Falha ao gerar o PDF assinado');
