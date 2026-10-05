@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
+import { rodapeDocumentoHTML } from "@/utils/rodapeDocumento";
 
 export type DocumentoTipo =
   | "contrato_residente"
@@ -70,24 +71,5 @@ export function useDocumentoAutenticidade() {
  * Mantém o estilo consistente entre contratos e advertências (Times New Roman).
  */
 export function rodapeAutenticidadeHTML(auth: DocumentoAutenticidade): string {
-  return `
-    <div class="autenticidade" style="margin-top:24px;padding:10px;border:1px solid #999;font-family:'Times New Roman',Times,serif;font-size:9pt;color:#222;page-break-inside:avoid;">
-      <table style="width:100%;border-collapse:collapse;"><tr>
-        <td style="width:170px;vertical-align:top;text-align:center;padding-right:10px;">
-          <img src="${auth.qrDataUrl}" alt="QR Code de verificação" style="width:140px;height:140px;display:block;margin:0 auto;" />
-          <div style="font-size:8pt;margin-top:3px;">Escaneie para verificar</div>
-        </td>
-        <td style="vertical-align:top;text-align:left;">
-          <div style="font-weight:bold;font-size:10pt;margin-bottom:4px;">CÓDIGO DE AUTENTICIDADE</div>
-          <div><strong>ID:</strong> ${auth.id}</div>
-          <div style="word-break:break-all;"><strong>Hash SHA-256:</strong> ${auth.hash}</div>
-          <div style="margin-top:4px;"><strong>Verificar em:</strong> ${auth.urlVerificacao}</div>
-          <div style="margin-top:6px;font-size:8pt;color:#555;">
-            Este documento é arquivado eletronicamente em conformidade com a LGPD (Lei 13.709/2018).
-            Qualquer alteração no conteúdo invalidará o hash acima.
-          </div>
-        </td>
-      </tr></table>
-    </div>
-  `;
+  return rodapeDocumentoHTML(auth);
 }
