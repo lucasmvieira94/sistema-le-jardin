@@ -195,7 +195,7 @@ export default function Assinaturas() {
                     <Button size="sm" variant="outline" onClick={() => setDetalhe(e)}>
                       <ShieldCheck className="w-4 h-4 mr-1" /> Auditoria
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => gerarCertificadoAssinaturas(e)}>
+                    <Button size="sm" variant="outline" onClick={() => void gerarCertificadoAssinaturas(e)}>
                       <FileDown className="w-4 h-4 mr-1" /> Manifesto (PDF)
                     </Button>
                     <Button
