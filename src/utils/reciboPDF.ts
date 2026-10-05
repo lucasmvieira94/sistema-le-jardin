@@ -461,7 +461,7 @@ export async function gerarReciboPDF(
   y += 16;
   // Reserva espaço para assinatura e para o bloco fixo de autenticidade.
   // Recibos extensos continuam em uma nova página sem sobreposição.
-  if (y > pageH - 92) {
+  if (y > pageH - 116) {
     doc.addPage();
     y = 24;
   }

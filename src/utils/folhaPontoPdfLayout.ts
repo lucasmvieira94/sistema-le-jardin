@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
 
 /**
- * Layout compartilhado dos PDFs de folha de ponto (individual e geral).
+ * Layout compartilhado dos PDFs de folha de ponto (individual em retrato e geral em paisagem).
  * Inspirado na tela de "Apropriação de Horas": cartões de KPI no topo,
  * tabela detalhada com intervalos/atrasos e coluna de situação.
  */

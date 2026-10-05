@@ -280,7 +280,7 @@ export async function gerarReciboDespesaPDF(r: ReciboDespesa) {
 
   // Local e data
   y += 16;
-  if (y > pageH - 98) {
+  if (y > pageH - 110) {
     doc.addPage();
     y = 24;
   }
