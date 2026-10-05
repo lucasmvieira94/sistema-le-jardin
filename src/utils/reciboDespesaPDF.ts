@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import { formatarData } from "./dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
+import { renderRodapeDocumentoPDF } from "./rodapeDocumento";
 
 export type ReciboDespesa = {
   contaId: string;
@@ -279,6 +280,10 @@ export async function gerarReciboDespesaPDF(r: ReciboDespesa) {
 
   // Local e data
   y += 16;
+  if (y > pageH - 98) {
+    doc.addPage();
+    y = 24;
+  }
   const localData = `${cidade || "_______________"}, ${formatarData(r.dataPagamento)}.`;
   doc.text(localData, pageW / 2, y, { align: "center" });
 
@@ -302,47 +307,7 @@ export async function gerarReciboDespesaPDF(r: ReciboDespesa) {
 
   // Rodapé de autenticidade (hash + QR)
   if (autenticidade) {
-    const boxH = 36;
-    const boxY = pageH - 14 - boxH - 4;
-    doc.setDrawColor(120);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(margin, boxY, pageW - margin * 2, boxH, 1.5, 1.5, "S");
-
-    const qrSize = 30;
-    try {
-      doc.addImage(autenticidade.qrDataUrl, "PNG", margin + 3, boxY + 3, qrSize, qrSize);
-    } catch {}
-
-    const txtX = margin + qrSize + 8;
-    let ty = boxY + 6;
-    doc.setTextColor(0);
-    doc.setFont("times", "bold");
-    doc.setFontSize(9);
-    doc.text("CÓDIGO DE AUTENTICIDADE", txtX, ty);
-    ty += 4;
-    doc.setFont("times", "normal");
-    doc.setFontSize(8);
-    doc.text(`ID: ${autenticidade.id}`, txtX, ty);
-    ty += 3.5;
-    const hashLines = doc.splitTextToSize(
-      `Hash SHA-256: ${autenticidade.hash}`,
-      pageW - margin - txtX - 3
-    );
-    doc.text(hashLines, txtX, ty);
-    ty += hashLines.length * 3.5;
-    const urlLines = doc.splitTextToSize(
-      `Verificar: ${autenticidade.urlVerificacao}`,
-      pageW - margin - txtX - 3
-    );
-    doc.text(urlLines, txtX, ty);
-    ty += urlLines.length * 3.5 + 1;
-    doc.setTextColor(90);
-    const aviso = doc.splitTextToSize(
-      "Documento arquivado eletronicamente em conformidade com a LGPD (Lei 13.709/2018). Qualquer alteração no conteúdo invalidará o hash.",
-      pageW - margin - txtX - 3
-    );
-    doc.text(aviso, txtX, ty);
-    doc.setTextColor(0);
+    renderRodapeDocumentoPDF(doc, autenticidade, margin);
   }
 
   doc.setDrawColor(200);

@@ -53,14 +53,14 @@ export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput): string {
   const linhas = doc.signatarios
     .map(
       (s) => `
-      <div style="border:1px solid #d1d5db;border-radius:6px;padding:10px 12px;margin-bottom:10px">
-        <div style="font-weight:bold;font-size:11pt">${esc(s.nome)} — ${esc(s.papel)}</div>
+      <div style="border-top:1px solid #999;padding:9px 4px;margin-bottom:4px;break-inside:avoid;page-break-inside:avoid;font-family:Arial,sans-serif">
+        <div style="font-size:9pt;line-height:1.5">Documento ${s.status === 'assinado' ? 'assinado eletronicamente' : s.status === 'recusado' ? 'com assinatura recusada' : 'aguardando assinatura'} por <strong>${esc(s.nome)}</strong> (${esc(s.papel)})${s.assinado_em ? ` em ${esc(fmt(s.assinado_em))}` : ''}.</div>
         ${
           s.rubrica_base64
             ? `<img src="${s.rubrica_base64}" style="max-height:60px;margin:6px 0" alt="Rubrica de ${esc(s.nome)}" />`
             : `<div style="font-family:'Times New Roman',serif;font-style:italic;font-size:16pt;margin:6px 0">${esc(s.nome)}</div>`
         }
-        <div style="font-size:9pt;line-height:1.45">
+        <div style="font-size:8pt;line-height:1.45">
           <div>CPF: ${esc(s.cpf)}</div>
           <div>Método de confirmação: ${esc(METODOS[s.metodo] ?? s.metodo)}</div>
           <div>Situação: ${s.status === 'assinado' ? 'Assinado' : s.status === 'recusado' ? 'Recusado' : 'Pendente'}</div>
@@ -78,10 +78,9 @@ export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput): string {
   <div style="margin-top:24px;padding-top:12px;border-top:2px solid #111">
     <h3 style="font-size:12pt;margin:0 0 10px">ASSINATURAS ELETRÔNICAS</h3>
     ${linhas}
-    <div style="font-size:8.5pt;color:#374151;line-height:1.45;margin-top:8px;word-break:break-all">
-      Hash SHA-256 do documento: ${esc(doc.hash_documento)}<br/>
-      Documento assinado eletronicamente nos termos da MP 2.200-2/2001 (art. 10, §2º) e da Lei 14.063/2020.
-      Qualquer alteração no conteúdo invalida o hash acima.
+    <div style="border-top:1px solid #999;border-bottom:1px solid #999;padding:9px 4px;font-family:Arial,sans-serif;font-size:8pt;line-height:1.5;overflow-wrap:anywhere;page-break-inside:avoid">
+      <strong>VERIFICAÇÃO DE INTEGRIDADE</strong><br/>Hash SHA-256 do documento: ${esc(doc.hash_documento)}<br/>
+      Consulte o manifesto de assinaturas para conferir as evidências de cada signatário.
     </div>
   </div>`;
 }
