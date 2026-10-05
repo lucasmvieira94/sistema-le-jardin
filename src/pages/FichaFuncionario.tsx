@@ -154,7 +154,7 @@ export default function FichaFuncionario() {
                     <WhatsAppShareButton
                       telefone={funcionario.telefone}
                       permitirSemTelefone={false}
-                      mensagem={`Olá, ${funcionario.nome_completo.split(" ")[0]}! Acesse o portal do colaborador Senex Care: ${window.location.origin}/funcionario`}
+                      mensagem={`Olá, ${funcionario.nome_completo.split(" ")[0]}! Acesse o portal do colaborador Senex Care: ${window.location.origin}/funcionario-access`}
                     />
                   )}
                 </div>
