@@ -24,6 +24,7 @@ import { gerarReciboPDF } from "@/utils/reciboPDF";
 import { calcularJurosMulta, CONFIG_PADRAO, type ConfigJurosMulta } from "@/utils/jurosMulta";
 import { filtrarPagamentos, type MeioPagamento } from "@/utils/filtroPagamentos";
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import WhatsAppShareButton from "@/components/whatsapp/WhatsAppShareButton";
 
 type Mensalidade = {
   id: string;
@@ -49,6 +50,7 @@ type Residente = {
   numero_prontuario: string | null;
   responsavel_nome?: string | null;
   responsavel_email?: string | null;
+  responsavel_telefone?: string | null;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -132,7 +134,7 @@ export default function Financeiro() {
         .order("data_vencimento", { ascending: true }),
       supabase
         .from("residentes")
-        .select("id, nome_completo, numero_prontuario, responsavel_nome, responsavel_email")
+        .select("id, nome_completo, numero_prontuario, responsavel_nome, responsavel_email, responsavel_telefone")
         .eq("ativo", true)
         .order("nome_completo"),
       (supabase as any)
@@ -622,6 +624,15 @@ export default function Financeiro() {
                             <Receipt className="h-3.5 w-3.5 mr-1" /> Recibo
                           </Button>
                         )}
+                        {m.status !== "cancelado" && (() => {
+                          const r = residentes.find((x) => x.id === m.residente_id);
+                          const saud = r?.responsavel_nome ? `Olá, ${r.responsavel_nome}!` : "Olá!";
+                          const comp = rotuloCompetencia(m.competencia);
+                          const texto = m.status === "pago"
+                            ? `${saud} Confirmamos o recebimento de ${fmtBRL(Number(m.valor_pago))} referente à mensalidade de ${comp} de ${r?.nome_completo ?? ""}. O recibo oficial foi enviado por e-mail. Obrigado!`
+                            : `${saud} Lembrete: a mensalidade de ${comp} de ${r?.nome_completo ?? ""}, no valor de ${fmtBRL(Number(m.valor_total))}, vence em ${formatarData(m.data_vencimento)}. Em caso de dúvidas, estamos à disposição.`;
+                          return <WhatsAppShareButton telefone={r?.responsavel_telefone} mensagem={texto} label="" size="sm" variant="outline" />;
+                        })()}
                         <Button size="sm" variant="outline" onClick={() => setExtraDialog({ open: true, m })}>+ Item</Button>
                         {m.status !== "cancelado" && (
                           <Button size="sm" variant="ghost" onClick={() => cancelarMensalidade(m)}>Cancelar</Button>

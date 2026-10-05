@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import NovoEnvelopeDialog from '@/components/assinaturas/NovoEnvelopeDialog';
+import WhatsAppShareButton from '@/components/whatsapp/WhatsAppShareButton';
 import { gerarCertificadoAssinaturas } from '@/utils/certificadoAssinaturaPDF';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
 import {
@@ -166,6 +167,11 @@ export default function Assinaturas() {
                               <Button size="sm" variant="ghost" onClick={() => copiar(s.token)} title="Copiar link">
                                 <Copy className="w-4 h-4" />
                               </Button>
+                              <WhatsAppShareButton
+                                telefone={s.telefone}
+                                size="icon" variant="ghost" label=""
+                                mensagem={`Olá, ${s.nome}! Você tem um documento para assinar eletronicamente: "${e.titulo}". Acesse pelo link: ${linkAssinatura(s.token)}`}
+                              />
                               <Button
                                 size="sm" variant="ghost" title="Reenviar convite"
                                 disabled={reenviar.isPending}
