@@ -2034,6 +2034,7 @@ export type Database = {
       }
       documentos_emitidos: {
         Row: {
+          codigo_verificador: string | null
           created_at: string
           dados_estruturais: Json
           emitido_em: string
@@ -2048,6 +2049,7 @@ export type Database = {
           titular_nome: string
         }
         Insert: {
+          codigo_verificador?: string | null
           created_at?: string
           dados_estruturais?: Json
           emitido_em?: string
@@ -2062,6 +2064,7 @@ export type Database = {
           titular_nome: string
         }
         Update: {
+          codigo_verificador?: string | null
           created_at?: string
           dados_estruturais?: Json
           emitido_em?: string
@@ -5394,6 +5397,7 @@ export type Database = {
       garantir_tenant_uso_mes: { Args: { _tenant_id: string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      gerar_codigo_verificador_documento: { Args: never; Returns: string }
       gerar_faturas_mensais: {
         Args: never
         Returns: {
