@@ -12,7 +12,7 @@ describe('rodapé de autenticidade', () => {
     expect(html).toContain('QR Code de verificação');
     expect(html).toContain('&amp;hash=abc');
     expect(html).not.toContain('assinado eletronicamente');
-    expect(html).toContain('SenexCare');
+    expect(html).toContain('SXCare assinatura eletrônica');
     expect(html).toContain('não representa assinatura eletrônica');
   });
 

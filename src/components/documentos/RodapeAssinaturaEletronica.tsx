@@ -1,6 +1,6 @@
 import sxCareLogo from "@/assets/sxcare-assinatura-eletronica.jpg.asset.json";
 import type { RegistroAssinaturaDocumento, SeloAutenticidade } from "@/utils/rodapeDocumento";
-import { formatarDataHoraAssinatura } from "@/utils/rodapeDocumento";
+import { formatarDataHoraAssinatura, normalizarHashDocumento } from "@/utils/rodapeDocumento";
 
 interface RodapeAssinaturaEletronicaProps {
   autenticidade: SeloAutenticidade;
@@ -51,7 +51,7 @@ export function RodapeAssinaturaEletronica({
             {autenticidade.urlVerificacao}
           </a>
           , informando o código verificador <strong>{autenticidade.id}</strong> e o código CRC/SHA-256{" "}
-          <strong className="break-all font-mono">{autenticidade.hash}</strong>.
+          <strong className="break-all font-mono">{normalizarHashDocumento(autenticidade.hash)}</strong>.
         </p>
       </div>
     </section>
