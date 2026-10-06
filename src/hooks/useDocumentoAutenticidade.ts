@@ -46,16 +46,18 @@ export function useDocumentoAutenticidade() {
           body: input,
         });
         if (error) throw error;
-        if (!data?.id || !data?.hash) throw new Error("Falha ao registrar documento");
+        if (!data?.codigo_verificador || !data?.hash) throw new Error("Falha ao registrar documento");
 
-        const urlVerificacao = buildUrlVerificacao(data.id, data.hash);
+        const hash = String(data.hash).toUpperCase();
+        const codigoVerificador = String(data.codigo_verificador);
+        const urlVerificacao = buildUrlVerificacao(codigoVerificador, hash);
         const qrDataUrl = await QRCode.toDataURL(urlVerificacao, {
           width: 160,
           margin: 1,
           errorCorrectionLevel: "M",
         });
 
-        return { id: data.id, hash: data.hash, urlVerificacao, qrDataUrl };
+        return { id: codigoVerificador, hash, urlVerificacao, qrDataUrl };
       } finally {
         setLoading(false);
       }

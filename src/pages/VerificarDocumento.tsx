@@ -16,6 +16,7 @@ interface VerificacaoResult {
   numero_documento?: string | null;
   titular_mascarado?: string;
   emitido_em?: string;
+  codigo_verificador?: string;
   motivo?: string;
 }
 
@@ -62,7 +63,7 @@ export default function VerificarDocumento() {
           </div>
           <h1 className="text-2xl font-semibold">Verificação de Autenticidade</h1>
           <p className="text-sm text-muted-foreground">
-            Informe o ID e o código (hash SHA-256) impressos no rodapé do documento, ou escaneie o QR Code.
+            Informe o código verificador e o hash SHA-256 impressos no rodapé, ou escaneie o QR Code.
           </p>
         </header>
 
@@ -72,8 +73,8 @@ export default function VerificarDocumento() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="doc-id">ID do Documento</Label>
-              <Input id="doc-id" value={id} onChange={(e) => setId(e.target.value)} placeholder="00000000-0000-0000-0000-000000000000" />
+              <Label htmlFor="doc-id">Código verificador</Label>
+              <Input id="doc-id" inputMode="numeric" value={id} onChange={(e) => setId(e.target.value.trim())} placeholder="42486962" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="doc-hash">Hash SHA-256</Label>
