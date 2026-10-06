@@ -246,17 +246,19 @@ export async function gerarReciboPDF(
         },
       }
     );
-    if (!regErr && regData?.id && regData?.hash) {
+    if (!regErr && regData?.codigo_verificador && regData?.hash) {
       const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const hash = String(regData.hash).toUpperCase();
+      const codigoVerificador = String(regData.codigo_verificador);
       const urlVerificacao = `${origin}/verificar-documento?id=${encodeURIComponent(
-        regData.id
-      )}&hash=${encodeURIComponent(regData.hash)}`;
+        codigoVerificador
+      )}&hash=${encodeURIComponent(hash)}`;
       const qrDataUrl = await QRCode.toDataURL(urlVerificacao, {
         width: 220,
         margin: 1,
         errorCorrectionLevel: "M",
       });
-      autenticidade = { id: regData.id, hash: regData.hash, urlVerificacao, qrDataUrl };
+      autenticidade = { id: codigoVerificador, hash, urlVerificacao, qrDataUrl };
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "falha desconhecida";

@@ -11,3 +11,4 @@
 - [x] Aplicar o novo modelo de assinatura a todas as novas emissões de documentos
 - [x] Criar um ícone próprio do SenexCare para o bloco de assinatura eletrônica
 - [x] Garantir todas as novas folhas de ponto em A4 retrato, inclusive a exportação consolidada
+- [x] Disponibilizar rodapé eletrônico reutilizável com logo SXCare, QR, código verificador de 8 dígitos e SHA-256

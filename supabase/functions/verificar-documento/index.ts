@@ -38,11 +38,13 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-    const { data: doc } = await admin
+    const porCodigo = /^\d{7,8}$/.test(id)
+    const consulta = admin
       .from('documentos_emitidos')
-      .select('id, tipo, numero_documento, titular_nome, hash_sha256, emitido_em')
-      .eq('id', id)
-      .maybeSingle()
+      .select('id, codigo_verificador, tipo, numero_documento, titular_nome, hash_sha256, emitido_em')
+    const { data: doc } = porCodigo
+      ? await consulta.eq('codigo_verificador', id).maybeSingle()
+      : await consulta.eq('id', id).maybeSingle()
 
     const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || null
     const ua = req.headers.get('user-agent') || null
@@ -52,7 +54,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ autentico: false, motivo: 'Documento não encontrado' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    const autentico = doc.hash_sha256 === hash
+    const autentico = doc.hash_sha256.toUpperCase() === hash.toUpperCase()
 
     await admin.from('documentos_auditoria').insert({
       documento_id: doc.id,
@@ -68,6 +70,7 @@ Deno.serve(async (req) => {
         tipo: doc.tipo,
         tipo_label: TIPO_LABEL[doc.tipo] ?? doc.tipo,
         numero_documento: doc.numero_documento,
+        codigo_verificador: doc.codigo_verificador,
         titular_mascarado: mascararNome(doc.titular_nome || ''),
         emitido_em: doc.emitido_em,
       }),

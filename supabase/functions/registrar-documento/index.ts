@@ -15,7 +15,7 @@ function canonicalStringify(value: unknown): string {
 async function sha256Hex(text: string): Promise<string> {
   const buf = new TextEncoder().encode(text)
   const digest = await crypto.subtle.digest('SHA-256', buf)
-  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('')
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase()
 }
 
 Deno.serve(async (req) => {
@@ -68,15 +68,17 @@ Deno.serve(async (req) => {
     // Reusar se já existe (mesma hash) — idempotente
     const { data: existente } = await admin
       .from('documentos_emitidos')
-      .select('id, hash_sha256')
-      .eq('hash_sha256', hash)
+      .select('id, hash_sha256, codigo_verificador')
+      .ilike('hash_sha256', hash)
       .maybeSingle()
 
     let documentoId: string
+    let codigoVerificador: string
     let acao: 'gerado' | 'reemitido' = 'gerado'
 
     if (existente) {
       documentoId = existente.id
+      codigoVerificador = existente.codigo_verificador
       acao = 'reemitido'
     } else {
       const { data: inserted, error: insErr } = await admin
@@ -92,12 +94,13 @@ Deno.serve(async (req) => {
           emitido_por: userId,
           tenant_id: tenant_id ?? null,
         })
-        .select('id')
+        .select('id, codigo_verificador')
         .single()
       if (insErr) {
         return new Response(JSON.stringify({ error: insErr.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
       }
       documentoId = inserted.id
+      codigoVerificador = inserted.codigo_verificador
     }
 
     await admin.from('documentos_auditoria').insert({
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
     })
 
     return new Response(
-      JSON.stringify({ id: documentoId, hash, acao }),
+      JSON.stringify({ id: documentoId, codigo_verificador: codigoVerificador, hash, acao }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (e) {

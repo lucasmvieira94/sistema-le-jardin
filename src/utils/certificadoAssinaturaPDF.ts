@@ -10,7 +10,7 @@ import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import type { Envelope } from '@/hooks/useAssinaturas';
 import { METODO_LABEL, STATUS_LABEL, TIPO_LABEL, linkAssinatura } from '@/hooks/useAssinaturas';
-import { renderRodapeDocumentoPDF } from './rodapeDocumento';
+import { codigoVerificadorDoHash, normalizarHashDocumento, renderRodapeDocumentoPDF } from './rodapeDocumento';
 
 const fmt = (iso?: string | null) =>
   iso
@@ -110,8 +110,8 @@ export async function gerarCertificadoAssinaturas(envelope: Envelope) {
     });
     if (y > 210) doc.addPage();
     renderRodapeDocumentoPDF(doc, {
-      id: envelope.hash_documento.slice(0, 12).toUpperCase(),
-      hash: envelope.hash_documento,
+      id: codigoVerificadorDoHash(envelope.hash_documento),
+      hash: normalizarHashDocumento(envelope.hash_documento),
       urlVerificacao,
       qrDataUrl,
     }, M, {

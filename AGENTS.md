@@ -9,3 +9,4 @@
 - Assinaturas de documentos internos ficam em `documentos_internos_assinaturas` (imutável, uma por colaborador/documento) e são gravadas só pela RPC `assinar_documento_interno`, que compara no servidor o rosto capturado com o cadastro (ou exige motivo de recusa); o navegador só extrai o vetor facial, então a decisão não pode ser burlada no aparelho.
 - O autocadastro facial pelo portal só é aceito quando não há biometria cadastrada; trocar uma biometria existente é exclusivo do gestor, para impedir que alguém com o código substitua o rosto de outra pessoa.
 - Todas as folhas de ponto em PDF usam layout compartilhado A4 retrato; documentos novos usam o rodapé compartilhado SenexCare para não divergir entre PDF e impressão.
+- A autenticidade documental usa código público de 8 dígitos e SHA-256 em caixa alta; UUIDs permanecem aceitos apenas para verificar emissões antigas.
