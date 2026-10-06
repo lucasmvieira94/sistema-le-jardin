@@ -13,7 +13,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
-import { rodapeDocumentoHTML } from './rodapeDocumento';
+import { codigoVerificadorDoHash, normalizarHashDocumento, rodapeDocumentoHTML } from './rodapeDocumento';
 
 export interface SignatarioPdf {
   nome: string;
@@ -210,8 +210,8 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
     });
     const principal = assinados[assinados.length - 1];
     verificacao = rodapeDocumentoHTML({
-      id: doc.hash_documento.slice(0, 12).toUpperCase(),
-      hash: doc.hash_documento,
+      id: codigoVerificadorDoHash(doc.hash_documento),
+      hash: normalizarHashDocumento(doc.hash_documento),
       urlVerificacao: doc.url_verificacao,
       qrDataUrl,
     }, {
