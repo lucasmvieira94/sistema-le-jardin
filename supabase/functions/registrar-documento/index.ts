@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const { data: existente } = await admin
       .from('documentos_emitidos')
       .select('id, hash_sha256, codigo_verificador')
-      .eq('hash_sha256', hash)
+      .ilike('hash_sha256', hash)
       .maybeSingle()
 
     let documentoId: string

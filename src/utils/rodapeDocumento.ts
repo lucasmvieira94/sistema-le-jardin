@@ -90,7 +90,7 @@ export function renderRodapeDocumentoPDF(
   doc.line(margin + 18.8, y + 10, margin + 18.8, y + 8.5);
   doc.setFont('helvetica', 'bold').setFontSize(6).setTextColor(255, 255, 255);
   doc.text('SXCare', margin + 14, y + 7.2);
-  doc.setFont('helvetica', assinatura ? 'normal' : 'bold').setFontSize(7.3);
+  doc.setFont('helvetica', assinatura ? 'normal' : 'bold').setFontSize(7.3).setTextColor(35);
   const textoAssinatura = assinatura
     ? `Documento assinado eletronicamente por ${assinatura.nome}${assinatura.papel ? `, ${assinatura.papel}` : ''} em ${formatarDataHoraAssinatura(assinatura.assinadoEm)}, conforme horário oficial de Brasília.`
     : 'DOCUMENTO ELETRÔNICO · AUTENTICIDADE — este bloco comprova integridade e não representa assinatura.';
