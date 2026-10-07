@@ -19,7 +19,6 @@ import {
 import { toast } from 'sonner';
 import NovoEnvelopeDialog from '@/components/assinaturas/NovoEnvelopeDialog';
 import WhatsAppShareButton from '@/components/whatsapp/WhatsAppShareButton';
-import { gerarCertificadoAssinaturas } from '@/utils/certificadoAssinaturaPDF';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
 import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
 import {
