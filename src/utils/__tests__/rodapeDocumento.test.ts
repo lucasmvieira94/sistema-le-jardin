@@ -27,7 +27,6 @@ describe('rodapé de autenticidade', () => {
     });
     expect(html).toContain('Documento assinado eletronicamente por <strong>Maria da Silva</strong>');
     expect(html).toContain('horário oficial de Brasília');
-    expect(html).toContain('Biometria facial');
     expect(html).toContain('05/10/2026');
     expect(html).toContain('conforme horário oficial de Brasília');
   });

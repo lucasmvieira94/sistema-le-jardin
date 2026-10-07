@@ -18,6 +18,7 @@ import CapturaAssinaturaDialog from '@/components/biometria/CapturaAssinaturaDia
 import AutoCadastroBiometriaDialog from '@/components/biometria/AutoCadastroBiometriaDialog';
 import { useBiometriaStatus } from '@/hooks/useBiometriaFuncionario';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
+import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
 import {
   ROTULO_TIPO, conteudoCanonico, filtrarDocumentos, resumirDocumentos, rotuloRecusa, sha256Hex,
   textoTermo, validarMotivoRecusa, type DocumentoFuncionario, type FiltroDocumentos,
@@ -100,8 +101,10 @@ export default function MeusDocumentos() {
       toast({ title: aceitou ? 'Documento assinado com biometria' : 'Recusa registrada' });
       if (aceitou) {
         try {
-          await gerarComprovante(aberto, hash, r.hash_assinatura, r.assinado_em);
-        } catch { /* comprovante pode ser baixado depois */ }
+          await baixarDocumento(aberto, hash, r.hash_assinatura, r.assinado_em);
+        } catch (e) {
+          toast({ variant: 'destructive', title: 'Assinatura salva; download não concluído', description: (e as Error).message });
+        }
       }
       qc.invalidateQueries({ queryKey: ['documentos-funcionario', funcionarioId] });
       setAberto(null);
@@ -113,21 +116,35 @@ export default function MeusDocumentos() {
     }
   };
 
-  const gerarComprovante = (doc: DocumentoFuncionario, hashDoc: string, hashAss: string, quando: string) =>
-    gerarPdfDocumentoAssinado({
+  const baixarDocumento = async (doc: DocumentoFuncionario, hashDoc: string, hashAss: string, quando: string) => {
+    const autenticidade = await obterAutenticidadeAssinatura({
+      origem: 'interno', referencia_id: doc.referencia_id, hash: hashDoc, hash_assinatura: hashAss,
+    });
+    let arquivoOriginal: ArrayBuffer | undefined;
+    if (doc.arquivo_path) {
+      const url = doc.tipo_documento === 'folha_ponto'
+        ? await getFolhaPontoSignedUrl(doc.arquivo_path)
+        : await getContrachequeSignedUrl(doc.arquivo_path);
+      if (!url) throw new Error('Não foi possível carregar o documento original.');
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Não foi possível carregar o documento original.');
+      arquivoOriginal = await response.arrayBuffer();
+    }
+    await gerarPdfDocumentoAssinado({
+      ...autenticidade,
+      arquivo_original: arquivoOriginal,
       titulo: doc.titulo,
       tipo: ROTULO_TIPO[doc.tipo_documento],
       conteudo_html: `
-        <h2 style="font-size:14pt;margin:0 0 6px">${doc.titulo}</h2>
-        <p style="font-size:10pt;color:#374151;margin:0 0 12px">${ROTULO_TIPO[doc.tipo_documento]}${doc.subtitulo ? ' — ' + doc.subtitulo : ''}</p>
-        ${doc.conteudo_html ? DOMPurify.sanitize(doc.conteudo_html) : '<p>O arquivo original (PDF) está identificado pelo hash SHA-256 abaixo.</p>'}
-        <p style="margin-top:16px;font-style:italic">${textoTermo(doc.tipo_documento)}</p>`,
+        ${DOMPurify.sanitize(`<h2>${doc.titulo}</h2>`)}
+        ${doc.conteudo_html ? DOMPurify.sanitize(doc.conteudo_html) : ''}`,
       hash_documento: hashDoc,
       signatarios: [{
         nome: funcionarioNome, papel: 'Colaborador', metodo: 'biometria_facial', status: 'assinado',
         assinado_em: quando, user_agent: navigator.userAgent, hash_assinatura: hashAss,
       }],
     });
+  };
 
   const badge = (s: DocumentoFuncionario['status']) =>
     s === 'pendente' ? <Badge variant="outline" className="border-amber-500 text-amber-700">Pendente</Badge>
@@ -292,8 +309,14 @@ export default function MeusDocumentos() {
                     </>
                   )
                 ) : aberto.status === 'assinado' && hash ? (
-                  <Button onClick={() => gerarComprovante(aberto, aberto.hash_documento ?? hash, aberto.hash_assinatura ?? '', aberto.assinado_em!)}>
-                    <Download className="w-4 h-4 mr-1" /> Baixar comprovante
+                  <Button disabled={enviando || !aberto.assinado_em} onClick={async () => {
+                    if (!aberto.assinado_em) return;
+                    setEnviando(true);
+                    try { await baixarDocumento(aberto, aberto.hash_documento ?? hash, aberto.hash_assinatura ?? '', aberto.assinado_em); }
+                    catch (e) { toast({ variant: 'destructive', title: 'Falha ao baixar documento', description: (e as Error).message }); }
+                    finally { setEnviando(false); }
+                  }}>
+                    <Download className="w-4 h-4 mr-1" /> Baixar documento assinado
                   </Button>
                 ) : (
                   <Button variant="outline" onClick={fechar}><FileText className="w-4 h-4 mr-1" /> Fechar</Button>

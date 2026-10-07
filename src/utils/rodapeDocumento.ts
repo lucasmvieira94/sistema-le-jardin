@@ -33,7 +33,7 @@ export const formatarDataHoraAssinatura = (iso: string) =>
     timeZone: 'America/Sao_Paulo',
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
-  });
+  }).replace(', ', ' às ');
 
 const iconeSenexCareHTML = () => `
   <img src="${escapeHtml(sxCareLogo.url)}" alt="SXCare assinatura eletrônica" style="width:66px;height:66px;flex:none;border:1px solid #777;border-radius:4px;object-fit:cover;background:#fff" />`;
@@ -47,7 +47,7 @@ export function rodapeDocumentoHTML(
   const faixaAssinatura = assinatura
     ? `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #999;line-height:1.45;">
         ${iconeSenexCareHTML()}
-        <div style="min-width:0">Documento assinado eletronicamente por <strong>${escapeHtml(assinatura.nome)}</strong>${assinatura.papel ? `, ${escapeHtml(assinatura.papel)}` : ''} em ${escapeHtml(formatarDataHoraAssinatura(assinatura.assinadoEm))}, conforme horário oficial de Brasília.${assinatura.metodo ? `<br/><span style="font-size:8pt">Método de confirmação: ${escapeHtml(assinatura.metodo)}.</span>` : ''}</div>
+        <div style="min-width:0">Documento assinado eletronicamente por <strong>${escapeHtml(assinatura.nome)}</strong>${assinatura.papel ? `, ${escapeHtml(assinatura.papel)}` : ''} em ${escapeHtml(formatarDataHoraAssinatura(assinatura.assinadoEm))}, conforme horário oficial de Brasília.</div>
       </div>`
     : `<div style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid #999;line-height:1.4;">
         ${iconeSenexCareHTML()}

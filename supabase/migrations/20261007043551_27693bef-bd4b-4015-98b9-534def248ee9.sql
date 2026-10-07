@@ -1,0 +1,2 @@
+CREATE POLICY "Verification service only" ON public.assinatura_verificacoes FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "Verification audit service only" ON public.assinatura_verificacoes_acessos FOR ALL TO service_role USING (true) WITH CHECK (true);
