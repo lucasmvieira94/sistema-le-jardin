@@ -10,3 +10,5 @@
 - O autocadastro facial pelo portal só é aceito quando não há biometria cadastrada; trocar uma biometria existente é exclusivo do gestor, para impedir que alguém com o código substitua o rosto de outra pessoa.
 - Todas as folhas de ponto em PDF usam layout compartilhado A4 retrato; documentos novos usam o rodapé compartilhado SenexCare para não divergir entre PDF e impressão.
 - A autenticidade documental usa código público de 8 dígitos e SHA-256 em caixa alta; UUIDs permanecem aceitos apenas para verificar emissões antigas.
+- Signed document downloads use the shared footer without evidence manifests; original PDF pages are retained through pdf-lib and the source hash is checked before merging, to avoid issuing incomplete or altered copies.
+- Signature verification codes are persisted in a service-only registry for envelopes and internal signatures; the public edge function requires a matching code and hash and audits access, keeping signing tokens out of printed links.

@@ -18,6 +18,7 @@ interface VerificacaoResult {
   emitido_em?: string;
   codigo_verificador?: string;
   motivo?: string;
+  assinaturas?: Array<{ nome: string; papel: string; metodo: string; status: string; assinado_em: string; ip_origem: string | null; user_agent: string | null; hash_assinatura: string | null }>;
 }
 
 export default function VerificarDocumento() {
@@ -106,6 +107,17 @@ export default function VerificarDocumento() {
                     {result.titular_mascarado && <div><strong>Titular:</strong> {result.titular_mascarado}</div>}
                     {result.emitido_em && <div><strong>Emitido em:</strong> {formatarDataHora(result.emitido_em)}</div>}
                   </div>
+                  {result.assinaturas?.map((s, i) => (
+                    <div key={i} className="mt-4 border-t border-border pt-3 space-y-1 text-sm break-words">
+                      <p><strong>Signatário:</strong> {s.nome} — {s.papel}</p>
+                      <p><strong>Método:</strong> {({ biometria_facial: 'Biometria facial', otp_email: 'Código por e-mail', otp_sms: 'Código por WhatsApp', rubrica_empresa: 'Rubrica institucional' } as Record<string, string>)[s.metodo] ?? s.metodo}</p>
+                      <p><strong>Situação:</strong> {s.status === 'assinado' ? 'Assinado' : s.status}</p>
+                      <p><strong>Assinado em:</strong> {formatarDataHora(s.assinado_em)} (Brasília)</p>
+                      <p><strong>IP:</strong> {s.ip_origem || 'Não registrado'}</p>
+                      <p className="break-all"><strong>Dispositivo:</strong> {s.user_agent || 'Não registrado'}</p>
+                      <p className="break-all"><strong>Hash da assinatura:</strong> {s.hash_assinatura?.toUpperCase()}</p>
+                    </div>
+                  ))}
                 </>
               ) : (
                 <p>{result.motivo || "Não foi possível confirmar a integridade. Verifique se o ID e o hash foram digitados corretamente."}</p>
