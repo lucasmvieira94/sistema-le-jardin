@@ -13,7 +13,9 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import QRCode from 'qrcode';
-import { codigoVerificadorDoHash, normalizarHashDocumento, rodapeDocumentoHTML } from './rodapeDocumento';
+import DOMPurify from 'dompurify';
+import { PDFDocument } from 'pdf-lib';
+import { normalizarHashDocumento, rodapeDocumentoHTML } from './rodapeDocumento';
 
 export interface SignatarioPdf {
   nome: string;
@@ -36,6 +38,9 @@ export interface DocumentoAssinadoInput {
   hash_documento: string;
   signatarios: SignatarioPdf[];
   url_verificacao?: string | null;
+  codigo_verificador?: string;
+  /** Bytes do PDF que foi efetivamente lido e assinado. Todas as páginas são preservadas. */
+  arquivo_original?: ArrayBuffer;
 }
 
 const METODOS: Record<string, string> = {
@@ -45,51 +50,34 @@ const METODOS: Record<string, string> = {
   rubrica_empresa: 'Rubrica institucional da empresa',
 };
 
-const fmt = (iso?: string | null) =>
-  iso ? `${new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (UTC-3)` : '—';
+/** Somente assinaturas efetivas são impressas; evidências permanecem na consulta online. */
+export function assinaturasEfetivas(doc: DocumentoAssinadoInput): SignatarioPdf[] {
+  return doc.signatarios.filter((s) => s.status === 'assinado' && Boolean(s.assinado_em));
+}
 
-const esc = (v?: string | null) =>
-  String(v ?? '—').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
+export function validarDocumentoParaDownload(doc: DocumentoAssinadoInput): void {
+  if (!doc.arquivo_original && !doc.conteudo_html.trim()) throw new Error('Conteúdo original indisponível.');
+  if (!doc.url_verificacao || !/^\d{8}$/.test(doc.codigo_verificador ?? '')) {
+    throw new Error('Código e link de autenticidade indisponíveis. Tente novamente.');
+  }
+  if (!assinaturasEfetivas(doc).length) throw new Error('Nenhuma assinatura registrada para este documento.');
+}
 
-/** Bloco HTML com as assinaturas e as evidências coletadas. */
-export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput): string {
-  const linhas = doc.signatarios
-    .map(
-      (s) => `
-      <div style="border-top:1px solid #999;padding:8px 4px;margin-bottom:4px;break-inside:avoid;page-break-inside:avoid;font-family:Arial,sans-serif;display:flex;gap:10px;align-items:flex-start">
-        <div style="width:76px;height:58px;flex:none;border:1px solid #777;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:5px;background:#fff;color:#222">
-          <svg viewBox="0 0 28 34" width="23" height="29" aria-hidden="true"><path d="M4 1.5h13l7 7V32H4z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M17 1.5v7h7M9 15h10M9 20h7" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="23" width="10" height="8" rx="1.5" fill="#fff" stroke="currentColor" stroke-width="1.5"/><path d="M17 23v-2a2 2 0 0 1 4 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-          <div style="line-height:1.05;text-align:left"><strong style="font-size:10px">SenexCare</strong><br/><span style="font-size:7px">assinatura<br/>eletrônica</span></div>
-        </div>
-        <div style="min-width:0;flex:1"><div style="font-size:9pt;line-height:1.5">Documento ${s.status === 'assinado' ? 'assinado eletronicamente' : s.status === 'recusado' ? 'com assinatura recusada' : 'aguardando assinatura'} por <strong>${esc(s.nome)}</strong> (${esc(s.papel)})${s.assinado_em ? ` em ${esc(fmt(s.assinado_em))}` : ''}.</div>
-        ${
-          s.rubrica_base64
-            ? `<img src="${s.rubrica_base64}" style="max-height:60px;margin:6px 0" alt="Rubrica de ${esc(s.nome)}" />`
-            : `<div style="font-family:'Times New Roman',serif;font-style:italic;font-size:16pt;margin:6px 0">${esc(s.nome)}</div>`
-        }
-        <div style="font-size:8pt;line-height:1.45">
-          <div>CPF: ${esc(s.cpf)}</div>
-          <div>Método de confirmação: ${esc(METODOS[s.metodo] ?? s.metodo)}</div>
-          <div>Situação: ${s.status === 'assinado' ? 'Assinado' : s.status === 'recusado' ? 'Recusado' : 'Pendente'}</div>
-          <div>Assinado em: ${fmt(s.assinado_em)}</div>
-          <div>IP: ${esc(s.ip_origem)}</div>
-          <div style="word-break:break-all">Dispositivo: ${esc(s.user_agent)}</div>
-          <div style="word-break:break-all">Hash da assinatura: ${esc(s.hash_assinatura)}</div>
-          ${s.motivo_recusa ? `<div>Motivo da recusa: ${esc(s.motivo_recusa)}</div>` : ''}
-        </div></div>
-      </div>`,
-    )
-    .join('');
+/** Mesmo rodapé de duas faixas para cada assinatura real, sem manifesto no PDF. */
+export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput, qrDataUrl: string): string {
+  return assinaturasEfetivas(doc).map((s) => rodapeDocumentoHTML({
+    id: doc.codigo_verificador ?? '', hash: normalizarHashDocumento(doc.hash_documento),
+    urlVerificacao: doc.url_verificacao ?? '', qrDataUrl,
+  }, { nome: s.nome, papel: s.papel, assinadoEm: s.assinado_em ?? '' })).join('');
+}
 
-  return `
-  <div style="margin-top:24px;padding-top:12px;border-top:2px solid #111">
-    <h3 style="font-size:12pt;margin:0 0 10px">ASSINATURAS ELETRÔNICAS</h3>
-    ${linhas}
-    <div style="border-top:1px solid #999;border-bottom:1px solid #999;padding:9px 4px;font-family:Arial,sans-serif;font-size:8pt;line-height:1.5;overflow-wrap:anywhere;page-break-inside:avoid">
-      <strong>VERIFICAÇÃO DE INTEGRIDADE</strong><br/>Hash SHA-256 do documento: ${esc(doc.hash_documento)}<br/>
-      Consulte o manifesto de assinaturas para conferir as evidências de cada signatário.
-    </div>
-  </div>`;
+/** Anexa o rodapé ao PDF sem rasterizar, omitir ou reescrever páginas originais. */
+export async function juntarOriginalERodape(original: ArrayBuffer, rodape: ArrayBuffer): Promise<Uint8Array> {
+  const destino = await PDFDocument.load(original);
+  const assinatura = await PDFDocument.load(rodape);
+  const paginas = await destino.copyPages(assinatura, assinatura.getPageIndices());
+  paginas.forEach((pagina) => destino.addPage(pagina));
+  return destino.save();
 }
 
 /**
@@ -122,6 +110,12 @@ function encontrarCorteSeguro(
 
 /** Renderiza o documento + assinaturas e dispara o download do PDF. */
 export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Promise<void> {
+  validarDocumentoParaDownload(doc);
+  if (doc.arquivo_original) {
+    const digest = await crypto.subtle.digest('SHA-256', doc.arquivo_original);
+    const hash = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    if (hash !== normalizarHashDocumento(doc.hash_documento)) throw new Error('O arquivo atual difere do documento assinado. Download interrompido.');
+  }
   // Margens equivalentes às do diálogo de impressão (padrão "normal").
   const marginX = 16;
   const marginTop = 16;
@@ -200,34 +194,23 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
   container.className = 'doc-pdf-root';
   container.appendChild(estilo);
 
-  const assinados = doc.signatarios.filter((s) => s.status === 'assinado' && s.assinado_em);
-  let verificacao = '';
-  if (doc.url_verificacao && assinados.length > 0) {
-    const qrDataUrl = await QRCode.toDataURL(doc.url_verificacao, {
-      width: 180,
-      margin: 1,
-      errorCorrectionLevel: 'M',
-    });
-    const principal = assinados[assinados.length - 1];
-    verificacao = rodapeDocumentoHTML({
-      id: codigoVerificadorDoHash(doc.hash_documento),
-      hash: normalizarHashDocumento(doc.hash_documento),
-      urlVerificacao: doc.url_verificacao,
-      qrDataUrl,
-    }, {
-      nome: principal.nome,
-      papel: principal.papel,
-      metodo: METODOS[principal.metodo] ?? principal.metodo,
-      assinadoEm: principal.assinado_em as string,
-    });
-  }
-
+  const qrDataUrl = await QRCode.toDataURL(doc.url_verificacao ?? '', {
+    width: 180, margin: 1, errorCorrectionLevel: 'M',
+  });
   const corpo = document.createElement('div');
-  corpo.innerHTML = doc.conteudo_html + blocoAssinaturasHTML(doc) + verificacao;
+  corpo.innerHTML = (doc.arquivo_original ? '' : DOMPurify.sanitize(doc.conteudo_html)) + blocoAssinaturasHTML(doc, qrDataUrl);
   container.appendChild(corpo);
   document.body.appendChild(container);
 
   try {
+    await Promise.all(Array.from(container.querySelectorAll('img')).map(async (img) => {
+      try { await img.decode(); } catch { throw new Error('Não foi possível carregar as imagens do documento. Tente novamente.'); }
+    }));
+    const blocos = Array.from(container.querySelectorAll('.autenticidade')).map((el) => {
+      const r = el.getBoundingClientRect();
+      const root = container.getBoundingClientRect();
+      return { inicio: r.top - root.top, fim: r.bottom - root.top };
+    });
     const canvas = await html2canvas(container, {
       scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)),
       useCORS: true,
@@ -263,10 +246,16 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
     let pagina = 0;
     while (offset < canvas.height) {
       const fimIdeal = Math.min(offset + alturaPaginaPx, canvas.height);
-      const fim =
+      let fim =
         fimIdeal >= canvas.height
           ? canvas.height
           : encontrarCorteSeguro(ctx, canvas.width, offset, fimIdeal, limiteBusca);
+      const escala = canvas.width / container.scrollWidth;
+      for (const bloco of blocos) {
+        const inicioBloco = Math.floor(bloco.inicio * escala);
+        const fimBloco = Math.ceil(bloco.fim * escala);
+        if (inicioBloco > offset && inicioBloco < fim && fimBloco > fim) fim = inicioBloco;
+      }
       const alturaFatiaPx = fim - offset;
       if (alturaFatiaPx <= 0) break;
 
@@ -304,7 +293,15 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
     }
 
     const nome = doc.titulo.replace(/[^\w\-]+/g, '_').slice(0, 60) || 'documento';
-    pdf.save(`${nome}_assinado.pdf`);
+    if (doc.arquivo_original) {
+      const bytes = await juntarOriginalERodape(doc.arquivo_original, pdf.output('arraybuffer'));
+      const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = `${nome}_assinado.pdf`; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } else {
+      pdf.save(`${nome}_assinado.pdf`);
+    }
   } finally {
     document.body.removeChild(container);
   }
