@@ -12,3 +12,5 @@
 - [x] Criar um ícone próprio do SenexCare para o bloco de assinatura eletrônica
 - [x] Garantir todas as novas folhas de ponto em A4 retrato, inclusive a exportação consolidada
 - [x] Disponibilizar rodapé eletrônico reutilizável com logo SXCare, QR, código verificador de 8 dígitos e SHA-256
+- [ ] Corrigir assinatura: evidências somente na verificação online, QR/link reais e download do documento integral
+- [ ] Testar geração integral e inspecionar rodapé em PDF
