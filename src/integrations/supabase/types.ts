@@ -863,6 +863,68 @@ export type Database = {
           },
         ]
       }
+      assinatura_verificacoes: {
+        Row: {
+          codigo_verificador: string
+          created_at: string
+          hash_documento: string
+          id: string
+          origem: string
+          referencia_id: string
+        }
+        Insert: {
+          codigo_verificador?: string
+          created_at?: string
+          hash_documento: string
+          id?: string
+          origem: string
+          referencia_id: string
+        }
+        Update: {
+          codigo_verificador?: string
+          created_at?: string
+          hash_documento?: string
+          id?: string
+          origem?: string
+          referencia_id?: string
+        }
+        Relationships: []
+      }
+      assinatura_verificacoes_acessos: {
+        Row: {
+          autentico: boolean
+          created_at: string
+          id: string
+          ip_origem: string | null
+          user_agent: string | null
+          verificacao_id: string
+        }
+        Insert: {
+          autentico: boolean
+          created_at?: string
+          id?: string
+          ip_origem?: string | null
+          user_agent?: string | null
+          verificacao_id: string
+        }
+        Update: {
+          autentico?: boolean
+          created_at?: string
+          id?: string
+          ip_origem?: string | null
+          user_agent?: string | null
+          verificacao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinatura_verificacoes_acessos_verificacao_id_fkey"
+            columns: ["verificacao_id"]
+            isOneToOne: false
+            referencedRelation: "assinatura_verificacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinaturas: {
         Row: {
           ciclo: string
