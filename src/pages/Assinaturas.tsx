@@ -21,6 +21,7 @@ import NovoEnvelopeDialog from '@/components/assinaturas/NovoEnvelopeDialog';
 import WhatsAppShareButton from '@/components/whatsapp/WhatsAppShareButton';
 import { gerarCertificadoAssinaturas } from '@/utils/certificadoAssinaturaPDF';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
+import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
 import {
   METODO_LABEL, STATUS_LABEL, TIPO_LABEL, linkAssinatura,
   useCancelarEnvelope, useEnvelopes, useEventosEnvelope, useReenviarConvite,
@@ -80,15 +81,14 @@ export default function Assinaturas() {
   const baixarAssinado = async (e: Envelope) => {
     setBaixando(e.id);
     try {
+      const autenticidade = await obterAutenticidadeAssinatura({ origem: 'envelope', referencia_id: e.id, hash: e.hash_documento });
       await gerarPdfDocumentoAssinado({
         titulo: e.titulo,
         tipo: e.tipo,
         conteudo_html: e.conteudo_html ?? '',
         hash_documento: e.hash_documento,
         signatarios: [...(e.assinatura_signatarios ?? [])].sort((a, b) => a.ordem - b.ordem),
-        url_verificacao: e.assinatura_signatarios?.[0]?.token
-          ? linkAssinatura(e.assinatura_signatarios[0].token)
-          : null,
+        ...autenticidade,
       });
     } catch (err: any) {
       toast.error(err.message ?? 'Falha ao gerar o PDF assinado');
@@ -194,9 +194,6 @@ export default function Assinaturas() {
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => setDetalhe(e)}>
                       <ShieldCheck className="w-4 h-4 mr-1" /> Auditoria
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => void gerarCertificadoAssinaturas(e)}>
-                      <FileDown className="w-4 h-4 mr-1" /> Manifesto (PDF)
                     </Button>
                     <Button
                       size="sm"

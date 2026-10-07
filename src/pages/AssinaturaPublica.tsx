@@ -24,6 +24,7 @@ import { Loader2, ShieldCheck, FileSignature, CheckCircle2, XCircle, AlertTriang
 import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometricaDialog';
 import { gerarPdfDocumentoAssinado, type SignatarioPdf } from '@/utils/documentoAssinadoPDF';
 import { FileDown } from 'lucide-react';
+import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
 
 interface Dados {
   envelope: {
@@ -144,13 +145,14 @@ export default function AssinaturaPublica() {
     if (!dados) return;
     setBaixando(true);
     try {
+      const autenticidade = await obterAutenticidadeAssinatura({ origem: 'envelope', referencia_id: dados.envelope.id, hash: dados.envelope.hash_documento });
       await gerarPdfDocumentoAssinado({
         titulo: dados.envelope.titulo,
         tipo: dados.envelope.tipo,
         conteudo_html: dados.envelope.conteudo_html,
         hash_documento: dados.envelope.hash_documento,
         signatarios: dados.signatarios ?? [],
-        url_verificacao: token ? `${window.location.origin}/assinar/${token}` : null,
+        ...autenticidade,
       });
     } catch (e: any) {
       toast.error(e.message ?? 'Falha ao gerar o PDF');
