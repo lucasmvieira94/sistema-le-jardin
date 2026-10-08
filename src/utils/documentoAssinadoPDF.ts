@@ -197,7 +197,14 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
 
   try {
     await Promise.all(Array.from(container.querySelectorAll('img')).map(async (img) => {
-      try { await img.decode(); } catch { throw new Error('Não foi possível carregar as imagens do documento. Tente novamente.'); }
+      try { await img.decode(); } catch {
+        if (img.getAttribute('src')?.startsWith('/__l5e/')) {
+          img.crossOrigin = 'anonymous';
+          img.src = `https://senexcare.app${img.getAttribute('src')}`;
+          try { await img.decode(); return; } catch { /* falhar sem emitir PDF incompleto */ }
+        }
+        throw new Error('Não foi possível carregar as imagens do documento. Tente novamente.');
+      }
     }));
     const blocos = Array.from(container.querySelectorAll('.autenticidade')).map((el) => {
       const r = el.getBoundingClientRect();
