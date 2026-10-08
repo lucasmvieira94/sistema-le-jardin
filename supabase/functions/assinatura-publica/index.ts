@@ -16,10 +16,8 @@
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import QRCode from 'npm:qrcode@1.5.4';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -118,33 +116,24 @@ const publico = (s: any) => ({
   motivo_recusa: s.motivo_recusa,
 });
 
-/** Bloco HTML de assinaturas anexado à cópia enviada por e-mail. */
-function blocoAssinaturasHTML(hashDoc: string, lista: any[]) {
-  const itens = lista
-    .map(
-      (s) => `
-      <div style="border:1px solid #d1d5db;border-radius:6px;padding:10px;margin-bottom:8px">
-        <div style="font-weight:bold">${s.nome} — ${s.papel}</div>
-        ${s.rubrica_base64 ? `<img src="${s.rubrica_base64}" style="max-height:60px;margin:6px 0" />` : ''}
-        <div style="font-size:12px;color:#374151;line-height:1.5">
-          CPF: ${s.cpf ?? '—'}<br/>
-          Método: ${METODOS[s.metodo] ?? s.metodo}<br/>
-          Assinado em: ${fmtBr(s.assinado_em)}<br/>
-          IP: ${s.ip_origem ?? '—'}<br/>
-          <span style="word-break:break-all">Hash: ${s.hash_assinatura ?? '—'}</span>
-        </div>
-      </div>`,
-    )
-    .join('');
-  return `
-    <div style="margin-top:20px;border-top:2px solid #111;padding-top:12px">
-      <h3 style="font-size:15px">ASSINATURAS ELETRÔNICAS</h3>
-      ${itens}
-      <p style="font-size:11px;color:#374151;word-break:break-all">
-        Hash SHA-256 do documento: ${hashDoc}<br/>
-        Assinado nos termos da MP 2.200-2/2001 (art. 10, §2º) e da Lei 14.063/2020.
-      </p>
-    </div>`;
+const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
+
+/** A cópia integral enviada por e-mail usa as mesmas duas faixas, sem evidências. */
+async function blocoAssinaturasHTML(hashDoc: string, lista: any[], codigo: string) {
+  const hash = hashDoc.toUpperCase();
+  const url = `https://senexcare.app/verificar-documento?id=${codigo}&hash=${hash}`;
+  const qr = await QRCode.toDataURL(url, { width: 180, margin: 1 });
+  return lista.filter((s) => s.status === 'assinado' && s.assinado_em).map((s) => `
+    <div style="margin-top:22px;border-top:1px solid #999;border-bottom:1px solid #999;font-family:Arial,sans-serif;font-size:12px;text-align:left">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #999">
+        <img src="https://senexcare.app/__l5e/assets-v1/83690979-9b1e-48ba-8142-d26775e6987c/sxcare-assinatura-eletronica.jpg" alt="SXCare" width="66" height="66" />
+        <div>Documento assinado eletronicamente por <strong>${esc(s.nome)}</strong>, ${esc(s.papel)} em ${esc(new Date(s.assinado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(', ', ' às '))}, conforme horário oficial de Brasília.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 4px">
+        <img src="${qr}" width="76" height="76" alt="QR de verificação" />
+        <div style="overflow-wrap:anywhere">A autenticidade deste documento pode ser conferida no site <a href="${esc(url)}">${esc(url)}</a>, informando o código verificador <strong>${esc(codigo)}</strong> e o código CRC/SHA-256 <strong>${hash}</strong>.</div>
+      </div>
+    </div>`).join('');
 }
 
 Deno.serve(async (req) => {
@@ -327,6 +316,9 @@ Deno.serve(async (req) => {
       let copia_enviada = false;
       if (sig.email) {
         try {
+          const { data: verificacao } = await admin.from('assinatura_verificacoes').select('codigo_verificador').eq('origem', 'envelope').eq('referencia_id', env.id).single();
+          if (!verificacao) throw new Error('Código de verificação indisponível');
+          const rodape = await blocoAssinaturasHTML(env.hash_documento, lista, verificacao.codigo_verificador);
           await enviarEmail(
             sig.email,
             `Documento assinado — ${env.titulo}`,
@@ -335,7 +327,7 @@ Deno.serve(async (req) => {
                <p>Olá, <strong>${sig.nome}</strong>. Segue abaixo a via integral do documento
                <strong>${env.titulo}</strong>, já com as assinaturas registradas.</p>
                <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px">${env.conteudo_html ?? ''}</div>
-               ${blocoAssinaturasHTML(env.hash_documento, lista)}
+               ${rodape}
              </div>`,
           );
           copia_enviada = true;
