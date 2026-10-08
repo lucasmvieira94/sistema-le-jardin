@@ -3,8 +3,8 @@
  *
  * Reúne, num único arquivo:
  *  1. o conteúdo original do documento (HTML do envelope);
- *  2. a página de assinaturas, com a rubrica de cada signatário e as
- *     evidências de autoria (data/hora UTC-3, IP, dispositivo, método e hash).
+ *  2. o rodapé SXCare com signatário, horário e verificação pública.
+ * Evidências de autoria permanecem na consulta online, não na via impressa.
  *
  * Serve tanto ao painel administrativo quanto ao signatário externo (página
  * pública), garantindo que ambas as partes tenham a mesma via probatória —
@@ -42,13 +42,6 @@ export interface DocumentoAssinadoInput {
   /** Bytes do PDF que foi efetivamente lido e assinado. Todas as páginas são preservadas. */
   arquivo_original?: ArrayBuffer;
 }
-
-const METODOS: Record<string, string> = {
-  otp_email: 'Código por e-mail',
-  otp_sms: 'Código por WhatsApp',
-  biometria_facial: 'Biometria facial',
-  rubrica_empresa: 'Rubrica institucional da empresa',
-};
 
 /** Somente assinaturas efetivas são impressas; evidências permanecem na consulta online. */
 export function assinaturasEfetivas(doc: DocumentoAssinadoInput): SignatarioPdf[] {
@@ -204,7 +197,14 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
 
   try {
     await Promise.all(Array.from(container.querySelectorAll('img')).map(async (img) => {
-      try { await img.decode(); } catch { throw new Error('Não foi possível carregar as imagens do documento. Tente novamente.'); }
+      try { await img.decode(); } catch {
+        if (img.getAttribute('src')?.startsWith('/__l5e/')) {
+          img.crossOrigin = 'anonymous';
+          img.src = `https://senexcare.app${img.getAttribute('src')}`;
+          try { await img.decode(); return; } catch { /* falhar sem emitir PDF incompleto */ }
+        }
+        throw new Error('Não foi possível carregar as imagens do documento. Tente novamente.');
+      }
     }));
     const blocos = Array.from(container.querySelectorAll('.autenticidade')).map((el) => {
       const r = el.getBoundingClientRect();
@@ -254,7 +254,7 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
       for (const bloco of blocos) {
         const inicioBloco = Math.floor(bloco.inicio * escala);
         const fimBloco = Math.ceil(bloco.fim * escala);
-        if (inicioBloco > offset && inicioBloco < fim && fimBloco > fim) fim = inicioBloco;
+        if (fim < canvas.height && inicioBloco > offset && inicioBloco < fim && fimBloco > fim + 2) fim = inicioBloco;
       }
       const alturaFatiaPx = fim - offset;
       if (alturaFatiaPx <= 0) break;

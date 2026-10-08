@@ -41,14 +41,17 @@ Deno.serve(async (req) => {
     if (body.action === 'obter_codigo') {
       if (!['interno', 'envelope'].includes(String(body.origem)) || typeof body.referencia_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(body.referencia_id)) return json({ error: 'Referência inválida' }, 400)
       let referencia = body.referencia_id
+      let signatarios
       if (body.origem === 'interno') {
         if (typeof body.hash_assinatura !== 'string' || !/^[a-f0-9]{64}$/i.test(body.hash_assinatura)) return json({ error: 'Assinatura inválida' }, 400)
-        const { data: assinatura } = await admin.from('documentos_internos_assinaturas').select('id,hash_documento').eq('referencia_id', referencia).eq('hash_assinatura', body.hash_assinatura).eq('status', 'assinado').maybeSingle()
+        const { data: assinatura } = await admin.from('documentos_internos_assinaturas').select('id,hash_documento,funcionario_id,metodo,assinado_em,status').eq('referencia_id', referencia).eq('hash_assinatura', body.hash_assinatura).eq('status', 'assinado').maybeSingle()
         if (!assinatura || assinatura.hash_documento.toUpperCase() !== hash) return json({ error: 'Assinatura não encontrada' }, 404)
         referencia = assinatura.id
+        const { data: funcionario } = await admin.from('funcionarios').select('nome').eq('id', assinatura.funcionario_id).maybeSingle()
+        signatarios = [{ nome: funcionario?.nome ?? 'Colaborador', papel: 'Colaborador', metodo: assinatura.metodo, status: assinatura.status, assinado_em: assinatura.assinado_em }]
       }
       const { data: codigo } = await admin.from('assinatura_verificacoes').select('codigo_verificador').eq('origem', body.origem).eq('referencia_id', referencia).eq('hash_documento', hash).maybeSingle()
-      return codigo ? json(codigo) : json({ error: 'Verificação não encontrada' }, 404)
+      return codigo ? json({ ...codigo, signatarios }) : json({ error: 'Verificação não encontrada' }, 404)
     }
     if (typeof id !== 'string' || !/^(\d{7,8}|[a-f0-9-]{36})$/i.test(id)) return json({ autentico: false, error: 'Código inválido' }, 400)
     const { data: verificacao } = await admin.from('assinatura_verificacoes').select('*').eq('codigo_verificador', id).maybeSingle()
