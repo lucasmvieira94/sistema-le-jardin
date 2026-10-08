@@ -53,7 +53,7 @@ export function rodapeDocumentoHTML(
         ${iconeSenexCareHTML()}
         <div><strong>DOCUMENTO ELETRÔNICO · AUTENTICIDADE</strong><br/>Este bloco comprova a integridade do documento; não representa assinatura eletrônica.</div>
       </div>`;
-  return `<div class="autenticidade" style="margin-top:22px;break-inside:avoid;page-break-inside:avoid;font-family:Arial,sans-serif;font-size:9pt;color:#222;border-top:1px solid #999;border-bottom:1px solid #999;">
+  return `<div class="autenticidade" style="margin-top:22px;break-inside:avoid;page-break-inside:avoid;font-family:Arial,sans-serif;font-size:9pt;text-align:left;color:#222;border-top:1px solid #999;border-bottom:1px solid #999;">
     ${faixaAssinatura}
     <div style="display:flex;align-items:center;gap:10px;padding:7px 4px;min-width:0;">
       <img src="${escapeHtml(auth.qrDataUrl)}" alt="QR Code de verificação" style="width:76px;height:76px;flex:none" />

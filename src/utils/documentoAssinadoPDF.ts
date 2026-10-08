@@ -254,7 +254,7 @@ export async function gerarPdfDocumentoAssinado(doc: DocumentoAssinadoInput): Pr
       for (const bloco of blocos) {
         const inicioBloco = Math.floor(bloco.inicio * escala);
         const fimBloco = Math.ceil(bloco.fim * escala);
-        if (inicioBloco > offset && inicioBloco < fim && fimBloco > fim) fim = inicioBloco;
+        if (fim < canvas.height && inicioBloco > offset && inicioBloco < fim && fimBloco > fim + 2) fim = inicioBloco;
       }
       const alturaFatiaPx = fim - offset;
       if (alturaFatiaPx <= 0) break;
