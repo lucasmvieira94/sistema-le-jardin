@@ -139,7 +139,7 @@ export default function MeusDocumentos() {
         ${DOMPurify.sanitize(`<h2>${doc.titulo}</h2>`)}
         ${doc.conteudo_html ? DOMPurify.sanitize(doc.conteudo_html) : ''}`,
       hash_documento: hashDoc,
-      signatarios: [{
+      signatarios: autenticidade.signatarios ?? [{
         nome: funcionarioNome, papel: 'Colaborador', metodo: 'biometria_facial', status: 'assinado',
         assinado_em: quando, user_agent: navigator.userAgent, hash_assinatura: hashAss,
       }],
@@ -276,7 +276,7 @@ export default function MeusDocumentos() {
                     <div className="rounded border p-3 text-sm space-y-1">
                       <div className="flex items-center gap-2 font-medium">
                         {aberto.status === 'assinado' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-destructive" />}
-                        {aberto.status === 'assinado' ? 'Assinado com biometria facial' : 'Assinatura recusada'} em {formatarTimestampDataHora(aberto.assinado_em!)}
+                        {aberto.status === 'assinado' ? 'Assinado com biometria facial' : 'Assinatura recusada'} em {aberto.assinado_em ? formatarTimestampDataHora(aberto.assinado_em) : '—'}
                       </div>
                       {aberto.motivo_recusa && <div>Motivo: {aberto.motivo_recusa}</div>}
                       <div className="text-[11px] text-muted-foreground break-all">Hash da assinatura: {aberto.hash_assinatura}</div>
