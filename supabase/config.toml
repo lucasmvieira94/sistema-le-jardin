@@ -131,3 +131,9 @@ verify_jwt = false
 
 [functions.diagnosticar-erro]
 verify_jwt = false
+
+[functions.denuncia-publica]
+verify_jwt = false
+
+[functions.denuncia-comite]
+verify_jwt = false

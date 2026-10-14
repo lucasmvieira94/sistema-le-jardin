@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { GestaoPermissoes } from "@/components/configuracoes/GestaoPermissoes";
+import { ComiteCompliance } from "@/components/configuracoes/ComiteCompliance";
 import { ConviteGestor } from "@/components/configuracoes/ConviteGestor";
 import { LogotipoEmpresa } from "@/components/configuracoes/LogotipoEmpresa";
 import { ConfiguracaoGeofence } from "@/components/configuracoes/ConfiguracaoGeofence";
@@ -307,6 +308,7 @@ export default function Configuracoes() {
         <AssinaturaDigitalConfig />
 
         <GestaoPermissoes ref={gestaoPermissoesRef} />
+        <ComiteCompliance />
 
         {/* Convite para Gestores */}
         <ConviteGestor onConviteEnviado={handleConviteEnviado} />

@@ -14,7 +14,7 @@ import { ptBR } from 'date-fns/locale';
 interface UserRole {
   id: string;
   user_id: string;
-  role: 'admin' | 'employee' | 'super_admin';
+  role: 'admin' | 'employee' | 'super_admin' | 'compliance';
   funcionario?: {
     nome_completo: string;
     email: string;
@@ -24,7 +24,7 @@ interface UserRole {
 interface Convite {
   id: string;
   email: string;
-  role: 'admin' | 'employee' | 'super_admin';
+  role: 'admin' | 'employee' | 'super_admin' | 'compliance';
   token: string;
   status: string; // Permitir string genérico do banco
   data_envio: string;

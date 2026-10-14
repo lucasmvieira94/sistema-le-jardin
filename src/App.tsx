@@ -30,6 +30,9 @@ import ContratoTemporarioPublico from "./pages/ContratoTemporarioPublico";
 import AdministracaoMedicamentosPublico from "./pages/AdministracaoMedicamentosPublico";
 import FichaAcolhimentoPublico from "./pages/FichaAcolhimentoPublico";
 import VerificarDocumento from "./pages/VerificarDocumento";
+import Denuncia from "./pages/Denuncia";
+import AcompanharDenuncia from "./pages/AcompanharDenuncia";
+import CanalDenuncias from "./pages/CanalDenuncias";
 import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 import Landing from "./pages/Landing";
@@ -127,6 +130,8 @@ const App = () => {
               <Route path="/meus-documentos" element={<MeusDocumentos />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/verificar-documento" element={<VerificarDocumento />} />
+              <Route path="/denuncia" element={<Denuncia />} />
+              <Route path="/denuncia/acompanhar" element={<AcompanharDenuncia />} />
               <Route path="/anexo-afastamento/:token" element={<AnexoAfastamentoPublico />} />
               <Route path="/landing" element={<Landing />} />
             </Route>
@@ -165,6 +170,7 @@ const App = () => {
               <Route path="/relatorios-ia" element={<ProtectedRoute><ModuleGuard modulo="relatorios_ia"><RelatoriosIA /></ModuleGuard></ProtectedRoute>} />
               <Route path="/controle-assinaturas" element={<ProtectedRoute><ControleAssinaturas /></ProtectedRoute>} />
               <Route path="/historico-erros" element={<ProtectedRoute><HistoricoErros /></ProtectedRoute>} />
+              <Route path="/canal-denuncias" element={<ProtectedRoute><CanalDenuncias /></ProtectedRoute>} />
               <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
               <Route path="/configuracoes/assinatura" element={<ProtectedRoute><MinhaAssinatura /></ProtectedRoute>} />
             </Route>

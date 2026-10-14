@@ -84,6 +84,8 @@ export async function reportarErro(
   try {
     const e = erro instanceof Error ? erro : new Error(typeof erro === "string" ? erro : JSON.stringify(erro));
     const mensagem = e.message || String(erro);
+    // Canal de Denúncias: nunca enviar nada (anonimato).
+    if (window.location.pathname.startsWith("/denuncia")) return null;
     if (ehRuido(mensagem)) return null;
     const modulo = extra.modulo || moduloDaRota(window.location.pathname);
     if (!deveReportar(assinaturaErro(modulo, mensagem)) || total >= MAX_POR_SESSAO) return null;
