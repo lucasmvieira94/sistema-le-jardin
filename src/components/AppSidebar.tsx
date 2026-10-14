@@ -1,6 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useEhComite } from "@/hooks/useEhComite";
 import { useSuperAdmin } from "@/hooks/saas/useSuperAdmin";
 import { Button } from "@/components/ui/button";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
@@ -52,6 +53,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user } = useAuthSession();
   const { isAdmin } = useUserRole();
+  const ehComite = useEhComite();
   const { isSuperAdmin } = useSuperAdmin();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -99,6 +101,7 @@ export function AppSidebar() {
     { path: "/assinaturas", icon: FileSignature, label: "Assinaturas Eletrônicas", adminOnly: true },
     { path: "/configuracoes/assinatura", icon: CreditCard, label: "Minha Assinatura", adminOnly: true },
     { path: "/historico-erros", icon: AlertTriangle, label: "Histórico de Erros", adminOnly: true },
+    { path: "/canal-denuncias", icon: AlertTriangle, label: "Canal de Denúncias", complianceOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 
@@ -141,7 +144,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainNavItems.map((item) => {
                 const Icon = item.icon;
-                const shouldShow = item.public || (user && (!item.adminOnly || isAdmin));
+                const shouldShow = (item as { complianceOnly?: boolean }).complianceOnly ? (user && ehComite) : (item.public || (user && (!item.adminOnly || isAdmin)));
                 
                 if (!shouldShow) return null;
                 

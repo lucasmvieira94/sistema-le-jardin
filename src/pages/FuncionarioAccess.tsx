@@ -491,6 +491,7 @@ export default function FuncionarioAccess() {
               )}
               {pode('documentos') && <FeatureCard title="Meus Documentos" description={docsPendentes > 0 ? `${docsPendentes} documento(s) para assinar` : "Assine com biometria facial"} icon={FileSignature} color={docsPendentes > 0 ? "red" : "indigo"} buttonLabel={docsPendentes > 0 ? "Assinar agora" : "Ver Documentos"} onClick={navigateToMeusDocumentos} featured={docsPendentes > 0} />}
               {pode('contracheques') && <FeatureCard title="Meus Contracheques" description="Baixe seus holerites por mês" icon={Receipt} color="emerald" buttonLabel="Ver Contracheques" onClick={navigateToContracheques} />}
+              <FeatureCard title="Canal de Denúncias" description="Relate assédio com sigilo" icon={AlertTriangle} color="teal" buttonLabel="Abrir" onClick={() => window.open('/denuncia', '_blank', 'noopener')} />
               {pode('desempenho') && <FeatureCard title="Meu Desempenho" description="Pontos, nível e prêmios" icon={Trophy} color="yellow" buttonLabel="Ver Desempenho" onClick={navigateToGamificacao} />}
             </div>
           </section>
