@@ -68,8 +68,8 @@ let total = 0;
 /** Decide se o erro deve ser enviado agora (sem repetir em 10 min, máx. 15 por sessão). */
 export function deveReportar(chave: string, agora = Date.now(), mapa = enviados): boolean {
   const ultimo = mapa.get(chave);
-  if (ultimo && agora - ultimo < JANELA_MS) return false;
-  if (mapa.size >= MAX_POR_SESSAO && !ultimo) return false;
+  if (ultimo !== undefined && agora - ultimo < JANELA_MS) return false;
+  if (mapa.size >= MAX_POR_SESSAO && ultimo === undefined) return false;
   mapa.set(chave, agora);
   return true;
 }
