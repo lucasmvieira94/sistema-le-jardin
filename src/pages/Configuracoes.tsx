@@ -308,6 +308,7 @@ export default function Configuracoes() {
         <AssinaturaDigitalConfig />
 
         <GestaoPermissoes ref={gestaoPermissoesRef} />
+        <ComiteCompliance />
 
         {/* Convite para Gestores */}
         <ConviteGestor onConviteEnviado={handleConviteEnviado} />
