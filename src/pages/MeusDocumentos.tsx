@@ -14,6 +14,15 @@ import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
 import { useDocumentosFuncionario, assinarDocumentoInterno } from '@/hooks/useDocumentosFuncionario';
 import { getFolhaPontoSignedUrl } from '@/hooks/useFolhasPonto';
 import { getContrachequeSignedUrl } from '@/hooks/useContracheques';
+
+/** Link temporário do PDF do documento, no armazenamento de cada tipo. */
+async function urlArquivoDocumento(doc: { tipo_documento: string; arquivo_path: string | null }): Promise<string | null> {
+  if (!doc.arquivo_path) return null;
+  if (doc.tipo_documento === 'folha_ponto') return getFolhaPontoSignedUrl(doc.arquivo_path);
+  if (doc.tipo_documento === 'contracheque') return getContrachequeSignedUrl(doc.arquivo_path);
+  const { data } = await supabase.storage.from('documentos-internos').createSignedUrl(doc.arquivo_path, 300);
+  return data?.signedUrl ?? null;
+}
 import CapturaAssinaturaDialog from '@/components/biometria/CapturaAssinaturaDialog';
 import AutoCadastroBiometriaDialog from '@/components/biometria/AutoCadastroBiometriaDialog';
 import { useBiometriaStatus } from '@/hooks/useBiometriaFuncionario';
@@ -66,9 +75,7 @@ export default function MeusDocumentos() {
     setCarregando(true);
     try {
       if (doc.arquivo_path) {
-        const url = doc.tipo_documento === 'folha_ponto'
-          ? await getFolhaPontoSignedUrl(doc.arquivo_path)
-          : await getContrachequeSignedUrl(doc.arquivo_path);
+        const url = await urlArquivoDocumento(doc);
         if (!url) throw new Error('Não foi possível abrir o arquivo.');
         setPdfUrl(url);
         // O hash é do arquivo exato que o colaborador está vendo
@@ -122,9 +129,7 @@ export default function MeusDocumentos() {
     });
     let arquivoOriginal: ArrayBuffer | undefined;
     if (doc.arquivo_path) {
-      const url = doc.tipo_documento === 'folha_ponto'
-        ? await getFolhaPontoSignedUrl(doc.arquivo_path)
-        : await getContrachequeSignedUrl(doc.arquivo_path);
+      const url = await urlArquivoDocumento(doc);
       if (!url) throw new Error('Não foi possível carregar o documento original.');
       const response = await fetch(url);
       if (!response.ok) throw new Error('Não foi possível carregar o documento original.');
