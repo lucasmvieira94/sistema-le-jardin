@@ -61,8 +61,8 @@ export function TenantSuspendedScreen({
               </Button>
             )}
             <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <a href="mailto:financeiro@senexcare.com.br" className="flex items-center gap-2 hover:text-foreground">
-                <Mail className="w-4 h-4" /> financeiro@senexcare.com.br
+              <a href="mailto:lucasmoraesv.dev@gmail.com" className="flex items-center gap-2 hover:text-foreground">
+                <Mail className="w-4 h-4" /> lucasmoraesv.dev@gmail.com
               </a>
               <a href="tel:+5500000000000" className="flex items-center gap-2 hover:text-foreground">
                 <Phone className="w-4 h-4" /> Suporte financeiro
