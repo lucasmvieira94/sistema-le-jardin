@@ -18,7 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
-import { FileSignature, Loader2, Send } from 'lucide-react';
+import { FileSignature, Loader2, Send, Paperclip, X, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { estaAtrasado, type LinhaAssinatura } from '@/utils/controleAssinaturas';
 
 const sb = supabase as any;
 
@@ -35,6 +37,7 @@ export default function DocumentosInternos() {
   const [todos, setTodos] = useState(true);
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [salvando, setSalvando] = useState(false);
+  const [pdf, setPdf] = useState<File | null>(null);
 
   const { data: funcionarios = [] } = useQuery({
     queryKey: ['docs-internos-funcionarios'],
@@ -64,11 +67,26 @@ export default function DocumentosInternos() {
     },
   });
 
+  // Documentos já disponíveis no sistema e ainda não assinados (folhas, contracheques, advertências, comunicados)
+  const { data: pendentes = [], isLoading: carregandoPend } = useQuery({
+    queryKey: ['painel-assinaturas'],
+    queryFn: async () => {
+      const { data, error } = await sb.rpc('painel_assinaturas_documentos');
+      if (error) throw error;
+      return ((data ?? []) as LinhaAssinatura[]).filter((l) => l.status === 'pendente');
+    },
+  });
+  const pendPorTipo = useMemo(() => {
+    const m = new Map<string, number>();
+    pendentes.forEach((l) => m.set(l.tipo_documento, (m.get(l.tipo_documento) ?? 0) + 1));
+    return m;
+  }, [pendentes]);
+
   const nomes = useMemo(() => new Map(funcionarios.map((f) => [f.id, f.nome_completo])), [funcionarios]);
 
   const publicar = async () => {
-    if (titulo.trim().length < 3 || texto.trim().length < 10) {
-      toast({ variant: 'destructive', title: 'Preencha o título e o texto do documento.' });
+    if (titulo.trim().length < 3 || (!pdf && texto.trim().length < 10)) {
+      toast({ variant: 'destructive', title: pdf ? 'Preencha o título do documento.' : 'Preencha o título e o texto, ou anexe um PDF.' });
       return;
     }
     if (!todos && selecionados.length === 0) {
@@ -77,18 +95,30 @@ export default function DocumentosInternos() {
     }
     setSalvando(true);
     try {
-      const conteudo_html = textoParaHtml(texto);
       const t = titulo.trim();
-      const hash_documento = await sha256Hex(conteudoCanonico({ titulo: t, conteudo_html }));
+      const conteudo_html = texto.trim() ? textoParaHtml(texto) : '';
+      let hash_documento: string;
+      let arquivo_path: string | null = null;
+      if (pdf) {
+        // Com PDF, o documento assinado é o próprio arquivo: o hash é dos bytes exatos enviados.
+        const bytes = await pdf.arrayBuffer();
+        hash_documento = await sha256Hex(bytes);
+        arquivo_path = `${Date.now()}-${crypto.randomUUID()}.pdf`;
+        const up = await supabase.storage.from('documentos-internos').upload(arquivo_path, pdf, { contentType: 'application/pdf' });
+        if (up.error) throw up.error;
+      } else {
+        hash_documento = await sha256Hex(conteudoCanonico({ titulo: t, conteudo_html }));
+      }
       const { data: u } = await supabase.auth.getUser();
       const { error } = await sb.from('documentos_internos').insert({
-        titulo: t, tipo, conteudo_html, hash_documento,
+        titulo: t, tipo, conteudo_html, hash_documento, arquivo_path,
         funcionario_ids: todos ? null : selecionados, criado_por: u.user?.id ?? null,
       });
       if (error) throw error;
       toast({ title: 'Documento publicado no portal dos colaboradores' });
-      setTitulo(''); setTexto(''); setSelecionados([]); setTodos(true);
+      setTitulo(''); setTexto(''); setSelecionados([]); setTodos(true); setPdf(null);
       qc.invalidateQueries({ queryKey: ['docs-internos'] });
+      qc.invalidateQueries({ queryKey: ['painel-assinaturas'] });
     } catch (e) {
       toast({ variant: 'destructive', title: 'Erro ao publicar', description: (e as Error).message });
     } finally {
@@ -115,6 +145,33 @@ export default function DocumentosInternos() {
       </div>
 
       <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-lg flex items-center gap-2"><Clock className="w-5 h-5" /> Aguardando assinatura ({pendentes.length})</CardTitle>
+          <Button asChild size="sm" variant="outline"><Link to="/controle-assinaturas">Ver controle completo</Link></Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {carregandoPend ? <Loader2 className="animate-spin" /> : pendentes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum documento pendente de assinatura.</p>
+          ) : (<>
+            <div className="flex flex-wrap gap-2">
+              {[...pendPorTipo].map(([t, n]) => <Badge key={t} variant="secondary">{ROTULO_TIPO[t as TipoDocumentoInterno] ?? t}: {n}</Badge>)}
+            </div>
+            <div className="max-h-72 overflow-y-auto divide-y border rounded">
+              {[...pendentes].sort((a, b) => a.criado_em.localeCompare(b.criado_em)).map((l) => (
+                <div key={`${l.funcionario_id}-${l.tipo_documento}-${l.referencia_id}`} className="flex items-center justify-between gap-2 p-2 text-sm">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{l.funcionario_nome}</div>
+                    <div className="text-xs text-muted-foreground truncate">{l.titulo} · disponível desde {formatarTimestampDataHora(l.criado_em)}</div>
+                  </div>
+                  {estaAtrasado(l) ? <Badge variant="destructive">Atrasado</Badge> : <Badge variant="outline">Pendente</Badge>}
+                </div>
+              ))}
+            </div>
+          </>)}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-lg">Publicar comunicado ou regimento</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-3 gap-3">
@@ -135,7 +192,24 @@ export default function DocumentosInternos() {
             </div>
           </div>
           <div className="space-y-1">
-            <Label>Texto</Label>
+            <Label>Arquivo PDF (opcional)</Label>
+            {pdf ? (
+              <div className="flex items-center gap-2 text-sm border rounded p-2">
+                <Paperclip className="w-4 h-4" /> <span className="truncate flex-1">{pdf.name}</span>
+                <Button size="sm" variant="ghost" onClick={() => setPdf(null)}><X className="w-4 h-4" /></Button>
+              </div>
+            ) : (
+              <Input type="file" accept="application/pdf,.pdf" onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                if (f && f.type !== 'application/pdf') { toast({ variant: 'destructive', title: 'Envie um arquivo PDF.' }); e.target.value = ''; return; }
+                if (f && f.size > 20 * 1024 * 1024) { toast({ variant: 'destructive', title: 'O PDF deve ter até 20 MB.' }); e.target.value = ''; return; }
+                setPdf(f);
+              }} />
+            )}
+            <p className="text-xs text-muted-foreground">Para documentos mais complexos, como o regimento interno: o colaborador verá e assinará o PDF no lugar do texto.</p>
+          </div>
+          <div className="space-y-1">
+            <Label>{pdf ? 'Texto de apresentação (opcional)' : 'Texto'}</Label>
             <Textarea rows={8} value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={20000}
               placeholder="Separe os parágrafos com uma linha em branco." />
           </div>
@@ -172,7 +246,7 @@ export default function DocumentosInternos() {
             return (
               <div key={d.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border rounded p-3">
                 <div>
-                  <div className="font-medium">{d.titulo} {!d.ativo && <Badge variant="secondary">Desativado</Badge>}</div>
+                  <div className="font-medium">{d.titulo} {d.arquivo_path && <Badge variant="outline">PDF</Badge>} {!d.ativo && <Badge variant="secondary">Desativado</Badge>}</div>
                   <div className="text-xs text-muted-foreground">
                     Publicado em {formatarTimestampDataHora(d.created_at)} · {ok} de {totalDestinatarios(d)} assinaram
                     {s.length - ok > 0 && ` · ${s.length - ok} recusa(s)`}
