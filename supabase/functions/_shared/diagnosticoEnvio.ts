@@ -8,7 +8,7 @@ import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export interface Diagnostico { diagnostico: string; sugestao: string; gravidade: string }
 
-const SUPORTE_PADRAO = "lucasmoraesv@hotmail.com";
+const SUPORTE_PADRAO = "lucasmoraesv.dev@gmail.com";
 
 async function perguntarIA(origem: string, erro: string, contexto: Record<string, unknown>): Promise<Diagnostico> {
   const fallback = { diagnostico: "Não foi possível analisar automaticamente.", sugestao: "Verifique os registros do envio e tente novamente.", gravidade: "media" };
