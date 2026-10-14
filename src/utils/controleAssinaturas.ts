@@ -1,6 +1,7 @@
 /**
  * Regras puras do painel de controle de assinaturas do gestor.
- * Um documento pendente há mais de PRAZO_DIAS dias é considerado "atrasado".
+ * Um documento pendente depois do seu prazo (`prazo_em`, calculado no banco) é "atrasado";
+ * sem prazo informado, vale o padrão de PRAZO_DIAS dias após o envio.
  */
 export const PRAZO_DIAS = 3;
 
@@ -9,12 +10,23 @@ export interface LinhaAssinatura {
   tipo_documento: string; referencia_id: string; titulo: string; subtitulo: string | null;
   criado_em: string; status: "pendente" | "assinado" | "recusado";
   assinado_em: string | null; motivo_recusa: string | null; hash_assinatura: string | null;
+  prazo_em?: string | null;
 }
 
 export type SituacaoFiltro = "todas" | "pendente" | "atrasado" | "assinado" | "recusado";
 
-export function estaAtrasado(l: Pick<LinhaAssinatura, "status" | "criado_em">, agora = Date.now()): boolean {
-  return l.status === "pendente" && agora - new Date(l.criado_em).getTime() > PRAZO_DIAS * 864e5;
+export function prazoDe(l: Pick<LinhaAssinatura, "criado_em" | "prazo_em">): number {
+  return l.prazo_em ? new Date(l.prazo_em).getTime() : new Date(l.criado_em).getTime() + PRAZO_DIAS * 864e5;
+}
+
+export function estaAtrasado(l: Pick<LinhaAssinatura, "status" | "criado_em" | "prazo_em">, agora = Date.now()): boolean {
+  return l.status === "pendente" && agora > prazoDe(l);
+}
+
+/** Pendente que vence em até 1 dia (ainda não atrasado). */
+export function venceEmBreve(l: Pick<LinhaAssinatura, "status" | "criado_em" | "prazo_em">, agora = Date.now()): boolean {
+  const p = prazoDe(l);
+  return l.status === "pendente" && agora <= p && p - agora <= 864e5;
 }
 
 export interface FiltrosAssinatura { busca: string; tipo: string; situacao: SituacaoFiltro }
