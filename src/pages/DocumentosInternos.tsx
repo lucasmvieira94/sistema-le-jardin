@@ -38,6 +38,31 @@ export default function DocumentosInternos() {
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [pdf, setPdf] = useState<File | null>(null);
+  const [prazo, setPrazo] = useState('');
+  const [prazoPadraoEdit, setPrazoPadraoEdit] = useState<string | null>(null);
+
+  // Prazo padrão (dias) para assinar qualquer documento, salvo nas configurações da empresa
+  const { data: config } = useQuery({
+    queryKey: ['config-prazo-assinatura'],
+    queryFn: async () => {
+      const { data, error } = await sb.from('configuracoes_empresa').select('id, prazo_assinatura_dias').order('created_at').limit(1).maybeSingle();
+      if (error) throw error;
+      return data as { id: string; prazo_assinatura_dias: number } | null;
+    },
+  });
+  const prazoPadrao = config?.prazo_assinatura_dias ?? 3;
+  const salvarPrazoPadrao = async () => {
+    const dias = Number(prazoPadraoEdit);
+    if (!config || !Number.isInteger(dias) || dias < 1 || dias > 90) {
+      toast({ variant: 'destructive', title: 'Informe um prazo entre 1 e 90 dias.' }); return;
+    }
+    const { error } = await sb.from('configuracoes_empresa').update({ prazo_assinatura_dias: dias }).eq('id', config.id);
+    if (error) { toast({ variant: 'destructive', title: 'Erro ao salvar', description: error.message }); return; }
+    toast({ title: 'Prazo padrão atualizado' });
+    setPrazoPadraoEdit(null);
+    qc.invalidateQueries({ queryKey: ['config-prazo-assinatura'] });
+    qc.invalidateQueries({ queryKey: ['painel-assinaturas'] });
+  };
 
   const { data: funcionarios = [] } = useQuery({
     queryKey: ['docs-internos-funcionarios'],
@@ -93,6 +118,10 @@ export default function DocumentosInternos() {
       toast({ variant: 'destructive', title: 'Escolha ao menos um colaborador.' });
       return;
     }
+    const hojeBR = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    if (prazo && prazo < hojeBR) {
+      toast({ variant: 'destructive', title: 'O prazo não pode ser uma data passada.' }); return;
+    }
     setSalvando(true);
     try {
       const t = titulo.trim();
@@ -111,12 +140,12 @@ export default function DocumentosInternos() {
       }
       const { data: u } = await supabase.auth.getUser();
       const { error } = await sb.from('documentos_internos').insert({
-        titulo: t, tipo, conteudo_html, hash_documento, arquivo_path,
+        titulo: t, tipo, conteudo_html, hash_documento, arquivo_path, prazo_assinatura: prazo || null,
         funcionario_ids: todos ? null : selecionados, criado_por: u.user?.id ?? null,
       });
       if (error) throw error;
       toast({ title: 'Documento publicado no portal dos colaboradores' });
-      setTitulo(''); setTexto(''); setSelecionados([]); setTodos(true); setPdf(null);
+      setTitulo(''); setTexto(''); setSelecionados([]); setTodos(true); setPdf(null); setPrazo('');
       qc.invalidateQueries({ queryKey: ['docs-internos'] });
       qc.invalidateQueries({ queryKey: ['painel-assinaturas'] });
     } catch (e) {
@@ -150,6 +179,18 @@ export default function DocumentosInternos() {
           <Button asChild size="sm" variant="outline"><Link to="/controle-assinaturas">Ver controle completo</Link></Button>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm rounded border p-2">
+            <span>Prazo padrão para assinar folhas de ponto, contracheques, advertências e comunicados sem data própria:</span>
+            {prazoPadraoEdit === null ? (<>
+              <b>{prazoPadrao} dia(s)</b>
+              <Button size="sm" variant="ghost" onClick={() => setPrazoPadraoEdit(String(prazoPadrao))}>Alterar</Button>
+            </>) : (<>
+              <Input type="number" min={1} max={90} className="w-20 h-8" value={prazoPadraoEdit} onChange={(e) => setPrazoPadraoEdit(e.target.value)} />
+              <Button size="sm" onClick={salvarPrazoPadrao}>Salvar</Button>
+              <Button size="sm" variant="ghost" onClick={() => setPrazoPadraoEdit(null)}>Cancelar</Button>
+            </>)}
+            <span className="text-xs text-muted-foreground w-full">O colaborador é avisado ao publicar, quando falta 1 dia e quando o prazo vence.</span>
+          </div>
           {carregandoPend ? <Loader2 className="animate-spin" /> : pendentes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum documento pendente de assinatura.</p>
           ) : (<>
@@ -161,7 +202,7 @@ export default function DocumentosInternos() {
                 <div key={`${l.funcionario_id}-${l.tipo_documento}-${l.referencia_id}`} className="flex items-center justify-between gap-2 p-2 text-sm">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{l.funcionario_nome}</div>
-                    <div className="text-xs text-muted-foreground truncate">{l.titulo} · disponível desde {formatarTimestampDataHora(l.criado_em)}</div>
+                    <div className="text-xs text-muted-foreground truncate">{l.titulo} · disponível desde {formatarTimestampDataHora(l.criado_em)}{l.prazo_em ? ` · prazo ${formatarTimestampDataHora(l.prazo_em)}` : ''}</div>
                   </div>
                   {estaAtrasado(l) ? <Badge variant="destructive">Atrasado</Badge> : <Badge variant="outline">Pendente</Badge>}
                 </div>
@@ -190,6 +231,11 @@ export default function DocumentosInternos() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1 max-w-xs">
+            <Label>Prazo para assinar (opcional)</Label>
+            <Input type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Sem data, vale o prazo padrão de {prazoPadrao} dia(s) após a publicação.</p>
           </div>
           <div className="space-y-1">
             <Label>Arquivo PDF (opcional)</Label>
@@ -248,7 +294,7 @@ export default function DocumentosInternos() {
                 <div>
                   <div className="font-medium">{d.titulo} {d.arquivo_path && <Badge variant="outline">PDF</Badge>} {!d.ativo && <Badge variant="secondary">Desativado</Badge>}</div>
                   <div className="text-xs text-muted-foreground">
-                    Publicado em {formatarTimestampDataHora(d.created_at)} · {ok} de {totalDestinatarios(d)} assinaram
+                    Publicado em {formatarTimestampDataHora(d.created_at)}{d.prazo_assinatura ? ` · prazo ${d.prazo_assinatura.split('-').reverse().join('/')}` : ''} · {ok} de {totalDestinatarios(d)} assinaram
                     {s.length - ok > 0 && ` · ${s.length - ok} recusa(s)`}
                   </div>
                 </div>
