@@ -14,14 +14,15 @@ import { ClipboardCheck, Loader2, Search } from "lucide-react";
 import { formatarTimestampDataHora } from "@/utils/formatTimestamp";
 import { ROTULO_TIPO, type TipoDocumentoInterno } from "@/utils/documentosInternos";
 import {
-  FiltrosAssinatura, LinhaAssinatura, PRAZO_DIAS, estaAtrasado, filtrarAssinaturas,
-  pendenciasPorColaborador, resumirAssinaturas,
+  FiltrosAssinatura, LinhaAssinatura, estaAtrasado, filtrarAssinaturas,
+  pendenciasPorColaborador, resumirAssinaturas, venceEmBreve,
 } from "@/utils/controleAssinaturas";
 
 function Situacao({ l }: { l: LinhaAssinatura }) {
   if (l.status === "assinado") return <Badge>Assinado</Badge>;
   if (l.status === "recusado") return <Badge variant="destructive">Recusado</Badge>;
-  return estaAtrasado(l) ? <Badge variant="destructive">Atrasado</Badge> : <Badge variant="secondary">Pendente</Badge>;
+  if (estaAtrasado(l)) return <Badge variant="destructive">Atrasado</Badge>;
+  return venceEmBreve(l) ? <Badge variant="outline">Vence em breve</Badge> : <Badge variant="secondary">Pendente</Badge>;
 }
 
 export default function ControleAssinaturas() {
@@ -43,7 +44,7 @@ export default function ControleAssinaturas() {
   const cartoes = [
     { rotulo: "Assinados", valor: resumo.assinados, extra: `${resumo.percentual}% do total`, sit: "assinado" },
     { rotulo: "Pendentes", valor: resumo.pendentes, extra: "aguardando o colaborador", sit: "pendente" },
-    { rotulo: "Atrasados", valor: resumo.atrasados, extra: `pendentes há mais de ${PRAZO_DIAS} dias`, sit: "atrasado" },
+    { rotulo: "Atrasados", valor: resumo.atrasados, extra: "pendentes após o prazo", sit: "atrasado" },
     { rotulo: "Recusados", valor: resumo.recusados, extra: "com discordância registrada", sit: "recusado" },
   ] as const;
 
@@ -114,7 +115,7 @@ export default function ControleAssinaturas() {
         ) : (
           <table className="w-full text-sm">
             <thead><tr className="text-left text-muted-foreground border-b border-border">
-              <th className="p-3">Colaborador</th><th className="p-3">Documento</th><th className="p-3">Enviado em</th>
+              <th className="p-3">Colaborador</th><th className="p-3">Documento</th><th className="p-3">Enviado em</th><th className="p-3">Prazo</th>
               <th className="p-3">Situação</th><th className="p-3">Assinado/recusado em</th>
             </tr></thead>
             <tbody>
@@ -123,6 +124,7 @@ export default function ControleAssinaturas() {
                   <td className="p-3"><div className="font-medium">{l.funcionario_nome}</div><div className="text-xs text-muted-foreground">{l.funcao ?? ""}</div></td>
                   <td className="p-3"><div>{l.titulo}</div><div className="text-xs text-muted-foreground">{ROTULO_TIPO[l.tipo_documento as TipoDocumentoInterno] ?? l.tipo_documento}</div></td>
                   <td className="p-3 whitespace-nowrap">{formatarTimestampDataHora(l.criado_em)}</td>
+                  <td className="p-3 whitespace-nowrap">{l.prazo_em ? formatarTimestampDataHora(l.prazo_em) : "—"}</td>
                   <td className="p-3"><Situacao l={l} />{l.motivo_recusa && <div className="text-xs mt-1 max-w-[240px]">{l.motivo_recusa}</div>}</td>
                   <td className="p-3 whitespace-nowrap">{l.assinado_em ? formatarTimestampDataHora(l.assinado_em) : "—"}</td>
                 </tr>

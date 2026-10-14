@@ -1,5 +1,6 @@
 /**
- * Avisos pendentes do funcionário (ex.: mudança de escala ou de revezamento).
+ * Avisos pendentes do funcionário (mudança de escala, documento novo para assinar,
+ * véspera do prazo e assinatura atrasada).
  * Abre ao entrar no portal e só fecha depois que cada aviso tem o recebimento
  * confirmado. A confirmação grava data/hora no banco e na auditoria.
  */
@@ -22,6 +23,8 @@ export default function AvisosPendentesDialog({ funcionarioId }: { funcionarioId
 
   const carregar = useCallback(async () => {
     if (!funcionarioId) { setAvisos([]); return; }
+    // Cria (uma vez por documento) os lembretes de véspera do prazo e de assinatura atrasada
+    await db.rpc("gerar_lembretes_assinatura", { p_funcionario_id: funcionarioId });
     const { data, error } = await db.rpc("listar_avisos_pendentes_funcionario", { p_funcionario_id: funcionarioId });
     if (!error) setAvisos(data || []);
   }, [funcionarioId]);

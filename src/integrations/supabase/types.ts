@@ -1396,6 +1396,7 @@ export type Database = {
           logo_url: string | null
           multa_atraso_percentual: number
           nome_empresa: string
+          prazo_assinatura_dias: number
           tenant_id: string | null
           updated_at: string | null
         }
@@ -1426,6 +1427,7 @@ export type Database = {
           logo_url?: string | null
           multa_atraso_percentual?: number
           nome_empresa: string
+          prazo_assinatura_dias?: number
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -1456,6 +1458,7 @@ export type Database = {
           logo_url?: string | null
           multa_atraso_percentual?: number
           nome_empresa?: string
+          prazo_assinatura_dias?: number
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -2202,6 +2205,7 @@ export type Database = {
           funcionario_ids: string[] | null
           hash_documento: string
           id: string
+          prazo_assinatura: string | null
           tenant_id: string | null
           tipo: string
           titulo: string
@@ -2216,6 +2220,7 @@ export type Database = {
           funcionario_ids?: string[] | null
           hash_documento: string
           id?: string
+          prazo_assinatura?: string | null
           tenant_id?: string | null
           tipo?: string
           titulo: string
@@ -2230,6 +2235,7 @@ export type Database = {
           funcionario_ids?: string[] | null
           hash_documento?: string
           id?: string
+          prazo_assinatura?: string | null
           tenant_id?: string | null
           tipo?: string
           titulo?: string
@@ -5620,6 +5626,10 @@ export type Database = {
           saida: string
         }[]
       }
+      gerar_lembretes_assinatura: {
+        Args: { p_funcionario_id: string }
+        Returns: number
+      }
       gerar_mensalidades_mes: {
         Args: { p_competencia?: string }
         Returns: {
@@ -5819,6 +5829,7 @@ export type Database = {
           funcionario_nome: string
           hash_assinatura: string
           motivo_recusa: string
+          prazo_em: string
           referencia_id: string
           status: string
           subtitulo: string
@@ -5829,6 +5840,15 @@ export type Database = {
       pgp_armor_headers: {
         Args: { "": string }
         Returns: Record<string, unknown>[]
+      }
+      prazo_assinatura_em: {
+        Args: {
+          p_criado: string
+          p_func: string
+          p_ref: string
+          p_tipo: string
+        }
+        Returns: string
       }
       preencher_horarios_por_escala: {
         Args: {
