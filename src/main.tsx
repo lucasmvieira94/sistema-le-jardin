@@ -1,6 +1,10 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { ErroBoundary } from './components/ErroBoundary'
+import { instalarMonitorErros } from './utils/monitorErros'
+
+instalarMonitorErros();
 import '@fontsource/outfit/400.css'
 import '@fontsource/outfit/500.css'
 import '@fontsource/outfit/600.css'
@@ -41,7 +45,7 @@ const cleanupAndRender = async () => {
     }
   }
 
-  createRoot(document.getElementById("root")!).render(<App />);
+  createRoot(document.getElementById("root")!).render(<ErroBoundary><App /></ErroBoundary>);
 };
 
 cleanupAndRender();

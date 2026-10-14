@@ -37,7 +37,7 @@ async function perguntarIA(origem: string, erro: string, contexto: Record<string
           },
         },
         messages: [
-          { role: "system", content: "Você é o suporte técnico do sistema SenexCare (gestão de casas de repouso). Analise falhas de envio de e-mail (Resend, validação de dados, autenticidade de documentos). Responda em português do Brasil, de forma curta: diagnóstico da causa provável e sugestão prática de correção para o gestor ou para o desenvolvedor. Nunca peça ou exponha chaves de API." },
+          { role: "system", content: "Você é o suporte técnico do sistema SenexCare (gestão de casas de repouso). Analise falhas de qualquer módulo do sistema (funcionários, cargos, ponto, escalas, afastamentos, prontuário, residentes e contratos, financeiro e recibos, fraldas, medicamentos, vacinas, temperatura, intercorrências, assinaturas eletrônicas, relatórios, WhatsApp, e-mails via Resend, portal do colaborador) e erros de tela no navegador, banco de dados (RLS, colunas, restrições) e funções do servidor. Responda em português do Brasil, de forma curta: diagnóstico da causa provável e sugestão prática de correção para o gestor ou para o desenvolvedor. Nunca peça ou exponha chaves de API." },
           { role: "user", content: `Origem: ${origem}\nErro: ${erro}\nContexto: ${JSON.stringify(contexto).slice(0, 3000)}` },
         ],
       }),
@@ -69,8 +69,8 @@ export async function diagnosticarErroEnvio(
         body: JSON.stringify({
           from: Deno.env.get("RESEND_FROM") || "Senex Care <nao-responda@senexcare.app>",
           to: [Deno.env.get("SUPORTE_EMAIL") || SUPORTE_PADRAO],
-          subject: `[Suporte SenexCare] Falha de envio — ${params.origem} (${d.gravidade})`,
-          html: `<h3>Falha de envio: ${params.origem}</h3><p><b>Erro:</b> ${params.erro.replace(/</g, "&lt;")}</p><p><b>Diagnóstico da IA:</b> ${d.diagnostico}</p><p><b>Sugestão:</b> ${d.sugestao}</p><pre>${JSON.stringify(contexto, null, 2).replace(/</g, "&lt;").slice(0, 3000)}</pre>`,
+          subject: `[Suporte SenexCare] Falha — ${params.origem} (${d.gravidade})`,
+          html: `<h3>Falha: ${params.origem}</h3><p><b>Erro:</b> ${params.erro.replace(/</g, "&lt;")}</p><p><b>Diagnóstico da IA:</b> ${d.diagnostico}</p><p><b>Sugestão:</b> ${d.sugestao}</p><pre>${JSON.stringify(contexto, null, 2).replace(/</g, "&lt;").slice(0, 3000)}</pre>`,
         }),
       });
       enviado = r.ok;
