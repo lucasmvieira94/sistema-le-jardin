@@ -2194,6 +2194,7 @@ export type Database = {
       }
       documentos_internos: {
         Row: {
+          arquivo_path: string | null
           ativo: boolean
           conteudo_html: string
           created_at: string
@@ -2207,6 +2208,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arquivo_path?: string | null
           ativo?: boolean
           conteudo_html: string
           created_at?: string
@@ -2220,6 +2222,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arquivo_path?: string | null
           ativo?: boolean
           conteudo_html?: string
           created_at?: string
