@@ -21,7 +21,7 @@ async function limparPdf(f: File): Promise<Blob> {
   doc.setCreator(""); doc.setProducer("");
   doc.setCreationDate(new Date(0)); doc.setModificationDate(new Date(0));
   doc.catalog.delete(PDFName.of("Metadata"));
-  return new Blob([await doc.save()], { type: "application/pdf" });
+  return new Blob([(await doc.save()) as BlobPart], { type: "application/pdf" });
 }
 
 export async function arquivoSemMetadados(f: File): Promise<{ blob: Blob; mime: string; nome: string }> {
