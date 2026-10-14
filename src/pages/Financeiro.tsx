@@ -198,9 +198,14 @@ export default function Financeiro() {
       },
     });
     if (error) {
-      const detalhes = error instanceof FunctionsHttpError
-        ? await error.context.text()
-        : error.message;
+      let detalhes = error.message;
+      if (error instanceof FunctionsHttpError) {
+        // A função devolve o erro já analisado pelo agente de suporte (diagnóstico + sugestão)
+        const corpo = await error.context.json().catch(() => null);
+        detalhes = corpo?.error
+          ? `${corpo.error}${corpo.sugestao ? ` — Sugestão: ${corpo.sugestao}` : ""} (o suporte já foi avisado)`
+          : detalhes;
+      }
       throw new Error(detalhes || "Não foi possível enviar o recibo por e-mail.");
     }
     if (!data?.success) {
