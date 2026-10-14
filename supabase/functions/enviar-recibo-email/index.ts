@@ -4,6 +4,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { Resend } from "npm:resend@4.0.0";
 import { z } from "npm:zod@3.23.8";
 import { calcularSha256Hex, criarAnexoRecibo, extrairIp } from "./auditoria.ts";
+import { diagnosticarErroEnvio } from "../_shared/diagnosticoEnvio.ts";
 
 const EnviarReciboSchema = z.object({
   email: z.string().email().max(320),
@@ -16,7 +17,8 @@ const EnviarReciboSchema = z.object({
   pdfBase64: z.string().min(1).max(15_000_000),
   filename: z.string().min(1).max(255),
   documentoId: z.string().uuid(),
-  autenticidadeHash: z.string().regex(/^[0-9a-f]{64}$/),
+  // Hash aceito em maiúsculas (padrão atual) ou minúsculas (emissões antigas)
+  autenticidadeHash: z.string().regex(/^[0-9a-fA-F]{64}$/),
 });
 
 const json = (body: unknown, status = 200) =>
@@ -45,9 +47,16 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) return json({ error: "Não autorizado" }, 401);
 
+    const admin = createClient(supabaseUrl, serviceKey);
+    /** Falha: o agente de IA analisa, avisa o suporte e devolve a sugestão. */
+    const falhar = async (mensagem: string, status: number, contexto: Record<string, unknown> = {}) => {
+      const ajuda = await diagnosticarErroEnvio(admin, { origem: "enviar-recibo-email", erro: mensagem, contexto, usuarioId: user.id });
+      return json({ error: mensagem, diagnostico: ajuda?.diagnostico, sugestao: ajuda?.sugestao, ...contexto }, status);
+    };
+
     const parsed = EnviarReciboSchema.safeParse(await req.json());
     if (!parsed.success) {
-      return json({ error: "Dados do recibo inválidos", details: parsed.error.flatten().fieldErrors }, 400);
+      return falhar("Dados do recibo inválidos", 400, { details: parsed.error.flatten().fieldErrors });
     }
     const {
       email, nomeResponsavel, residenteNome, competencia, valorPago,
@@ -55,15 +64,14 @@ const handler = async (req: Request): Promise<Response> => {
       autenticidadeHash,
     } = parsed.data;
 
-    const admin = createClient(supabaseUrl, serviceKey);
     const { data: documento, error: documentoError } = await admin
       .from("documentos_emitidos")
       .select("id, hash_sha256")
       .eq("id", documentoId)
-      .eq("hash_sha256", autenticidadeHash)
+      .in("hash_sha256", [autenticidadeHash.toUpperCase(), autenticidadeHash.toLowerCase()])
       .maybeSingle();
     if (documentoError || !documento) {
-      return json({ error: "Documento autenticado não encontrado" }, 400);
+      return falhar("Documento autenticado não encontrado", 400, { documentoId });
     }
 
     const pdfBuffer = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0));
@@ -102,9 +110,13 @@ const handler = async (req: Request): Promise<Response> => {
       await admin.from("recibos_envios_auditoria")
         .update({ erro_detalhes: "Serviço de e-mail não configurado." })
         .eq("id", auditoria.id);
-      return json({ error: "Serviço de e-mail não configurado" }, 500);
+      return falhar("Serviço de e-mail não configurado", 500);
     }
     const resend = new Resend(resendKey);
+    // Respostas vão para o e-mail da empresa (Configurações); o remetente é sempre o domínio verificado no Resend.
+    const { data: cfg } = await admin.from("configuracoes_empresa").select("dominio_email")
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const emailEmpresa = cfg?.dominio_email?.includes("@") ? cfg.dominio_email : undefined;
 
     const html = `
       <div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
@@ -124,6 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data, error } = await resend.emails.send({
       from: Deno.env.get("RESEND_FROM") || "Senex Care <nao-responda@senexcare.app>",
       to: [email],
+      ...(emailEmpresa ? { reply_to: emailEmpresa, replyTo: emailEmpresa } : {}),
       subject: `Recibo de pagamento — ${residenteNome} (${competencia})`,
       html,
       // A API do Resend exige uma string Base64 no campo `content`.
@@ -137,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
         erro_detalhes: JSON.stringify(error).slice(0, 4000),
       }).eq("id", auditoria.id);
       if (auditError) console.error("Falha ao registrar auditoria do recibo:", auditError);
-      return json({ error: "Falha no envio", details: error }, 502);
+      return falhar(`Falha no envio: ${(error as any)?.message ?? JSON.stringify(error)}`, 502, { details: error });
     }
 
     const { error: auditError } = await admin.from("recibos_envios_auditoria").update({

@@ -60,12 +60,14 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     const nomeEmpresa = config?.nome_empresa || 'Sistema de Gestão';
-    const dominioEmail = config?.dominio_email || 'nao-responda@senexcare.app';
+    // Remetente sempre no domínio verificado no Resend; o e-mail da empresa recebe as respostas.
+    const emailEmpresa = config?.dominio_email?.includes('@') ? config.dominio_email : undefined;
     
     const linkConvite = `${Deno.env.get("SUPABASE_URL")}/auth/v1/signup?redirect_to=${encodeURIComponent(`${req.headers.get("origin")}/auth?convite=${funcionario_id}`)}`;
 
     const emailResponse = await resend.emails.send({
-      from: `${nomeEmpresa} <${dominioEmail}>`,
+      from: Deno.env.get('RESEND_FROM') || 'Senex Care <nao-responda@senexcare.app>',
+      ...(emailEmpresa ? { reply_to: emailEmpresa, replyTo: emailEmpresa } : {}),
       to: [email],
       subject: `Convite para acessar o ${nomeEmpresa}`,
       html: `

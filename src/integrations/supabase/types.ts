@@ -2392,6 +2392,45 @@ export type Database = {
           },
         ]
       }
+      erros_envio_suporte: {
+        Row: {
+          contexto: Json
+          created_at: string
+          diagnostico: string | null
+          enviado_suporte: boolean
+          erro: string
+          gravidade: string | null
+          id: string
+          origem: string
+          sugestao: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          contexto?: Json
+          created_at?: string
+          diagnostico?: string | null
+          enviado_suporte?: boolean
+          erro: string
+          gravidade?: string | null
+          id?: string
+          origem: string
+          sugestao?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          contexto?: Json
+          created_at?: string
+          diagnostico?: string | null
+          enviado_suporte?: boolean
+          erro?: string
+          gravidade?: string | null
+          id?: string
+          origem?: string
+          sugestao?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       escalas: {
         Row: {
           created_at: string

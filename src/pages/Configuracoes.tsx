@@ -193,15 +193,16 @@ export default function Configuracoes() {
               </p>
             </div>
             <div>
-              <Label htmlFor="dominio_email">Domínio de Email</Label>
+              <Label htmlFor="dominio_email">E-mail da empresa</Label>
               <Input
                 id="dominio_email"
                 value={config.dominio_email}
                 onChange={(e) => setConfig({...config, dominio_email: e.target.value})}
+                type="email"
                 placeholder="contato@suaempresa.com"
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Este email será usado para enviar os códigos de registro aos funcionários
+                Endereço que recebe relatórios, documentos e lembretes (como lembretes de pagamento) e as respostas dos e-mails enviados. Os envios saem sempre do remetente oficial do sistema.
               </p>
             </div>
           </CardContent>
