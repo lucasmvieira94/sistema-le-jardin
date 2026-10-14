@@ -2401,7 +2401,11 @@ export type Database = {
           erro: string
           gravidade: string | null
           id: string
+          observacao_resolucao: string | null
           origem: string
+          resolvido: boolean
+          resolvido_em: string | null
+          resolvido_por: string | null
           sugestao: string | null
           usuario_id: string | null
         }
@@ -2413,7 +2417,11 @@ export type Database = {
           erro: string
           gravidade?: string | null
           id?: string
+          observacao_resolucao?: string | null
           origem: string
+          resolvido?: boolean
+          resolvido_em?: string | null
+          resolvido_por?: string | null
           sugestao?: string | null
           usuario_id?: string | null
         }
@@ -2425,7 +2433,11 @@ export type Database = {
           erro?: string
           gravidade?: string | null
           id?: string
+          observacao_resolucao?: string | null
           origem?: string
+          resolvido?: boolean
+          resolvido_em?: string | null
+          resolvido_por?: string | null
           sugestao?: string | null
           usuario_id?: string | null
         }

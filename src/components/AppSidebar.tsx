@@ -97,6 +97,7 @@ export function AppSidebar() {
     { path: "/gestao-intercorrencias", icon: AlertTriangle, label: "Intercorrências", adminOnly: true },
     { path: "/assinaturas", icon: FileSignature, label: "Assinaturas Eletrônicas", adminOnly: true },
     { path: "/configuracoes/assinatura", icon: CreditCard, label: "Minha Assinatura", adminOnly: true },
+    { path: "/historico-erros", icon: AlertTriangle, label: "Histórico de Erros", adminOnly: true },
     { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
   ];
 
