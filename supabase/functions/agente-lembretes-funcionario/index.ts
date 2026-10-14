@@ -294,7 +294,7 @@ Gere UMA mensagem motivacional curta (1 a 2 frases) destacando o que é mais imp
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -400,7 +400,7 @@ REGRAS:
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3-flash-preview",
           messages: [{ role: "system", content: systemPrompt }, ...messages],
           stream: true,
         }),
