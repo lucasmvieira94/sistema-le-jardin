@@ -36,7 +36,8 @@ export default function AlertasProntuariosAtraso({ mostrarBotaoVer = true }: { m
 
   useEffect(() => {
     const carregar = async () => {
-      const rpc = supabase.rpc as unknown as (n: string, a?: object) => Promise<{ data: unknown; error: unknown }>;
+      // bind mantém o `this` do cliente (sem ele o Safari quebra em `this.rest`).
+      const rpc = supabase.rpc.bind(supabase) as unknown as (n: string, a?: object) => Promise<{ data: unknown; error: unknown }>;
       const [h, o] = await Promise.all([
         rpc("monitorar_prontuarios_dia"),
         rpc("monitorar_prontuarios_dia", { p_data: ontemCicloISO() }),

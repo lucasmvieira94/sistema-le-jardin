@@ -21,7 +21,9 @@ export default function AlertasContasPagar() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await (supabase as any).rpc("marcar_contas_atrasadas").catch(() => {});
+      // O retorno do rpc não tem .catch(); o erro vem no campo `error`.
+      const { error: erroAtraso } = await (supabase as any).rpc("marcar_contas_atrasadas");
+      if (erroAtraso) console.warn("[contas_pagar] marcar_contas_atrasadas falhou:", erroAtraso.message);
       const limite = new Date(); limite.setDate(limite.getDate() + 7);
       const { data } = await (supabase as any)
         .from("contas_pagar")
