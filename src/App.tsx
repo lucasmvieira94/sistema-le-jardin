@@ -39,6 +39,7 @@ import AnexoAfastamentoPublico from "./pages/AnexoAfastamentoPublico";
 import Index from "./pages/Index";
 import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
+import Cargos from "./pages/Cargos";
 import EditarFuncionario from "./pages/EditarFuncionario";
 import FichaFuncionario from "./pages/FichaFuncionario";
 import Escalas from "./pages/Escalas";
@@ -133,6 +134,7 @@ const App = () => {
               <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/funcionarios" element={<ProtectedRoute><Funcionarios /></ProtectedRoute>} />
               <Route path="/funcionarios/novo" element={<ProtectedRoute><NovoFuncionario /></ProtectedRoute>} />
+              <Route path="/cargos" element={<ProtectedRoute><Cargos /></ProtectedRoute>} />
               <Route path="/funcionarios/:id/editar" element={<ProtectedRoute><EditarFuncionario /></ProtectedRoute>} />
               <Route path="/funcionarios/:id/ficha" element={<ProtectedRoute><FichaFuncionario /></ProtectedRoute>} />
               <Route path="/escalas" element={<ProtectedRoute><Escalas /></ProtectedRoute>} />
