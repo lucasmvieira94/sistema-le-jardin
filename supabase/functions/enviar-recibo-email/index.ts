@@ -136,7 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data, error } = await resend.emails.send({
       from: Deno.env.get("RESEND_FROM") || "Senex Care <nao-responda@senexcare.app>",
       to: [email],
-      ...(emailEmpresa ? { reply_to: emailEmpresa } : {}),
+      ...(emailEmpresa ? { reply_to: emailEmpresa, replyTo: emailEmpresa } : {}),
       subject: `Recibo de pagamento — ${residenteNome} (${competencia})`,
       html,
       // A API do Resend exige uma string Base64 no campo `content`.

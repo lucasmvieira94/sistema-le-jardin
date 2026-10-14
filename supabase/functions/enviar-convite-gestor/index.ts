@@ -67,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: Deno.env.get('RESEND_FROM') || 'Senex Care <nao-responda@senexcare.app>',
-      ...(emailEmpresa ? { reply_to: emailEmpresa } : {}),
+      ...(emailEmpresa ? { reply_to: emailEmpresa, replyTo: emailEmpresa } : {}),
       to: [email],
       subject: `Convite para acessar o ${nomeEmpresa}`,
       html: `
