@@ -26,7 +26,7 @@ const MODULOS: [string, string][] = [
   ["/controle-temperatura", "Temperatura"], ["/controle-vacinas", "Vacinas"],
   ["/intercorrencias", "Intercorrências"], ["/gestao-intercorrencias", "Intercorrências"],
   ["/painel-intercorrencias", "Intercorrências"],
-  ["/assinatura", "Assinaturas eletrônicas"], ["/documentos-internos", "Documentos internos"],
+  ["/historico-erros", "Histórico de erros"], ["/assinatura", "Assinaturas eletrônicas"], ["/documentos-internos", "Documentos internos"],
   ["/verificar-documento", "Verificação de documentos"],
   ["/relatorios-ia", "Relatórios com IA"], ["/relatorios", "Relatórios"],
   ["/whatsapp", "WhatsApp"], ["/notificacoes-whatsapp", "WhatsApp"],
