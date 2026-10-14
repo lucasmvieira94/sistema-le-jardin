@@ -6,6 +6,7 @@
  * biometria facial; recusas exigem motivo. Tudo fica registrado com hash do
  * documento, hash da assinatura, data/hora, IP e dispositivo.
  */
+import { supabase } from '@/integrations/supabase/client';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
