@@ -2055,6 +2055,186 @@ export type Database = {
         }
         Relationships: []
       }
+      denuncias: {
+        Row: {
+          ainda_ocorre: boolean | null
+          anonima: boolean
+          bloqueado_ate: string | null
+          categoria: string
+          conclusao: string | null
+          created_at: string
+          dados_cifrados: string
+          id: string
+          medidas_cifradas: string | null
+          prazo_resposta: string
+          probabilidade: number | null
+          protocolo: string
+          senha_hash: string
+          severidade: number | null
+          situacao: string
+          tenant_id: string | null
+          tentativas_falhas: number
+          updated_at: string
+        }
+        Insert: {
+          ainda_ocorre?: boolean | null
+          anonima?: boolean
+          bloqueado_ate?: string | null
+          categoria: string
+          conclusao?: string | null
+          created_at?: string
+          dados_cifrados: string
+          id?: string
+          medidas_cifradas?: string | null
+          prazo_resposta?: string
+          probabilidade?: number | null
+          protocolo: string
+          senha_hash: string
+          severidade?: number | null
+          situacao?: string
+          tenant_id?: string | null
+          tentativas_falhas?: number
+          updated_at?: string
+        }
+        Update: {
+          ainda_ocorre?: boolean | null
+          anonima?: boolean
+          bloqueado_ate?: string | null
+          categoria?: string
+          conclusao?: string | null
+          created_at?: string
+          dados_cifrados?: string
+          id?: string
+          medidas_cifradas?: string | null
+          prazo_resposta?: string
+          probabilidade?: number | null
+          protocolo?: string
+          senha_hash?: string
+          severidade?: number | null
+          situacao?: string
+          tenant_id?: string | null
+          tentativas_falhas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      denuncias_anexos: {
+        Row: {
+          created_at: string
+          denuncia_id: string
+          enviado_por: string
+          id: string
+          mime: string
+          nome_cifrado: string
+          path: string
+          sha256: string
+          tamanho: number
+        }
+        Insert: {
+          created_at?: string
+          denuncia_id: string
+          enviado_por?: string
+          id?: string
+          mime: string
+          nome_cifrado: string
+          path: string
+          sha256: string
+          tamanho: number
+        }
+        Update: {
+          created_at?: string
+          denuncia_id?: string
+          enviado_por?: string
+          id?: string
+          mime?: string
+          nome_cifrado?: string
+          path?: string
+          sha256?: string
+          tamanho?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "denuncias_anexos_denuncia_id_fkey"
+            columns: ["denuncia_id"]
+            isOneToOne: false
+            referencedRelation: "denuncias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      denuncias_auditoria: {
+        Row: {
+          acao: string
+          created_at: string
+          denuncia_id: string | null
+          detalhe: string | null
+          id: string
+          protocolo: string | null
+          usuario_id: string | null
+          usuario_nome: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          denuncia_id?: string | null
+          detalhe?: string | null
+          id?: string
+          protocolo?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          denuncia_id?: string | null
+          detalhe?: string | null
+          id?: string
+          protocolo?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "denuncias_auditoria_denuncia_id_fkey"
+            columns: ["denuncia_id"]
+            isOneToOne: false
+            referencedRelation: "denuncias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      denuncias_mensagens: {
+        Row: {
+          autor: string
+          conteudo_cifrado: string
+          created_at: string
+          denuncia_id: string
+          id: string
+        }
+        Insert: {
+          autor: string
+          conteudo_cifrado: string
+          created_at?: string
+          denuncia_id: string
+          id?: string
+        }
+        Update: {
+          autor?: string
+          conteudo_cifrado?: string
+          created_at?: string
+          denuncia_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "denuncias_mensagens_denuncia_id_fkey"
+            columns: ["denuncia_id"]
+            isOneToOne: false
+            referencedRelation: "denuncias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       desligamentos_historico: {
         Row: {
           aviso_previo: boolean
@@ -5977,7 +6157,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "employee" | "super_admin"
+      app_role: "admin" | "employee" | "super_admin" | "compliance"
       documento_acao:
         | "gerado"
         | "reemitido"
@@ -6142,7 +6322,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "employee", "super_admin"],
+      app_role: ["admin", "employee", "super_admin", "compliance"],
       documento_acao: [
         "gerado",
         "reemitido",
