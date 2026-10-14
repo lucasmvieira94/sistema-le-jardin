@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       return json({ denuncias: data ?? [] });
     }
 
-    const { data: d } = await admin.from("denuncias").select("*").eq(b.action === "anexo" ? "id" : "id", b.action === "anexo" ? "00000000-0000-0000-0000-000000000000" : b.id).maybeSingle();
+    const d = b.action === "anexo" ? null : (await admin.from("denuncias").select("*").eq("id", b.id).maybeSingle()).data;
 
     if (b.action === "anexo") {
       const { data: a } = await admin.from("denuncias_anexos").select("*, denuncias(protocolo)").eq("id", b.id).maybeSingle();
