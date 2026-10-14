@@ -41,6 +41,7 @@ import Funcionarios from "./pages/Funcionarios";
 import NovoFuncionario from "./pages/NovoFuncionario";
 import Cargos from "./pages/Cargos";
 import HistoricoErros from "./pages/HistoricoErros";
+import ControleAssinaturas from "./pages/ControleAssinaturas";
 import EditarFuncionario from "./pages/EditarFuncionario";
 import FichaFuncionario from "./pages/FichaFuncionario";
 import Escalas from "./pages/Escalas";
@@ -162,6 +163,7 @@ const App = () => {
               <Route path="/gestao-gamificacao" element={<ProtectedRoute><ModuleGuard modulo="gamificacao"><GestaoGamificacao /></ModuleGuard></ProtectedRoute>} />
               <Route path="/controle-vacinas" element={<ProtectedRoute><ModuleGuard modulo="vacinas"><ControleVacinas /></ModuleGuard></ProtectedRoute>} />
               <Route path="/relatorios-ia" element={<ProtectedRoute><ModuleGuard modulo="relatorios_ia"><RelatoriosIA /></ModuleGuard></ProtectedRoute>} />
+              <Route path="/controle-assinaturas" element={<ProtectedRoute><ControleAssinaturas /></ProtectedRoute>} />
               <Route path="/historico-erros" element={<ProtectedRoute><HistoricoErros /></ProtectedRoute>} />
               <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
               <Route path="/configuracoes/assinatura" element={<ProtectedRoute><MinhaAssinatura /></ProtectedRoute>} />

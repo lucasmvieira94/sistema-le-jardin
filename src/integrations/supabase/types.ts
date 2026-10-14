@@ -5806,6 +5806,23 @@ export type Database = {
           quantidade_minima: number
         }[]
       }
+      painel_assinaturas_documentos: {
+        Args: never
+        Returns: {
+          assinado_em: string
+          criado_em: string
+          funcao: string
+          funcionario_id: string
+          funcionario_nome: string
+          hash_assinatura: string
+          motivo_recusa: string
+          referencia_id: string
+          status: string
+          subtitulo: string
+          tipo_documento: string
+          titulo: string
+        }[]
+      }
       pgp_armor_headers: {
         Args: { "": string }
         Returns: Record<string, unknown>[]
