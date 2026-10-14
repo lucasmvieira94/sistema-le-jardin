@@ -20,6 +20,7 @@ import EscalaSelect from "./cadastro-funcionario/EscalaSelect";
 import RegistraPontoSwitch from "./cadastro-funcionario/RegistraPontoSwitch";
 import TelefoneInput from "./cadastro-funcionario/TelefoneInput";
 import ValeTransporteSwitch from "./cadastro-funcionario/ValeTransporteSwitch";
+import { excecoesParaCargo, modulosEfetivos } from "@/utils/modulosCargo";
 
 type Escala = {
   id: number;
@@ -41,6 +42,9 @@ type FormData = {
   data_admissao: string;
   data_inicio_vigencia: string;
   funcao: string;
+  cargo_id: string;
+  personalizar_modulos: boolean;
+  modulos_desejados: string[];
   escala_id: string;
   registra_ponto: boolean;
   acesso_supervisor: boolean;
@@ -71,6 +75,9 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       data_admissao: funcionarioData.data_admissao || '',
       data_inicio_vigencia: funcionarioData.data_inicio_vigencia || '',
       funcao: funcionarioData.funcao || '',
+      cargo_id: funcionarioData.cargo_id || '',
+      personalizar_modulos: (funcionarioData.modulos_extras?.length || 0) + (funcionarioData.modulos_bloqueados?.length || 0) > 0,
+      modulos_desejados: [],
       escala_id: funcionarioData.escala_id?.toString() || '',
       registra_ponto: funcionarioData.registra_ponto ?? true,
       acesso_supervisor: funcionarioData.acesso_supervisor ?? false,
@@ -81,8 +88,19 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
       acesso_supervisor: false,
       recebe_vale_transporte: false,
       valor_diaria_vale_transporte: '',
+      cargo_id: '',
+      personalizar_modulos: false,
+      modulos_desejados: [],
     }
   });
+
+  // Ao editar, carrega os módulos efetivos atuais para a personalização
+  useEffect(() => {
+    if (!funcionarioData?.cargo_id) return;
+    supabase.from("cargos" as any).select("modulos").eq("id", funcionarioData.cargo_id).single().then(({ data }) => {
+      if (data) form.setValue("modulos_desejados", modulosEfetivos(data as any, funcionarioData));
+    });
+  }, [funcionarioData, form]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [escalas, setEscalas] = useState<Escala[]>([]);
@@ -200,14 +218,33 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
         return;
       }
 
+      // Cargo obrigatório: define o texto da função e os módulos do portal
+      if (!values.cargo_id) {
+        toast({ variant: "destructive", title: "Selecione o cargo do funcionário" });
+        setIsSubmitting(false);
+        return;
+      }
+      const { data: cargoSel } = await supabase
+        .from("cargos" as any).select("nome,modulos").eq("id", values.cargo_id).single();
+      const cargoInfo = cargoSel as any as { nome: string; modulos: string[] } | null;
+      if (!cargoInfo) {
+        toast({ variant: "destructive", title: "Cargo não encontrado" });
+        setIsSubmitting(false);
+        return;
+      }
+      const excecoes = values.personalizar_modulos
+        ? excecoesParaCargo(cargoInfo.modulos, values.modulos_desejados || [])
+        : { modulos_extras: [], modulos_bloqueados: [] };
+
       // Sanitize string inputs
       const sanitizedValues = {
         ...values,
         nome_completo: sanitizeString(values.nome_completo),
         email: sanitizeString(values.email),
         telefone: values.telefone,
-        funcao: sanitizeString(values.funcao)
+        funcao: cargoInfo.nome,
       };
+      const camposCargo = { cargo_id: values.cargo_id, ...excecoes };
 
       // Check for duplicates only if not editing or if values changed
       if (!isEditing || (funcionarioData && sanitizedValues.cpf !== funcionarioData.cpf)) {
@@ -252,7 +289,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
             escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
             data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
           }),
-          acesso_supervisor: sanitizedValues.acesso_supervisor,
+          ...camposCargo,
           recebe_vale_transporte: !!sanitizedValues.recebe_vale_transporte,
           valor_diaria_vale_transporte: sanitizedValues.valor_diaria_vale_transporte
             ? Number(sanitizedValues.valor_diaria_vale_transporte)
@@ -288,7 +325,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           registra_ponto: sanitizedValues.registra_ponto,
           escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
           data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
-          acesso_supervisor: sanitizedValues.acesso_supervisor,
+          ...camposCargo,
           recebe_vale_transporte: !!sanitizedValues.recebe_vale_transporte,
           valor_diaria_vale_transporte: sanitizedValues.valor_diaria_vale_transporte
             ? Number(sanitizedValues.valor_diaria_vale_transporte)
@@ -392,31 +429,9 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           <DataInput control={form.control} name="data_nascimento" label="Data de Nascimento" />
           <DataInput control={form.control} name="data_admissao" label="Data de Admissão" />
         </div>
-        <FuncaoInput control={form.control} />
+        <FuncaoInput control={form.control} watch={form.watch} setValue={form.setValue} />
         <RegistraPontoSwitch control={form.control} />
         <ValeTransporteSwitch control={form.control} />
-        <FormField
-          control={form.control}
-          name="acesso_supervisor"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">
-                  Acesso ao Painel do Supervisor
-                </FormLabel>
-                <div className="text-sm text-muted-foreground">
-                  Permite visualizar todos os prontuários preenchidos e em aberto
-                </div>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Escala de Trabalho</h3>
           {form.watch("registra_ponto") && escalaGerenciadaPorHistorico && (

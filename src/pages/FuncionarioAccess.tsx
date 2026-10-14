@@ -124,6 +124,15 @@ export default function FuncionarioAccess() {
   const docsPendentes = documentosFuncionario.filter((d) => d.status === "pendente").length;
   const { data: bioStatus, refetch: recarregarBioStatus } = useBiometriaStatus(funcionarioId);
   const [autoCadastroOpen, setAutoCadastroOpen] = useState(false);
+  // Módulos liberados pelo cargo do funcionário (null = carregando)
+  const [modulos, setModulos] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!funcionarioId) { setModulos(null); return; }
+    supabase.rpc('modulos_funcionario' as any, { _funcionario_id: funcionarioId }).then(({ data, error }) => {
+      setModulos(error ? [] : ((data as string[] | null) ?? []));
+    });
+  }, [funcionarioId]);
+  const pode = (id: string) => !!modulos?.includes(id);
 
   // Auto-expire session every minute
   useEffect(() => {
@@ -457,12 +466,12 @@ export default function FuncionarioAccess() {
               <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Principais</h2>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {funcionarioRegistraPonto && (
+              {funcionarioRegistraPonto && pode('ponto') && (
                 <FeatureCard title="Registro de Ponto" description="Entrada, saída e intervalos" icon={CalendarRange} color="green" buttonLabel="Registrar" onClick={navigateToRegistroPonto} featured />
               )}
-              <FeatureCard title="Prontuário Eletrônico" description="Atividades dos residentes" icon={FileHeart} color="green" buttonLabel="Acessar" onClick={navigateToProntuario} featured />
-              <FeatureCard title="Controle de Temperatura" description="Sala de medicamentos" icon={Thermometer} color="green" buttonLabel="Registrar" onClick={navigateToTemperatura} featured />
-              <FeatureCard title="Intercorrências" description="Registre e acompanhe" icon={AlertTriangle} color="red" buttonLabel="Registrar" onClick={navigateToIntercorrencias} featured />
+              {pode('prontuario') && <FeatureCard title="Prontuário Eletrônico" description="Atividades dos residentes" icon={FileHeart} color="green" buttonLabel="Acessar" onClick={navigateToProntuario} featured />}
+              {pode('temperatura') && <FeatureCard title="Controle de Temperatura" description="Sala de medicamentos" icon={Thermometer} color="green" buttonLabel="Registrar" onClick={navigateToTemperatura} featured />}
+              {pode('intercorrencias') && <FeatureCard title="Intercorrências" description="Registre e acompanhe" icon={AlertTriangle} color="red" buttonLabel="Registrar" onClick={navigateToIntercorrencias} featured />}
             </div>
           </section>
 
@@ -473,16 +482,16 @@ export default function FuncionarioAccess() {
               <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Meu RH</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {funcionarioRegistraPonto && (
+              {funcionarioRegistraPonto && pode('folhas_ponto') && (
                 <FeatureCard title="Minhas Folhas de Ponto" description="Folhas mensais publicadas pelo gestor" icon={Clock} color="blue" buttonLabel="Ver Folhas" onClick={navigateToMinhasFolhasPonto} />
               )}
-              <FeatureCard title="Minha Escala" description="Seus dias escalados no mês" icon={CalendarDays} color="teal" buttonLabel="Ver Escala" onClick={navigateToMinhaEscala} />
+              {pode('escala') && <FeatureCard title="Minha Escala" description="Seus dias escalados no mês" icon={CalendarDays} color="teal" buttonLabel="Ver Escala" onClick={navigateToMinhaEscala} />}
               {bioStatus && !bioStatus.cadastrada && (
                 <FeatureCard title="Cadastrar meu rosto" description="Necessário para assinar documentos" icon={ScanFace} color="orange" buttonLabel="Cadastrar" onClick={() => setAutoCadastroOpen(true)} featured />
               )}
-              <FeatureCard title="Meus Documentos" description={docsPendentes > 0 ? `${docsPendentes} documento(s) para assinar` : "Assine com biometria facial"} icon={FileSignature} color={docsPendentes > 0 ? "red" : "indigo"} buttonLabel={docsPendentes > 0 ? "Assinar agora" : "Ver Documentos"} onClick={navigateToMeusDocumentos} featured={docsPendentes > 0} />
-              <FeatureCard title="Meus Contracheques" description="Baixe seus holerites por mês" icon={Receipt} color="emerald" buttonLabel="Ver Contracheques" onClick={navigateToContracheques} />
-              <FeatureCard title="Meu Desempenho" description="Pontos, nível e prêmios" icon={Trophy} color="yellow" buttonLabel="Ver Desempenho" onClick={navigateToGamificacao} />
+              {pode('documentos') && <FeatureCard title="Meus Documentos" description={docsPendentes > 0 ? `${docsPendentes} documento(s) para assinar` : "Assine com biometria facial"} icon={FileSignature} color={docsPendentes > 0 ? "red" : "indigo"} buttonLabel={docsPendentes > 0 ? "Assinar agora" : "Ver Documentos"} onClick={navigateToMeusDocumentos} featured={docsPendentes > 0} />}
+              {pode('contracheques') && <FeatureCard title="Meus Contracheques" description="Baixe seus holerites por mês" icon={Receipt} color="emerald" buttonLabel="Ver Contracheques" onClick={navigateToContracheques} />}
+              {pode('desempenho') && <FeatureCard title="Meu Desempenho" description="Pontos, nível e prêmios" icon={Trophy} color="yellow" buttonLabel="Ver Desempenho" onClick={navigateToGamificacao} />}
             </div>
           </section>
 
@@ -493,15 +502,15 @@ export default function FuncionarioAccess() {
               <h2 className="text-white text-sm sm:text-base font-semibold uppercase tracking-wider">Residentes</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <FeatureCard title="Meus Prontuários" description="Prontuários que você preencheu" icon={FileSearch} color="cyan" buttonLabel="Ver Registros" onClick={navigateToMeusProntuarios} />
-              <FeatureCard title="Controle de Fraldas" description="Uso e estoque de fraldas" icon={Baby} color="purple" buttonLabel="Acessar" onClick={navigateToFraldas} />
-              <FeatureCard title="Medicamentos" description="Administração e confirmação" icon={Pill} color="orange" buttonLabel="Administrar" onClick={navigateToAdministracaoMedicamentos} />
-              <FeatureCard title="Cartão Vacinal" description="Consulte e registre vacinas" icon={Syringe} color="pink" buttonLabel="Acessar" onClick={navigateToVacinas} />
+              {pode('meus_prontuarios') && <FeatureCard title="Meus Prontuários" description="Prontuários que você preencheu" icon={FileSearch} color="cyan" buttonLabel="Ver Registros" onClick={navigateToMeusProntuarios} />}
+              {pode('fraldas') && <FeatureCard title="Controle de Fraldas" description="Uso e estoque de fraldas" icon={Baby} color="purple" buttonLabel="Acessar" onClick={navigateToFraldas} />}
+              {pode('medicamentos') && <FeatureCard title="Medicamentos" description="Administração e confirmação" icon={Pill} color="orange" buttonLabel="Administrar" onClick={navigateToAdministracaoMedicamentos} />}
+              {pode('vacinas') && <FeatureCard title="Cartão Vacinal" description="Consulte e registre vacinas" icon={Syringe} color="pink" buttonLabel="Acessar" onClick={navigateToVacinas} />}
             </div>
           </section>
 
           {/* D. PAINEL DO SUPERVISOR (unificado) */}
-          {funcionarioAcessoSupervisor && (
+          {pode('supervisor') && (
             <section>
               <div className="flex items-center gap-2 mb-3 px-1">
                 <div className="h-1 w-8 bg-indigo-300 rounded-full" />
@@ -539,7 +548,7 @@ export default function FuncionarioAccess() {
               <div className="h-1 w-8 bg-amber-300 rounded-full" />
               <h2 className="text-white/80 text-xs sm:text-sm font-medium uppercase tracking-wider">Outros</h2>
             </div>
-            <FeatureCard title="Feedback do Sistema" description="Avalie e sugira melhorias para o SENEXCARE" icon={MessageSquareHeart} color="amber" buttonLabel="Avaliar" onClick={navigateToFeedback} />
+            {pode('feedback') && <FeatureCard title="Feedback do Sistema" description="Avalie e sugira melhorias para o SENEXCARE" icon={MessageSquareHeart} color="amber" buttonLabel="Avaliar" onClick={navigateToFeedback} />}
           </section>
 
 

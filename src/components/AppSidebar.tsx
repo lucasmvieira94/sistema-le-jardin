@@ -69,6 +69,7 @@ export function AppSidebar() {
 
   const pontoMenuItems = [
     { path: "/funcionarios", icon: Users, label: "Funcionários", adminOnly: true },
+    { path: "/cargos", icon: Users, label: "Cargos e Funções", adminOnly: true },
     { path: "/escalas", icon: Calendar, label: "Escalas", adminOnly: true },
     { path: "/apropriacao", icon: Clock, label: "Apropriação", adminOnly: true },
     { path: "/analise-condutas", icon: AlertTriangle, label: "Análise de Condutas", adminOnly: true },
