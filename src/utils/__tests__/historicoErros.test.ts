@@ -22,9 +22,9 @@ describe("histórico de erros", () => {
   it("usa o dia de Brasília no período", () => {
     expect(filtrarErros(lista, { ...todos, de: "2026-10-11", ate: "2026-10-11" })).toHaveLength(1);
   });
-  it("resume por módulo com mais abertos primeiro", () => {
+  it("resume por módulo com mais abertos primeiro (empate: mais ocorrências)", () => {
     const r = resumoPorModulo(lista);
-    expect(r[0]).toMatchObject({ modulo: "Financeiro", abertos: 1, altas: 1 });
-    expect(r[1]).toMatchObject({ modulo: "Prontuário", total: 2, abertos: 1 });
+    expect(r[1]).toMatchObject({ modulo: "Financeiro", abertos: 1, altas: 1 });
+    expect(r[0]).toMatchObject({ modulo: "Prontuário", total: 2, abertos: 1 });
   });
 });
