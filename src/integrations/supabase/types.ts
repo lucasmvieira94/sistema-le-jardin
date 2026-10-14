@@ -1179,6 +1179,56 @@ export type Database = {
           },
         ]
       }
+      cargos: {
+        Row: {
+          ativo: boolean
+          carga_horaria_semanal: number | null
+          cbo: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          modulos: string[]
+          nome: string
+          salario_base: number | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          carga_horaria_semanal?: number | null
+          cbo?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          modulos?: string[]
+          nome: string
+          salario_base?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          carga_horaria_semanal?: number | null
+          cbo?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          modulos?: string[]
+          nome?: string
+          salario_base?: number | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargos_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalogo_vacinas: {
         Row: {
           ativo: boolean
@@ -2902,6 +2952,7 @@ export type Database = {
           biometria_cadastrada_em: string | null
           biometria_facial: Json | null
           biometria_obrigatoria: boolean
+          cargo_id: string | null
           codigo_4_digitos: string
           cpf: string
           created_at: string
@@ -2918,6 +2969,8 @@ export type Database = {
           funcao: string
           id: string
           modalidade_reducao_aviso: string | null
+          modulos_bloqueados: string[]
+          modulos_extras: string[]
           motivo_desligamento: string | null
           nome_completo: string
           observacoes_desligamento: string | null
@@ -2936,6 +2989,7 @@ export type Database = {
           biometria_cadastrada_em?: string | null
           biometria_facial?: Json | null
           biometria_obrigatoria?: boolean
+          cargo_id?: string | null
           codigo_4_digitos: string
           cpf: string
           created_at?: string
@@ -2952,6 +3006,8 @@ export type Database = {
           funcao: string
           id?: string
           modalidade_reducao_aviso?: string | null
+          modulos_bloqueados?: string[]
+          modulos_extras?: string[]
           motivo_desligamento?: string | null
           nome_completo: string
           observacoes_desligamento?: string | null
@@ -2970,6 +3026,7 @@ export type Database = {
           biometria_cadastrada_em?: string | null
           biometria_facial?: Json | null
           biometria_obrigatoria?: boolean
+          cargo_id?: string | null
           codigo_4_digitos?: string
           cpf?: string
           created_at?: string
@@ -2986,6 +3043,8 @@ export type Database = {
           funcao?: string
           id?: string
           modalidade_reducao_aviso?: string | null
+          modulos_bloqueados?: string[]
+          modulos_extras?: string[]
           motivo_desligamento?: string | null
           nome_completo?: string
           observacoes_desligamento?: string | null
@@ -2998,6 +3057,13 @@ export type Database = {
           valor_diaria_vale_transporte?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "funcionarios_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "funcionarios_escala_id_fkey"
             columns: ["escala_id"]
@@ -5341,6 +5407,16 @@ export type Database = {
         }
         Returns: string
       }
+      calcular_modulos_funcionario: {
+        Args: {
+          _bloq: string[]
+          _cargo_mods: string[]
+          _extras: string[]
+          _supervisor: boolean
+          _tem_cargo: boolean
+        }
+        Returns: string[]
+      }
       calcular_nivel_gamificacao: {
         Args: { p_xp: number }
         Returns: Database["public"]["Enums"]["gamification_nivel"]
@@ -5615,6 +5691,10 @@ export type Database = {
         Returns: undefined
       }
       marcar_contas_atrasadas: { Args: never; Returns: number }
+      modulos_funcionario: {
+        Args: { _funcionario_id: string }
+        Returns: string[]
+      }
       monitorar_prontuarios_dia: {
         Args: { p_data?: string }
         Returns: {
