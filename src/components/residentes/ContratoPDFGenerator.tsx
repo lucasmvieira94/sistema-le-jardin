@@ -90,7 +90,7 @@ export default function ContratoPDFGenerator({
         console.error("Erro ao registrar autenticidade:", e);
         toast({
           title: "Aviso",
-          description: "Não foi possível registrar o código de autenticidade. O documento pode ser visualizado, mas sem QR Code.",
+          description: "Não foi possível certificar o contrato. A impressão e o download ficam bloqueados até a certificação.",
           variant: "destructive",
         });
       }
@@ -363,6 +363,7 @@ export default function ContratoPDFGenerator({
   `;
 
   const handlePrint = () => {
+    if (!auth) return;
     const htmlContent = generateContractHTML();
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
@@ -384,7 +385,7 @@ export default function ContratoPDFGenerator({
   };
 
   const handleDownloadPDF = async () => {
-    if (!printRef.current) return;
+    if (!printRef.current || !auth) return;
 
     try {
       toast({ title: "Gerando PDF...", description: "Aguarde enquanto o documento é gerado." });
@@ -510,7 +511,7 @@ export default function ContratoPDFGenerator({
                   <ShieldCheck className="w-3.5 h-3.5" /> Autenticidade registrada
                 </span>
               )}
-              <Button variant="outline" size="sm" onClick={handlePrint}>
+              <Button variant="outline" size="sm" onClick={handlePrint} disabled={!auth || registrandoAuth}>
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
               </Button>
@@ -534,7 +535,7 @@ export default function ContratoPDFGenerator({
                   },
                 ]}
               />
-              <Button size="sm" onClick={handleDownloadPDF}>
+              <Button size="sm" onClick={handleDownloadPDF} disabled={!auth || registrandoAuth}>
                 <FileDown className="w-4 h-4 mr-2" />
                 Baixar PDF
               </Button>

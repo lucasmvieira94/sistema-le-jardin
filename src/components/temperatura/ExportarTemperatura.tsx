@@ -15,6 +15,7 @@ import * as z from "zod";
 import { useTemperatura } from "@/hooks/useTemperatura";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
+import { certificarPDF } from '@/utils/certificarPDF';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { cn } from "@/lib/utils";
@@ -153,6 +154,7 @@ export function ExportarTemperatura() {
       doc.text(`Relatório gerado em: ${formatarDataHora(new Date().toISOString())}`, 14, pageHeight - 10);
 
       // Salvar arquivo
+      await certificarPDF(doc, { tipo: 'relatorio', titulo: `Controle de temperatura — ${titulo}` }, finalY + 21);
       doc.save(`controle-temperatura-${hojeISO()}.pdf`);
       toast.success("Relatório PDF exportado com sucesso!");
       

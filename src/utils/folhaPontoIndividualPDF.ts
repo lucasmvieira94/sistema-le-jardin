@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
 import { supabase } from '@/integrations/supabase/client';
 import { renderFolhaFuncionario, renderRodapeNumeracao } from './folhaPontoPdfLayout';
+import { certificarPDF } from './certificarPDF';
 
 interface DadosEmpresa {
   nome_empresa: string;
@@ -37,7 +38,8 @@ export async function gerarFolhaPontoIndividualPDFBytes(
   const doc = new jsPDF('portrait');
   const dadosEmpresa = dadosEmpresaPre ?? (await buscarDadosEmpresa());
 
-  renderFolhaFuncionario(doc, dados, totais, mes, ano, dadosEmpresa);
+  const fim = renderFolhaFuncionario(doc, dados, totais, mes, ano, dadosEmpresa);
+  await certificarPDF(doc, { tipo: 'folha_ponto', titulo: `Folha de ponto ${dados[0]?.funcionario_nome ?? ''} — ${mes}/${ano}` }, fim);
   renderRodapeNumeracao(doc, dadosEmpresa);
 
   const arrayBuffer = doc.output('arraybuffer');
@@ -93,7 +95,7 @@ export async function publicarFolhaPontoFuncionario(params: {
         mes,
         ano,
         path,
-        paginas: 1,
+        paginas: (await (await import('pdf-lib')).PDFDocument.load(bytes)).getPageCount(),
         tamanho_bytes: bytes.byteLength,
         enviado_por: enviadoPor ?? null,
         created_at: new Date().toISOString(),

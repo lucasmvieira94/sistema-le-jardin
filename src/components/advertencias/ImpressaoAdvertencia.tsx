@@ -92,6 +92,7 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
   }, [advertencia.id]);
 
   const handlePrint = () => {
+    if (!auth) return;
     const content = printRef.current;
     if (!content) return;
 
@@ -162,7 +163,7 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
               <ShieldCheck className="w-3.5 h-3.5" /> Autenticidade registrada
             </span>
           )}
-          <Button onClick={handlePrint} className="gap-2">
+          <Button onClick={handlePrint} disabled={!auth || registrandoAuth} className="gap-2">
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
           <EnviarParaAssinaturaButton

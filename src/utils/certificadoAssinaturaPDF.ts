@@ -9,8 +9,9 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import type { Envelope } from '@/hooks/useAssinaturas';
-import { METODO_LABEL, STATUS_LABEL, TIPO_LABEL, linkAssinatura } from '@/hooks/useAssinaturas';
-import { codigoVerificadorDoHash, normalizarHashDocumento, renderRodapeDocumentoPDF } from './rodapeDocumento';
+import { METODO_LABEL, STATUS_LABEL, TIPO_LABEL } from '@/hooks/useAssinaturas';
+import { carregarLogoRodape, normalizarHashDocumento, renderRodapeDocumentoPDF } from './rodapeDocumento';
+import { obterAutenticidadeAssinatura } from './autenticidadeAssinatura';
 
 const fmt = (iso?: string | null) =>
   iso
@@ -100,17 +101,18 @@ export async function gerarCertificadoAssinaturas(envelope: Envelope) {
   doc.text(nota, M, y);
 
   const assinado = signatarios.find((s) => s.status === 'assinado' && s.assinado_em);
-  const tokenVerificacao = signatarios.find((s) => s.token)?.token;
-  if (assinado?.assinado_em && tokenVerificacao) {
-    const urlVerificacao = linkAssinatura(tokenVerificacao);
+  if (assinado?.assinado_em) {
+    const autenticidade = await obterAutenticidadeAssinatura({ origem: 'envelope', referencia_id: envelope.id, hash: envelope.hash_documento });
+    const urlVerificacao = autenticidade.url_verificacao;
     const qrDataUrl = await QRCode.toDataURL(urlVerificacao, {
       width: 180,
       margin: 1,
       errorCorrectionLevel: 'M',
     });
     if (y > 210) doc.addPage();
+    await carregarLogoRodape();
     renderRodapeDocumentoPDF(doc, {
-      id: codigoVerificadorDoHash(envelope.hash_documento),
+      id: autenticidade.codigo_verificador,
       hash: normalizarHashDocumento(envelope.hash_documento),
       urlVerificacao,
       qrDataUrl,
@@ -120,7 +122,7 @@ export async function gerarCertificadoAssinaturas(envelope: Envelope) {
       metodo: METODO_LABEL[assinado.metodo] ?? assinado.metodo,
       assinadoEm: assinado.assinado_em,
     });
-  }
+  } else throw new Error('Não é possível emitir certificado sem assinatura registrada.');
 
   doc.save(`manifesto-assinaturas-${envelope.id.slice(0, 8)}.pdf`);
 }

@@ -10,6 +10,10 @@ const TIPO_LABEL: Record<string, string> = {
   recibo_despesa: 'Recibo de Pagamento de Despesa',
   anexo_afastamento: 'Documento de Afastamento',
   ficha_funcional: 'Ficha Funcional do Colaborador',
+  folha_ponto: 'Folha de Ponto',
+  relatorio: 'Relatório do Sistema',
+  ficha_acolhimento: 'Ficha de Acolhimento',
+  recibo_confirmacao: 'Recibo de Confirmação da Folha de Ponto',
 }
 
 function mascararNome(nome: string): string {
@@ -48,8 +52,8 @@ Deno.serve(async (req) => {
         const { data: assinatura } = await admin.from('documentos_internos_assinaturas').select('id,hash_documento,funcionario_id,metodo,assinado_em,status').eq('referencia_id', referencia).eq('hash_assinatura', body.hash_assinatura).eq('status', 'assinado').maybeSingle()
         if (!assinatura || assinatura.hash_documento.toUpperCase() !== hash) return json({ error: 'Assinatura não encontrada' }, 404)
         referencia = assinatura.id
-        const { data: funcionario } = await admin.from('funcionarios').select('nome').eq('id', assinatura.funcionario_id).maybeSingle()
-        signatarios = [{ nome: funcionario?.nome ?? 'Colaborador', papel: 'Colaborador', metodo: assinatura.metodo, status: assinatura.status, assinado_em: assinatura.assinado_em }]
+        const { data: funcionario } = await admin.from('funcionarios').select('nome_completo,funcao').eq('id', assinatura.funcionario_id).maybeSingle()
+        signatarios = [{ nome: funcionario?.nome_completo ?? 'Colaborador', papel: funcionario?.funcao ?? 'Colaborador', metodo: assinatura.metodo, status: assinatura.status, assinado_em: assinatura.assinado_em }]
       }
       const { data: codigo } = await admin.from('assinatura_verificacoes').select('codigo_verificador').eq('origem', body.origem).eq('referencia_id', referencia).eq('hash_documento', hash).maybeSingle()
       return codigo ? json({ ...codigo, signatarios }) : json({ error: 'Verificação não encontrada' }, 404)
@@ -65,9 +69,9 @@ Deno.serve(async (req) => {
       if (verificacao.origem === 'interno') {
         const { data: s } = await admin.from('documentos_internos_assinaturas').select('titulo,funcionario_id,metodo,status,assinado_em,ip_origem,user_agent,hash_assinatura').eq('id', verificacao.referencia_id).maybeSingle()
         if (!s || s.status !== 'assinado') return json({ autentico: false, motivo: 'Assinatura indisponível.' })
-        const { data: funcionario } = await admin.from('funcionarios').select('nome').eq('id', s.funcionario_id).maybeSingle()
+        const { data: funcionario } = await admin.from('funcionarios').select('nome_completo').eq('id', s.funcionario_id).maybeSingle()
         titulo = s.titulo
-        assinaturas = [{ nome: mascararNome(funcionario?.nome ?? ''), papel: 'Colaborador', metodo: s.metodo, status: s.status, assinado_em: s.assinado_em, ip_origem: s.ip_origem, user_agent: s.user_agent, hash_assinatura: s.hash_assinatura }]
+        assinaturas = [{ nome: mascararNome(funcionario?.nome_completo ?? ''), papel: 'Colaborador', metodo: s.metodo, status: s.status, assinado_em: s.assinado_em, ip_origem: s.ip_origem, user_agent: s.user_agent, hash_assinatura: s.hash_assinatura }]
       } else {
         const { data: envelope } = await admin.from('assinatura_envelopes').select('titulo,status').eq('id', verificacao.referencia_id).maybeSingle()
         if (!envelope || envelope.status === 'cancelado') return json({ autentico: false, motivo: 'Documento cancelado ou indisponível.' })

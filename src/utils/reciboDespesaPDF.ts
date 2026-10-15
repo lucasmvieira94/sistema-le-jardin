@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import { formatarData } from "./dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
-import { renderRodapeDocumentoPDF } from "./rodapeDocumento";
+import { carregarLogoRodape, renderRodapeDocumentoPDF } from "./rodapeDocumento";
 
 export type ReciboDespesa = {
   contaId: string;
@@ -127,7 +127,7 @@ export async function gerarReciboDespesaPDF(r: ReciboDespesa) {
       }
     );
     if (!regErr && regData?.codigo_verificador && regData?.hash) {
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const origin = "https://senexcare.app";
       const hash = String(regData.hash).toUpperCase();
       const codigoVerificador = String(regData.codigo_verificador);
       const urlVerificacao = `${origin}/verificar-documento?id=${encodeURIComponent(
@@ -314,6 +314,7 @@ export async function gerarReciboDespesaPDF(r: ReciboDespesa) {
 
   // Rodapé de autenticidade (hash + QR)
   if (autenticidade) {
+    await carregarLogoRodape();
     renderRodapeDocumentoPDF(doc, autenticidade, margin);
   }
 

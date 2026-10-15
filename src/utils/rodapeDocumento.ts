@@ -38,6 +38,25 @@ export const formatarDataHoraAssinatura = (iso: string) =>
 const iconeSenexCareHTML = () => `
   <img src="${escapeHtml(sxCareLogo.url)}" alt="SXCare assinatura eletrônica" style="width:66px;height:66px;flex:none;border:1px solid #777;border-radius:4px;object-fit:cover;background:#fff" />`;
 
+let logoPDF: string | undefined;
+let carregandoLogo: Promise<void> | undefined;
+/** O PDF usa o mesmo logo quadrado do documento de referência, não uma aproximação vetorial. */
+export async function carregarLogoRodape(): Promise<void> {
+  if (logoPDF) return;
+  if (!carregandoLogo) carregandoLogo = (async () => {
+    const response = await fetch(sxCareLogo.url);
+    if (!response.ok) throw new Error('Não foi possível carregar o logo de certificação.');
+    const blob = await response.blob();
+    logoPDF = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Logo inválido.'));
+      reader.onerror = () => reject(new Error('Não foi possível ler o logo de certificação.'));
+      reader.readAsDataURL(blob);
+    });
+  })().catch(error => { carregandoLogo = undefined; throw error; });
+  await carregandoLogo;
+}
+
 /** Apresentação institucional inspirada no SEI, sem usar sua marca nem afirmar assinatura inexistente. */
 export function rodapeDocumentoHTML(
   auth: SeloAutenticidade,
@@ -64,7 +83,7 @@ export function rodapeDocumentoHTML(
   </div>`;
 }
 
-/** Faixa de verificação no fim do PDF; reserva de 36 mm a cargo do chamador. */
+/** Duas faixas conforme o documento de referência; reservar 72 mm no fim da página. */
 export function renderRodapeDocumentoPDF(
   doc: jsPDF,
   auth: SeloAutenticidade,
@@ -73,39 +92,30 @@ export function renderRodapeDocumentoPDF(
 ): void {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
-  const y = h - 65;
+  const y = h - 72;
+  if (!logoPDF) throw new Error('Logo de certificação indisponível. A emissão foi interrompida.');
   doc.setDrawColor(150);
   doc.setLineWidth(0.25);
   doc.line(margin, y, w - margin, y);
-  // Símbolo vetorial SXCare (blocos conectados + cadeado) para impressão nítida.
-  doc.setFillColor(19, 102, 63);
-  doc.roundedRect(margin + 2, y + 3, 24, 16, 1, 1, 'F');
-  doc.setFillColor(255, 255, 255);
-  doc.rect(margin + 5, y + 8, 3.2, 3.2, 'F');
-  doc.rect(margin + 9, y + 8, 3.2, 3.2, 'F');
-  doc.rect(margin + 7, y + 12, 3.2, 3.2, 'F');
-  doc.setDrawColor(255, 255, 255);
-  doc.roundedRect(margin + 14, y + 10, 6, 5.5, 0.7, 0.7);
-  doc.line(margin + 15.2, y + 10, margin + 15.2, y + 8.5);
-  doc.line(margin + 18.8, y + 10, margin + 18.8, y + 8.5);
-  doc.setFont('helvetica', 'bold').setFontSize(6).setTextColor(255, 255, 255);
-  doc.text('SXCare', margin + 14, y + 7.2);
-  doc.setFont('helvetica', assinatura ? 'normal' : 'bold').setFontSize(7.3).setTextColor(35);
+  doc.addImage(logoPDF, 'JPEG', margin + 1, y + 3, 22, 22);
+  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(35);
   const textoAssinatura = assinatura
     ? `Documento assinado eletronicamente por ${assinatura.nome}${assinatura.papel ? `, ${assinatura.papel}` : ''} em ${formatarDataHoraAssinatura(assinatura.assinadoEm)}, conforme horário oficial de Brasília.`
     : 'DOCUMENTO ELETRÔNICO · AUTENTICIDADE — este bloco comprova integridade e não representa assinatura.';
-  doc.text(doc.splitTextToSize(textoAssinatura, w - margin * 2 - 31), margin + 30, y + 8);
-  doc.line(margin, y + 22, w - margin, y + 22);
-  doc.addImage(auth.qrDataUrl, 'PNG', margin + 2, y + 25, 25, 25);
+  const linhasAssinatura = doc.splitTextToSize(textoAssinatura, w - margin * 2 - 28);
+  const fimSuperior = y + Math.max(28, linhasAssinatura.length * 4 + 8);
+  doc.text(linhasAssinatura, margin + 27, y + 10, { lineHeightFactor: 1.25 });
+  doc.line(margin, fimSuperior, w - margin, fimSuperior);
+  doc.addImage(auth.qrDataUrl, 'PNG', margin + 1, fimSuperior + 3, 25, 25);
   const x = margin + 31;
   const disponivel = w - margin - x - 2;
-  doc.setFont('helvetica', 'normal').setFontSize(7).setTextColor(45);
-  doc.text('A autenticidade deste documento pode ser conferida no site:', x, y + 29);
-  doc.text(doc.splitTextToSize(auth.urlVerificacao, disponivel), x, y + 33);
-  doc.setFont('helvetica', 'bold').setFontSize(7);
-  doc.text(doc.splitTextToSize(`Código verificador: ${auth.id}`, disponivel), x, y + 42);
-  doc.setFont('helvetica', 'normal').setFontSize(6.5);
-  doc.text(doc.splitTextToSize(`Código CRC/SHA-256: ${normalizarHashDocumento(auth.hash)}`, disponivel), x, y + 47);
-  doc.line(margin, y + 53, w - margin, y + 53);
+  doc.setFont('helvetica', 'normal').setFontSize(8).setTextColor(35);
+  const textoVerificacao = `A autenticidade deste documento pode ser conferida no site ${auth.urlVerificacao}, informando o código verificador ${auth.id} e o código CRC/SHA-256 ${normalizarHashDocumento(auth.hash)}.`;
+  const linhasVerificacao = doc.splitTextToSize(textoVerificacao, disponivel);
+  doc.text(linhasVerificacao, x, fimSuperior + 7, { lineHeightFactor: 1.25 });
+  const fimInferior = fimSuperior + Math.max(31, linhasVerificacao.length * 3.6 + 9);
+  if (fimInferior > h - 12) throw new Error('O rodapé excedeu o espaço disponível. Reduza os dados do signatário.');
+  doc.link(x, fimSuperior + 2, disponivel, fimInferior - fimSuperior - 2, { url: auth.urlVerificacao });
+  doc.line(margin, fimInferior, w - margin, fimInferior);
   doc.setTextColor(0);
 }

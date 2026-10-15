@@ -1,9 +1,14 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { z } from 'npm:zod@3'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const Schema = z.object({
+  tipo: z.enum(['contrato_residente', 'contrato_temporario', 'advertencia', 'recibo_pagamento', 'recibo_despesa', 'ficha_funcional', 'folha_ponto', 'relatorio', 'ficha_acolhimento']),
+  referencia_id: z.string().uuid().nullish(), referencia_tabela: z.string().max(100).nullish(),
+  numero_documento: z.string().max(255).nullish(), titular_nome: z.string().min(1).max(500),
+  dados_estruturais: z.record(z.unknown()), tenant_id: z.string().uuid().nullish(),
+  hash_conteudo: z.string().regex(/^[a-f0-9]{64}$/i).optional(),
+})
 
 function canonicalStringify(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value)
@@ -20,6 +25,7 @@ async function sha256Hex(text: string): Promise<string> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method !== 'POST') return new Response('Método inválido', { status: 405, headers: corsHeaders })
 
   try {
     const authHeader = req.headers.get('Authorization') || ''
@@ -40,14 +46,14 @@ Deno.serve(async (req) => {
     }
     const userId = userData.user.id
 
-    const body = await req.json().catch(() => ({}))
-    const { tipo, referencia_id, referencia_tabela, numero_documento, titular_nome, dados_estruturais, tenant_id } = body
-
-    if (!tipo || !titular_nome || !dados_estruturais) {
-      return new Response(JSON.stringify({ error: 'Campos obrigatórios ausentes' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-    }
-    if (!['contrato_residente', 'contrato_temporario', 'advertencia', 'recibo_pagamento', 'recibo_despesa', 'ficha_funcional'].includes(tipo)) {
-      return new Response(JSON.stringify({ error: 'Tipo inválido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const parsed = Schema.safeParse(await req.json().catch(() => null))
+    if (!parsed.success) return new Response(JSON.stringify({ error: parsed.error.flatten() }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    const { tipo, referencia_id, referencia_tabela, numero_documento, titular_nome, dados_estruturais, tenant_id, hash_conteudo } = parsed.data
+    const { data: tenantAtual } = await userClient.rpc('get_current_tenant_id')
+    const tenantEmissao = tenant_id ?? tenantAtual ?? null
+    if (tenant_id && tenant_id !== tenantAtual) {
+      const { data: superAdmin } = await userClient.rpc('is_super_admin')
+      if (!superAdmin) return new Response(JSON.stringify({ error: 'Empresa não autorizada' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     // Hash canônico dos dados estruturais
@@ -58,7 +64,7 @@ Deno.serve(async (req) => {
       titular_nome,
       dados: dados_estruturais,
     })
-    const hash = await sha256Hex(canonical)
+    const hash = hash_conteudo?.toUpperCase() ?? await sha256Hex(canonical)
 
     const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || null
     const ua = req.headers.get('user-agent') || null
@@ -70,6 +76,7 @@ Deno.serve(async (req) => {
       .from('documentos_emitidos')
       .select('id, hash_sha256, codigo_verificador')
       .ilike('hash_sha256', hash)
+      .eq('emitido_por', userId)
       .maybeSingle()
 
     let documentoId: string
@@ -92,7 +99,7 @@ Deno.serve(async (req) => {
           hash_sha256: hash,
           dados_estruturais,
           emitido_por: userId,
-          tenant_id: tenant_id ?? null,
+          tenant_id: tenantEmissao,
         })
         .select('id, codigo_verificador')
         .single()

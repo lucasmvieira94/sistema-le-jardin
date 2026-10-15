@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { FolhaPontoData, TotaisFolhaPonto } from '@/hooks/useFolhaPonto';
 import { supabase } from '@/integrations/supabase/client';
 import { linkAnexo } from './anexoAfastamento';
+import { certificarPDF } from './certificarPDF';
 import {
   renderCabecalhoEmpresa,
   renderTitulo,
@@ -97,7 +98,8 @@ export async function exportToPDF(
   const funcionario = dados[0];
   const dadosEmpresa = await buscarDadosEmpresa();
 
-  renderFolhaFuncionario(doc, dados, totais, mes, ano, dadosEmpresa);
+  const fim = renderFolhaFuncionario(doc, dados, totais, mes, ano, dadosEmpresa);
+  await certificarPDF(doc, { tipo: 'folha_ponto', titulo: `Folha de ponto ${funcionario.funcionario_nome} — ${mes}/${ano}` }, fim);
   renderRodapeNumeracao(doc, dadosEmpresa);
 
   doc.save(`folha-ponto-${funcionario.funcionario_nome.replace(/\s+/g, '-')}-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
@@ -165,6 +167,7 @@ export async function exportMultipleFuncionariosToPDF(
     });
   }
 
+  await certificarPDF(doc, { tipo: 'folha_ponto', titulo: `Folhas de ponto consolidadas — ${mes}/${ano}` });
   renderRodapeNumeracao(doc, dadosEmpresa);
   doc.save(`folhas-ponto-geral-${mes.toString().padStart(2, '0')}-${ano}.pdf`);
 }

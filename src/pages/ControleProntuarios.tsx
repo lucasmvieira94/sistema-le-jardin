@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import jsPDF from 'jspdf';
+import { certificarPDF } from '@/utils/certificarPDF';
 import 'jspdf-autotable';
 
 interface ProntuarioRegistro {
@@ -523,6 +524,7 @@ export default function ControleProntuarios() {
       const nomeArquivo = `prontuario_${prontuario.residentes?.nome_completo?.replace(/\s+/g, '_')}_${new Date(prontuario.data_registro + 'T12:00:00').toISOString().split('T')[0]}.pdf`;
       
       // Salvar PDF
+      await certificarPDF(pdf, { tipo: 'relatorio', titulo: `Prontuário — ${prontuario.residentes?.nome_completo ?? 'Residente'}`, referenciaId: prontuario.id, referenciaTabela: 'prontuario_registros' }, currentY);
       pdf.save(nomeArquivo);
 
       toast({

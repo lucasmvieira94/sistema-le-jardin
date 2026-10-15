@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calcularDiasTrabalhadosPorHistorico, calcularUltimoDiaVT, nomeMes } from "@/utils/valeTransporteCalculator";
 import { toast } from "@/components/ui/use-toast";
 import jsPDF from "jspdf";
+import { certificarPDF } from '@/utils/certificarPDF';
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 
@@ -166,7 +167,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
 
   const tituloPeriodo = `${nomeMes(mes)}/${ano}`;
 
-  function exportarPDF() {
+  async function exportarPDF() {
     setExporting("pdf");
     try {
       const doc = new jsPDF({ orientation: "portrait" });
@@ -198,6 +199,7 @@ export default function ModalValeTransporte({ open, onOpenChange }: ModalValeTra
         footStyles: { fillColor: [229, 231, 235], textColor: 0, fontStyle: "bold" },
       });
 
+      await certificarPDF(doc, { tipo: 'relatorio', titulo: `Vale-transporte — ${tituloPeriodo}` });
       doc.save(`vale-transporte-${tituloPeriodo.replace("/", "-")}.pdf`);
       toast({ title: "PDF gerado com sucesso" });
     } catch (e: any) {
