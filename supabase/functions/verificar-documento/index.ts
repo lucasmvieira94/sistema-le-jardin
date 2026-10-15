@@ -9,6 +9,7 @@ const TIPO_LABEL: Record<string, string> = {
   recibo_pagamento: 'Recibo de Pagamento',
   recibo_despesa: 'Recibo de Pagamento de Despesa',
   anexo_afastamento: 'Documento de Afastamento',
+  ficha_funcional: 'Ficha Funcional do Colaborador',
 }
 
 function mascararNome(nome: string): string {
