@@ -397,6 +397,8 @@ export default function ContratosTemporarios() {
       rodape = rodapeAutenticidadeHTML(auth);
     } catch (e) {
       console.error("Falha ao registrar autenticidade do contrato temporário:", e);
+      toast({ title: 'Emissão interrompida', description: 'Não foi possível certificar o contrato. Tente novamente.', variant: 'destructive' });
+      return;
     }
 
     const printWindow = window.open("", "_blank");

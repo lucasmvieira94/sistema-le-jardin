@@ -27,7 +27,7 @@ export interface DocumentoAutenticidade {
 }
 
 function buildUrlVerificacao(id: string, hash: string): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin = "https://senexcare.app";
   return `${origin}/verificar-documento?id=${encodeURIComponent(id)}&hash=${encodeURIComponent(hash)}`;
 }
 

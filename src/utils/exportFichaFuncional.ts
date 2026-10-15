@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { certificarPDF } from './certificarPDF';
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -293,6 +294,7 @@ export async function exportarFichaPDF(filtro: FiltroExport, ids?: string[]) {
     }
   });
 
+  await certificarPDF(doc, { tipo: 'ficha_funcional', titulo: 'Fichas funcionais consolidadas' });
   const total = funcionarios.length;
   const totalPages = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {

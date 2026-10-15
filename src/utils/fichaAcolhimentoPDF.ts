@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { certificarPDF } from './certificarPDF';
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import { formatarDataHora } from "@/utils/dateUtils";
@@ -87,6 +88,7 @@ export async function baixarFichaAcolhimentoPDF(
 
   const empresa = data as EmpresaPDF | null;
   const doc = gerarDocumentoFichaAcolhimento(ficha, residenteNome, empresa);
+  await certificarPDF(doc, { tipo: 'ficha_acolhimento', titulo: `Ficha de acolhimento — ${residenteNome}`, referenciaId: ficha.id, referenciaTabela: 'fichas_acolhimento' });
   doc.save(criarNomeArquivoFicha(residenteNome, ficha.created_at));
 }
 

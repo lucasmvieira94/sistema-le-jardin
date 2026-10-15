@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { certificarPDF } from '@/utils/certificarPDF';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -260,6 +261,7 @@ export default function AnaliseFeedback() {
         }
       }
 
+      await certificarPDF(pdf, { tipo: 'relatorio', titulo: 'Análise de feedback' });
       pdf.save(`analise-feedback-${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success("PDF exportado com sucesso!");
     } catch (e: any) {

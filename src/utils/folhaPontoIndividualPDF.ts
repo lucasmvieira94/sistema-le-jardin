@@ -95,7 +95,7 @@ export async function publicarFolhaPontoFuncionario(params: {
         mes,
         ano,
         path,
-        paginas: (await import('pdf-lib')).PDFDocument.load(bytes).then(pdf => pdf.getPageCount()),
+        paginas: (await (await import('pdf-lib')).PDFDocument.load(bytes)).getPageCount(),
         tamanho_bytes: bytes.byteLength,
         enviado_por: enviadoPor ?? null,
         created_at: new Date().toISOString(),

@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
 import QRCode from "qrcode";
-import { renderRodapeDocumentoPDF, type SeloAutenticidade } from "@/utils/rodapeDocumento";
+import { certificarPDF } from './certificarPDF';
 import { formatarData, formatarDataHora, hojeISO } from "@/utils/dateUtils";
 
 /**
@@ -146,16 +146,7 @@ export async function exportarFichaFuncionarioPDF(funcionarioId: string) {
   if (g) secao("Gamificação", [["Nível", g.nivel || "-"], ["XP total", g.xp_total ?? g.xp ?? 0], ["Moedas", g.moedas ?? g.saldo_moedas ?? 0]]);
 
   // Certificação de autenticidade: registra o conteúdo consolidado e gera código + SHA-256.
-  const selo = await registrarAutenticidade(func, {
-    escalas: (hist.data || []).length,
-    advertencias: (adv.data || []).map((a: any) => [a.tipo, a.data_ocorrencia]),
-    afastamentos: (afa.data || []).map((a: any) => [a.data_inicio, a.data_fim]),
-    folhas: (folhas.data || []).map((p: any) => [p.mes, p.ano, !!p.confirmado]),
-    contracheques: (contra.data || []).length,
-  });
-  if (y > pageH - 72) doc.addPage();
-  doc.setPage(doc.getNumberOfPages());
-  renderRodapeDocumentoPDF(doc, selo, 14);
+  await certificarPDF(doc, { tipo: 'ficha_funcional', titulo: `Ficha funcional — ${func.nome_completo}`, referenciaId: func.id, referenciaTabela: 'funcionarios', tenantId: func.tenant_id }, y);
 
   const total = doc.getNumberOfPages();
   for (let i = 1; i <= total; i++) {

@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import jsPDF from 'jspdf';
+import { certificarPDF } from '@/utils/certificarPDF';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,7 +72,7 @@ export default function RelatoriosIA() {
     }
   };
 
-  const generatePDFDoc = (relatorio: any) => {
+  const generatePDFDoc = async (relatorio: any) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     let yPos = 20;
@@ -305,12 +306,13 @@ export default function RelatoriosIA() {
       });
     }
 
+    await certificarPDF(doc, { tipo: 'relatorio', titulo: 'Relatório semanal — análise com IA', referenciaId: relatorio.id, referenciaTabela: relatorio.id ? 'relatorios_semanais_ia' : undefined }, yPos);
     return doc;
   };
 
-  const handleDownloadPDF = (relatorio: any) => {
+  const handleDownloadPDF = async (relatorio: any) => {
     try {
-      const doc = generatePDFDoc(relatorio);
+      const doc = await generatePDFDoc(relatorio);
       const nomeArquivo = `relatorio_${format(new Date(relatorio.data_inicio), 'dd-MM-yyyy')}_${format(new Date(relatorio.data_fim), 'dd-MM-yyyy')}.pdf`;
       doc.save(nomeArquivo);
       toast.success('Relatório baixado com sucesso!');
@@ -328,7 +330,7 @@ export default function RelatoriosIA() {
 
     setEnviandoEmail(true);
     try {
-      const doc = generatePDFDoc(relatorioParaEnviar);
+      const doc = await generatePDFDoc(relatorioParaEnviar);
       const pdfBase64 = doc.output('datauristring').split(',')[1];
       
       const { data, error } = await supabase.functions.invoke('enviar-relatorio-email', {
@@ -386,7 +388,7 @@ export default function RelatoriosIA() {
       toast.success("Relatório gerado! Enviando email...");
 
       // Enviar email de teste
-      const doc = generatePDFDoc(relatorioData.relatorio);
+      const doc = await generatePDFDoc(relatorioData.relatorio);
       const pdfBase64 = doc.output('datauristring').split(',')[1];
 
       const { error: emailError } = await supabase.functions.invoke('enviar-relatorio-email', {

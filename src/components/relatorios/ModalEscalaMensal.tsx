@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
+import { certificarPDF } from '@/utils/certificarPDF';
 import autoTable from 'jspdf-autotable';
 
 interface Funcionario {
@@ -177,7 +178,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
     }
   };
 
-  const exportarPDF = () => {
+  const exportarPDF = async () => {
     try {
       // Criar documento PDF em modo paisagem
       const doc = new jsPDF({
@@ -372,6 +373,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
       });
       
       // Salvar o PDF
+      await certificarPDF(doc, { tipo: 'relatorio', titulo: `Escala — ${monthNames[selectedMonth - 1]} ${selectedYear}` });
       doc.save(`Escala_${monthNames[selectedMonth - 1]}_${selectedYear}.pdf`);
       toast.success("PDF gerado com sucesso!");
       
@@ -508,7 +510,7 @@ export default function ModalEscalaMensal({ open, onOpenChange, funcionarios }: 
                     <FileText className="w-4 h-4 mr-2" />
                     Gerar PDF
                   </Button>
-                  <Button onClick={() => window.print()} variant="outline">
+                  <Button onClick={exportarPDF} variant="outline">
                     <Download className="w-4 h-4 mr-2" />
                     Imprimir
                   </Button>
