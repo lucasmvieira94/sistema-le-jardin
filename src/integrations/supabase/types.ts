@@ -6170,6 +6170,7 @@ export type Database = {
         | "recibo_pagamento"
         | "recibo_despesa"
         | "anexo_afastamento"
+        | "ficha_funcional"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -6336,6 +6337,7 @@ export const Constants = {
         "recibo_pagamento",
         "recibo_despesa",
         "anexo_afastamento",
+        "ficha_funcional",
       ],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [
