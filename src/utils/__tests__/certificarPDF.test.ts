@@ -5,7 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 const mocks = vi.hoisted(() => ({ invoke: vi.fn(), logo: vi.fn(), render: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
 vi.mock('../rodapeDocumento', () => ({ carregarLogoRodape: mocks.logo, renderRodapeDocumentoPDF: mocks.render }));
-import { certificarPDF, seloDaEmissao } from '../certificarPDF';
+import { certificarArquivoPDF, certificarPDF, seloDaEmissao } from '../certificarPDF';
 
 describe('emissão obrigatoriamente certificada', () => {
   beforeEach(() => { vi.clearAllMocks(); });
@@ -41,5 +41,17 @@ describe('emissão obrigatoriamente certificada', () => {
     pdf.addPage(); pdf.text('Segunda página', 20, 20);
     await certificarPDF(pdf, { tipo: 'relatorio', titulo: 'Relatório' }, 270);
     expect((await PDFDocument.load(pdf.output('arraybuffer'))).getPageCount()).toBe(3);
+  });
+  it('preserva todas as páginas do contracheque importado e acrescenta seu certificado', async () => {
+    mocks.invoke.mockResolvedValue({ data: { codigo_verificador: '12345678', hash: 'a'.repeat(64) } });
+    const original = await PDFDocument.create();
+    original.addPage([400, 600]);
+    original.addPage([450, 650]);
+    const bytes = await certificarArquivoPDF(await original.save(), { tipo: 'relatorio', titulo: 'Contracheque' });
+    const certificado = await PDFDocument.load(bytes);
+    expect(certificado.getPageCount()).toBe(3);
+    expect(certificado.getPage(0).getSize()).toEqual({ width: 400, height: 600 });
+    expect(certificado.getPage(1).getSize()).toEqual({ width: 450, height: 650 });
+    expect(mocks.render).toHaveBeenCalledOnce();
   });
 });
