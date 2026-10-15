@@ -17,6 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Loader2, User, Calendar, Clock, Shield, Trophy, FileText, AlertTriangle, Briefcase, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "@/components/ui/use-toast";
 
 type FuncionarioCompleto = {
   id: string;
@@ -56,6 +57,7 @@ type Afastamento = {
 
 export default function FichaFuncionario() {
   const { id } = useParams();
+  const [gerandoPDF, setGerandoPDF] = useState(false);
   const navigate = useNavigate();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const [funcionario, setFuncionario] = useState<FuncionarioCompleto | null>(null);
@@ -124,6 +126,23 @@ export default function FichaFuncionario() {
           </div>
           <p className="text-muted-foreground">{funcionario.funcao} {funcionario.escalas ? `• ${funcionario.escalas.nome}` : ""}</p>
         </div>
+        <Button
+          variant="outline"
+          disabled={gerandoPDF}
+          onClick={async () => {
+            setGerandoPDF(true);
+            try {
+              const { exportarFichaFuncionarioPDF } = await import("@/utils/fichaFuncionarioPDF");
+              await exportarFichaFuncionarioPDF(id!);
+            } catch (e: any) {
+              toast({ variant: "destructive", title: "Erro ao gerar PDF", description: e?.message || "Tente novamente" });
+            } finally {
+              setGerandoPDF(false);
+            }
+          }}
+        >
+          {gerandoPDF ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />} Exportar PDF
+        </Button>
         <Button variant="outline" onClick={() => navigate(`/funcionarios/${id}/editar`)}>
           <Edit className="w-4 h-4 mr-2" /> Editar
         </Button>
