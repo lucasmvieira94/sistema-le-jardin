@@ -5682,6 +5682,14 @@ export type Database = {
           total_horas_trabalhadas: string
         }[]
       }
+      certificado_confirmacao_folha: {
+        Args: {
+          p_confirmado_at: string
+          p_folha_id: string
+          p_funcionario_id: string
+        }
+        Returns: Json
+      }
       ciclo_jornada_dias: { Args: { p_jornada: string }; Returns: number }
       cleanup_expired_rotation_tokens: { Args: never; Returns: undefined }
       confirmar_aviso_funcionario: {
