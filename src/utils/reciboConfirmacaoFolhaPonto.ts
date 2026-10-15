@@ -1,5 +1,7 @@
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
+import { seloDaEmissao } from './certificarPDF';
+import { carregarLogoRodape, renderRodapeDocumentoPDF } from './rodapeDocumento';
 
 const MESES = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -29,10 +31,14 @@ async function empresa() {
 
 const fmt = (iso: string) => {
   const d = new Date(iso);
-  return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  return d.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
 };
 
 export async function gerarReciboConfirmacaoFolhaPonto(p: Params): Promise<Blob> {
+  const { data, error } = await supabase.functions.invoke('verificar-documento', { body: { action: 'recibo_confirmacao', folha_id: p.folhaId, funcionario_id: p.funcionarioId, confirmado_em: p.confirmadoAt } });
+  if (error || !data?.dados) throw new Error('Não foi possível certificar o comprovante.');
+  const selo = await seloDaEmissao(data);
+  p = { ...p, funcionarioNome: data.dados.nome, mes: data.dados.mes, ano: data.dados.ano, concorda: data.dados.concorda, motivo: data.dados.motivo, confirmadoAt: data.dados.confirmado_em };
   const emp = await empresa();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const larg = doc.internal.pageSize.getWidth();
@@ -105,5 +111,8 @@ export async function gerarReciboConfirmacaoFolhaPonto(p: Params): Promise<Blob>
   doc.setFont('times', 'normal'); doc.setFontSize(10);
   doc.text(p.funcionarioNome, larg / 2, y + 6, { align: 'center' });
 
+  await carregarLogoRodape();
+  if (y + 6 > doc.internal.pageSize.getHeight() - 78) doc.addPage();
+  renderRodapeDocumentoPDF(doc, selo, 16);
   return doc.output('blob');
 }
