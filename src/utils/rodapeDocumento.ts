@@ -44,9 +44,11 @@ let carregandoLogo: Promise<void> | undefined;
 export async function carregarLogoRodape(): Promise<void> {
   if (logoPDF) return;
   if (!carregandoLogo) carregandoLogo = (async () => {
-    const response = await fetch(sxCareLogo.url);
+    const response = await fetch(new URL(sxCareLogo.url, 'https://senexcare.app').href);
     if (!response.ok) throw new Error('Não foi possível carregar o logo de certificação.');
     const blob = await response.blob();
+    const header = new Uint8Array(await blob.slice(0, 3).arrayBuffer());
+    if (header[0] !== 0xff || header[1] !== 0xd8 || header[2] !== 0xff) throw new Error('A imagem de certificação não é um JPEG válido.');
     logoPDF = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Logo inválido.'));

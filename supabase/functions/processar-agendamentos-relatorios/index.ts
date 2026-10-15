@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { anexarCertificadoPDF, gerarRelatorioAgendadoPDF, pdfBase64 } from '../_shared/certificacaoPDF.ts';
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -157,16 +158,18 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Gerar PDF do relatório (simplificado - apenas metadados)
-        const pdfContent = btoa(JSON.stringify({
-          titulo: "Relatório Semanal com IA",
-          periodo: `${dataInicioStr} a ${dataFimStr}`,
-          resumo: relatorio.resumo_executivo,
-          metricas: {
-            total_prontuarios: relatorio.total_prontuarios,
-            nao_conformidades: relatorio.nao_conformidades_encontradas,
-          },
-        }));
+        const original = gerarRelatorioAgendadoPDF(relatorio);
+        const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', original));
+        const hash = Array.from(digest, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        const { data: certificado, error: certError } = await supabase.from('documentos_emitidos').insert({
+          tipo: 'relatorio', referencia_id: relatorio.id, referencia_tabela: 'relatorios_semanais_ia',
+          titular_nome: 'Relatório semanal — análise com IA', tenant_id: agendamento.tenant_id,
+          hash_sha256: hash, dados_estruturais: { titulo: 'Relatório semanal', hash_conteudo: hash, escopo_hash: 'PDF antes do rodapé de certificação' },
+        }).select('id,codigo_verificador').single();
+        if (certError || !certificado) throw new Error('Não foi possível certificar o relatório agendado');
+        const pdfContent = pdfBase64(await anexarCertificadoPDF(original, certificado.codigo_verificador, hash));
+        const { error: auditError } = await supabase.from('documentos_auditoria').insert({ documento_id: certificado.id, acao: 'gerado', metadata: { origem: 'relatorio_agendado' } });
+        if (auditError) throw new Error('Não foi possível auditar a emissão');
 
         // Enviar email com o relatório
         const { error: emailError } = await supabase.functions.invoke("enviar-relatorio-email", {

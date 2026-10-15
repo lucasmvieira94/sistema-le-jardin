@@ -1,7 +1,8 @@
 # Roadmap
 
-- [ ] Certificar todas as novas emissões de documentos e padronizar o rodapé conforme o PDF enviado
-- [ ] Testar certificados e inspecionar os PDFs gerados
+- [x] Certificar todas as novas emissões de documentos e padronizar o rodapé conforme o PDF enviado
+- [x] Testar certificados e inspecionar os PDFs gerados
+- [ ] Validar emissão autenticada ponta a ponta: sessão externa indisponível no ambiente de testes
 
 - [x] Criar armazenamento privado e estrutura auditável para anexos de afastamentos
 - [x] Converter imagens, DOCX, ODT, TXT e RTF para PDF antes do armazenamento

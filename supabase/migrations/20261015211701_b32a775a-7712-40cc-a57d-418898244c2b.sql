@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.certificado_confirmacao_folha(uuid,uuid,timestamptz) FROM anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.certificado_confirmacao_folha(uuid,uuid,timestamptz) TO service_role;

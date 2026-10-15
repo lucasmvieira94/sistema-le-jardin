@@ -97,7 +97,7 @@ export default function MinhasFolhasPonto() {
     setEnviando(true);
     try {
       const concorda = modo === 'concorda';
-      await confirmarFolhaPonto({
+      const confirmacao = await confirmarFolhaPonto({
         folhaId: confirmando.id,
         funcionarioId,
         concorda,
@@ -114,7 +114,7 @@ export default function MinhasFolhasPonto() {
           ano: confirmando.ano,
           concorda,
           motivo: concorda ? null : motivo.trim(),
-          confirmadoAt: new Date().toISOString(),
+          confirmadoAt: confirmacao[0].confirmado_at,
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -124,6 +124,10 @@ export default function MinhasFolhasPonto() {
         setTimeout(() => URL.revokeObjectURL(url), 3000);
       } catch (e) {
         console.error('Erro ao gerar recibo:', e);
+        toast({ variant: 'destructive', title: 'Confirmação salva, mas o recibo não foi emitido', description: 'Não foi possível certificar o PDF. Procure o gestor para obter uma nova via.' });
+        setConfirmando(null);
+        qc.invalidateQueries({ queryKey: ['minhas-folhas-ponto', funcionarioId] });
+        return;
       }
 
       toast({

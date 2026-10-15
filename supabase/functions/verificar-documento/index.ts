@@ -37,6 +37,14 @@ Deno.serve(async (req) => {
       hash = hash || (typeof body.hash === 'string' ? body.hash : null)
     }
     const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    if (body.action === 'recibo_confirmacao') {
+      const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (typeof body.folha_id !== 'string' || !uuid.test(body.folha_id) || typeof body.funcionario_id !== 'string' || !uuid.test(body.funcionario_id) || typeof body.confirmado_em !== 'string' || !/^\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})$/.test(body.confirmado_em)) return json({ error: 'Confirmação inválida' }, 400)
+      // O instante exato devolvido pela confirmação, junto aos dois UUIDs, vincula o recibo à operação realizada.
+      const service = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
+      const { data, error } = await service.rpc('certificado_confirmacao_folha', { p_folha_id: body.folha_id, p_funcionario_id: body.funcionario_id, p_confirmado_at: body.confirmado_em })
+      return error || !data ? json({ error: 'Comprovante não encontrado' }, 404) : json(data)
+    }
     if (typeof hash !== 'string' || !/^[a-f0-9]{64}$/i.test(hash.trim())) return json({ autentico: false, error: 'Hash inválido' }, 400)
     hash = hash.trim().toUpperCase()
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)

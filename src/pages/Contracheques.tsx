@@ -12,6 +12,7 @@ import { useContrachequesAdmin, useDeleteContracheque, getContrachequeSignedUrl 
 import { processarPDFContracheques, type FuncionarioMatch, normalizar, type ResultadoProcessamento } from '@/utils/contrachequeProcessor';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { formatarTimestampDataHora } from '@/utils/formatTimestamp';
+import { certificarArquivoPDF } from '@/utils/certificarPDF';
 
 const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -77,10 +78,14 @@ export default function Contracheques() {
       let falhas = 0;
 
       for (const h of res.holerites) {
+        let pdfBytes: Uint8Array;
+        try {
+          pdfBytes = await certificarArquivoPDF(h.pdfBytes, { tipo: 'relatorio', titulo: `Contracheque — ${h.funcionarioNome} — ${mes}/${ano}`, referenciaId: h.funcionarioId, referenciaTabela: 'funcionarios', tenantId });
+        } catch { falhas++; continue; }
         const path = `${tenantId}/${h.funcionarioId}/${ano}-${String(mes).padStart(2, '0')}.pdf`;
         const { error: upErr } = await supabase.storage
           .from('contracheques')
-          .upload(path, new Blob([h.pdfBytes as any], { type: 'application/pdf' }), {
+          .upload(path, new Blob([pdfBytes as BlobPart], { type: 'application/pdf' }), {
             upsert: true,
             contentType: 'application/pdf',
           });
@@ -94,8 +99,8 @@ export default function Contracheques() {
             mes,
             ano,
             path,
-            paginas: h.paginas.length,
-            tamanho_bytes: h.pdfBytes.byteLength,
+            paginas: h.paginas.length + 1,
+            tamanho_bytes: pdfBytes.byteLength,
             enviado_por: uid,
           }, { onConflict: 'tenant_id,funcionario_id,mes,ano' });
         if (dbErr) { falhas++; continue; }
