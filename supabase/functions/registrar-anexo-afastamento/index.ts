@@ -5,7 +5,7 @@ import { z } from 'npm:zod@3'
 const Schema = z.object({
   afastamentoId: z.string().uuid(), tenantId: z.string().uuid(),
   path: z.string().regex(/^[a-f0-9-]{36}\/[a-f0-9-]{36}\/[a-f0-9-]{36}\.pdf$/),
-  nomeOriginal: z.string().min(1).max(255), formatoOriginal: z.enum(['pdf','jpg','jpeg','png','webp','gif','bmp','tif','tiff','heic','heif','svg','doc','docx','odt']),
+  nomeOriginal: z.string().min(1).max(255), formatoOriginal: z.enum(['pdf','jpg','jpeg','png','webp','gif','bmp','tif','tiff','heic','heif','svg','docx','odt','txt','rtf']),
   tamanhoOriginal: z.number().int().positive().max(20 * 1024 * 1024), hashOriginal: z.string().regex(/^[a-f0-9]{64}$/),
 })
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

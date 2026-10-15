@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { anexarCertificadoPDF } from '../_shared/certificacaoPDF.ts'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
@@ -26,5 +27,13 @@ Deno.serve(async req => {
   if (hash !== anexo.hash_pdf) { await audit('integridade_falhou'); return json({ error: 'Falha na verificação de integridade' }, 409) }
   await audit('visualizado')
   if (anexo.documento_id) await admin.from('documentos_auditoria').insert({ documento_id: anexo.documento_id, acao: 'verificado_publico', ip_origem: ip, user_agent: agent, metadata: { autentico: true, origem: 'anexo_afastamento' } })
-  return new Response(bytes, { headers: { ...corsHeaders, 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="afastamento-${anexo.id}.pdf"`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } })
+   const { data: certificado } = await admin.from('documentos_emitidos').select('codigo_verificador,hash_sha256').eq('id', anexo.documento_id).maybeSingle()
+   if (!certificado) return json({ error: 'Certificado indisponível' }, 409)
+   try {
+     const certificadoBytes = await anexarCertificadoPDF(bytes, certificado.codigo_verificador, certificado.hash_sha256)
+     return new Response(certificadoBytes, { headers: { ...corsHeaders, 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="afastamento-${anexo.id}.pdf"`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } })
+   } catch {
+     await audit('certificacao_falhou')
+     return json({ error: 'Não foi possível emitir o documento certificado. Tente novamente.' }, 503)
+   }
 })
