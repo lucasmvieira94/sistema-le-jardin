@@ -1,7 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
-import QRCode from "qrcode";
 import { certificarPDF } from './certificarPDF';
 import { formatarData, formatarDataHora, hojeISO } from "@/utils/dateUtils";
 
@@ -162,33 +161,3 @@ export async function exportarFichaFuncionarioPDF(funcionarioId: string) {
   doc.save(nomeArquivoFichaFuncionario(func.nome_completo, hojeISO()));
 }
 
-/** Registra a emissão no servidor (hash canônico) e devolve o selo com QR para o rodapé. */
-async function registrarAutenticidade(func: any, resumo: Record<string, unknown>): Promise<SeloAutenticidade> {
-  const { data, error } = await supabase.functions.invoke("registrar-documento", {
-    body: {
-      tipo: "ficha_funcional",
-      referencia_id: func.id,
-      referencia_tabela: "funcionarios",
-      titular_nome: func.nome_completo,
-      tenant_id: func.tenant_id ?? null,
-      dados_estruturais: {
-        emitido_em: hojeISO(),
-        cpf: func.cpf,
-        cargo: func.cargos?.nome || func.funcao,
-        admissao: func.data_admissao,
-        ativo: func.ativo,
-        desligamento: func.data_desligamento,
-        escala: func.escalas?.nome ?? null,
-        ...resumo,
-      },
-    },
-  });
-  if (error || !data?.codigo_verificador || !data?.hash) {
-    throw new Error("Não foi possível certificar a autenticidade da ficha. Tente novamente.");
-  }
-  const hash = String(data.hash).toUpperCase();
-  const id = String(data.codigo_verificador);
-  const urlVerificacao = `https://senexcare.app/verificar-documento?id=${encodeURIComponent(id)}&hash=${encodeURIComponent(hash)}`;
-  const qrDataUrl = await QRCode.toDataURL(urlVerificacao, { width: 220, margin: 1, errorCorrectionLevel: "M" });
-  return { id, hash, urlVerificacao, qrDataUrl };
-}

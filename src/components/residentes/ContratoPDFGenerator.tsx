@@ -90,7 +90,7 @@ export default function ContratoPDFGenerator({
         console.error("Erro ao registrar autenticidade:", e);
         toast({
           title: "Aviso",
-          description: "Não foi possível registrar o código de autenticidade. O documento pode ser visualizado, mas sem QR Code.",
+          description: "Não foi possível certificar o contrato. A impressão e o download ficam bloqueados até a certificação.",
           variant: "destructive",
         });
       }
