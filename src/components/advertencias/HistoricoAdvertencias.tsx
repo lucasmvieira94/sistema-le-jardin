@@ -116,8 +116,6 @@ export default function HistoricoAdvertencias({ funcionarioId, funcionarioNome }
                 )}
 
                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  {reg.testemunha_1 && <span>Testemunha 1: {reg.testemunha_1}</span>}
-                  {reg.testemunha_2 && <span>Testemunha 2: {reg.testemunha_2}</span>}
                   {reg.funcionario_recusou_assinar && (
                     <Badge variant="outline" className="text-xs border-destructive text-destructive">
                       Recusou assinar

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Printer, X, ShieldCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDocumentoAutenticidade, rodapeAutenticidadeHTML, type DocumentoAutenticidade } from "@/hooks/useDocumentoAutenticidade";
-import EnviarParaAssinaturaButton from "@/components/assinaturas/EnviarParaAssinaturaButton";
 
 const TIPO_LABELS: Record<string, string> = {
   advertencia_verbal: "ADVERTÊNCIA VERBAL",
@@ -47,6 +46,18 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
   const [empresa, setEmpresa] = useState<{ nome_empresa: string; cnpj: string | null; logo_url: string | null; cidade: string | null } | null>(null);
   const { registrar, loading: registrandoAuth } = useDocumentoAutenticidade();
   const [auth, setAuth] = useState<DocumentoAutenticidade | null>(null);
+  const [assinaturas, setAssinaturas] = useState<{ funcionario_id: string; tipo_documento: string; status: string; assinado_em: string; motivo_recusa: string | null; nome: string }[]>([]);
+
+  // Assinaturas eletrônicas do colaborador e das testemunhas (registro imutável)
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase as any).from("documentos_internos_assinaturas")
+        .select("funcionario_id, tipo_documento, status, assinado_em, motivo_recusa, funcionarios(nome_completo)")
+        .eq("referencia_id", advertencia.id).in("tipo_documento", ["advertencia", "advertencia_testemunha"])
+        .order("assinado_em");
+      setAssinaturas((data ?? []).map((r: any) => ({ ...r, nome: r.funcionarios?.nome_completo ?? "" })));
+    })();
+  }, [advertencia.id]);
 
   useEffect(() => {
     async function fetchEmpresa() {
@@ -166,41 +177,6 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
           <Button onClick={handlePrint} disabled={!auth || registrandoAuth} className="gap-2">
             <Printer className="w-4 h-4" /> Imprimir
           </Button>
-          <EnviarParaAssinaturaButton
-            titulo={`${TIPO_LABELS[advertencia.tipo] || "Documento disciplinar"} — ${advertencia.funcionarios.nome_completo}`}
-            tipo="advertencia"
-            referenciaId={advertencia.id}
-            referenciaTabela="advertencias_suspensoes"
-            size="default"
-            label="Enviar para assinatura"
-            obterConteudoHtml={() =>
-              (printRef.current?.innerHTML ?? "") + (auth ? rodapeAutenticidadeHTML(auth) : "")
-            }
-            signatarios={[
-              {
-                nome: advertencia.funcionarios.nome_completo,
-                cpf: advertencia.funcionarios.cpf ?? null,
-                papel: "funcionario",
-                metodo: "otp_email",
-              },
-              ...(advertencia.testemunha_1
-                ? [{
-                    nome: advertencia.testemunha_1,
-                    cpf: advertencia.cpf_testemunha_1 ?? null,
-                    papel: "testemunha" as const,
-                    metodo: "otp_email" as const,
-                  }]
-                : []),
-              ...(advertencia.testemunha_2
-                ? [{
-                    nome: advertencia.testemunha_2,
-                    cpf: advertencia.cpf_testemunha_2 ?? null,
-                    papel: "testemunha" as const,
-                    metodo: "otp_email" as const,
-                  }]
-                : []),
-            ]}
-          />
           <Button variant="outline" size="icon" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
@@ -284,53 +260,18 @@ export default function ImpressaoAdvertencia({ advertencia, onClose }: Impressao
             <p>{empresa?.cidade || "_________________"}, {hoje}</p>
           </div>
 
-          {/* Assinaturas */}
-          <div className="assinaturas">
-            <div className="assinatura-row">
-              <div className="assinatura-item">
-                <div className="assinatura-linha">
-                  <p><strong>Empregador / Representante</strong></p>
-                </div>
-              </div>
-              <div className="assinatura-item">
-                <div className="assinatura-linha">
-                  <p><strong>{advertencia.funcionarios.nome_completo}</strong></p>
-                  <p>Empregado(a)</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Testemunhas */}
-            {(advertencia.testemunha_1 || advertencia.testemunha_2) && (
-              <div className="assinatura-row">
-                {advertencia.testemunha_1 && (
-                  <div className="assinatura-item">
-                    <div className="assinatura-linha">
-                      <p><strong>{advertencia.testemunha_1}</strong></p>
-                      {advertencia.cpf_testemunha_1 && <p>CPF: {advertencia.cpf_testemunha_1}</p>}
-                      <p>Testemunha 1</p>
-                    </div>
-                  </div>
-                )}
-                {advertencia.testemunha_2 && (
-                  <div className="assinatura-item">
-                    <div className="assinatura-linha">
-                      <p><strong>{advertencia.testemunha_2}</strong></p>
-                      {advertencia.cpf_testemunha_2 && <p>CPF: {advertencia.cpf_testemunha_2}</p>}
-                      <p>Testemunha 2</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+          {/* Assinaturas eletrônicas (biometria facial em Meus Documentos) */}
+          <div className="legal-text">
+            <p><strong>ASSINATURAS ELETRÔNICAS</strong></p>
+            {assinaturas.length === 0 ? (
+              <p>Aguardando assinatura eletrônica do(a) colaborador(a) em Meus Documentos (SenexCare).</p>
+            ) : assinaturas.map((a) => (
+              <p key={a.funcionario_id + a.tipo_documento}>
+                {a.tipo_documento === "advertencia_testemunha" ? "Testemunha" : "Colaborador(a)"}: <strong>{a.nome}</strong> —{" "}
+                {a.status === "assinado" ? `assinado com biometria facial em ${formatarDataHora(a.assinado_em)}` : `recusou em ${formatarDataHora(a.assinado_em)}${a.motivo_recusa ? ` (motivo: ${a.motivo_recusa})` : ""}`}
+              </p>
+            ))}
           </div>
-
-          {/* Recusa */}
-          {advertencia.funcionario_recusou_assinar && (
-            <div className="recusa-box">
-              <p><strong>REGISTRO DE RECUSA:</strong> O(a) empregado(a) recusou-se a assinar o presente documento, conforme testemunhado pelas pessoas acima identificadas.</p>
-            </div>
-          )}
 
           {/* Hash de verificação */}
           <div className="hash-box">

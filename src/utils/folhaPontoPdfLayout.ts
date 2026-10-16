@@ -320,14 +320,10 @@ export function renderFolhaFuncionario(
     });
     const finalY = (doc as any).lastAutoTable.finalY;
     // Folhas exportadas ainda não foram assinadas: não declarar assinatura eletrônica.
-    doc.setDrawColor(...CORES.suave).setLineWidth(0.25);
+    // A assinatura do colaborador é feita apenas eletronicamente em Meus Documentos.
     const assinaturaY = Math.max(finalY + 9, doc.internal.pageSize.getHeight() - 26);
-    const half = (largura(doc) - MARGIN * 2) / 2;
-    doc.line(MARGIN + 5, assinaturaY, MARGIN + half - 6, assinaturaY);
-    doc.line(MARGIN + half + 6, assinaturaY, largura(doc) - MARGIN - 5, assinaturaY);
     doc.setFont('helvetica', 'normal').setFontSize(7).setTextColor(...CORES.suave);
-    doc.text('Assinatura do funcionário', MARGIN + half / 2, assinaturaY + 4, { align: 'center' });
-    doc.text('Assinatura do responsável', MARGIN + half * 1.5, assinaturaY + 4, { align: 'center' });
+    doc.text('A conferência e a assinatura desta folha são feitas eletronicamente pelo colaborador em Meus Documentos (SenexCare).', largura(doc) / 2, assinaturaY + 4, { align: 'center' });
     return assinaturaY + 5;
   }
 

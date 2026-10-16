@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer, PenLine, Trash2 } from "lucide-react";
+import { Loader2, Plus, Filter, AlertTriangle, FileWarning, Ban, Gavel, History, Printer, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import AdvertenciaForm from "@/components/advertencias/AdvertenciaForm";
 import HistoricoAdvertencias from "@/components/advertencias/HistoricoAdvertencias";
 import ImpressaoAdvertencia, { type AdvertenciaImpressao } from "@/components/advertencias/ImpressaoAdvertencia";
-import AssinaturaAdvertenciaForm from "@/components/advertencias/AssinaturaAdvertenciaForm";
 
 type AdvertenciaRow = {
   funcionario_id: string;
@@ -65,7 +64,6 @@ export default function AdvertenciasSuspensoes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [historicoFunc, setHistoricoFunc] = useState<{ id: string; nome: string } | null>(null);
   const [impressaoReg, setImpressaoReg] = useState<AdvertenciaRow | null>(null);
-  const [assinaturaReg, setAssinaturaReg] = useState<AdvertenciaRow | null>(null);
   const [exclusaoReg, setExclusaoReg] = useState<AdvertenciaRow | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const { isAdmin, loading: roleLoading } = useUserRole();
@@ -150,7 +148,7 @@ export default function AdvertenciasSuspensoes() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">Advertências e Suspensões</h2>
-          <p className="text-sm text-muted-foreground">Gestão disciplinar conforme CLT</p>
+          <p className="text-sm text-muted-foreground">Gestão disciplinar conforme CLT. Cada medida registrada vai automaticamente para assinatura do colaborador em Meus Documentos; acompanhe e indique testemunhas em Controle de Assinaturas.</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -228,26 +226,6 @@ export default function AdvertenciasSuspensoes() {
         </DialogContent>
       </Dialog>
 
-      {/* Assinatura/Testemunhas (modal) */}
-      <Dialog open={!!assinaturaReg} onOpenChange={() => setAssinaturaReg(null)}>
-        <DialogContent className="max-w-2xl">
-          {assinaturaReg && (
-            <AssinaturaAdvertenciaForm
-              advertenciaId={assinaturaReg.id}
-              currentData={{
-                testemunha_1: assinaturaReg.testemunha_1,
-                cpf_testemunha_1: assinaturaReg.cpf_testemunha_1,
-                testemunha_2: assinaturaReg.testemunha_2,
-                cpf_testemunha_2: assinaturaReg.cpf_testemunha_2,
-                funcionario_recusou_assinar: assinaturaReg.funcionario_recusou_assinar,
-              }}
-              onSuccess={() => { setAssinaturaReg(null); fetchRegistros(); }}
-              onCancel={() => setAssinaturaReg(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* Lista */}
       {/* Confirmação de exclusão com auditoria */}
       <AlertDialog open={!!exclusaoReg} onOpenChange={(open) => !open && setExclusaoReg(null)}>
@@ -315,21 +293,12 @@ export default function AdvertenciasSuspensoes() {
                     <td className="py-2 px-3">
                       <Badge variant={cfg.variant}>{cfg.label}</Badge>
                       {reg.funcionario_recusou_assinar && (
-                        <Badge variant="outline" className="ml-1 text-xs border-destructive text-destructive">Recusou</Badge>
+                        <Badge variant="outline" className="ml-1 text-xs border-destructive text-destructive">Não assinou</Badge>
                       )}
                     </td>
                     <td className="py-2 px-3 text-sm max-w-xs truncate">{reg.motivo}</td>
                     <td className="py-2 px-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="w-8 h-8"
-                          title="Testemunhas e assinatura"
-                          onClick={() => setAssinaturaReg(reg)}
-                        >
-                          <PenLine className="w-4 h-4" />
-                        </Button>
                         <Button
                           size="icon"
                           variant="outline"
