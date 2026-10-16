@@ -68,8 +68,9 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
 
     try {
       console.log('🔍 Validando funcionário usando função segura...');
-      const { data: validacao, error } = await supabase
-        .rpc("validar_acesso_funcionario", { p_codigo: codigo });
+      // Valida o PIN e recebe do servidor o passe temporário do portal
+      const { data: validacao, error } = await (supabase.rpc as any)(
+        "portal_iniciar_sessao", { p_codigo: codigo });
 
       console.log('📋 Resultado da validação:', { validacao, error });
 
