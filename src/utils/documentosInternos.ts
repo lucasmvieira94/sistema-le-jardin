@@ -6,7 +6,7 @@
  * (Lei 14.063/2020, art. 4º, II; MP 2.200-2/2001, art. 10, §2º).
  */
 
-export type TipoDocumentoInterno = 'advertencia' | 'folha_ponto' | 'contracheque' | 'comunicado';
+export type TipoDocumentoInterno = 'advertencia' | 'advertencia_testemunha' | 'folha_ponto' | 'contracheque' | 'comunicado';
 export type StatusDocumentoInterno = 'pendente' | 'assinado' | 'recusado';
 
 export interface DocumentoFuncionario {
@@ -27,16 +27,22 @@ export interface DocumentoFuncionario {
 
 export const ROTULO_TIPO: Record<TipoDocumentoInterno, string> = {
   advertencia: 'Advertência / Suspensão',
+  advertencia_testemunha: 'Testemunha de medida disciplinar',
   folha_ponto: 'Folha de ponto',
   contracheque: 'Contracheque',
   comunicado: 'Comunicado / Regimento',
 };
+
+/** Indica se o colaborador está no documento apenas como testemunha. */
+export const ehTestemunha = (tipo: TipoDocumentoInterno) => tipo === 'advertencia_testemunha';
 
 /** Texto do termo que o colaborador aceita ao assinar — muda conforme o tipo. */
 export function textoTermo(tipo: TipoDocumentoInterno): string {
   switch (tipo) {
     case 'advertencia':
       return 'Declaro que recebi e tomei ciência desta medida disciplinar. A assinatura indica ciência, não concordância.';
+    case 'advertencia_testemunha':
+      return 'Declaro, na qualidade de TESTEMUNHA, que tenho ciência de que esta medida disciplinar foi comunicada ao colaborador indicado, que não a assinou no prazo. A medida não se aplica a mim.';
     case 'folha_ponto':
       return 'Declaro que conferi esta folha de ponto e concordo com os horários registrados.';
     case 'contracheque':
@@ -48,13 +54,31 @@ export function textoTermo(tipo: TipoDocumentoInterno): string {
 
 /** Rótulo do botão de recusa — na folha de ponto é discordância. */
 export function rotuloRecusa(tipo: TipoDocumentoInterno): string {
-  return tipo === 'folha_ponto' ? 'Discordo dos registros' : 'Recusar assinatura';
+  if (tipo === 'folha_ponto') return 'Discordo dos registros';
+  if (tipo === 'advertencia_testemunha') return 'Não posso testemunhar';
+  return 'Recusar assinatura';
 }
 
 /** Motivo mínimo de 5 caracteres (mesma regra do servidor). */
 export function validarMotivoRecusa(motivo: string): string | null {
   return motivo.trim().length >= 5 ? null : 'Informe o motivo com pelo menos 5 caracteres.';
 }
+
+/**
+ * O gestor pode indicar testemunhas quando a advertência foi recusada
+ * ou continua pendente depois do prazo — e ainda não há testemunhas.
+ * (Mesma regra validada no servidor por `indicar_testemunhas_advertencia`.)
+ */
+export function podeIndicarTestemunhas(
+  l: { tipo_documento: string; status: StatusDocumentoInterno; prazo_em?: string | null },
+  jaIndicadas: boolean,
+  agora = Date.now(),
+): boolean {
+  if (l.tipo_documento !== 'advertencia' || jaIndicadas) return false;
+  if (l.status === 'recusado') return true;
+  return l.status === 'pendente' && !!l.prazo_em && agora > new Date(l.prazo_em).getTime();
+}
+
 
 /** Conteúdo canônico de documentos em texto, usado para calcular o hash. */
 export function conteudoCanonico(doc: Pick<DocumentoFuncionario, 'titulo' | 'conteudo_html'>): string {

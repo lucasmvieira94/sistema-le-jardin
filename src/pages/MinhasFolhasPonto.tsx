@@ -265,16 +265,13 @@ export default function MinhasFolhasPonto() {
                         <Download className="w-4 h-4 mr-1" /> Baixar
                       </Button>
                       {f.confirmado === null && (
+                        // Assinatura única: feita com biometria na Central de Documentos
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => {
-                            setConfirmando(f);
-                            setModo(null);
-                            setMotivo('');
-                          }}
+                          onClick={() => { window.location.href = `/meus-documentos${window.location.search}`; }}
                         >
-                          <Receipt className="w-4 h-4 mr-1" /> Confirmar
+                          <Receipt className="w-4 h-4 mr-1" /> Assinar em Meus Documentos
                         </Button>
                       )}
                     </div>

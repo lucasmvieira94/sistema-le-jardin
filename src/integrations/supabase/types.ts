@@ -188,6 +188,48 @@ export type Database = {
           },
         ]
       }
+      advertencias_testemunhas: {
+        Row: {
+          advertencia_id: string
+          created_at: string
+          funcionario_id: string
+          id: string
+          indicado_por: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          advertencia_id: string
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          indicado_por?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          advertencia_id?: string
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          indicado_por?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertencias_testemunhas_advertencia_id_fkey"
+            columns: ["advertencia_id"]
+            isOneToOne: false
+            referencedRelation: "advertencias_suspensoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advertencias_testemunhas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       afastamentos: {
         Row: {
           created_at: string
@@ -5869,6 +5911,10 @@ export type Database = {
         Returns: boolean
       }
       has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
+      indicar_testemunhas_advertencia: {
+        Args: { p_advertencia_id: string; p_testemunhas: string[] }
+        Returns: number
+      }
       iniciar_prontuario_diario: {
         Args: { p_funcionario_id: string; p_residente_id: string }
         Returns: {

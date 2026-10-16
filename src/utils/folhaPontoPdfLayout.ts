@@ -320,14 +320,10 @@ export function renderFolhaFuncionario(
     });
     const finalY = (doc as any).lastAutoTable.finalY;
     // Folhas exportadas ainda não foram assinadas: não declarar assinatura eletrônica.
-    doc.setDrawColor(...CORES.suave).setLineWidth(0.25);
+    // A assinatura do colaborador é feita apenas eletronicamente em Meus Documentos.
     const assinaturaY = Math.max(finalY + 9, doc.internal.pageSize.getHeight() - 26);
-    const half = (largura(doc) - MARGIN * 2) / 2;
-    doc.line(MARGIN + 5, assinaturaY, MARGIN + half - 6, assinaturaY);
-    doc.line(MARGIN + half + 6, assinaturaY, largura(doc) - MARGIN - 5, assinaturaY);
     doc.setFont('helvetica', 'normal').setFontSize(7).setTextColor(...CORES.suave);
-    doc.text('Assinatura do funcionário', MARGIN + half / 2, assinaturaY + 4, { align: 'center' });
-    doc.text('Assinatura do responsável', MARGIN + half * 1.5, assinaturaY + 4, { align: 'center' });
+    doc.text('A conferência e a assinatura desta folha são feitas eletronicamente pelo colaborador em Meus Documentos (SenexCare).', largura(doc) / 2, assinaturaY + 4, { align: 'center' });
     return assinaturaY + 5;
   }
 
@@ -407,15 +403,10 @@ export function renderFolhaFuncionario(
     finalY = MARGIN + 10;
   }
 
-  // Assinaturas
-  doc.setDrawColor(...CORES.suave);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN + 10, finalY + 12, MARGIN + 100, finalY + 12);
-  doc.line(largura(doc) - MARGIN - 100, finalY + 12, largura(doc) - MARGIN - 10, finalY + 12);
+  // Assinatura apenas eletrônica, em Meus Documentos
   doc.setFontSize(8);
   doc.setTextColor(...CORES.suave);
-  doc.text('Assinatura do funcionário', MARGIN + 55, finalY + 16, { align: 'center' });
-  doc.text('Assinatura do responsável', largura(doc) - MARGIN - 55, finalY + 16, { align: 'center' });
+  doc.text('A conferência e a assinatura desta folha são feitas eletronicamente pelo colaborador em Meus Documentos (SenexCare).', largura(doc) / 2, finalY + 12, { align: 'center' });
   doc.setTextColor(...CORES.texto);
 
   return finalY + 20;
