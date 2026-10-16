@@ -30,7 +30,7 @@ import { useBiometriaStatus } from '@/hooks/useBiometriaFuncionario';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
 import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
 import {
-  ROTULO_TIPO, conteudoCanonico, filtrarDocumentos, resumirDocumentos, rotuloRecusa, sha256Hex,
+  ROTULO_TIPO, conteudoCanonico, ehTestemunha, filtrarDocumentos, resumirDocumentos, rotuloRecusa, sha256Hex,
   textoTermo, validarMotivoRecusa, type DocumentoFuncionario, type FiltroDocumentos,
 } from '@/utils/documentosInternos';
 import { formatarTimestampDataHora } from '@/utils/formatTimestamp';
@@ -221,7 +221,10 @@ export default function MeusDocumentos() {
                     className="w-full text-left flex items-center justify-between gap-3 p-3 border rounded-lg hover:bg-muted/40 transition-colors"
                   >
                     <div className="min-w-0">
-                      <div className="text-xs text-muted-foreground">{ROTULO_TIPO[d.tipo_documento]}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        {ROTULO_TIPO[d.tipo_documento]}
+                        {ehTestemunha(d.tipo_documento) && <Badge variant="outline" className="border-amber-500 text-amber-700 text-[10px] py-0">Você é testemunha</Badge>}
+                      </div>
                       <div className="font-semibold truncate">{d.titulo}</div>
                       <div className="text-xs text-muted-foreground">
                         {d.assinado_em ? `${d.status === 'assinado' ? 'Assinado' : 'Recusado'} em ${formatarTimestampDataHora(d.assinado_em)}` : `Disponível desde ${formatarTimestampDataHora(d.criado_em)}`}
@@ -249,6 +252,12 @@ export default function MeusDocumentos() {
                 <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
               ) : (
                 <div className="space-y-4">
+                  {ehTestemunha(aberto.tipo_documento) && (
+                    <div className="rounded-lg border-2 border-amber-500 bg-amber-50 p-3 text-sm text-amber-900">
+                      <strong>Você está assinando como TESTEMUNHA.</strong> Esta medida disciplinar não é para você;
+                      sua assinatura confirma apenas que o colaborador indicado tomou conhecimento dela.
+                    </div>
+                  )}
                   {pdfUrl ? (
                     <div className="space-y-2">
                       <iframe src={pdfUrl} title={aberto.titulo} className="w-full h-[50vh] border rounded" />
@@ -269,7 +278,7 @@ export default function MeusDocumentos() {
                         <Textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={1000}
                           placeholder="Explique o motivo" />
                         {aberto.tipo_documento === 'advertencia' && (
-                          <p className="text-xs text-muted-foreground">Em caso de recusa, a empresa poderá registrar a ciência com duas testemunhas, conforme a CLT.</p>
+                          <p className="text-xs text-muted-foreground">Sua recusa fica registrada. A empresa poderá indicar duas testemunhas do quadro de funcionários para registrar a ciência pelo sistema.</p>
                         )}
                       </div>
                     ) : (
