@@ -5767,6 +5767,7 @@ export type Database = {
       criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
       distancia_descriptor: { Args: { a: Json; b: Json }; Returns: number }
+      eh_gestor: { Args: { _uid: string }; Returns: boolean }
       eh_horario_noturno: {
         Args: {
           p_fim_noturno?: string
