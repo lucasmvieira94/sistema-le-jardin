@@ -25,3 +25,6 @@
 - [x] Indicar testemunhas de advertência dentro do sistema, só após recusa ou prazo vencido
 - [x] Publicar o frontend no site
 - [ ] Revisar as 35 regras de acesso do banco apontadas pela varredura de segurança
+- [x] Opção A — base do passe do portal + módulo Ponto
+- [ ] Opção A — próximos módulos: prontuário, intercorrências, medicamentos/temperatura, fraldas, lembretes/push, contracheques/folhas (arquivos), residentes, configurações
+- [ ] Validação biométrica do portal no servidor (hoje o passe sai antes do rosto)
