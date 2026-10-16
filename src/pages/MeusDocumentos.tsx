@@ -146,7 +146,7 @@ export default function MeusDocumentos() {
         ${doc.conteudo_html ? DOMPurify.sanitize(doc.conteudo_html) : ''}`,
       hash_documento: hashDoc,
       signatarios: autenticidade.signatarios ?? [{
-        nome: funcionarioNome, papel: 'Colaborador', metodo: 'biometria_facial', status: 'assinado',
+        nome: funcionarioNome, papel: ehTestemunha(doc.tipo_documento) ? 'Testemunha' : 'Colaborador', metodo: 'biometria_facial', status: 'assinado',
         assinado_em: quando, user_agent: navigator.userAgent, hash_assinatura: hashAss,
       }],
     });
