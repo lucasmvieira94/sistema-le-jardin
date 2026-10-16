@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  conteudoCanonico, filtrarDocumentos, resumirDocumentos, rotuloRecusa, sha256Hex,
+  conteudoCanonico, filtrarDocumentos, podeIndicarTestemunhas, resumirDocumentos, rotuloRecusa, sha256Hex,
   textoTermo, validarMotivoRecusa, type DocumentoFuncionario,
 } from '../documentosInternos';
 
@@ -41,5 +41,30 @@ describe('documentosInternos', () => {
     expect(filtrarDocumentos(lista, 'pendentes').map((d) => d.criado_em)).toEqual(['2026-02-15', '2026-01-01']);
     expect(filtrarDocumentos(lista, 'concluidos')).toHaveLength(2);
     expect(filtrarDocumentos(lista, 'todos').map((d) => d.status)).toEqual(['pendente', 'pendente', 'assinado', 'recusado']);
+  });
+
+  it('testemunha tem termo próprio, deixando claro que a medida não é para ela', () => {
+    expect(textoTermo('advertencia_testemunha')).toMatch(/TESTEMUNHA/);
+    expect(textoTermo('advertencia_testemunha')).toMatch(/não se aplica a mim/);
+    expect(rotuloRecusa('advertencia_testemunha')).toBe('Não posso testemunhar');
+  });
+
+  describe('podeIndicarTestemunhas', () => {
+    const agora = new Date('2026-10-10T12:00:00Z').getTime();
+    const adv = { tipo_documento: 'advertencia', prazo_em: '2026-10-08T12:00:00Z' };
+    it('libera após o prazo de 3 dias sem assinatura', () => {
+      expect(podeIndicarTestemunhas({ ...adv, status: 'pendente' }, false, agora)).toBe(true);
+    });
+    it('não libera antes do prazo', () => {
+      expect(podeIndicarTestemunhas({ ...adv, status: 'pendente', prazo_em: '2026-10-11T12:00:00Z' }, false, agora)).toBe(false);
+    });
+    it('libera imediatamente quando o colaborador recusa', () => {
+      expect(podeIndicarTestemunhas({ ...adv, status: 'recusado', prazo_em: '2026-10-11T12:00:00Z' }, false, agora)).toBe(true);
+    });
+    it('não libera se já assinou, se já há testemunhas ou se não é advertência', () => {
+      expect(podeIndicarTestemunhas({ ...adv, status: 'assinado' }, false, agora)).toBe(false);
+      expect(podeIndicarTestemunhas({ ...adv, status: 'recusado' }, true, agora)).toBe(false);
+      expect(podeIndicarTestemunhas({ ...adv, tipo_documento: 'folha_ponto', status: 'pendente' }, false, agora)).toBe(false);
+    });
   });
 });
