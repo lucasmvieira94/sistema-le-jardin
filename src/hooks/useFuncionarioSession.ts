@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { temPasseValido } from '@/utils/portalSessao';
 import { useNavigate } from 'react-router-dom';
 
 const SESSION_KEY = 'funcionario_session';
@@ -20,7 +21,7 @@ export function useFuncionarioSession() {
           return;
         }
         const session = JSON.parse(raw);
-        if (Date.now() - session.timestamp > SESSION_DURATION) {
+        if (Date.now() - session.timestamp > SESSION_DURATION || !temPasseValido()) {
           sessionStorage.removeItem(SESSION_KEY);
           navigate('/', { replace: true });
         }

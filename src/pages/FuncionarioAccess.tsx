@@ -87,7 +87,8 @@ function loadSession(): FuncionarioSession | null {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const session: FuncionarioSession = JSON.parse(raw);
-    if (Date.now() - session.timestamp > SESSION_DURATION) {
+    // Sessões antigas (sem passe do servidor) exigem novo PIN
+    if (Date.now() - session.timestamp > SESSION_DURATION || !temPasseValido()) {
       sessionStorage.removeItem(SESSION_KEY);
       return null;
     }
@@ -100,6 +101,7 @@ function loadSession(): FuncionarioSession | null {
 
 function clearSession() {
   sessionStorage.removeItem(SESSION_KEY);
+  void encerrarPasse();
 }
 
 export default function FuncionarioAccess() {

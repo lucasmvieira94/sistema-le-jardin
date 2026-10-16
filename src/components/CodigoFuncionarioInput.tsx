@@ -95,7 +95,7 @@ export default function CodigoFuncionarioInput({ onFuncionarioValidado }: Codigo
       }
 
       const funcionario = validacao[0];
-      console.log('✅ Funcionário validado:', funcionario);
+      guardarPasse(funcionario.token, funcionario.expira_em);
       onFuncionarioValidado(funcionario.funcionario_id, funcionario.nome_completo, {
         registraPonto: funcionario.registra_ponto ?? true,
         acessoSupervisor: funcionario.acesso_supervisor ?? false,
