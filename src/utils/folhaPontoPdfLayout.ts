@@ -403,15 +403,10 @@ export function renderFolhaFuncionario(
     finalY = MARGIN + 10;
   }
 
-  // Assinaturas
-  doc.setDrawColor(...CORES.suave);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN + 10, finalY + 12, MARGIN + 100, finalY + 12);
-  doc.line(largura(doc) - MARGIN - 100, finalY + 12, largura(doc) - MARGIN - 10, finalY + 12);
+  // Assinatura apenas eletrônica, em Meus Documentos
   doc.setFontSize(8);
   doc.setTextColor(...CORES.suave);
-  doc.text('Assinatura do funcionário', MARGIN + 55, finalY + 16, { align: 'center' });
-  doc.text('Assinatura do responsável', largura(doc) - MARGIN - 55, finalY + 16, { align: 'center' });
+  doc.text('A conferência e a assinatura desta folha são feitas eletronicamente pelo colaborador em Meus Documentos (SenexCare).', largura(doc) / 2, finalY + 12, { align: 'center' });
   doc.setTextColor(...CORES.texto);
 
   return finalY + 20;
