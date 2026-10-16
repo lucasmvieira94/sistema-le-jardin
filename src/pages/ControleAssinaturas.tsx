@@ -10,9 +10,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClipboardCheck, Loader2, Search } from "lucide-react";
+import { ClipboardCheck, Loader2, Search, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import IndicarTestemunhasDialog from "@/components/assinaturas/IndicarTestemunhasDialog";
 import { formatarTimestampDataHora } from "@/utils/formatTimestamp";
-import { ROTULO_TIPO, type TipoDocumentoInterno } from "@/utils/documentosInternos";
+import { ROTULO_TIPO, podeIndicarTestemunhas, type TipoDocumentoInterno } from "@/utils/documentosInternos";
 import {
   FiltrosAssinatura, LinhaAssinatura, estaAtrasado, filtrarAssinaturas,
   pendenciasPorColaborador, resumirAssinaturas, venceEmBreve,
@@ -27,13 +29,24 @@ function Situacao({ l }: { l: LinhaAssinatura }) {
 
 export default function ControleAssinaturas() {
   const [f, setF] = useState<FiltrosAssinatura>({ busca: "", tipo: "todos", situacao: "todas" });
+  const [indicar, setIndicar] = useState<LinhaAssinatura | null>(null);
 
-  const { data = [], isLoading, error } = useQuery({
+  const { data = [], isLoading, error, refetch } = useQuery({
     queryKey: ["painel-assinaturas"],
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc("painel_assinaturas_documentos");
       if (error) throw error;
       return (data ?? []) as LinhaAssinatura[];
+    },
+  });
+
+  // Advertências que já têm testemunhas indicadas
+  const { data: comTestemunhas = new Set<string>(), refetch: refetchTestemunhas } = useQuery({
+    queryKey: ["advertencias-com-testemunhas"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("advertencias_testemunhas").select("advertencia_id");
+      if (error) throw error;
+      return new Set<string>((data ?? []).map((r: { advertencia_id: string }) => r.advertencia_id));
     },
   });
 
@@ -116,23 +129,45 @@ export default function ControleAssinaturas() {
           <table className="w-full text-sm">
             <thead><tr className="text-left text-muted-foreground border-b border-border">
               <th className="p-3">Colaborador</th><th className="p-3">Documento</th><th className="p-3">Enviado em</th><th className="p-3">Prazo</th>
-              <th className="p-3">Situação</th><th className="p-3">Assinado/recusado em</th>
+              <th className="p-3">Situação</th><th className="p-3">Assinado/recusado em</th><th className="p-3">Testemunhas</th>
             </tr></thead>
             <tbody>
               {linhas.map((l) => (
                 <tr key={`${l.funcionario_id}-${l.tipo_documento}-${l.referencia_id}`} className="border-b border-border align-top">
                   <td className="p-3"><div className="font-medium">{l.funcionario_nome}</div><div className="text-xs text-muted-foreground">{l.funcao ?? ""}</div></td>
-                  <td className="p-3"><div>{l.titulo}</div><div className="text-xs text-muted-foreground">{ROTULO_TIPO[l.tipo_documento as TipoDocumentoInterno] ?? l.tipo_documento}</div></td>
+                  <td className="p-3"><div>{l.titulo}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {l.tipo_documento === "advertencia_testemunha" ? <Badge variant="outline" className="text-[10px]">Assina como testemunha</Badge>
+                        : (ROTULO_TIPO[l.tipo_documento as TipoDocumentoInterno] ?? l.tipo_documento)}
+                    </div></td>
                   <td className="p-3 whitespace-nowrap">{formatarTimestampDataHora(l.criado_em)}</td>
                   <td className="p-3 whitespace-nowrap">{l.prazo_em ? formatarTimestampDataHora(l.prazo_em) : "—"}</td>
                   <td className="p-3"><Situacao l={l} />{l.motivo_recusa && <div className="text-xs mt-1 max-w-[240px]">{l.motivo_recusa}</div>}</td>
                   <td className="p-3 whitespace-nowrap">{l.assinado_em ? formatarTimestampDataHora(l.assinado_em) : "—"}</td>
+                  <td className="p-3 whitespace-nowrap">
+                    {l.tipo_documento !== "advertencia" ? "—"
+                      : comTestemunhas.has(l.referencia_id) ? <span className="text-xs text-muted-foreground">Indicadas</span>
+                      : podeIndicarTestemunhas(l, false) ? (
+                        <Button size="sm" variant="outline" onClick={() => setIndicar(l)}><UserPlus className="w-4 h-4 mr-1" /> Indicar</Button>
+                      ) : l.status === "pendente" ? <span className="text-xs text-muted-foreground">Após o prazo</span> : "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </Card>
+
+      {indicar && (
+        <IndicarTestemunhasDialog
+          open={!!indicar}
+          onOpenChange={(o) => !o && setIndicar(null)}
+          advertenciaId={indicar.referencia_id}
+          advertidoId={indicar.funcionario_id}
+          advertidoNome={indicar.funcionario_nome}
+          onConcluido={() => { refetch(); refetchTestemunhas(); }}
+        />
+      )}
     </div>
   );
 }
