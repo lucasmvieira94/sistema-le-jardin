@@ -19,3 +19,9 @@
 - [x] Corrigir assinatura: evidências somente na verificação online, QR/link reais e download do documento integral
 - [x] Testar geração integral e inspecionar rodapé em PDF
 - [ ] Validar nova assinatura biométrica no portal: depende de captura real do colaborador; consulta de assinatura existente e geração de PDF verificadas
+
+- [x] Enviar toda medida disciplinar, folha de ponto, contracheque e comunicado para a Central de Documentos
+- [x] Retirar papel, envelopes e testemunhas digitadas do fluxo de advertências
+- [x] Indicar testemunhas de advertência dentro do sistema, só após recusa ou prazo vencido
+- [x] Publicar o frontend no site
+- [ ] Revisar as 35 regras de acesso do banco apontadas pela varredura de segurança
