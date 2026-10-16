@@ -16,6 +16,7 @@ import { FileSignature, ScanFace } from "lucide-react";
 import AutoCadastroBiometriaDialog from "@/components/biometria/AutoCadastroBiometriaDialog";
 import { useBiometriaStatus } from "@/hooks/useBiometriaFuncionario";
 import { useDocumentosFuncionario } from "@/hooks/useDocumentosFuncionario";
+import { temPasseValido, encerrarPasse } from "@/utils/portalSessao";
 
 const SESSION_KEY = 'funcionario_session';
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 horas em ms

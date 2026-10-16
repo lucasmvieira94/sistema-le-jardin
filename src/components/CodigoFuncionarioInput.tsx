@@ -8,6 +8,7 @@ import { MapPin, Loader2, Shield } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useRateLimit } from '@/hooks/useRateLimit';
 import { validateFuncionarioCode } from '@/utils/validation';
+import { guardarPasse } from '@/utils/portalSessao';
 
 interface CodigoFuncionarioInputProps {
   onFuncionarioValidado: (
