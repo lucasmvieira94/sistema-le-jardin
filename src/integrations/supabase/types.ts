@@ -4294,6 +4294,47 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_sessoes: {
+        Row: {
+          acesso_supervisor: boolean
+          criada_em: string
+          expira_em: string
+          funcionario_id: string
+          id: string
+          revogada_em: string | null
+          tenant_id: string | null
+          token_hash: string
+        }
+        Insert: {
+          acesso_supervisor?: boolean
+          criada_em?: string
+          expira_em: string
+          funcionario_id: string
+          id?: string
+          revogada_em?: string | null
+          tenant_id?: string | null
+          token_hash: string
+        }
+        Update: {
+          acesso_supervisor?: boolean
+          criada_em?: string
+          expira_em?: string
+          funcionario_id?: string
+          id?: string
+          revogada_em?: string | null
+          tenant_id?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_sessoes_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescricoes_medicamentos: {
         Row: {
           ativo: boolean
@@ -6075,6 +6116,42 @@ export type Database = {
       pgp_armor_headers: {
         Args: { "": string }
         Returns: Record<string, unknown>[]
+      }
+      portal_eh_supervisor: { Args: never; Returns: boolean }
+      portal_encerrar_sessao: { Args: never; Returns: undefined }
+      portal_funcionario_atual: { Args: never; Returns: string }
+      portal_iniciar_sessao: {
+        Args: { p_codigo: string }
+        Returns: {
+          acesso_supervisor: boolean
+          biometria_facial: Json
+          exigir_biometria: boolean
+          expira_em: string
+          funcionario_id: string
+          nome_completo: string
+          registra_ponto: boolean
+          token: string
+          valid: boolean
+        }[]
+      }
+      portal_sessao_atual: {
+        Args: never
+        Returns: {
+          acesso_supervisor: boolean
+          criada_em: string
+          expira_em: string
+          funcionario_id: string
+          id: string
+          revogada_em: string | null
+          tenant_id: string | null
+          token_hash: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "portal_sessoes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       prazo_assinatura_em: {
         Args: {

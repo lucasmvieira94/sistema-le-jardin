@@ -3,8 +3,10 @@ import App from './App.tsx'
 import './index.css'
 import { ErroBoundary } from './components/ErroBoundary'
 import { instalarMonitorErros } from './utils/monitorErros'
+import { restaurarPasse } from './utils/portalSessao'
 
 instalarMonitorErros();
+restaurarPasse();
 import '@fontsource/outfit/400.css'
 import '@fontsource/outfit/500.css'
 import '@fontsource/outfit/600.css'
