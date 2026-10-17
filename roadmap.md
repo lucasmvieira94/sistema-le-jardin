@@ -1,7 +1,7 @@
 # Roadmap
 
-- [ ] Enviar fichas de acolhimento preenchidas existentes ao e-mail do residencial
-- [ ] Automatizar envio de futuras fichas preenchidas com PDF certificado e auditoria
+- [x] Enviar fichas de acolhimento preenchidas existentes ao e-mail do residencial (8 aceitas pelo serviço de e-mail)
+- [x] Automatizar envio de futuras fichas preenchidas com PDF certificado e auditoria
 
 - [x] Certificar todas as novas emissões de documentos e padronizar o rodapé conforme o PDF enviado
 - [x] Testar certificados e inspecionar os PDFs gerados
