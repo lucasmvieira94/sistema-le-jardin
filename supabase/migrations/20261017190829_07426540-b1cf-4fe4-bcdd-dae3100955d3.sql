@@ -1,0 +1,1 @@
+CREATE TRIGGER ficha_preenchida_email AFTER INSERT OR UPDATE OF status ON public.fichas_acolhimento FOR EACH ROW EXECUTE FUNCTION public.agendar_ficha_acolhimento_email();
