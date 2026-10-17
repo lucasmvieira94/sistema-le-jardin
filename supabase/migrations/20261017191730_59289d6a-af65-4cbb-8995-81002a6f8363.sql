@@ -1,0 +1,1 @@
+CREATE TRIGGER retomar_envio_ficha AFTER UPDATE OF status ON public.fichas_acolhimento_envios FOR EACH ROW WHEN (NEW.status='pendente' AND OLD.status='falhou') EXECUTE FUNCTION public.acordar_envio_ficha();
