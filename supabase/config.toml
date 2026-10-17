@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.denuncia-comite]
 verify_jwt = false
+
+[functions.enviar-ficha-acolhimento]
+verify_jwt = false
