@@ -3102,6 +3102,75 @@ export type Database = {
         }
         Relationships: []
       }
+      fichas_acolhimento_envios: {
+        Row: {
+          capacidade_hash: string | null
+          created_at: string
+          destinatario: string | null
+          documento_id: string | null
+          enviado_em: string | null
+          erro: string | null
+          ficha_id: string
+          id: string
+          pdf_base64: string | null
+          processando_em: string | null
+          provider_id: string | null
+          status: string
+          tenant_id: string | null
+          tentativas: number
+          updated_at: string
+        }
+        Insert: {
+          capacidade_hash?: string | null
+          created_at?: string
+          destinatario?: string | null
+          documento_id?: string | null
+          enviado_em?: string | null
+          erro?: string | null
+          ficha_id: string
+          id?: string
+          pdf_base64?: string | null
+          processando_em?: string | null
+          provider_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          tentativas?: number
+          updated_at?: string
+        }
+        Update: {
+          capacidade_hash?: string | null
+          created_at?: string
+          destinatario?: string | null
+          documento_id?: string | null
+          enviado_em?: string | null
+          erro?: string | null
+          ficha_id?: string
+          id?: string
+          pdf_base64?: string | null
+          processando_em?: string | null
+          provider_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          tentativas?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_acolhimento_envios_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos_emitidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fichas_acolhimento_envios_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: true
+            referencedRelation: "fichas_acolhimento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       folhas_ponto: {
         Row: {
           ano: number
@@ -5775,6 +5844,10 @@ export type Database = {
       }
       ciclo_jornada_dias: { Args: { p_jornada: string }; Returns: number }
       cleanup_expired_rotation_tokens: { Args: never; Returns: undefined }
+      concluir_ficha_acolhimento_email: {
+        Args: { p_envio: string }
+        Returns: undefined
+      }
       confirmar_aviso_funcionario: {
         Args: { p_aviso_id: string; p_funcionario_id: string }
         Returns: boolean
@@ -5807,6 +5880,10 @@ export type Database = {
       }
       criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
+      disparar_ficha_acolhimento_email: {
+        Args: { p_envio: string }
+        Returns: undefined
+      }
       distancia_descriptor: { Args: { a: Json; b: Json }; Returns: number }
       eh_gestor: { Args: { _uid: string }; Returns: boolean }
       eh_horario_noturno: {
