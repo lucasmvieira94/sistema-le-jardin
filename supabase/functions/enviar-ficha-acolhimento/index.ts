@@ -31,22 +31,25 @@ Deno.serve(async (req) => {
   try {
     const { data: ficha, error: fichaError } = await db.from('fichas_acolhimento').select('*').eq('id', envio.ficha_id).single();
     if (fichaError || !ficha || !fichaConcluida(ficha.status)) throw new Error('Ficha não preenchida ou indisponível.');
-    let consulta = db.from('configuracoes_empresa').select('nome_empresa,cnpj,endereco,cidade,dominio_email').order('created_at', { ascending: false }).limit(1);
-    consulta = ficha.tenant_id ? consulta.eq('tenant_id', ficha.tenant_id) : consulta.is('tenant_id', null);
-    const { data: empresa, error: configError } = await consulta.single();
+    const { data: residente, error: residenteError } = await db.from('residentes').select('nome_completo,tenant_id').eq('id', ficha.residente_id).single();
+    if (residenteError || !residente || (ficha.tenant_id && residente.tenant_id && residente.tenant_id !== ficha.tenant_id)) throw new Error('Residente não encontrado nesta instituição.');
+    const tenantId = ficha.tenant_id || residente.tenant_id;
+    let consulta = db.from('configuracoes_empresa').select('nome_empresa,cnpj,endereco,cidade,dominio_email,tenant_id').order('created_at', { ascending: false });
+    // Legacy rows have no institution ID. Resolve only when the configuration is unambiguous.
+    consulta = tenantId ? consulta.eq('tenant_id', tenantId).limit(1) : consulta.limit(2);
+    const { data: empresas, error: configError } = await consulta;
+    const empresa = empresas?.length === 1 ? empresas[0] : null;
     if (configError || !empresa) throw new Error('Configurações do residencial não encontradas.');
     // Persist recipient and exact PDF before provider call: retries use identical payload/idempotency key.
     const destinatario = envio.destinatario || emailResidencial(empresa.dominio_email);
     let pdf = envio.pdf_base64;
     let documentoId = envio.documento_id;
     if (!pdf) {
-      const { data: residente, error: residenteError } = await db.from('residentes').select('nome_completo,tenant_id').eq('id', ficha.residente_id).single();
-      if (residenteError || !residente || residente.tenant_id !== ficha.tenant_id) throw new Error('Residente não encontrado nesta instituição.');
       const original = gerarFichaPDF(ficha, residente.nome_completo, empresa);
       const hash = (await sha(original)).toUpperCase();
       const { data: certificado, error: certError } = await db.from('documentos_emitidos').insert({
         tipo: 'ficha_acolhimento', referencia_id: ficha.id, referencia_tabela: 'fichas_acolhimento',
-        titular_nome: residente.nome_completo, tenant_id: ficha.tenant_id, hash_sha256: hash,
+        titular_nome: residente.nome_completo, tenant_id: empresa.tenant_id, hash_sha256: hash,
         dados_estruturais: { titulo: 'Ficha de acolhimento', hash_conteudo: hash, escopo_hash: 'PDF antes do rodapé de certificação' },
       }).select('id,codigo_verificador').single();
       if (certError || !certificado) throw new Error('Não foi possível certificar a ficha.');
