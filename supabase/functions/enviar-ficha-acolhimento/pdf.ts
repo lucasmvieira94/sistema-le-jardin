@@ -1,5 +1,5 @@
 import { jsPDF } from 'npm:jspdf@4.2.0';
-import autoTable from 'npm:jspdf-autotable@5.0.2';
+import { autoTable } from 'npm:jspdf-autotable@5.0.2';
 
 const saude = {
   doencas_previas: 'Doenças prévias / diagnósticos', alergias: 'Alergias (medicamentos, alimentos, outros)',
