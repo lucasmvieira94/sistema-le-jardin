@@ -6293,6 +6293,32 @@ export type Database = {
         Args: { p_codigo: string; p_ip_address?: unknown }
         Returns: undefined
       }
+      reservar_envio_ficha: {
+        Args: { p_envio: string; p_hash: string }
+        Returns: {
+          capacidade_hash: string | null
+          created_at: string
+          destinatario: string | null
+          documento_id: string | null
+          enviado_em: string | null
+          erro: string | null
+          ficha_id: string
+          id: string
+          pdf_base64: string | null
+          processando_em: string | null
+          provider_id: string | null
+          status: string
+          tenant_id: string | null
+          tentativas: number
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "fichas_acolhimento_envios"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       revisar_apropriacao_horas: {
         Args: { p_fim: string; p_funcionario_id?: string; p_inicio: string }
         Returns: Json
