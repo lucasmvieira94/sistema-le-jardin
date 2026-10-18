@@ -31,7 +31,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Eye, MoreHorizontal, FileText, Plus, Edit, Ban, CheckCircle, XCircle } from "lucide-react";
+import { Eye, MoreHorizontal, FileText, Plus, Edit, Ban, CheckCircle, XCircle, FileX } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import DistratoForm, { type DistratoData } from "./DistratoForm";
+import DistratoPDFGenerator from "./DistratoPDFGenerator";
 import { formatarData } from "@/utils/dateUtils";
 import { useContratos } from "./useContratos";
 import ContratoForm from "./ContratoForm";
@@ -66,8 +69,25 @@ export default function ContratosLista({
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [novoStatus, setNovoStatus] = useState<string>("");
 
+  // Distratos já gerados, indexados pelo contrato
+  const [distratos, setDistratos] = useState<Record<string, DistratoData>>({});
+  const [distratoFormOpen, setDistratoFormOpen] = useState(false);
+  const [distratoView, setDistratoView] = useState<DistratoData | null>(null);
+
+  const fetchDistratos = async () => {
+    const { data } = await supabase
+      .from("contratos_distratos")
+      .select("*")
+      .eq("residente_id", residenteId)
+      .order("created_at", { ascending: false });
+    const mapa: Record<string, DistratoData> = {};
+    (data || []).forEach((d: any) => { if (!mapa[d.contrato_id]) mapa[d.contrato_id] = d; });
+    setDistratos(mapa);
+  };
+
   useEffect(() => {
     fetchContratos(residenteId);
+    fetchDistratos();
   }, [residenteId, fetchContratos]);
 
   const handleCriarContrato = async (data: ContratoFormData) => {
@@ -215,7 +235,14 @@ export default function ContratosLista({
                   <TableCell>
                     {formatarData(contrato.data_inicio_contrato)}
                   </TableCell>
-                  <TableCell>{getStatusBadge(contrato.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {getStatusBadge(contrato.status)}
+                      {contrato.id && distratos[contrato.id] && contrato.status !== "encerrado" && (
+                        <Badge variant="outline">Em aviso prévio até {formatarData(distratos[contrato.id].data_efetiva)}</Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -242,6 +269,27 @@ export default function ContratosLista({
                           <Edit className="w-4 h-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
+                        {contrato.id && distratos[contrato.id] ? (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedContrato(contrato);
+                              setDistratoView(distratos[contrato.id!]);
+                            }}
+                          >
+                            <FileX className="w-4 h-4 mr-2" />
+                            Ver distrato
+                          </DropdownMenuItem>
+                        ) : contrato.status !== "encerrado" && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedContrato(contrato);
+                              setDistratoFormOpen(true);
+                            }}
+                          >
+                            <FileX className="w-4 h-4 mr-2 text-destructive" />
+                            Cancelar contrato
+                          </DropdownMenuItem>
+                        )}
                         {contrato.status !== "ativo" && (
                           <DropdownMenuItem
                             onClick={() => openStatusDialog(contrato, "ativo")}
@@ -326,6 +374,42 @@ export default function ContratosLista({
         <ContratoPDFGenerator
           open={visualizarContratoOpen}
           onOpenChange={setVisualizarContratoOpen}
+          contrato={selectedContrato}
+          residente={residenteData}
+          empresa={{
+            nome_empresa: "LE JARDIN RESIDENCIAL SÊNIOR LTDA ME",
+            cnpj: "48.897.411/0001-58",
+            endereco: "Rua Promotor Arquibaldo Mendonça, 660, Bairro Suíssa, Aracaju/SE",
+          }}
+        />
+      )}
+
+      {/* Cancelar contrato (distrato) */}
+      <Dialog open={distratoFormOpen} onOpenChange={setDistratoFormOpen}>
+        <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Cancelar contrato {selectedContrato?.numero_contrato}</DialogTitle>
+          </DialogHeader>
+          {selectedContrato && (
+            <DistratoForm
+              contrato={selectedContrato}
+              residenteId={residenteId}
+              onCancel={() => setDistratoFormOpen(false)}
+              onSaved={async (d) => {
+                setDistratoFormOpen(false);
+                await Promise.all([fetchContratos(residenteId), fetchDistratos()]);
+                setDistratoView(d);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {selectedContrato && distratoView && (
+        <DistratoPDFGenerator
+          open={!!distratoView}
+          onOpenChange={(o) => !o && setDistratoView(null)}
+          distrato={distratoView}
           contrato={selectedContrato}
           residente={residenteData}
           empresa={{
