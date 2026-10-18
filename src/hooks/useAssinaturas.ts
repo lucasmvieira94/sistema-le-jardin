@@ -165,6 +165,7 @@ export const METODO_LABEL: Record<MetodoAssinatura, string> = {
 
 export const TIPO_LABEL: Record<string, string> = {
   contrato_residente: 'Contrato de residente',
+  distrato_residente: 'Distrato de contrato de residente',
   contrato_temporario: 'Contrato temporário',
   advertencia: 'Advertência / suspensão',
   folha_ponto: 'Folha de ponto',
