@@ -4,6 +4,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
 const TIPO_LABEL: Record<string, string> = {
   contrato_residente: 'Contrato de Prestação de Serviços',
+  distrato_residente: 'Distrato de Contrato de Prestação de Serviços',
   contrato_temporario: 'Contrato de Hospedagem Temporária',
   advertencia: 'Documento Disciplinar',
   recibo_pagamento: 'Recibo de Pagamento',
