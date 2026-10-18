@@ -1757,6 +1757,89 @@ export type Database = {
           },
         ]
       }
+      contratos_distratos: {
+        Row: {
+          condicao_livre: string | null
+          contrato_id: string
+          created_at: string
+          created_by: string | null
+          data_distrato: string
+          data_efetiva: string
+          id: string
+          numero_distrato: string
+          observacoes: string | null
+          parte_iniciadora: string
+          residente_id: string
+          retem_garantia: boolean
+          status: string
+          tenant_id: string | null
+          tipo_rescisao: string
+          updated_at: string
+          valor_adaptacao: number
+          valor_indenizacao: number
+          valor_pendencias: number
+          valor_proporcional: number
+          valor_total: number
+          valores_pendentes: Json
+        }
+        Insert: {
+          condicao_livre?: string | null
+          contrato_id: string
+          created_at?: string
+          created_by?: string | null
+          data_distrato: string
+          data_efetiva: string
+          id?: string
+          numero_distrato: string
+          observacoes?: string | null
+          parte_iniciadora?: string
+          residente_id: string
+          retem_garantia?: boolean
+          status?: string
+          tenant_id?: string | null
+          tipo_rescisao: string
+          updated_at?: string
+          valor_adaptacao?: number
+          valor_indenizacao?: number
+          valor_pendencias?: number
+          valor_proporcional?: number
+          valor_total?: number
+          valores_pendentes?: Json
+        }
+        Update: {
+          condicao_livre?: string | null
+          contrato_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_distrato?: string
+          data_efetiva?: string
+          id?: string
+          numero_distrato?: string
+          observacoes?: string | null
+          parte_iniciadora?: string
+          residente_id?: string
+          retem_garantia?: boolean
+          status?: string
+          tenant_id?: string | null
+          tipo_rescisao?: string
+          updated_at?: string
+          valor_adaptacao?: number
+          valor_indenizacao?: number
+          valor_pendencias?: number
+          valor_proporcional?: number
+          valor_total?: number
+          valores_pendentes?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_distratos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_residentes: {
         Row: {
           clausulas_especiais: string | null
@@ -6410,6 +6493,7 @@ export type Database = {
         | "relatorio"
         | "ficha_acolhimento"
         | "recibo_confirmacao"
+        | "distrato_residente"
       gamification_nivel: "bronze" | "prata" | "ouro" | "diamante"
       gamification_transaction_tipo:
         | "plantao"
@@ -6581,6 +6665,7 @@ export const Constants = {
         "relatorio",
         "ficha_acolhimento",
         "recibo_confirmacao",
+        "distrato_residente",
       ],
       gamification_nivel: ["bronze", "prata", "ouro", "diamante"],
       gamification_transaction_tipo: [

@@ -3,7 +3,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { z } from 'npm:zod@3'
 
 const Schema = z.object({
-  tipo: z.enum(['contrato_residente', 'contrato_temporario', 'advertencia', 'recibo_pagamento', 'recibo_despesa', 'ficha_funcional', 'folha_ponto', 'relatorio', 'ficha_acolhimento']),
+  tipo: z.enum(['contrato_residente', 'contrato_temporario', 'advertencia', 'recibo_pagamento', 'recibo_despesa', 'ficha_funcional', 'folha_ponto', 'relatorio', 'ficha_acolhimento', 'distrato_residente']),
   referencia_id: z.string().uuid().nullish(), referencia_tabela: z.string().max(100).nullish(),
   numero_documento: z.string().max(255).nullish(), titular_nome: z.string().min(1).max(500),
   dados_estruturais: z.record(z.unknown()), tenant_id: z.string().uuid().nullish(),

@@ -7,7 +7,8 @@ export type DocumentoTipo =
   | "contrato_residente"
   | "contrato_temporario"
   | "advertencia"
-  | "recibo_pagamento";
+  | "recibo_pagamento"
+  | "distrato_residente";
 
 export interface RegistrarDocumentoInput {
   tipo: DocumentoTipo;
