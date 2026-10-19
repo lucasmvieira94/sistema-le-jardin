@@ -5981,6 +5981,7 @@ export type Database = {
         Args: { p_ciclo_id: string; p_funcionario_id: string }
         Returns: boolean
       }
+      encerrar_contratos_distratados: { Args: never; Returns: number }
       escala_vigente_em: {
         Args: { p_data: string; p_funcionario_id: string }
         Returns: {
