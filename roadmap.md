@@ -31,3 +31,5 @@
 - [x] Opção A — base do passe do portal + módulo Ponto
 - [ ] Opção A — próximos módulos: prontuário, intercorrências, medicamentos/temperatura, fraldas, lembretes/push, contracheques/folhas (arquivos), residentes, configurações
 - [ ] Validação biométrica do portal no servidor (hoje o passe sai antes do rosto)
+
+- [x] Distrato de contrato de residente (Cancelar contrato, cálculo pela Cláusula Sexta, PDF certificado)
