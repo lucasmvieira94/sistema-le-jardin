@@ -164,7 +164,7 @@ export default function EditarFuncionario() {
       />
 
       {/* Escala por período: trocas não alteram os dias anteriores */}
-      {(funcionario as any)?.registra_ponto && (
+      {((funcionario as any)?.registra_ponto || (funcionario as any)?.escala_id) && (
         <div className="mt-6">
           <HistoricoEscalas funcionarioId={(funcionario as any).id} onAlterado={recarregarFuncionario} />
         </div>

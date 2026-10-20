@@ -34,7 +34,7 @@ export function useMonitoramentoPonto(dias = 7) {
       const [func, regs, afast, just, folhas, hist] = await Promise.all([
         db.from("funcionarios")
           .select("id, nome_completo, data_inicio_vigencia, escalas:escala_id(entrada, saida, jornada_trabalho, intervalo_pre_assinalado, intervalo_minutos)")
-          .eq("ativo", true),
+          .eq("ativo", true).eq("registra_ponto", true),
         db.from("registros_ponto")
           .select("funcionario_id, data, entrada, saida, intervalo_inicio, intervalo_fim, intervalos_pausas")
           .gte("data", inicio).lte("data", hoje).limit(5000),
