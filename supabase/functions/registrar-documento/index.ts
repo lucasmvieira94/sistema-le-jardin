@@ -71,12 +71,11 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
 
-    // Reusar se já existe (mesma hash) — idempotente
+    // Reusar se já existe (mesma hash) — idempotente, vale para qualquer gestor
     const { data: existente } = await admin
       .from('documentos_emitidos')
       .select('id, hash_sha256, codigo_verificador')
       .ilike('hash_sha256', hash)
-      .eq('emitido_por', userId)
       .maybeSingle()
 
     let documentoId: string
@@ -86,6 +85,12 @@ Deno.serve(async (req) => {
     if (existente) {
       documentoId = existente.id
       codigoVerificador = existente.codigo_verificador
+      // Documentos antigos sem código verificador ganham um agora
+      if (!codigoVerificador) {
+        const { data: novoCodigo } = await admin.rpc('gerar_codigo_verificador_documento')
+        codigoVerificador = novoCodigo
+        await admin.from('documentos_emitidos').update({ codigo_verificador: novoCodigo }).eq('id', documentoId)
+      }
       acao = 'reemitido'
     } else {
       const { data: inserted, error: insErr } = await admin

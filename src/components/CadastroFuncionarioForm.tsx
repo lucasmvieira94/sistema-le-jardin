@@ -285,7 +285,7 @@ export default function CadastroFuncionarioForm({ funcionarioData, onSuccess, is
           funcao: sanitizedValues.funcao,
           registra_ponto: sanitizedValues.registra_ponto,
           // Escala já existente só muda pelo histórico (vale a partir de uma data)
-          ...(escalaGerenciadaPorHistorico ? {} : {
+          ...(escalaGerenciadaPorHistorico && sanitizedValues.registra_ponto ? {} : {
             escala_id: sanitizedValues.registra_ponto ? Number(sanitizedValues.escala_id) : null,
             data_inicio_vigencia: sanitizedValues.registra_ponto ? sanitizedValues.data_inicio_vigencia : null,
           }),
