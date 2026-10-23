@@ -37,6 +37,7 @@ import NotFound from "./pages/NotFound";
 import Unsubscribe from "./pages/Unsubscribe";
 import Landing from "./pages/Landing";
 import AnexoAfastamentoPublico from "./pages/AnexoAfastamentoPublico";
+import PortalCuidados from "./pages/PortalCuidados";
 
 // Páginas protegidas (admin)
 import Index from "./pages/Index";
@@ -133,6 +134,7 @@ const App = () => {
               <Route path="/denuncia" element={<Denuncia />} />
               <Route path="/denuncia/acompanhar" element={<AcompanharDenuncia />} />
               <Route path="/anexo-afastamento/:token" element={<AnexoAfastamentoPublico />} />
+              <Route path="/cuidados" element={<PortalCuidados />} />
               <Route path="/landing" element={<Landing />} />
             </Route>
 
