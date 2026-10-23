@@ -14,6 +14,7 @@ export const MODULOS_PORTAL = [
   { id: "documentos", nome: "Meus documentos", grupo: "Meu RH" },
   { id: "contracheques", nome: "Meus contracheques", grupo: "Meu RH" },
   { id: "desempenho", nome: "Meu desempenho", grupo: "Meu RH" },
+  { id: "portal_cuidados", nome: "Portal de Cuidados", grupo: "Residentes" },
   { id: "meus_prontuarios", nome: "Meus prontuários", grupo: "Residentes" },
   { id: "fraldas", nome: "Controle de fraldas", grupo: "Residentes" },
   { id: "medicamentos", nome: "Medicamentos", grupo: "Residentes" },
