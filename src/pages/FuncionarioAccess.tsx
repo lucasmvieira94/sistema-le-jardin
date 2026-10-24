@@ -519,6 +519,7 @@ export default function FuncionarioAccess() {
               {pode('vacinas') && <FeatureCard title="Cartão Vacinal" description="Consulte e registre vacinas" icon={Syringe} color="pink" buttonLabel="Acessar" onClick={navigateToVacinas} />}
             </div>
           </section>
+          )}
 
           {/* D. PAINEL DO SUPERVISOR (unificado) */}
           {pode('supervisor') && (
