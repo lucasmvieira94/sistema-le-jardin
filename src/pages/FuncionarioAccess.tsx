@@ -472,9 +472,15 @@ export default function FuncionarioAccess() {
               {funcionarioRegistraPonto && pode('ponto') && (
                 <FeatureCard title="Registro de Ponto" description="Entrada, saída e intervalos" icon={CalendarRange} color="green" buttonLabel="Registrar" onClick={navigateToRegistroPonto} featured />
               )}
-              {pode('prontuario') && <FeatureCard title="Prontuário Eletrônico" description="Atividades dos residentes" icon={FileHeart} color="green" buttonLabel="Acessar" onClick={navigateToProntuario} featured />}
-              {pode('temperatura') && <FeatureCard title="Controle de Temperatura" description="Sala de medicamentos" icon={Thermometer} color="green" buttonLabel="Registrar" onClick={navigateToTemperatura} featured />}
-              {pode('intercorrencias') && <FeatureCard title="Intercorrências" description="Registre e acompanhe" icon={AlertTriangle} color="red" buttonLabel="Registrar" onClick={navigateToIntercorrencias} featured />}
+              {pode('portal_cuidados') ? (
+                <FeatureCard title="Portal de Cuidados" description="Rotina e fichas dos residentes" icon={FileHeart} color="green" buttonLabel="Abrir" onClick={() => navigate('/cuidados')} featured />
+              ) : (
+                <>
+                  {pode('prontuario') && <FeatureCard title="Prontuário Eletrônico" description="Atividades dos residentes" icon={FileHeart} color="green" buttonLabel="Acessar" onClick={navigateToProntuario} featured />}
+                  {pode('temperatura') && <FeatureCard title="Controle de Temperatura" description="Sala de medicamentos" icon={Thermometer} color="green" buttonLabel="Registrar" onClick={navigateToTemperatura} featured />}
+                  {pode('intercorrencias') && <FeatureCard title="Intercorrências" description="Registre e acompanhe" icon={AlertTriangle} color="red" buttonLabel="Registrar" onClick={navigateToIntercorrencias} featured />}
+                </>
+              )}
             </div>
           </section>
 
@@ -499,7 +505,8 @@ export default function FuncionarioAccess() {
             </div>
           </section>
 
-          {/* B2. RESIDENTES */}
+          {/* B2. RESIDENTES — só para quem ainda não tem o Portal de Cuidados (compatibilidade) */}
+          {!pode('portal_cuidados') && (
           <section>
             <div className="flex items-center gap-2 mb-3 px-1">
               <div className="h-1 w-8 bg-purple-300 rounded-full" />
