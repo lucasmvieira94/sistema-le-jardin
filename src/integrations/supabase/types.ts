@@ -6278,6 +6278,20 @@ export type Database = {
         Args: { "": string }
         Returns: Record<string, unknown>[]
       }
+      portal_cadastrar_medicamento: {
+        Args: {
+          p_data_fim?: string
+          p_data_inicio?: string
+          p_dosagem: string
+          p_horarios: string[]
+          p_nome: string
+          p_observacoes?: string
+          p_prescrito_por?: string
+          p_residente_id: string
+          p_via?: string
+        }
+        Returns: string
+      }
       portal_cuidados_ficha: { Args: { p_residente_id: string }; Returns: Json }
       portal_cuidados_funcionario: { Args: never; Returns: string }
       portal_cuidados_residentes: {
