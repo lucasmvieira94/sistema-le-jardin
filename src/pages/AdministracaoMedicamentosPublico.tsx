@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, Pill, Clock, Check, Search, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { montarMapaDia, agruparPorHorario, resumoDoses, type DoseDia } from "@/utils/mapaMedicamentos";
 
 interface Prescricao {
   id: string;
@@ -65,7 +68,14 @@ export default function AdministracaoMedicamentosPublico() {
   const [observacoes, setObservacoes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const hoje = format(new Date(), "yyyy-MM-dd");
+  const hoje = formatInTimeZone(new Date(), "America/Sao_Paulo", "yyyy-MM-dd");
+  const [visao, setVisao] = useState<"mapa" | "residente">("mapa");
+  const [filtroStatus, setFiltroStatus] = useState<"pendentes" | "todos">("pendentes");
+  const [agoraHHmm, setAgoraHHmm] = useState(() => formatInTimeZone(new Date(), "America/Sao_Paulo", "HH:mm"));
+  useEffect(() => {
+    const t = setInterval(() => setAgoraHHmm(formatInTimeZone(new Date(), "America/Sao_Paulo", "HH:mm")), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     if (!funcionarioId) return;
@@ -205,8 +215,8 @@ export default function AdministracaoMedicamentosPublico() {
 
   return (
     <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4"}>
-      <div className="container mx-auto max-w-2xl space-y-4">
-        {emb && <TituloTarefa icone={Pill} titulo="Administração de Medicamentos" descricao={format(new Date(), "dd/MM/yyyy")} />}
+      <div className="container mx-auto max-w-4xl space-y-4">
+        {emb && <TituloTarefa icone={Pill} titulo="Mapa de Medicamentos" descricao={`Medicações de hoje · ${formatInTimeZone(new Date(), "America/Sao_Paulo", "dd/MM/yyyy")}`} />}
         {/* Header */}
         <div className={emb ? "" : "bg-white rounded-2xl p-4 shadow-xl"}>
           <div className={emb ? "hidden" : "flex items-center gap-3 mb-3"}>
@@ -230,8 +240,23 @@ export default function AdministracaoMedicamentosPublico() {
           </div>
         </div>
 
+        <Tabs value={visao} onValueChange={(v) => setVisao(v as any)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="mapa">Mapa do dia</TabsTrigger>
+            <TabsTrigger value="residente">Por residente</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {visao === "mapa" && (
+          <MapaDoDia
+            prescricoes={prescricoes} administracoes={administracoes} hoje={hoje} agora={agoraHHmm}
+            busca={searchTerm} filtro={filtroStatus} setFiltro={setFiltroStatus}
+            onAdministrar={(p, h) => { setConfirmDialog({ open: true, prescricao: p, horario: h }); setObservacoes(""); }}
+          />
+        )}
+
         {/* Lista por residente */}
-        {filtered.length === 0 ? (
+        {visao !== "residente" ? null : filtered.length === 0 ? (
           <Card className="bg-white">
             <CardContent className="text-center py-8 text-muted-foreground">
               <Pill className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -360,6 +385,103 @@ export default function AdministracaoMedicamentosPublico() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+const ESTILO: Record<DoseDia["status"], { rotulo: string; classe: string }> = {
+  atrasado: { rotulo: "Atrasado", classe: "border-destructive/50 bg-destructive/5" },
+  agora: { rotulo: "Dar agora", classe: "border-primary bg-primary/5 ring-1 ring-primary/30" },
+  proximo: { rotulo: "Mais tarde", classe: "bg-card" },
+  administrado: { rotulo: "Dado", classe: "bg-muted/40 opacity-70" },
+};
+
+/** Mapa de medicamentos do dia: todas as doses de todos os residentes, por horário. */
+function MapaDoDia({ prescricoes, administracoes, hoje, agora, busca, filtro, setFiltro, onAdministrar }: {
+  prescricoes: Prescricao[]; administracoes: any[]; hoje: string; agora: string; busca: string;
+  filtro: "pendentes" | "todos"; setFiltro: (f: "pendentes" | "todos") => void;
+  onAdministrar: (p: Prescricao, horario: string) => void;
+}) {
+  const { doses, semHorario } = montarMapaDia(prescricoes as any, administracoes, hoje, agora);
+  const termo = busca.toLowerCase();
+  const casa = (d: DoseDia) => !termo ||
+    (d.prescricao.residente?.nome_completo ?? "").toLowerCase().includes(termo) ||
+    (d.prescricao.medicamento?.nome ?? "").toLowerCase().includes(termo);
+  const visiveis = doses.filter((d) => casa(d) && (filtro === "todos" || d.status !== "administrado"));
+  const r = resumoDoses(doses);
+  const grupos = agruparPorHorario(visiveis);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-2 text-center">
+        {[["Atrasados", r.atrasado, "text-destructive"], ["Agora", r.agora, "text-primary"],
+          ["Depois", r.proximo, "text-foreground"], ["Dados", `${r.administrado}/${r.total}`, "text-muted-foreground"]]
+          .map(([n, v, c]) => (
+            <div key={n as string} className="rounded-xl border bg-card p-2">
+              <p className={`text-lg font-bold sm:text-2xl ${c}`}>{v}</p>
+              <p className="text-[11px] text-muted-foreground sm:text-xs">{n}</p>
+            </div>
+          ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">Agora: {agora} (Brasília)</p>
+        <div className="flex rounded-lg border p-0.5 text-xs">
+          {(["pendentes", "todos"] as const).map((f) => (
+            <button key={f} onClick={() => setFiltro(f)}
+              className={`rounded-md px-3 py-1.5 font-medium ${filtro === f ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+              {f === "pendentes" ? "A dar" : "Todos"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {!grupos.length && (
+        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
+          <Check className="mx-auto mb-2 h-10 w-10 text-primary" />
+          {doses.length ? "Todas as medicações do dia foram dadas." : "Nenhuma medicação prevista para hoje."}
+        </CardContent></Card>
+      )}
+
+      {grupos.map(([horario, lista]) => (
+        <section key={horario}>
+          <div className="sticky top-[7.5rem] z-10 -mx-1 mb-2 flex items-center gap-2 bg-background/95 px-1 py-1 backdrop-blur">
+            <Clock className="h-4 w-4 text-primary" />
+            <h3 className="text-base font-bold">{horario}</h3>
+            <span className="text-xs text-muted-foreground">{lista.length} dose(s)</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {lista.map((d) => {
+              const e = ESTILO[d.status];
+              const p = d.prescricao as Prescricao;
+              return (
+                <div key={d.chave} className={`flex items-center gap-3 rounded-xl border p-3 ${e.classe}`}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{p.residente?.nome_completo}</p>
+                    <p className="truncate text-sm"><Pill className="mr-1 inline h-3.5 w-3.5 text-primary" />{p.medicamento?.nome} · {p.dosagem}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {p.via_administracao ? `Via ${p.via_administracao}` : "Via não informada"}{p.observacoes ? ` · ${p.observacoes}` : ""}
+                    </p>
+                    <Badge variant={d.status === "atrasado" ? "destructive" : "outline"} className="mt-1 text-[10px]">{e.rotulo}</Badge>
+                  </div>
+                  {d.status === "administrado" ? (
+                    <Check className="h-6 w-6 shrink-0 text-primary" aria-label="Já administrado" />
+                  ) : (
+                    <Button size="sm" className="min-h-10 shrink-0" onClick={() => onAdministrar(p, d.horario)}>Dar</Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+
+      {semHorario.length > 0 && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <span>Sem horário cadastrado (avise a supervisão): {semHorario.map((p: any) => `${p.residente?.nome_completo} – ${p.medicamento?.nome}`).join("; ")}</span>
+        </div>
+      )}
     </div>
   );
 }
