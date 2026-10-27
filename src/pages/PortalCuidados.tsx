@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { formatInTimeZone } from "date-fns-tz";
 import { ArrowLeft, Baby, FileHeart, FileSearch, HeartPulse, Loader2, Pill, Search, Syringe, Thermometer, AlertTriangle, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +31,8 @@ function lerSessao(): { id: string; nome: string } | null {
 /** Portal de Cuidados: rotina assistencial e fichas dos residentes. */
 export default function PortalCuidados() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const naHome = pathname.replace(/\/$/, "") === "/cuidados";
   const sessao = useMemo(lerSessao, []);
   const [modulos, setModulos] = useState<string[] | null>(null);
   const [residentes, setResidentes] = useState<ResidenteResumo[] | null>(null);
@@ -83,7 +85,22 @@ export default function PortalCuidados() {
           </div>
           <Button variant="secondary" size="sm" onClick={() => navigate("/")}><ArrowLeft className="mr-1 h-4 w-4" />Meu RH</Button>
         </div>
+        {/* Navegação fixa entre as tarefas, sem sair do portal */}
+        <nav className="border-t border-primary-foreground/20">
+          <div className="container mx-auto flex gap-1 overflow-x-auto px-2 py-1.5">
+            {[{ id: "inicio", nome: "Residentes", icone: HeartPulse, to: `/cuidados?${q}`, end: true },
+              ...atalhosLiberados(modulos).map((a) => ({ id: a.id, nome: a.nome, icone: ICONES[a.id], to: `/cuidados/${a.id}?${q}`, end: false }))]
+              .map((t) => (
+                <NavLink key={t.id} to={t.to} end={t.end}
+                  className={({ isActive }) => `flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${isActive ? "bg-primary-foreground text-primary" : "hover:bg-primary-foreground/15"}`}>
+                  <t.icone className="h-4 w-4" />{t.nome}
+                </NavLink>
+              ))}
+          </div>
+        </nav>
       </header>
+
+      {!naHome ? <div className="animate-fade-in"><Outlet /></div> : (
 
       <main className="container mx-auto space-y-6 px-4 py-5">
         <section>
@@ -92,7 +109,7 @@ export default function PortalCuidados() {
             {atalhosLiberados(modulos).map((a) => {
               const Icone = ICONES[a.id];
               return (
-                <button key={a.id} onClick={() => navigate(`${a.rota}?${q}`)}
+                <button key={a.id} onClick={() => navigate(`/cuidados/${a.id}?${q}`)}
                   className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center text-sm font-medium shadow-sm transition hover:border-primary hover:shadow-md active:scale-95">
                   <Icone className="h-7 w-7 text-primary" />{a.nome}
                 </button>
@@ -132,6 +149,7 @@ export default function PortalCuidados() {
           )}
         </section>
       </main>
+      )}
       <FichaCuidadoResidente residenteId={aberto} onClose={() => setAberto(null)} />
     </div>
   );
