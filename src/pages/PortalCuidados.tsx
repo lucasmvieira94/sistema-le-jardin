@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { temPasseValido } from "@/utils/portalSessao";
 import { atalhosLiberados, filtrarResidentes, idade, podeAcessarPortalCuidados, semCamposProibidos } from "@/utils/portalCuidados";
 import FichaCuidadoResidente from "@/components/cuidados/FichaCuidadoResidente";
+import { PortalCuidadosEmbutido } from "@/components/cuidados/PortalCuidadosContexto";
 
 const ICONES: Record<string, typeof Pill> = {
   prontuario: FileHeart, medicamentos: Pill, fraldas: Baby, temperatura: Thermometer,
@@ -79,20 +80,20 @@ export default function PortalCuidados() {
           <div className="flex items-center gap-2">
             <HeartPulse className="h-6 w-6" />
             <div>
-              <h1 className="font-bold leading-tight">Portal de Cuidados</h1>
+              <h1 className="text-base font-bold leading-tight sm:text-lg">Portal de Cuidados</h1>
               <p className="text-xs opacity-90">Olá, {sessao.nome.split(" ")[0]} · {formatInTimeZone(agora, "America/Sao_Paulo", "dd/MM/yyyy HH:mm")}</p>
             </div>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => navigate("/")}><ArrowLeft className="mr-1 h-4 w-4" />Meu RH</Button>
+          <Button variant="secondary" size="sm" className="shrink-0" onClick={() => navigate("/")} aria-label="Voltar ao Meu RH"><ArrowLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Meu RH</span></Button>
         </div>
         {/* Navegação fixa entre as tarefas, sem sair do portal */}
         <nav className="border-t border-primary-foreground/20">
-          <div className="container mx-auto flex gap-1 overflow-x-auto px-2 py-1.5">
+          <div className="container mx-auto flex snap-x gap-1 overflow-x-auto px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[{ id: "inicio", nome: "Residentes", icone: HeartPulse, to: `/cuidados?${q}`, end: true },
               ...atalhosLiberados(modulos).map((a) => ({ id: a.id, nome: a.nome, icone: ICONES[a.id], to: `/cuidados/${a.id}?${q}`, end: false }))]
               .map((t) => (
                 <NavLink key={t.id} to={t.to} end={t.end}
-                  className={({ isActive }) => `flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition ${isActive ? "bg-primary-foreground text-primary" : "hover:bg-primary-foreground/15"}`}>
+                  className={({ isActive }) => `flex min-h-10 shrink-0 snap-start items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition ${isActive ? "bg-primary-foreground text-primary" : "hover:bg-primary-foreground/15"}`}>
                   <t.icone className="h-4 w-4" />{t.nome}
                 </NavLink>
               ))}
@@ -100,17 +101,17 @@ export default function PortalCuidados() {
         </nav>
       </header>
 
-      {!naHome ? <div className="animate-fade-in"><Outlet /></div> : (
+      {!naHome ? <main className="animate-fade-in pb-20 sm:pb-6"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
 
-      <main className="container mx-auto space-y-6 px-4 py-5">
+      <main className="container mx-auto space-y-6 px-3 py-5 sm:px-4">
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Rotina</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-7">
             {atalhosLiberados(modulos).map((a) => {
               const Icone = ICONES[a.id];
               return (
                 <button key={a.id} onClick={() => navigate(`/cuidados/${a.id}?${q}`)}
-                  className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center text-sm font-medium shadow-sm transition hover:border-primary hover:shadow-md active:scale-95">
+                  className="flex flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center text-xs font-medium sm:p-4 sm:text-sm shadow-sm transition hover:border-primary hover:shadow-md active:scale-95">
                   <Icone className="h-7 w-7 text-primary" />{a.nome}
                 </button>
               );
@@ -121,7 +122,7 @@ export default function PortalCuidados() {
         <section>
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Residentes ({lista.length})</h2>
-            <div className="relative sm:w-72">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input className="pl-9" placeholder="Buscar por nome ou quarto" value={busca} onChange={(e) => setBusca(e.target.value)} />
             </div>
