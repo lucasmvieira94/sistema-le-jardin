@@ -1,3 +1,8 @@
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -105,14 +110,7 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
             <TabsContent value="saude" className="space-y-5">
               <section>
                 <h3 className="mb-2 font-semibold">Medicamentos em uso</h3>
-                {!ficha?.medicamentos?.length && <p className="text-sm text-muted-foreground">Nenhuma prescrição ativa.</p>}
-                {ficha?.medicamentos?.map((m: Json, i: number) => (
-                  <div key={i} className="border-b py-2 text-sm">
-                    <p className="font-medium">{m.nome} — {m.dosagem}</p>
-                    <p className="text-muted-foreground">{[m.via, m.horarios?.join(", ")].filter(Boolean).join(" · ")}</p>
-                    {m.observacoes && <p className="text-xs">{m.observacoes}</p>}
-                  </div>
-                ))}
+                <MedicamentosNoMapa residenteId={residenteId!} />
               </section>
               <section>
                 <h3 className="mb-2 font-semibold">Vacinas</h3>
@@ -129,5 +127,58 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Remédios no mapa do residente, com "Excluir do mapa" (exige motivo; registro não é apagado). */
+function MedicamentosNoMapa({ residenteId }: { residenteId: string }) {
+  const { toast } = useToast();
+  const [lista, setLista] = useState<any[] | null>(null);
+  const [excluindo, setExcluindo] = useState<any | null>(null);
+  const [motivo, setMotivo] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const carregar = () => supabase.from("prescricoes_medicamentos")
+    .select("id, dosagem, horarios, via_administracao, observacoes, medicamento:medicamentos(nome)")
+    .eq("residente_id", residenteId).eq("ativo", true).then(({ data }) => setLista(data ?? []));
+  useEffect(() => { carregar(); }, [residenteId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const excluir = async () => {
+    setSalvando(true);
+    const { error } = await supabase.rpc("portal_excluir_do_mapa" as any, { p_prescricao_id: excluindo.id, p_motivo: motivo });
+    setSalvando(false);
+    if (error) { toast({ title: "Não foi possível excluir", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Retirado do mapa", description: "A exclusão ficou registrada com seu nome e o motivo." });
+    setExcluindo(null); setMotivo(""); carregar();
+  };
+
+  if (lista === null) return <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />;
+  return (
+    <>
+      {!lista.length && <p className="text-sm text-muted-foreground">Nenhum remédio no mapa.</p>}
+      {lista.map((m) => (
+        <div key={m.id} className="flex items-start gap-2 border-b py-2 text-sm">
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">{m.medicamento?.nome} — {m.dosagem}</p>
+            <p className="text-muted-foreground">{[m.via_administracao, m.horarios?.join(", ")].filter(Boolean).join(" · ")}</p>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0 text-destructive" onClick={() => { setExcluindo(m); setMotivo(""); }}>
+            <Trash2 className="mr-1 h-4 w-4" />Excluir do mapa
+          </Button>
+        </div>
+      ))}
+      <Dialog open={!!excluindo} onOpenChange={(o) => !o && setExcluindo(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir do mapa</DialogTitle>
+            <DialogDescription>{excluindo?.medicamento?.nome} deixará de aparecer no mapa diário. O histórico é mantido.</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={3} maxLength={500} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Motivo (ex.: suspenso pelo médico)" />
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setExcluindo(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" disabled={salvando || motivo.trim().length < 5} onClick={excluir}>{salvando ? "Excluindo..." : "Excluir"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
