@@ -197,8 +197,8 @@ export default function AdministracaoMedicamentosPublico() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white" />
+      <div className={emb ? "flex justify-center py-16" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center"}>
+        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${emb ? "border-primary" : "border-white"}`} />
       </div>
     );
   }
