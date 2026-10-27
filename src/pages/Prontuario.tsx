@@ -1,3 +1,4 @@
+import { useEmbutidoPortal, TituloTarefa } from "@/components/cuidados/PortalCuidadosContexto";
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFuncionarioSession } from "@/hooks/useFuncionarioSession";
@@ -12,6 +13,7 @@ import NovoFormularioProntuario from "@/components/prontuario/NovoFormularioPron
 import TutorialProntuarioDialog from "@/components/prontuario/TutorialProntuarioDialog";
 
 export default function Prontuario() {
+  const emb = useEmbutidoPortal();
   const location = useLocation();
   const navigate = useNavigate();
   useFuncionarioSession();
@@ -137,9 +139,9 @@ export default function Prontuario() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={emb ? "" : "min-h-screen bg-background"}>
       <TutorialProntuarioDialog funcionarioId={funcionarioId} />
-      {/* Header */}
+      {emb ? <div className="container mx-auto px-3 pt-4 sm:px-4"><TituloTarefa icone={FileHeart} titulo="Prontuário Eletrônico" descricao="Selecione o residente e registre o cuidado" /></div> : (
       <div className="sticky top-0 bg-background/95 backdrop-blur-sm border-b z-50">
         <div className="container mx-auto px-2 sm:px-4 py-3">
           <div className="flex items-center justify-between">
@@ -162,7 +164,8 @@ export default function Prontuario() {
         </div>
       </div>
 
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      )}
+      <div className={emb ? "container mx-auto px-3 pb-6 sm:px-4" : "container mx-auto px-2 sm:px-4 py-4 sm:py-6"}>
         {!selectedResidente ? (
           <div className="space-y-4 sm:space-y-6">
             <div className="text-center px-4">

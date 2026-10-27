@@ -1,3 +1,4 @@
+import { useEmbutidoPortal, TituloTarefa } from "@/components/cuidados/PortalCuidadosContexto";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,7 @@ interface DiaAgrupado {
 }
 
 export default function MeusProntuarios() {
+  const emb = useEmbutidoPortal();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -133,10 +135,11 @@ export default function MeusProntuarios() {
   if (!funcionarioId) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4">
+    <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4"}>
       <div className="container mx-auto max-w-4xl">
+        {emb && <TituloTarefa icone={ClipboardList} titulo="Meus Prontuários" descricao="Prontuários que você finalizou" />}
         {/* Header */}
-        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4">
+        <div className={emb ? "hidden" : "bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4"}>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
