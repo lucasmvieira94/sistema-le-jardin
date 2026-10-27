@@ -1,0 +1,2 @@
+ALTER TABLE public.assinatura_envelopes DROP CONSTRAINT assinatura_envelopes_tipo_chk;
+ALTER TABLE public.assinatura_envelopes ADD CONSTRAINT assinatura_envelopes_tipo_chk CHECK (tipo = ANY (ARRAY['contrato_residente','contrato_temporario','distrato_residente','advertencia','folha_ponto','contracheque','recibo_pagamento','recibo_despesa','outro']));
