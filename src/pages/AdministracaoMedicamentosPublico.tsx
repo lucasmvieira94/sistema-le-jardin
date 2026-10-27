@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Pill, Clock, Check, Search, AlertTriangle } from "lucide-react";
+import { ArrowLeft, User, Pill, Clock, Check, Search, AlertTriangle, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import CadastrarMedicamentoDialog from "@/components/cuidados/CadastrarMedicamentoDialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { montarMapaDia, agruparPorHorario, resumoDoses, type DoseDia } from "@/utils/mapaMedicamentos";
 
@@ -69,6 +70,7 @@ export default function AdministracaoMedicamentosPublico() {
   const [submitting, setSubmitting] = useState(false);
 
   const hoje = formatInTimeZone(new Date(), "America/Sao_Paulo", "yyyy-MM-dd");
+  const [cadastroAberto, setCadastroAberto] = useState(false);
   const [visao, setVisao] = useState<"mapa" | "residente">("mapa");
   const [filtroStatus, setFiltroStatus] = useState<"pendentes" | "todos">("pendentes");
   const [agoraHHmm, setAgoraHHmm] = useState(() => formatInTimeZone(new Date(), "America/Sao_Paulo", "HH:mm"));
@@ -216,7 +218,9 @@ export default function AdministracaoMedicamentosPublico() {
   return (
     <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4"}>
       <div className="container mx-auto max-w-4xl space-y-4">
-        {emb && <TituloTarefa icone={Pill} titulo="Mapa de Medicamentos" descricao={`Medicações de hoje · ${formatInTimeZone(new Date(), "America/Sao_Paulo", "dd/MM/yyyy")}`} />}
+        {emb && <TituloTarefa icone={Pill} titulo="Mapa de Medicamentos" descricao={`Medicações de hoje · ${formatInTimeZone(new Date(), "America/Sao_Paulo", "dd/MM/yyyy")}`}
+          acao={<Button size="sm" className="min-h-10 shrink-0" onClick={() => setCadastroAberto(true)}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Cadastrar</span></Button>} />}
+        {emb && <CadastrarMedicamentoDialog open={cadastroAberto} onOpenChange={setCadastroAberto} onSalvo={fetchData} />}
         {/* Header */}
         <div className={emb ? "" : "bg-white rounded-2xl p-4 shadow-xl"}>
           <div className={emb ? "hidden" : "flex items-center gap-3 mb-3"}>
