@@ -42,3 +42,33 @@ describe("mapa de medicamentos do dia", () => {
     expect(resumoDoses(doses)).toMatchObject({ total: 2, administrado: 1, proximo: 1 });
   });
 });
+
+import { saldoPorResidente, situacaoLote, loteParaUso } from "../mapaMedicamentos";
+
+describe("estoque e emergência", () => {
+  it("remédio com estoque zerado continua no mapa, marcado como sem estoque", () => {
+    const saldo = saldoPorResidente([{ residente_id: "r1", medicamento_id: "m1", quantidade_atual: 0, tipo_estoque: "residente" }]);
+    const { doses } = montarMapaDia([base()], [], "2026-10-27", "07:30", saldo);
+    expect(doses).toHaveLength(2);
+    expect(doses.every((d) => d.semEstoque)).toBe(true);
+  });
+
+  it("dose de emergência não marca a dose de rotina como dada", () => {
+    const { doses } = montarMapaDia([base()], [{ residente_id: "r1", medicamento_id: "m1", horario_administracao: "08:00", tipo: "emergencia" }], "2026-10-27", "07:30");
+    expect(doses[0].status).toBe("agora");
+  });
+
+  it("lote vencido fica bloqueado e usa primeiro o que vence antes", () => {
+    const lotes = [
+      { id: "a", quantidade: 5, validade: "2026-10-01" },
+      { id: "b", quantidade: 5, validade: "2027-05-01" },
+      { id: "c", quantidade: 5, validade: "2026-12-01" },
+      { id: "d", quantidade: 0, validade: "2026-11-01" },
+    ];
+    expect(loteParaUso(lotes, "2026-10-27")?.id).toBe("c");
+    expect(situacaoLote(5, 2, "2026-10-01", "2026-10-27")).toBe("vencido");
+    expect(situacaoLote(5, 2, "2026-11-20", "2026-10-27")).toBe("vence_breve");
+    expect(situacaoLote(2, 2, "2027-11-20", "2026-10-27")).toBe("baixo");
+    expect(situacaoLote(0, 2, null, "2026-10-27")).toBe("zerado");
+  });
+});
