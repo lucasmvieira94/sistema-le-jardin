@@ -134,7 +134,15 @@ const App = () => {
               <Route path="/denuncia" element={<Denuncia />} />
               <Route path="/denuncia/acompanhar" element={<AcompanharDenuncia />} />
               <Route path="/anexo-afastamento/:token" element={<AnexoAfastamentoPublico />} />
-              <Route path="/cuidados" element={<PortalCuidados />} />
+              <Route path="/cuidados" element={<PortalCuidados />}>
+                <Route path="prontuario" element={<Prontuario />} />
+                <Route path="medicamentos" element={<AdministracaoMedicamentosPublico />} />
+                <Route path="fraldas" element={<ControleFraldasPublico />} />
+                <Route path="temperatura" element={<ControleTemperaturaPublico />} />
+                <Route path="vacinas" element={<ControleVacinasPublico />} />
+                <Route path="intercorrencias" element={<IntercorrenciasPublico />} />
+                <Route path="meus_prontuarios" element={<MeusProntuarios />} />
+              </Route>
               <Route path="/landing" element={<Landing />} />
             </Route>
 
