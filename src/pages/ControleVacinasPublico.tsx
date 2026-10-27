@@ -1,3 +1,4 @@
+import { useEmbutidoPortal, TituloTarefa } from "@/components/cuidados/PortalCuidadosContexto";
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ interface Residente {
 }
 
 export default function ControleVacinasPublico() {
+  const emb = useEmbutidoPortal();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const funcionarioId = params.get("funcionario_id") || undefined;
@@ -68,14 +70,15 @@ export default function ControleVacinasPublico() {
 
   return (
     <div className="container mx-auto p-4 max-w-3xl space-y-4">
-      <div className="flex items-center justify-between">
+      <div className={emb ? "hidden" : "flex items-center justify-between"}>
         <Button variant="ghost" onClick={() => navigate("/funcionario-access")}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Voltar
         </Button>
         <span className="text-sm text-muted-foreground">{funcionarioNome}</span>
       </div>
 
-      <div className="flex items-center gap-3">
+      {emb && <TituloTarefa icone={Syringe} titulo="Cartão Vacinal" descricao="Selecione um residente para ver/registrar vacinas" />}
+      <div className={emb ? "hidden" : "flex items-center gap-3"}>
         <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
           <Syringe className="w-6 h-6 text-pink-700" />
         </div>

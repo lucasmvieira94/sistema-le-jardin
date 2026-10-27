@@ -1,3 +1,4 @@
+import { useEmbutidoPortal, TituloTarefa } from "@/components/cuidados/PortalCuidadosContexto";
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Clock, MessageSquare, AlertTriangle, Search, Loader2 } from 'lucide-react';
@@ -50,6 +51,7 @@ const BORDER_COLORS: Record<string, string> = {
 };
 
 export default function IntercorrenciasPublico() {
+  const emb = useEmbutidoPortal();
   useFuncionarioSession();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -162,10 +164,11 @@ export default function IntercorrenciasPublico() {
   const categoriaInfo = (c: string) => CATEGORIAS.find(cat => cat.value === c);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-orange-900 p-2 sm:p-4">
+    <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-orange-900 p-2 sm:p-4"}>
       <div className="container mx-auto max-w-2xl">
+        {emb && <TituloTarefa icone={AlertTriangle} titulo="Intercorrências" descricao="Registre e acompanhe ocorrências" />}
         {/* Header */}
-        <div className="bg-background rounded-2xl p-4 sm:p-6 shadow-xl mb-4">
+        <div className={emb ? "hidden" : "bg-background rounded-2xl p-4 sm:p-6 shadow-xl mb-4"}>
           <div className="flex items-center gap-3 mb-2">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/funcionario-access`)}>
               <ArrowLeft className="w-5 h-5" />
@@ -181,7 +184,7 @@ export default function IntercorrenciasPublico() {
         </div>
 
         {/* Conteúdo */}
-        <div className="bg-background rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div className={emb ? "rounded-xl border bg-card p-3 sm:p-5 shadow-sm" : "bg-background rounded-2xl p-4 sm:p-6 shadow-xl"}>
           <Tabs defaultValue="registrar" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="registrar" className="gap-2">

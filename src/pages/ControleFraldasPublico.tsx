@@ -1,3 +1,4 @@
+import { useEmbutidoPortal, TituloTarefa } from "@/components/cuidados/PortalCuidadosContexto";
 import React, { useState, useEffect } from "react";
 import { Package, Droplets, ArrowLeft, Clock, CalendarRange } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -12,6 +13,7 @@ import { CadastroEstoquePublico } from "@/components/fraldas/CadastroEstoquePubl
 import { toast } from "@/components/ui/sonner";
 
 export default function ControleFraldasPublico() {
+  const emb = useEmbutidoPortal();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
@@ -94,8 +96,10 @@ export default function ControleFraldasPublico() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4">
+    <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4"}>
       <div className="container mx-auto max-w-2xl">
+        {emb && <TituloTarefa icone={Package} titulo="Controle de Fraldas" descricao="Registre o uso ou cadastre estoque" />}
+        {!emb && (<>
         {/* Header */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4 sm:mb-6">
           <div className="text-center space-y-3 sm:space-y-4">
@@ -140,6 +144,7 @@ export default function ControleFraldasPublico() {
           </div>
         </div>
 
+        </>)}
         {/* Cards de ação */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
           {/* Registrar Uso */}
@@ -190,7 +195,7 @@ export default function ControleFraldasPublico() {
         </div>
 
         {/* Botão voltar */}
-        <div className="text-center">
+        <div className={emb ? "hidden" : "text-center"}>
           <Button
             variant="outline"
             onClick={handleVoltar}

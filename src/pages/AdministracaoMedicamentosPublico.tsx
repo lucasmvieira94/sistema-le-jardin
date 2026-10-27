@@ -1,3 +1,4 @@
+import { useEmbutidoPortal, TituloTarefa } from "@/components/cuidados/PortalCuidadosContexto";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +49,7 @@ const frequenciaLabel = (tipo: string, valor?: number, diaSemana?: number, inter
 };
 
 export default function AdministracaoMedicamentosPublico() {
+  const emb = useEmbutidoPortal();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -195,18 +197,19 @@ export default function AdministracaoMedicamentosPublico() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white" />
+      <div className={emb ? "flex justify-center py-16" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 flex items-center justify-center"}>
+        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${emb ? "border-primary" : "border-white"}`} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4">
+    <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4"}>
       <div className="container mx-auto max-w-2xl space-y-4">
+        {emb && <TituloTarefa icone={Pill} titulo="Administração de Medicamentos" descricao={format(new Date(), "dd/MM/yyyy")} />}
         {/* Header */}
-        <div className="bg-white rounded-2xl p-4 shadow-xl">
-          <div className="flex items-center gap-3 mb-3">
+        <div className={emb ? "" : "bg-white rounded-2xl p-4 shadow-xl"}>
+          <div className={emb ? "hidden" : "flex items-center gap-3 mb-3"}>
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
