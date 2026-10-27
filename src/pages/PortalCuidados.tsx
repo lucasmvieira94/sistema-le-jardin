@@ -101,7 +101,7 @@ export default function PortalCuidados() {
         </nav>
       </header>
 
-      {!naHome ? <main className="animate-fade-in pb-20 sm:pb-6"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
+      {!naHome ? <main className="animate-fade-in pb-8"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
 
       <main className="container mx-auto space-y-6 px-3 py-5 sm:px-4">
         <section>
