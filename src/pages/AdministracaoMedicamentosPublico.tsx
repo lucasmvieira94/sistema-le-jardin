@@ -9,10 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Pill, Clock, Check, Search, AlertTriangle, Plus } from "lucide-react";
+import { ArrowLeft, User, Pill, Clock, Check, Search, AlertTriangle, Plus, Siren, PackageX } from "lucide-react";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import CadastrarMedicamentoDialog from "@/components/cuidados/CadastrarMedicamentoDialog";
+import DoseEmergenciaDialog from "@/components/cuidados/DoseEmergenciaDialog";
+import EstoqueResidentePortal from "@/components/cuidados/EstoqueResidentePortal";
+import EstoqueEmergenciaPortal from "@/components/cuidados/EstoqueEmergenciaPortal";
+import { saldoPorResidente } from "@/utils/mapaMedicamentos";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { montarMapaDia, agruparPorHorario, resumoDoses, type DoseDia } from "@/utils/mapaMedicamentos";
 
@@ -71,7 +75,11 @@ export default function AdministracaoMedicamentosPublico() {
 
   const hoje = formatInTimeZone(new Date(), "America/Sao_Paulo", "yyyy-MM-dd");
   const [cadastroAberto, setCadastroAberto] = useState(false);
-  const [visao, setVisao] = useState<"mapa" | "residente">("mapa");
+  const [visao, setVisao] = useState<"mapa" | "residente" | "estoque" | "emergencia">("mapa");
+  const [emergenciaAberta, setEmergenciaAberta] = useState(false);
+  const [saldo, setSaldo] = useState<Map<string, number>>(new Map());
+  const [supervisor, setSupervisor] = useState(false);
+  useEffect(() => { supabase.rpc("portal_eh_supervisor" as any).then(({ data }) => setSupervisor(data === true)); }, []);
   const [filtroStatus, setFiltroStatus] = useState<"pendentes" | "todos">("pendentes");
   const [agoraHHmm, setAgoraHHmm] = useState(() => formatInTimeZone(new Date(), "America/Sao_Paulo", "HH:mm"));
   useEffect(() => {
@@ -104,6 +112,9 @@ export default function AdministracaoMedicamentosPublico() {
 
       if (adminError) throw adminError;
 
+      const { data: est } = await supabase.from("estoque_medicamentos")
+        .select("residente_id, medicamento_id, quantidade_atual, tipo_estoque").eq("ativo", true).eq("tipo_estoque", "residente");
+      setSaldo(saldoPorResidente((est as any[]) ?? []));
       setPrescricoes(presc || []);
       setAdministracoes(admin || []);
     } catch (error: any) {
@@ -139,59 +150,21 @@ export default function AdministracaoMedicamentosPublico() {
   const confirmarAdministracao = async () => {
     if (!confirmDialog.prescricao || !confirmDialog.horario) return;
     setSubmitting(true);
-
     const p = confirmDialog.prescricao;
-
-    try {
-      // Buscar estoque do residente para este medicamento
-      const { data: estoque } = await supabase
-        .from("estoque_medicamentos")
-        .select("id")
-        .eq("medicamento_id", p.medicamento_id)
-        .eq("residente_id", p.residente_id)
-        .eq("ativo", true)
-        .maybeSingle();
-
-      // Se não tem estoque do residente, tentar urgência
-      let estoqueId = estoque?.id;
-      if (!estoqueId) {
-        const { data: estoqueUrg } = await supabase
-          .from("estoque_medicamentos")
-          .select("id")
-          .eq("medicamento_id", p.medicamento_id)
-          .eq("tipo_estoque", "urgencia")
-          .eq("ativo", true)
-          .maybeSingle();
-        estoqueId = estoqueUrg?.id;
-      }
-
-      const { error } = await supabase
-        .from("administracao_medicamentos")
-        .insert({
-          medicamento_id: p.medicamento_id,
-          residente_id: p.residente_id,
-          funcionario_id: funcionarioId,
-          dosagem_administrada: p.dosagem,
-          horario_administracao: confirmDialog.horario,
-          data_administracao: hoje,
-          quantidade_utilizada: 1,
-          via_administracao: p.via_administracao,
-          estoque_medicamento_id: estoqueId || null,
-          observacoes: observacoes || null,
-          status: "administrado",
-        });
-
-      if (error) throw error;
-
+    // Registro pelo servidor: confere o passe do PIN e não bloqueia se o estoque acabou
+    const { data, error } = await supabase.rpc("portal_administrar_dose" as any, {
+      p_prescricao_id: p.id, p_horario: confirmDialog.horario, p_observacoes: observacoes || null,
+    });
+    setSubmitting(false);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if ((data as any)?.sem_estoque) {
+      toast({ title: "Dose registrada — estoque zerado", description: `${p.medicamento?.nome}: avise a supervisão para repor.`, variant: "destructive" });
+    } else {
       toast({ title: "✅ Registrado", description: `${p.medicamento?.nome} administrado com sucesso` });
-      setConfirmDialog({ open: false });
-      setObservacoes("");
-      fetchData();
-    } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } finally {
-      setSubmitting(false);
     }
+    setConfirmDialog({ open: false });
+    setObservacoes("");
+    fetchData();
   };
 
   const getHorariosParaPrescricao = (p: Prescricao): string[] => {
@@ -219,8 +192,12 @@ export default function AdministracaoMedicamentosPublico() {
     <div className={emb ? "px-3 py-4 sm:px-4" : "min-h-screen bg-gradient-to-br from-green-800 to-green-900 p-2 sm:p-4"}>
       <div className="container mx-auto max-w-4xl space-y-4">
         {emb && <TituloTarefa icone={Pill} titulo="Mapa de Medicamentos" descricao={`Medicações de hoje · ${formatInTimeZone(new Date(), "America/Sao_Paulo", "dd/MM/yyyy")}`}
-          acao={<Button size="sm" className="min-h-10 shrink-0" onClick={() => setCadastroAberto(true)}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Cadastrar</span></Button>} />}
-        {emb && <CadastrarMedicamentoDialog open={cadastroAberto} onOpenChange={setCadastroAberto} onSalvo={fetchData} />}
+          acao={<div className="flex shrink-0 gap-2">
+            <Button size="sm" variant="destructive" className="min-h-10" onClick={() => setEmergenciaAberta(true)} aria-label="Dose de emergência"><Siren className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Emergência</span></Button>
+            <Button size="sm" className="min-h-10" onClick={() => setCadastroAberto(true)} aria-label="Cadastrar no mapa"><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Cadastrar no mapa</span></Button>
+          </div>} />}
+        {emb && <DoseEmergenciaDialog open={emergenciaAberta} onOpenChange={setEmergenciaAberta} onSalvo={fetchData} />}
+        {emb && <CadastrarMedicamentoDialog open={cadastroAberto} onOpenChange={setCadastroAberto} onSalvo={fetchData} onIrEstoque={() => setVisao("estoque")} />}
         {/* Header */}
         <div className={emb ? "" : "bg-white rounded-2xl p-4 shadow-xl"}>
           <div className={emb ? "hidden" : "flex items-center gap-3 mb-3"}>
@@ -245,14 +222,19 @@ export default function AdministracaoMedicamentosPublico() {
         </div>
 
         <Tabs value={visao} onValueChange={(v) => setVisao(v as any)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="mapa">Mapa do dia</TabsTrigger>
-            <TabsTrigger value="residente">Por residente</TabsTrigger>
+          <TabsList className={`grid w-full ${emb ? (supervisor ? "grid-cols-4" : "grid-cols-3") : "grid-cols-2"}`}>
+            <TabsTrigger value="mapa" className="text-xs sm:text-sm">Mapa</TabsTrigger>
+            <TabsTrigger value="residente" className="text-xs sm:text-sm">Por residente</TabsTrigger>
+            {emb && <TabsTrigger value="estoque" className="text-xs sm:text-sm">Estoque</TabsTrigger>}
+            {emb && supervisor && <TabsTrigger value="emergencia" className="text-xs sm:text-sm">Emergência</TabsTrigger>}
           </TabsList>
         </Tabs>
 
+        {visao === "estoque" && <EstoqueResidentePortal onAlterado={fetchData} />}
+        {visao === "emergencia" && supervisor && <EstoqueEmergenciaPortal />}
         {visao === "mapa" && (
           <MapaDoDia
+            saldo={saldo}
             prescricoes={prescricoes} administracoes={administracoes} hoje={hoje} agora={agoraHHmm}
             busca={searchTerm} filtro={filtroStatus} setFiltro={setFiltroStatus}
             onAdministrar={(p, h) => { setConfirmDialog({ open: true, prescricao: p, horario: h }); setObservacoes(""); }}
@@ -401,12 +383,14 @@ const ESTILO: Record<DoseDia["status"], { rotulo: string; classe: string }> = {
 };
 
 /** Mapa de medicamentos do dia: todas as doses de todos os residentes, por horário. */
-function MapaDoDia({ prescricoes, administracoes, hoje, agora, busca, filtro, setFiltro, onAdministrar }: {
-  prescricoes: Prescricao[]; administracoes: any[]; hoje: string; agora: string; busca: string;
+function MapaDoDia({ saldo, prescricoes, administracoes, hoje, agora, busca, filtro, setFiltro, onAdministrar }: {
+  saldo: Map<string, number>; prescricoes: Prescricao[]; administracoes: any[]; hoje: string; agora: string; busca: string;
   filtro: "pendentes" | "todos"; setFiltro: (f: "pendentes" | "todos") => void;
   onAdministrar: (p: Prescricao, horario: string) => void;
 }) {
-  const { doses, semHorario } = montarMapaDia(prescricoes as any, administracoes, hoje, agora);
+  const { doses, semHorario } = montarMapaDia(prescricoes as any, administracoes, hoje, agora, saldo);
+  const emergencias = administracoes.filter((a) => a.tipo === "emergencia");
+  const nomeRes = new Map(prescricoes.map((p) => [p.residente_id, p.residente?.nome_completo]));
   const termo = busca.toLowerCase();
   const casa = (d: DoseDia) => !termo ||
     (d.prescricao.residente?.nome_completo ?? "").toLowerCase().includes(termo) ||
@@ -466,7 +450,10 @@ function MapaDoDia({ prescricoes, administracoes, hoje, agora, busca, filtro, se
                     <p className="truncate text-xs text-muted-foreground">
                       {p.via_administracao ? `Via ${p.via_administracao}` : "Via não informada"}{p.observacoes ? ` · ${p.observacoes}` : ""}
                     </p>
-                    <Badge variant={d.status === "atrasado" ? "destructive" : "outline"} className="mt-1 text-[10px]">{e.rotulo}</Badge>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      <Badge variant={d.status === "atrasado" ? "destructive" : "outline"} className="text-[10px]">{e.rotulo}</Badge>
+                      {d.semEstoque && <Badge variant="destructive" className="text-[10px]"><PackageX className="mr-1 h-3 w-3" />Sem estoque</Badge>}
+                    </div>
                   </div>
                   {d.status === "administrado" ? (
                     <Check className="h-6 w-6 shrink-0 text-primary" aria-label="Já administrado" />
@@ -479,6 +466,17 @@ function MapaDoDia({ prescricoes, administracoes, hoje, agora, busca, filtro, se
           </div>
         </section>
       ))}
+
+      {emergencias.length > 0 && (
+        <section className="rounded-xl border border-destructive/40 p-3">
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-bold"><Siren className="h-4 w-4 text-destructive" />Emergências de hoje</h3>
+          {emergencias.map((a: any) => (
+            <p key={a.id} className="border-b py-1.5 text-xs last:border-0">
+              <strong>{a.horario_administracao?.slice(0, 5)}</strong> · {nomeRes.get(a.residente_id) ?? "Residente"} · {a.dosagem_administrada}{a.motivo ? ` — ${a.motivo}` : ""}
+            </p>
+          ))}
+        </section>
+      )}
 
       {semHorario.length > 0 && (
         <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">

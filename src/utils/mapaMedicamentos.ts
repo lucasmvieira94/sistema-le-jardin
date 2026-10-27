@@ -25,6 +25,7 @@ export interface AdministracaoMapa {
   medicamento_id: string;
   residente_id: string;
   horario_administracao?: string | null;
+  tipo?: string | null; // "rotina" | "emergencia"
 }
 
 export type StatusDose = "administrado" | "atrasado" | "agora" | "proximo";
@@ -34,7 +35,12 @@ export interface DoseDia {
   prescricao: PrescricaoMapa;
   horario: string; // HH:mm
   status: StatusDose;
+  /** Remédio continua no mapa mesmo com o estoque do residente zerado. */
+  semEstoque: boolean;
 }
+
+/** Chave residente|medicamento usada para o saldo do estoque. */
+export const chaveSaldo = (residenteId: string, medicamentoId: string) => `${residenteId}|${medicamentoId}`;
 
 /** Tolerância (min) para considerar a dose "agora" antes/depois do horário. */
 export const JANELA_MINUTOS = 60;
@@ -85,9 +91,10 @@ export function montarMapaDia(
   administracoes: AdministracaoMapa[],
   dia: string,
   agoraHHmm: string,
+  saldo?: Map<string, number>,
 ): { doses: DoseDia[]; semHorario: PrescricaoMapa[] } {
   const feitos = new Set(
-    administracoes.map((a) => `${a.residente_id}|${a.medicamento_id}|${(a.horario_administracao ?? "").slice(0, 5)}`),
+    administracoes.filter((a) => a.tipo !== "emergencia").map((a) => `${a.residente_id}|${a.medicamento_id}|${(a.horario_administracao ?? "").slice(0, 5)}`),
   );
   const doses: DoseDia[] = [];
   const semHorario: PrescricaoMapa[] = [];
@@ -97,7 +104,8 @@ export function montarMapaDia(
     if (!hrs.length) { semHorario.push(p); continue; }
     for (const h of hrs) {
       const ok = feitos.has(`${p.residente_id}|${p.medicamento_id}|${h}`);
-      doses.push({ chave: `${p.id}|${h}`, prescricao: p, horario: h, status: statusDose(h, agoraHHmm, ok) });
+      const semEstoque = saldo ? (saldo.get(chaveSaldo(p.residente_id, p.medicamento_id)) ?? 0) <= 0 : false;
+      doses.push({ chave: `${p.id}|${h}`, prescricao: p, horario: h, status: statusDose(h, agoraHHmm, ok), semEstoque });
     }
   }
   doses.sort((a, b) =>
@@ -117,4 +125,33 @@ export function resumoDoses(doses: DoseDia[]) {
   const r = { total: doses.length, administrado: 0, atrasado: 0, agora: 0, proximo: 0 };
   for (const d of doses) r[d.status]++;
   return r;
+}
+
+/** Soma o saldo do estoque do residente por residente|medicamento. */
+export function saldoPorResidente(estoques: { residente_id: string | null; medicamento_id: string; quantidade_atual: number | string; tipo_estoque?: string | null }[]) {
+  const m = new Map<string, number>();
+  for (const e of estoques) {
+    if (!e.residente_id || (e.tipo_estoque && e.tipo_estoque !== "residente")) continue;
+    const k = chaveSaldo(e.residente_id, e.medicamento_id);
+    m.set(k, (m.get(k) ?? 0) + Number(e.quantidade_atual || 0));
+  }
+  return m;
+}
+
+export type SituacaoEmergencia = "vencido" | "zerado" | "vence_breve" | "baixo" | "ok";
+
+/** Situação de um lote do estoque de emergência (mesma regra do servidor). */
+export function situacaoLote(qtd: number, minimo: number, validade: string | null, hoje: string): SituacaoEmergencia {
+  if (validade && validade < hoje) return "vencido";
+  if (qtd <= 0) return "zerado";
+  if (validade && diasEntre(hoje, validade) <= 30) return "vence_breve";
+  if (qtd <= minimo) return "baixo";
+  return "ok";
+}
+
+/** FEFO: lote utilizável que vence primeiro (vencidos e zerados ficam de fora). */
+export function loteParaUso<T extends { quantidade: number; validade: string | null }>(lotes: T[], hoje: string): T | null {
+  const ok = lotes.filter((l) => l.quantidade >= 1 && (!l.validade || l.validade >= hoje));
+  ok.sort((a, b) => (a.validade ?? "9999-12-31").localeCompare(b.validade ?? "9999-12-31"));
+  return ok[0] ?? null;
 }

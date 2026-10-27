@@ -24,11 +24,13 @@ export type Database = {
           horario_administracao: string
           id: string
           medicamento_id: string
+          motivo: string | null
           observacoes: string | null
           quantidade_utilizada: number
           residente_id: string
           status: string | null
           tenant_id: string | null
+          tipo: string
           via_administracao: string | null
         }
         Insert: {
@@ -40,11 +42,13 @@ export type Database = {
           horario_administracao?: string
           id?: string
           medicamento_id: string
+          motivo?: string | null
           observacoes?: string | null
           quantidade_utilizada: number
           residente_id: string
           status?: string | null
           tenant_id?: string | null
+          tipo?: string
           via_administracao?: string | null
         }
         Update: {
@@ -56,11 +60,13 @@ export type Database = {
           horario_administracao?: string
           id?: string
           medicamento_id?: string
+          motivo?: string | null
           observacoes?: string | null
           quantidade_utilizada?: number
           residente_id?: string
           status?: string | null
           tenant_id?: string | null
+          tipo?: string
           via_administracao?: string | null
         }
         Relationships: [
@@ -4495,12 +4501,16 @@ export type Database = {
           data_inicio: string
           dia_semana: number | null
           dosagem: string
+          estoque_medicamento_id: string | null
+          excluida_em: string | null
+          excluida_por: string | null
           frequencia_tipo: string
           frequencia_valor: number | null
           horarios: string[] | null
           id: string
           intervalo_dias: number | null
           medicamento_id: string
+          motivo_exclusao: string | null
           observacoes: string | null
           prescrito_por: string | null
           residente_id: string
@@ -4515,12 +4525,16 @@ export type Database = {
           data_inicio?: string
           dia_semana?: number | null
           dosagem: string
+          estoque_medicamento_id?: string | null
+          excluida_em?: string | null
+          excluida_por?: string | null
           frequencia_tipo?: string
           frequencia_valor?: number | null
           horarios?: string[] | null
           id?: string
           intervalo_dias?: number | null
           medicamento_id: string
+          motivo_exclusao?: string | null
           observacoes?: string | null
           prescrito_por?: string | null
           residente_id: string
@@ -4535,12 +4549,16 @@ export type Database = {
           data_inicio?: string
           dia_semana?: number | null
           dosagem?: string
+          estoque_medicamento_id?: string | null
+          excluida_em?: string | null
+          excluida_por?: string | null
           frequencia_tipo?: string
           frequencia_valor?: number | null
           horarios?: string[] | null
           id?: string
           intervalo_dias?: number | null
           medicamento_id?: string
+          motivo_exclusao?: string | null
           observacoes?: string | null
           prescrito_por?: string | null
           residente_id?: string
@@ -4549,6 +4567,13 @@ export type Database = {
           via_administracao?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "prescricoes_medicamentos_estoque_medicamento_id_fkey"
+            columns: ["estoque_medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_medicamentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prescricoes_medicamentos_medicamento_id_fkey"
             columns: ["medicamento_id"]
@@ -6278,16 +6303,23 @@ export type Database = {
         Args: { "": string }
         Returns: Record<string, unknown>[]
       }
+      portal_administrar_dose: {
+        Args: {
+          p_horario: string
+          p_observacoes?: string
+          p_prescricao_id: string
+        }
+        Returns: Json
+      }
       portal_cadastrar_medicamento: {
         Args: {
           p_data_fim?: string
           p_data_inicio?: string
           p_dosagem: string
+          p_estoque_id: string
           p_horarios: string[]
-          p_nome: string
           p_observacoes?: string
           p_prescrito_por?: string
-          p_residente_id: string
           p_via?: string
         }
         Returns: string
@@ -6306,8 +6338,70 @@ export type Database = {
           responsavel_telefone: string
         }[]
       }
+      portal_dose_emergencia: {
+        Args: {
+          p_dosagem: string
+          p_medicamento_id: string
+          p_motivo: string
+          p_origem: string
+          p_residente_id: string
+          p_via: string
+        }
+        Returns: string
+      }
       portal_eh_supervisor: { Args: never; Returns: boolean }
       portal_encerrar_sessao: { Args: never; Returns: undefined }
+      portal_entrada_estoque_emergencia: {
+        Args: {
+          p_lote: string
+          p_minimo?: number
+          p_nome: string
+          p_observacoes?: string
+          p_quantidade: number
+          p_validade: string
+        }
+        Returns: string
+      }
+      portal_entrada_estoque_residente: {
+        Args: {
+          p_lote?: string
+          p_nome: string
+          p_observacoes?: string
+          p_quantidade: number
+          p_residente_id: string
+          p_validade?: string
+        }
+        Returns: string
+      }
+      portal_estoque_emergencia: {
+        Args: never
+        Returns: {
+          estoque_id: string
+          lote: string
+          medicamento_id: string
+          minimo: number
+          nome: string
+          quantidade: number
+          situacao: string
+          validade: string
+        }[]
+      }
+      portal_estoque_residente: {
+        Args: { p_residente_id: string }
+        Returns: {
+          estoque_id: string
+          lote: string
+          medicamento_id: string
+          no_mapa: boolean
+          nome: string
+          quantidade: number
+          validade: string
+        }[]
+      }
+      portal_excluir_do_mapa: {
+        Args: { p_motivo: string; p_prescricao_id: string }
+        Returns: undefined
+      }
       portal_funcionario_atual: { Args: never; Returns: string }
       portal_iniciar_sessao: {
         Args: { p_codigo: string }
@@ -6321,6 +6415,28 @@ export type Database = {
           registra_ponto: boolean
           token: string
           valid: boolean
+        }[]
+      }
+      portal_med_catalogo: {
+        Args: { p_autor: string; p_nome: string; p_tenant: string }
+        Returns: string
+      }
+      portal_med_funcionario: { Args: never; Returns: string }
+      portal_med_residente_ok: {
+        Args: { p_residente: string; p_tenant: string }
+        Returns: undefined
+      }
+      portal_movimentos_emergencia: {
+        Args: { p_limite?: number }
+        Returns: {
+          lote: string
+          motivo: string
+          nome: string
+          quando: string
+          quantidade: number
+          residente: string
+          responsavel: string
+          tipo: string
         }[]
       }
       portal_sessao_atual: {
