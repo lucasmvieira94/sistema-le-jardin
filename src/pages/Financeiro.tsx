@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, TrendingUp, AlertCircle, Plus, RefreshCw, Wallet, Loader2, Receipt } from "lucide-react";
+import { DollarSign, TrendingUp, AlertCircle, Plus, RefreshCw, Wallet, Loader2, Receipt, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import ContasPagarLista from "@/components/financeiro/ContasPagarLista";
 import LucratividadeDashboard from "@/components/financeiro/LucratividadeDashboard";
 import { formatarData } from "@/utils/dateUtils";
 import { gerarReciboPDF } from "@/utils/reciboPDF";
+import { enviarTentativaRecibo, podeReenviarRecibo, type TentativaRecibo } from "@/utils/reenvioRecibo";
 import { calcularJurosMulta, CONFIG_PADRAO, type ConfigJurosMulta } from "@/utils/jurosMulta";
 import { filtrarPagamentos, type MeioPagamento } from "@/utils/filtroPagamentos";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -99,6 +100,9 @@ export default function Financeiro() {
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroMeioPagamento, setFiltroMeioPagamento] = useState<"todos" | MeioPagamento>("todos");
   const [configMora, setConfigMora] = useState<ConfigJurosMulta>(CONFIG_PADRAO);
+  const tentativasRecibo = useRef(new Map<string, TentativaRecibo>());
+  const enviosEmCurso = useRef(new Set<string>());
+  const [reenviandoRecibos, setReenviandoRecibos] = useState<string[]>([]);
 
   // Dialog: registrar pagamento
   const [pagDialog, setPagDialog] = useState<{ open: boolean; m: Mensalidade | null }>({ open: false, m: null });
@@ -175,12 +179,7 @@ export default function Financeiro() {
     const residente = residentes.find((r) => r.id === residenteId);
     const email = residente?.responsavel_email?.trim();
     if (!email) {
-      toast({
-        title: "Recibo não enviado",
-        description: `Nenhum e-mail cadastrado para o responsável de ${residente?.nome_completo ?? "residente"}.`,
-        variant: "destructive",
-      });
-      return;
+      throw new Error(`Nenhum e-mail cadastrado para o responsável de ${residente?.nome_completo ?? "residente"}. Cadastre o e-mail e tente reenviar.`);
     }
     const { data, error } = await supabase.functions.invoke("enviar-recibo-email", {
       body: {
@@ -294,7 +293,7 @@ export default function Financeiro() {
     // Recibo desse pagamento: sem download automático, apenas envio por e-mail.
     const numeroRecibo = `${pagDialog.m.id.slice(0, 8).toUpperCase()}-${pagData.replace(/-/g, "")}`;
     try {
-      const recibo = await gerarReciboPDF({
+      const tentativa: TentativaRecibo = { dados: {
         residenteNome: residenteNome(pagDialog.m.residente_id),
         residenteId: pagDialog.m.residente_id,
         mensalidadeId: pagDialog.m.id,
@@ -317,19 +316,46 @@ export default function Financeiro() {
         formaPagamento: pagForma,
         numeroRecibo,
         observacoes: pagObs,
-      });
-
-      await enviarReciboPorEmail(pagDialog.m.residente_id, recibo, {
-        competencia: pagDialog.m.competencia,
-        valorPago: valorRecebido,
-        dataPagamento: pagData,
-        numeroRecibo,
-      });
+      } };
+      tentativasRecibo.current.set(pagDialog.m.id, tentativa);
+      await enviarTentativaRecibo(tentativa, gerarReciboPDF, (recibo, dados) =>
+        enviarReciboPorEmail(dados.residenteId ?? "", recibo, dados));
+      tentativasRecibo.current.delete(pagDialog.m.id);
     } catch (e: any) {
-      toast({ title: "Falha ao gerar ou enviar recibo", description: e?.message ?? String(e), variant: "destructive" });
+      toast({ title: "Pagamento salvo; recibo não enviado", description: `${e?.message ?? String(e)} Use “Reenviar recibo” na cobrança.`, variant: "destructive" });
     }
     setPagDialog({ open: false, m: null });
     carregar();
+  };
+
+  const reenviarReciboMensalidade = async (m: Mensalidade) => {
+    if (!podeReenviarRecibo(m) || enviosEmCurso.current.has(m.id)) return;
+    enviosEmCurso.current.add(m.id);
+    setReenviandoRecibos([...enviosEmCurso.current]);
+    try {
+      // Reenvios posteriores à saída da tela usam os dados do recebimento salvo.
+      const tentativa = tentativasRecibo.current.get(m.id) ?? { dados: {
+        residenteNome: residenteNome(m.residente_id), residenteId: m.residente_id,
+        mensalidadeId: m.id, competencia: m.competencia, dataVencimento: m.data_vencimento,
+        dataPagamento: m.data_pagamento ?? "", valorMensalidade: Number(m.valor_mensalidade),
+        valorExtras: Number(m.valor_extras), valorDesconto: Number(m.valor_desconto),
+        valorMulta: Number(m.valor_multa || 0), valorJuros: Number(m.valor_juros || 0),
+        valorTotal: Number(m.valor_total), valorPago: Number(m.valor_pago),
+        formaPagamento: m.forma_pagamento,
+        numeroRecibo: `${m.id.slice(0, 8).toUpperCase()}-${(m.data_pagamento ?? "").replace(/-/g, "")}`,
+        observacoes: m.observacoes,
+      } };
+      if (!tentativa.dados.dataPagamento) throw new Error("O recebimento está sem data de pagamento. Confira o cadastro antes de reenviar.");
+      tentativasRecibo.current.set(m.id, tentativa);
+      await enviarTentativaRecibo(tentativa, gerarReciboPDF, (recibo, dados) =>
+        enviarReciboPorEmail(m.residente_id, recibo, dados));
+      tentativasRecibo.current.delete(m.id);
+    } catch (error) {
+      toast({ title: "Recibo não enviado", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+    } finally {
+      enviosEmCurso.current.delete(m.id);
+      setReenviandoRecibos([...enviosEmCurso.current]);
+    }
   };
 
   const baixarReciboMensalidade = async (m: Mensalidade) => {
@@ -627,6 +653,17 @@ export default function Financeiro() {
                         {m.status !== "cancelado" && (
                           <Button size="sm" variant="outline" onClick={() => baixarReciboMensalidade(m)}>
                             <Receipt className="h-3.5 w-3.5 mr-1" /> Recibo
+                          </Button>
+                        )}
+                        {podeReenviarRecibo(m) && (
+                          <Button size="sm" variant="outline"
+                            onClick={() => reenviarReciboMensalidade(m)}
+                            disabled={reenviandoRecibos.includes(m.id)}
+                            title="Reenviar recibo por e-mail ao responsável">
+                            {reenviandoRecibos.includes(m.id)
+                              ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                              : <Mail className="h-3.5 w-3.5 mr-1" />}
+                            {reenviandoRecibos.includes(m.id) ? "Enviando…" : "Reenviar recibo"}
                           </Button>
                         )}
                         {m.status !== "cancelado" && (() => {

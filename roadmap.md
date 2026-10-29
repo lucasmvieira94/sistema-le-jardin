@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Adicionar reenvio de recibos por e-mail sem registrar novo pagamento e testar preservação do PDF após falha
+
 - [x] Enviar fichas de acolhimento preenchidas existentes ao e-mail do residencial (8 aceitas pelo serviço de e-mail)
 - [x] Automatizar envio de futuras fichas preenchidas com PDF certificado e auditoria
 
