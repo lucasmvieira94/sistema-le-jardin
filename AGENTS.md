@@ -1,5 +1,7 @@
 # Decisões técnicas
 
+- Receipt email retries reuse the certified PDF and installment data while the payment screen remains open; later retries use persisted payment data, never recording another payment.
+
 - Intake-form emails run server-side from persisted per-form events authorized by hashed single-event capabilities; certified PDFs and provider idempotency keys are preserved across bounded retries to avoid duplicate delivery.
 
 - Anexos de afastamentos são convertidos a PDF antes de ir ao armazenamento privado; a consulta pública verifica o SHA-256 e audita cada acesso, preservando integridade e rastreabilidade.
