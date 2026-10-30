@@ -787,6 +787,38 @@ export type Database = {
           },
         ]
       }
+      assinatura_pdfs_finais: {
+        Row: {
+          arquivo_path: string
+          created_at: string
+          envelope_id: string
+          hash_pdf: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_path: string
+          created_at?: string
+          envelope_id: string
+          hash_pdf: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_path?: string
+          created_at?: string
+          envelope_id?: string
+          hash_pdf?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinatura_pdfs_finais_envelope_id_fkey"
+            columns: ["envelope_id"]
+            isOneToOne: true
+            referencedRelation: "assinatura_envelopes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinatura_signatarios: {
         Row: {
           assinado_em: string | null

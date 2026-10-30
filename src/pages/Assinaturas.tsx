@@ -21,6 +21,8 @@ import NovoEnvelopeDialog from '@/components/assinaturas/NovoEnvelopeDialog';
 import WhatsAppShareButton from '@/components/whatsapp/WhatsAppShareButton';
 import { gerarPdfDocumentoAssinado } from '@/utils/documentoAssinadoPDF';
 import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
+import { prepararViaFinal, salvarViaFinal } from '@/utils/baixarViaFinal';
+import { supabase } from '@/integrations/supabase/client';
 import {
   METODO_LABEL, STATUS_LABEL, TIPO_LABEL, linkAssinatura,
   useCancelarEnvelope, useEnvelopes, useEventosEnvelope, useReenviarConvite,
@@ -46,6 +48,8 @@ export default function Assinaturas() {
   const [cancelarAlvo, setCancelarAlvo] = useState<Envelope | null>(null);
   const [motivo, setMotivo] = useState('');
   const [baixando, setBaixando] = useState<string | null>(null);
+  const [viaFinal, setViaFinal] = useState<{ blob: Blob; filename: string } | null>(null);
+  const [reenviandoFinal, setReenviandoFinal] = useState<string | null>(null);
 
   const { data: eventos } = useEventosEnvelope(detalhe?.id);
 
@@ -80,6 +84,10 @@ export default function Assinaturas() {
   const baixarAssinado = async (e: Envelope) => {
     setBaixando(e.id);
     try {
+      if (e.status === 'concluido') {
+        setViaFinal(await prepararViaFinal(e.id, e.titulo));
+        return;
+      }
       const autenticidade = await obterAutenticidadeAssinatura({ origem: 'envelope', referencia_id: e.id, hash: e.hash_documento });
       await gerarPdfDocumentoAssinado({
         titulo: e.titulo,
@@ -94,6 +102,16 @@ export default function Assinaturas() {
     } finally {
       setBaixando(null);
     }
+  };
+
+  const reenviarFinal = async (e: Envelope) => {
+    setReenviandoFinal(e.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('assinatura-envelope', { body: { action: 'reenviar_final', envelope_id: e.id } });
+      if (error || data?.error) throw new Error(data?.error ?? error?.message);
+      toast.success(data.enviados ? 'PDF final enviado aos signatários' : 'Nenhum e-mail de signatário cadastrado');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Falha ao enviar PDF final'); }
+    finally { setReenviandoFinal(null); }
   };
 
   return (
@@ -203,8 +221,14 @@ export default function Assinaturas() {
                       {baixando === e.id
                         ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                         : <FileDown className="w-4 h-4 mr-1" />}
-                      PDF assinado
+                      {e.status === 'concluido' ? 'PDF final assinado' : 'PDF parcialmente assinado'}
                     </Button>
+                    {e.status === 'concluido' && (
+                      <Button size="sm" variant="outline" onClick={() => reenviarFinal(e)} disabled={reenviandoFinal === e.id}>
+                        {reenviandoFinal === e.id ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Send className="w-4 h-4 mr-1" />}
+                        Enviar PDF final por e-mail
+                      </Button>
+                    )}
                     {!['cancelado', 'concluido'].includes(e.status) && (
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setCancelarAlvo(e)}>
                         <Ban className="w-4 h-4 mr-1" /> Cancelar
@@ -219,6 +243,13 @@ export default function Assinaturas() {
       )}
 
       <NovoEnvelopeDialog open={novoAberto} onOpenChange={setNovoAberto} />
+
+      <Dialog open={!!viaFinal} onOpenChange={(open) => !open && setViaFinal(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>PDF final assinado</DialogTitle><DialogDescription>{viaFinal?.filename}</DialogDescription></DialogHeader>
+          <Button onClick={() => viaFinal && salvarViaFinal(viaFinal.blob, viaFinal.filename)}><FileDown className="w-4 h-4 mr-2" />Baixar PDF</Button>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!detalhe} onOpenChange={(v) => !v && setDetalhe(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">

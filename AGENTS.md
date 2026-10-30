@@ -1,5 +1,7 @@
 # Decisões técnicas
 
+- Completed external-signature envelopes persist one server-rendered final PDF in private storage; manager/token downloads and Resend attachments share those exact integrity-checked bytes, with per-signatory delivery auditing.
+
 - Receipt email retries reuse the certified PDF and installment data while the payment screen remains open; later retries use persisted payment data, never recording another payment.
 
 - Intake-form emails run server-side from persisted per-form events authorized by hashed single-event capabilities; certified PDFs and provider idempotency keys are preserved across bounded retries to avoid duplicate delivery.
