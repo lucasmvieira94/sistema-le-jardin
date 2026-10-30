@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
 
     if (action === 'baixar_final' || action === 'reenviar_final') {
       if (!body.envelope_id || !/^[a-f0-9-]{36}$/i.test(body.envelope_id)) return json({ error: 'Documento inválido' }, 400);
-      const { data: gestor, error: erroGestor } = await userClient.rpc('eh_gestor', { _user_id: userId });
+      const { data: gestor, error: erroGestor } = await userClient.rpc('eh_gestor', { _uid: userId });
       if (erroGestor || !gestor) return json({ error: 'Acesso exclusivo do gestor' }, 403);
       // Consulta com o JWT do gestor aplica o isolamento já existente do documento.
       const { data: autorizado } = await userClient.from('assinatura_envelopes').select('id').eq('id', body.envelope_id).maybeSingle();
