@@ -25,6 +25,7 @@ import ValidacaoBiometricaDialog from '@/components/biometria/ValidacaoBiometric
 import { gerarPdfDocumentoAssinado, type SignatarioPdf } from '@/utils/documentoAssinadoPDF';
 import { FileDown } from 'lucide-react';
 import { obterAutenticidadeAssinatura } from '@/utils/autenticidadeAssinatura';
+import { prepararViaFinal, salvarViaFinal } from '@/utils/baixarViaFinal';
 
 interface Dados {
   envelope: {
@@ -67,6 +68,7 @@ export default function AssinaturaPublica() {
   const [concluido, setConcluido] = useState<{ hash: string; em: string } | null>(null);
   const [copiaEnviada, setCopiaEnviada] = useState(false);
   const [baixando, setBaixando] = useState(false);
+  const [viaFinal, setViaFinal] = useState<{ blob: Blob; filename: string } | null>(null);
 
   const carregar = useCallback(async () => {
     if (!token) return;
@@ -121,6 +123,7 @@ export default function AssinaturaPublica() {
       setConcluido({ hash: r.hash_assinatura, em: r.assinado_em });
       setCopiaEnviada(!!r.copia_enviada);
       toast.success('Documento assinado com sucesso');
+      if (r.copia_erro) toast.warning('Assinatura salva, mas o PDF não foi enviado por e-mail. O suporte foi notificado.');
       carregar();
     } catch (e: any) {
       toast.error(e.message);
@@ -145,6 +148,11 @@ export default function AssinaturaPublica() {
     if (!dados) return;
     setBaixando(true);
     try {
+      if (dados.envelope.status === 'concluido') {
+        if (!token) throw new Error('Link de assinatura indisponível');
+        setViaFinal(await prepararViaFinal(dados.envelope.id, dados.envelope.titulo, token));
+        return;
+      }
       const autenticidade = await obterAutenticidadeAssinatura({ origem: 'envelope', referencia_id: dados.envelope.id, hash: dados.envelope.hash_documento });
       await gerarPdfDocumentoAssinado({
         titulo: dados.envelope.titulo,
@@ -359,6 +367,12 @@ export default function AssinaturaPublica() {
         />
       )}
 
+      <Dialog open={!!viaFinal} onOpenChange={(open) => !open && setViaFinal(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>PDF final assinado</DialogTitle><DialogDescription>{viaFinal?.filename}</DialogDescription></DialogHeader>
+          <Button onClick={() => viaFinal && salvarViaFinal(viaFinal.blob, viaFinal.filename)}><FileDown className="w-4 h-4 mr-2" />Baixar PDF</Button>
+        </DialogContent>
+      </Dialog>
       <Dialog open={recusaAberta} onOpenChange={setRecusaAberta}>
         <DialogContent>
           <DialogHeader>

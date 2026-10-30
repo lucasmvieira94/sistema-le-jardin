@@ -15,6 +15,8 @@
  * comprovação de autoria e integridade (hash + trilha de auditoria).
  */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { obterViaFinal, enviarViasFinais } from '../_shared/assinaturaFinalPDF.ts';
+import { diagnosticarErroEnvio } from '../_shared/diagnosticoEnvio.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -126,6 +128,23 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body.action || 'criar';
     const baseUrl: string = (body.base_url || '').replace(/\/$/, '');
+
+    if (action === 'baixar_final' || action === 'reenviar_final') {
+      if (!body.envelope_id || !/^[a-f0-9-]{36}$/i.test(body.envelope_id)) return json({ error: 'Documento inválido' }, 400);
+      const { data: gestor, error: erroGestor } = await userClient.rpc('eh_gestor', { _user_id: userId });
+      if (erroGestor || !gestor) return json({ error: 'Acesso exclusivo do gestor' }, 403);
+      // Consulta com o JWT do gestor aplica o isolamento já existente do documento.
+      const { data: autorizado } = await userClient.from('assinatura_envelopes').select('id').eq('id', body.envelope_id).maybeSingle();
+      if (!autorizado) return json({ error: 'Documento não autorizado' }, 403);
+      try {
+        if (action === 'reenviar_final') return json({ ok: true, enviados: await enviarViasFinais(admin, body.envelope_id) });
+        const final = await obterViaFinal(admin, body.envelope_id);
+        return new Response(final.bytes as BodyInit, { headers: { ...corsHeaders, 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${final.filename}"`, 'Cache-Control': 'no-store' } });
+      } catch (e) {
+        if (action === 'reenviar_final') await diagnosticarErroEnvio(admin, { origem: 'assinatura-pdf-final', erro: (e as Error).message, contexto: { envelope_id: body.envelope_id }, usuarioId: userId });
+        return json({ error: (e as Error).message }, 500);
+      }
+    }
 
     // ---------------------------------------------------------------- CANCELAR
     if (action === 'cancelar') {

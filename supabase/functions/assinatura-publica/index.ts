@@ -17,7 +17,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import QRCode from 'npm:qrcode@1.5.4';
+import { obterViaFinal, enviarViasFinais } from '../_shared/assinaturaFinalPDF.ts';
+import { diagnosticarErroEnvio } from '../_shared/diagnosticoEnvio.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -118,24 +119,6 @@ const publico = (s: any) => ({
 
 const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] ?? c));
 
-/** A cópia integral enviada por e-mail usa as mesmas duas faixas, sem evidências. */
-async function blocoAssinaturasHTML(hashDoc: string, lista: any[], codigo: string) {
-  const hash = hashDoc.toUpperCase();
-  const url = `https://senexcare.app/verificar-documento?id=${codigo}&hash=${hash}`;
-  const qr = await QRCode.toDataURL(url, { width: 180, margin: 1 });
-  return lista.filter((s) => s.status === 'assinado' && s.assinado_em).map((s) => `
-    <div style="margin-top:22px;border-top:1px solid #999;border-bottom:1px solid #999;font-family:Arial,sans-serif;font-size:12px;text-align:left">
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #999">
-        <img src="https://senexcare.app/__l5e/assets-v1/83690979-9b1e-48ba-8142-d26775e6987c/sxcare-assinatura-eletronica.jpg" alt="SXCare" width="66" height="66" />
-        <div>Documento assinado eletronicamente por <strong>${esc(s.nome)}</strong>, ${esc(s.papel)} em ${esc(new Date(s.assinado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).replace(', ', ' às '))}, conforme horário oficial de Brasília.</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 4px">
-        <img src="${qr}" width="76" height="76" alt="QR de verificação" />
-        <div style="overflow-wrap:anywhere">A autenticidade deste documento pode ser conferida no site <a href="${esc(url)}">${esc(url)}</a>, informando o código verificador <strong>${esc(codigo)}</strong> e o código CRC/SHA-256 <strong>${hash}</strong>.</div>
-      </div>
-    </div>`).join('');
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -164,6 +147,12 @@ Deno.serve(async (req) => {
 
     const expirado = new Date(sig.token_expira_em).getTime() < Date.now();
     const bloqueado = env.status === 'cancelado' || expirado;
+
+    if (action === 'baixar_final') {
+      if (bloqueado || sig.status !== 'assinado') return json({ error: 'Acesso à via final não autorizado' }, 403);
+      const final = await obterViaFinal(admin, env.id);
+      return new Response(final.bytes as BodyInit, { headers: { ...corsHeaders, 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${final.filename}"`, 'Cache-Control': 'no-store' } });
+    }
 
     // ------------------------------------------------------------------ OBTER
     if (!action || action === 'obter') {
@@ -314,29 +303,15 @@ Deno.serve(async (req) => {
       const lista = (todos ?? []).map(publico);
 
       let copia_enviada = false;
-      if (sig.email) {
+      let copia_erro: string | null = null;
+      const { data: atualizado } = await admin.from('assinatura_envelopes').select('status').eq('id', env.id).single();
+      if (atualizado?.status === 'concluido') {
         try {
-          const { data: verificacao } = await admin.from('assinatura_verificacoes').select('codigo_verificador').eq('origem', 'envelope').eq('referencia_id', env.id).single();
-          if (!verificacao) throw new Error('Código de verificação indisponível');
-          const rodape = await blocoAssinaturasHTML(env.hash_documento, lista, verificacao.codigo_verificador);
-          await enviarEmail(
-            sig.email,
-            `Documento assinado — ${env.titulo}`,
-            `<div style="font-family:Arial,sans-serif;color:#1f2937;max-width:720px;margin:0 auto">
-               <h2 style="color:#065f46">Sua via do documento assinado</h2>
-               <p>Olá, <strong>${sig.nome}</strong>. Segue abaixo a via integral do documento
-               <strong>${env.titulo}</strong>, já com as assinaturas registradas.</p>
-               <div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px">${env.conteudo_html ?? ''}</div>
-               ${rodape}
-             </div>`,
-          );
-          copia_enviada = true;
-          await admin.from('assinatura_eventos').insert({
-            envelope_id: env.id, signatario_id: sig.id, evento: 'copia_enviada',
-            metadata: { canal: 'email' },
-          });
+          copia_enviada = (await enviarViasFinais(admin, env.id)) > 0;
         } catch (e) {
-          console.error('Falha ao enviar cópia assinada:', (e as Error).message);
+          copia_erro = (e as Error).message;
+          await admin.from('assinatura_eventos').insert({ envelope_id: env.id, signatario_id: sig.id, evento: 'pdf_final_falhou', metadata: { erro: copia_erro } });
+          await diagnosticarErroEnvio(admin, { origem: 'assinatura-pdf-final', erro: copia_erro, contexto: { envelope_id: env.id } });
         }
       }
 
@@ -345,6 +320,7 @@ Deno.serve(async (req) => {
         hash_assinatura: hashAssinatura,
         assinado_em: assinadoEm,
         copia_enviada,
+        copia_erro,
         signatarios: lista,
       });
     }

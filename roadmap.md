@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Corrigir PDF final de assinaturas externas: armazenamento privado, download do gestor e anexo real por e-mail
+- [ ] Testar integridade, conteúdo e envio da via final assinada
+
 - [x] Adicionar reenvio de recibos por e-mail sem registrar novo pagamento e testar preservação do PDF após falha
 
 - [x] Enviar fichas de acolhimento preenchidas existentes ao e-mail do residencial (8 aceitas pelo serviço de e-mail)
