@@ -46,7 +46,7 @@ export async function renderizarViaAssinada(env: any, lista: any[], codigo: stri
     doc.addImage(data, props.fileType, pagina ? 16 : (210 - w) / 2, y, w, h);
     y += h + 5;
   };
-  const { document } = parseHTML(`<html><body>${html}</body></html>`);
+  const { document } = parseHTML(`<html><body>${html}</body></html>`) as unknown as { document: { body: { childNodes: Iterable<unknown> } } };
   const blocos = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'LI', 'TR', 'SECTION', 'HEADER', 'FOOTER']);
   let buffer = '';
   const flush = (bold = false, size = 11) => { if (buffer.trim()) escrever(buffer, bold, size); buffer = ''; };
