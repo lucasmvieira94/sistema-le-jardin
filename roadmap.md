@@ -1,7 +1,8 @@
 # Roadmap
 
-- [ ] Corrigir PDF final de assinaturas externas: armazenamento privado, download do gestor e anexo real por e-mail
-- [ ] Testar integridade, conteúdo e envio da via final assinada
+- [x] Corrigir PDF final de assinaturas externas: armazenamento privado, download do gestor e anexo real por e-mail
+- [x] Testar integridade, conteúdo, anexo idêntico ao PDF armazenado e conferir visualmente as páginas
+- [ ] Validar download autenticado e recebimento real do PDF final: sessão externa do gestor indisponível (401)
 
 - [x] Adicionar reenvio de recibos por e-mail sem registrar novo pagamento e testar preservação do PDF após falha
 

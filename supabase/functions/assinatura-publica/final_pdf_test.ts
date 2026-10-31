@@ -15,6 +15,11 @@ Deno.test('PDF final preserva documento longo e possui duas assinaturas sem omit
   const pdf = await PDFDocument.load(bytes);
   assertEquals(pdf.getPageCount() >= 3, true);
   assertEquals(pdf.getTitle(), env.titulo);
+  const content = new TextDecoder('latin1').decode(bytes);
+  assertEquals(content.includes('CONTEUDO ORIGINAL PRIMEIRA LINHA'), true);
+  assertEquals(content.includes('CONTEUDO ORIGINAL ULTIMA LINHA'), true);
+  assertEquals(content.includes('Contratante'), true);
+  assertEquals(content.includes('Representante da Empresa'), true);
 });
 
 Deno.test('PDF final bloqueia conteúdo adulterado e documento sem assinatura', async () => {
