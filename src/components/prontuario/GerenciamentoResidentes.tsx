@@ -24,6 +24,8 @@ import * as XLSX from 'xlsx';
 import ContratosLista from "@/components/residentes/ContratosLista";
 import ContratosTemporarios from "@/components/residentes/ContratosTemporarios";
 import FichaAcolhimentoAdmin from "@/components/residentes/FichaAcolhimentoAdmin";
+import BaixarContratoAssinado from "@/components/residentes/BaixarContratoAssinado";
+import { ClipboardCheck } from "lucide-react";
 
 interface Residente {
   id: string;
@@ -79,6 +81,8 @@ export default function GerenciamentoResidentes() {
   const [filtroStatus, setFiltroStatus] = useState<"ativos" | "inativos" | "todos">("ativos");
   const [filtroContrato, setFiltroContrato] = useState<"todos" | ContratoStatusKey>("todos");
   const [contratos, setContratos] = useState<ContratoResumo[]>([]);
+  const [envelopesAssinados, setEnvelopesAssinados] = useState<Record<string, string>>({});
+  const [fichasPreenchidas, setFichasPreenchidas] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchResidentes();
@@ -112,6 +116,24 @@ export default function GerenciamentoResidentes() {
       .select('id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato');
 
     if (!error) setContratos((data || []) as ContratoResumo[]);
+
+    // Envelopes concluídos (todos assinaram) por contrato → símbolo + download.
+    const { data: envs } = await supabase
+      .from('assinatura_envelopes')
+      .select('id, referencia_id')
+      .eq('referencia_tabela', 'contratos_residentes')
+      .eq('status', 'concluido')
+      .order('concluido_em', { ascending: true });
+    const mapa: Record<string, string> = {};
+    (envs || []).forEach((e) => { if (e.referencia_id) mapa[e.referencia_id] = e.id; });
+    setEnvelopesAssinados(mapa);
+
+    // Fichas de acolhimento já preenchidas pela família.
+    const { data: fichas } = await supabase
+      .from('fichas_acolhimento')
+      .select('residente_id')
+      .not('data_preenchimento', 'is', null);
+    setFichasPreenchidas(new Set((fichas || []).map((f) => f.residente_id)));
   };
 
   const statusContratoDe = (residenteId: string) =>
@@ -972,6 +994,7 @@ export default function GerenciamentoResidentes() {
                 <TableHead>Idade</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Contrato</TableHead>
+                <TableHead>Documentos</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -1015,6 +1038,35 @@ export default function GerenciamentoResidentes() {
                               {info.diasRestantes !== null && info.diasRestantes >= 0 && ` (${info.diasRestantes}d)`}
                             </span>
                           )}
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const contratoAssinado = contratos
+                        .filter((c) => c.residente_id === residente.id && envelopesAssinados[c.id])
+                        .map((c) => ({ c, env: envelopesAssinados[c.id] }))[0];
+                      const fichaOk = fichasPreenchidas.has(residente.id);
+                      return (
+                        <div className="flex items-center gap-1">
+                          {contratoAssinado ? (
+                            <BaixarContratoAssinado
+                              compacto
+                              envelopeId={contratoAssinado.env}
+                              titulo={`Contrato ${contratoAssinado.c.numero_contrato} ${residente.nome_completo}`}
+                            />
+                          ) : (
+                            <span title="Contrato sem assinatura concluída" className="h-7 px-1.5 inline-flex items-center text-muted-foreground/50">
+                              <FileText className="w-4 h-4" />
+                            </span>
+                          )}
+                          <span
+                            title={fichaOk ? "Ficha de acolhimento preenchida" : "Ficha de acolhimento pendente"}
+                            className={`h-7 px-1.5 inline-flex items-center ${fichaOk ? "text-emerald-600" : "text-muted-foreground/50"}`}
+                          >
+                            <ClipboardCheck className="w-4 h-4" />
+                          </span>
                         </div>
                       );
                     })()}
@@ -1068,7 +1120,7 @@ export default function GerenciamentoResidentes() {
               ))}
               {residentesFiltrados.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                     Nenhum residente encontrado com os filtros selecionados
                   </TableCell>
                 </TableRow>
