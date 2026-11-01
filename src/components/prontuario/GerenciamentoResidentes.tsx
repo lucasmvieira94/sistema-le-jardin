@@ -1120,7 +1120,7 @@ export default function GerenciamentoResidentes() {
               ))}
               {residentesFiltrados.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                     Nenhum residente encontrado com os filtros selecionados
                   </TableCell>
                 </TableRow>
