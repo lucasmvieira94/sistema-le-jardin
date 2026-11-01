@@ -10,6 +10,7 @@ import html2canvas from "html2canvas";
 import type { ContratoData, ResidenteData, EmpresaData } from "./types";
 import { useDocumentoAutenticidade, rodapeAutenticidadeHTML, type DocumentoAutenticidade } from "@/hooks/useDocumentoAutenticidade";
 import EnviarParaAssinaturaButton from "@/components/assinaturas/EnviarParaAssinaturaButton";
+import BaixarContratoAssinado from "./BaixarContratoAssinado";
 
 interface ContratoPDFGeneratorProps {
   open: boolean;
@@ -37,6 +38,22 @@ export default function ContratoPDFGenerator({
     cidade: string | null;
     endereco: string | null;
   } | null>(null);
+
+  // Contrato já assinado por todos: oferece a via final em vez de novo envio.
+  const [envelopeAssinadoId, setEnvelopeAssinadoId] = useState<string | null>(null);
+  useEffect(() => {
+    setEnvelopeAssinadoId(null);
+    if (!open || !contrato.id) return;
+    supabase
+      .from("assinatura_envelopes")
+      .select("id")
+      .eq("referencia_tabela", "contratos_residentes")
+      .eq("referencia_id", contrato.id)
+      .eq("status", "concluido")
+      .order("concluido_em", { ascending: false })
+      .limit(1)
+      .then(({ data }) => setEnvelopeAssinadoId(data?.[0]?.id ?? null));
+  }, [open, contrato.id]);
 
   useEffect(() => {
     async function fetchEmpresa() {
@@ -515,6 +532,12 @@ export default function ContratoPDFGenerator({
                 <Printer className="w-4 h-4 mr-2" />
                 Imprimir
               </Button>
+              {envelopeAssinadoId ? (
+                <BaixarContratoAssinado
+                  envelopeId={envelopeAssinadoId}
+                  titulo={`Contrato ${contrato.numero_contrato} ${residente.nome_completo}`}
+                />
+              ) : (
               <EnviarParaAssinaturaButton
                 titulo={`Contrato nº ${contrato.numero_contrato} — ${residente.nome_completo}`}
                 tipo="contrato_residente"
@@ -535,6 +558,7 @@ export default function ContratoPDFGenerator({
                   },
                 ]}
               />
+              )}
               <Button size="sm" onClick={handleDownloadPDF} disabled={!auth || registrandoAuth}>
                 <FileDown className="w-4 h-4 mr-2" />
                 Baixar PDF
