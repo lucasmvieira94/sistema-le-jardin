@@ -10,6 +10,7 @@ const original = readFileSync('supabase/migrations/20261027180420_351bf2de-a9e9-
 
 beforeAll(async () => {
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated;
+    CREATE TABLE public.funcionarios (id uuid, tenant_id uuid);
     CREATE FUNCTION public.portal_funcionario_atual() RETURNS uuid LANGUAGE sql AS $$
       SELECT nullif(current_setting('test.employee', true), '')::uuid $$;
     CREATE FUNCTION public.modulos_funcionario(uuid) RETURNS text[] LANGUAGE sql AS $$
