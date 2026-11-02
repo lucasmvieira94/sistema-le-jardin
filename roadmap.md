@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Corrigir bloqueio de medicamentos para colaboradores com o módulo autorizado, sem exigir Portal de Cuidados, e testar as permissões
+
 - [x] Corrigir PDF final de assinaturas externas: armazenamento privado, download do gestor e anexo real por e-mail
 - [x] Testar integridade, conteúdo, anexo idêntico ao PDF armazenado e conferir visualmente as páginas
 - [ ] Validar download autenticado e recebimento real do PDF final: sessão externa do gestor indisponível (401)
