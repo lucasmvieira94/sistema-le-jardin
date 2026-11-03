@@ -96,6 +96,8 @@ export default defineConfig(({ mode }) => ({
     })
   ].filter(Boolean),
   resolve: {
+    // Keep linked/prebundled React consumers on the same hook dispatcher.
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
