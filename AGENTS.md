@@ -3,6 +3,8 @@
 - Completed external-signature envelopes persist one server-rendered final PDF in private storage; manager/token downloads and Resend attachments share those exact integrity-checked bytes, with per-signatory delivery auditing.
 
 - Receipt email retries reuse the certified PDF and installment data while the payment screen remains open; later retries use persisted payment data, never recording another payment.
+- Receipt email payloads use the document registry UUID; public verifier codes remain separate and are used only for the authenticity footer and URL, preventing schema validation failures.
+- Vite deduplicates React and React DOM so dependency consumers share the renderer's hook dispatcher; this guards against module-identity mismatches without changing hook behavior.
 
 - Intake-form emails run server-side from persisted per-form events authorized by hashed single-event capabilities; certified PDFs and provider idempotency keys are preserved across bounded retries to avoid duplicate delivery.
 

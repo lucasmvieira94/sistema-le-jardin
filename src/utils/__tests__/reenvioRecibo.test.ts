@@ -6,7 +6,7 @@ const dados = {
   dataPagamento: "2026-10-29", valorMensalidade: 2000, valorExtras: 0,
   valorDesconto: 0, valorTotal: 2000, valorPago: 500, formaPagamento: "pix", numeroRecibo: "REC-1",
 };
-const pdf = { base64: "PDF-certificado", filename: "recibo.pdf", documentoId: "12345678", autenticidadeHash: "ABC" };
+const pdf = { base64: "PDF-certificado", filename: "recibo.pdf", documentoId: "00000000-0000-4000-8000-000000000001", autenticidadeHash: "ABC" };
 
 describe("reenvio de recibos", () => {
   it("permite reenviar recebimentos pagos e parciais, mas não cancelados ou sem pagamento", () => {

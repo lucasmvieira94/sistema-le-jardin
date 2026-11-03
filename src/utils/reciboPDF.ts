@@ -230,7 +230,7 @@ export async function gerarReciboPDF(
     })),
   };
 
-  let autenticidade: { id: string; hash: string; urlVerificacao: string; qrDataUrl: string } | null = null;
+  let autenticidade: { id: string; documentoId: string; hash: string; urlVerificacao: string; qrDataUrl: string } | null = null;
   try {
     const { data: regData, error: regErr } = await supabase.functions.invoke(
       "registrar-documento",
@@ -246,7 +246,7 @@ export async function gerarReciboPDF(
         },
       }
     );
-    if (!regErr && regData?.codigo_verificador && regData?.hash) {
+    if (!regErr && regData?.id && regData?.codigo_verificador && regData?.hash) {
       const origin = "https://senexcare.app";
       const hash = String(regData.hash).toUpperCase();
       const codigoVerificador = String(regData.codigo_verificador);
@@ -258,7 +258,8 @@ export async function gerarReciboPDF(
         margin: 1,
         errorCorrectionLevel: "M",
       });
-      autenticidade = { id: codigoVerificador, hash, urlVerificacao, qrDataUrl };
+      // O código público pertence ao rodapé; o envio consulta o UUID do registro.
+      autenticidade = { id: codigoVerificador, documentoId: String(regData.id), hash, urlVerificacao, qrDataUrl };
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "falha desconhecida";
@@ -559,7 +560,7 @@ export async function gerarReciboPDF(
   return {
     base64,
     filename,
-    documentoId: autenticidade.id,
+    documentoId: autenticidade.documentoId,
     autenticidadeHash: autenticidade.hash,
   };
 }
