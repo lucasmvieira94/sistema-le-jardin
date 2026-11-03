@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ invoke: vi.fn(), footer: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: () => ({ select: () => ({ limit: () => ({ maybeSingle: async () => ({ data: {
     nome_empresa: 'Empresa', assinatura_empresa_nome: 'Gestora',
-    assinatura_empresa_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3foAAAAASUVORK5CYII=',
+    assinatura_empresa_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8//8/AwMDEwMDAwMDAwAkBgMB/DXemwAAAABJRU5ErkJggg==',
   } }) }) }) }), functions: { invoke: mocks.invoke },
 } }));
 vi.mock('../rodapeDocumento', () => ({ carregarLogoRodape: async () => null, renderRodapeDocumentoPDF: mocks.footer }));
