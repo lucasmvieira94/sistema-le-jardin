@@ -1,7 +1,10 @@
 # Roadmap
 
-- [ ] Corrigir bloqueio de medicamentos para colaboradores com o módulo autorizado, sem exigir Portal de Cuidados, e testar as permissões
-- [ ] Investigar e corrigir erros recentes do Painel e envio de recibos registrados pelo agente de IA
+- [x] Corrigir bloqueio de medicamentos para colaboradores com o módulo autorizado, sem exigir Portal de Cuidados, e testar as permissões
+- [x] Corrigir identificador no envio de recibos, testar geração/reenvio e registrar resolução no histórico
+- [x] Investigar falhas de hooks do Painel e adicionar proteção de identidade única do React; tela pública sem erros
+- [ ] Confirmar envio real de recibo e operação de medicamentos com login: sessão externa indisponível para testes autenticados
+- [ ] Confirmar erro intermitente do Painel com gestor autenticado: não reproduzido na tela pública; sessão externa indisponível
 
 - [x] Corrigir PDF final de assinaturas externas: armazenamento privado, download do gestor e anexo real por e-mail
 - [x] Testar integridade, conteúdo, anexo idêntico ao PDF armazenado e conferir visualmente as páginas
