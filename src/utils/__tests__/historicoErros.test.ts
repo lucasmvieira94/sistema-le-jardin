@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filtrarErros, resumoPorModulo, ErroSistema } from "../historicoErros";
+import { filtrarErros, resumoPorModulo, ErroSistema, resolucaoDocumentada } from "../historicoErros";
 
 const base = (o: Partial<ErroSistema>): ErroSistema => ({
   id: Math.random().toString(), origem: "Financeiro", erro: "x", diagnostico: null, sugestao: null,
@@ -13,6 +13,10 @@ const lista = [
 const todos = { modulo: "todos", gravidade: "todas", status: "todos" as const };
 
 describe("histórico de erros", () => {
+  it("exige observação para registrar uma resolução", () => {
+    expect(resolucaoDocumentada('   ')).toBe(false);
+    expect(resolucaoDocumentada('UUID corrigido e teste de recibo aprovado')).toBe(true);
+  });
   it("filtra por módulo, gravidade e status", () => {
     expect(filtrarErros(lista, { ...todos, modulo: "Prontuário" })).toHaveLength(2);
     expect(filtrarErros(lista, { ...todos, gravidade: "alta" })).toHaveLength(1);
