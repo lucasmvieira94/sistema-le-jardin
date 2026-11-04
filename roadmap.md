@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Revisar erros corrigidos, atualizar status com evidências e criar histórico consultado antes das atualizações
+
 - [x] Corrigir bloqueio de medicamentos para colaboradores com o módulo autorizado, sem exigir Portal de Cuidados, e testar as permissões
 - [x] Corrigir identificador no envio de recibos, testar geração/reenvio e registrar resolução no histórico
 - [x] Investigar falhas de hooks do Painel e adicionar proteção de identidade única do React; tela pública sem erros
