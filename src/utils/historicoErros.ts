@@ -30,6 +30,9 @@ export function filtrarErros(lista: ErroSistema[], f: FiltrosErros): ErroSistema
 
 export interface ResumoModulo { modulo: string; total: number; abertos: number; altas: number }
 
+/** Uma resolução precisa registrar a correção e sua verificação. */
+export const resolucaoDocumentada = (nota: string) => nota.trim().length > 0;
+
 /** Totais por módulo, do mais problemático para o menos. */
 export function resumoPorModulo(lista: ErroSistema[]): ResumoModulo[] {
   const m = new Map<string, ResumoModulo>();

@@ -5,6 +5,7 @@
  * Nunca lança exceção: uma falha aqui não pode mascarar o erro original.
  */
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { consultarCorrecoes } from "./historicoCorrecoes.ts";
 
 export interface Diagnostico { diagnostico: string; sugestao: string; gravidade: string }
 
@@ -57,8 +58,13 @@ export async function diagnosticarErroEnvio(
   params: { origem: string; erro: string; contexto?: Record<string, unknown>; usuarioId?: string | null },
 ): Promise<Diagnostico | null> {
   try {
-    const contexto = params.contexto ?? {};
-    const d = await perguntarIA(params.origem, params.erro, contexto);
+    const correcoes = await consultarCorrecoes(admin, params.origem, params.erro);
+    const contexto = { ...(params.contexto ?? {}), historico_correcoes_consultado: true, correcoes_anteriores: correcoes };
+    // Recorrências continuam abertas: uma correção antiga não prova que a nova falha foi resolvida.
+    // Não devolvemos notas internas pelo endpoint acessível ao portal público.
+    const d = correcoes.length > 0
+      ? { diagnostico: "Recorrência de erro com correção anterior registrada.", sugestao: "O gestor deve consultar o Histórico de erros e conferir a correção anterior antes de aplicar uma nova solução.", gravidade: "media" }
+      : await perguntarIA(params.origem, params.erro, contexto);
 
     let enviado = false;
     const resendKey = Deno.env.get("RESEND_API_KEY");

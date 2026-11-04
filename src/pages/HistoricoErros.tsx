@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { Bug, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { formatarTimestampDataHora } from "@/utils/formatTimestamp";
-import { ErroSistema, FiltrosErros, filtrarErros, limitesPeriodo, resumoPorModulo } from "@/utils/historicoErros";
+import { ErroSistema, FiltrosErros, filtrarErros, limitesPeriodo, resumoPorModulo, resolucaoDocumentada } from "@/utils/historicoErros";
 
 const COR_GRAVIDADE: Record<string, "destructive" | "secondary" | "outline"> = {
   alta: "destructive", media: "secondary", baixa: "outline",
@@ -50,10 +50,11 @@ export default function HistoricoErros() {
 
   const alterarStatus = async (resolver: boolean) => {
     if (!aberto) return;
+    if (resolver && !resolucaoDocumentada(obs)) return toast({ title: "Informe a correção e a verificação realizada", variant: "destructive" });
     setSalvando(true);
     const { error } = await supabase.from("erros_envio_suporte" as any).update({
       resolvido: resolver, resolvido_em: resolver ? new Date().toISOString() : null,
-      resolvido_por: resolver ? user?.id : null, observacao_resolucao: resolver ? obs.trim() || null : null,
+      resolvido_por: resolver ? user?.id : null, observacao_resolucao: resolver ? obs.trim() : aberto.observacao_resolucao ?? null,
     }).eq("id", aberto.id);
     setSalvando(false);
     if (error) return toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" });
@@ -150,14 +151,14 @@ export default function HistoricoErros() {
               {aberto.resolvido ? (
                 <p className="text-muted-foreground">Resolvido em {aberto.resolvido_em ? formatarTimestampDataHora(aberto.resolvido_em) : "—"}{aberto.observacao_resolucao ? ` — ${aberto.observacao_resolucao}` : ""}</p>
               ) : (
-                <Textarea placeholder="O que foi feito para resolver (opcional)" value={obs} onChange={(e) => setObs(e.target.value)} maxLength={1000} />
+                <Textarea placeholder="Correção realizada e como foi verificada" value={obs} onChange={(e) => setObs(e.target.value)} maxLength={1000} />
               )}
             </div>
             <DialogFooter>
               {aberto.resolvido ? (
                 <Button variant="outline" onClick={() => alterarStatus(false)} disabled={salvando}><RotateCcw className="w-4 h-4 mr-1" />Reabrir</Button>
               ) : (
-                <Button onClick={() => alterarStatus(true)} disabled={salvando}><CheckCircle2 className="w-4 h-4 mr-1" />Marcar como resolvido</Button>
+                <Button onClick={() => alterarStatus(true)} disabled={salvando || !resolucaoDocumentada(obs)}><CheckCircle2 className="w-4 h-4 mr-1" />Marcar como resolvido</Button>
               )}
             </DialogFooter>
           </>)}
