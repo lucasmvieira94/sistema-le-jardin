@@ -1,6 +1,9 @@
 # Roadmap
 
-- [ ] Revisar erros corrigidos, atualizar status com evidências e criar histórico consultado antes das atualizações
+- [x] Revisar erros corrigidos e encerrar dois registros antigos do Painel com evidências, preservando os não confirmados
+- [x] Criar histórico preventivo obrigatório antes das atualizações e consulta automática de correções no diagnóstico
+- [x] Exigir descrição da resolução e preservar observação ao reabrir; testar histórico e regressões
+- [ ] Validar tela administrativa autenticada do histórico: sessão externa indisponível no ambiente de testes
 
 - [x] Corrigir bloqueio de medicamentos para colaboradores com o módulo autorizado, sem exigir Portal de Cuidados, e testar as permissões
 - [x] Corrigir identificador no envio de recibos, testar geração/reenvio e registrar resolução no histórico
