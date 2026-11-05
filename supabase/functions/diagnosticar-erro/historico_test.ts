@@ -1,6 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { consultarCorrecoes } from "../_shared/historicoCorrecoes.ts";
+import { diagnosticarErroEnvio } from "../_shared/diagnosticoEnvio.ts";
 
 function cliente(data: unknown[], error: unknown = null) {
   const calls: unknown[][] = [];
@@ -31,4 +32,23 @@ Deno.test('não retorna notas internas nem usa registros sem resolução documen
 Deno.test('falha de consulta não mascara o erro original', async () => {
   const { admin } = cliente([], new Error('Sem conexão'));
   assertEquals(await consultarCorrecoes(admin, 'Painel', 'erro'), []);
+});
+
+Deno.test('recorrência consulta histórico antes do diagnóstico, grava novo erro aberto e não expõe nota', async () => {
+  const { admin: reader } = cliente([{ id: 'anterior', observacao_resolucao: 'Nota interna confidencial' }]);
+  let registro: Record<string, unknown> = {};
+  const admin = { from: () => ({
+    ...(reader.from('erros_envio_suporte') as unknown as object),
+    insert: (row: Record<string, unknown>) => { registro = row; return Promise.resolve({ error: null }); },
+  }) } as unknown as SupabaseClient;
+  // Evita qualquer e-mail real durante o teste.
+  const key = Deno.env.get('RESEND_API_KEY');
+  Deno.env.delete('RESEND_API_KEY');
+  try {
+    const result = await diagnosticarErroEnvio(admin, { origem: 'Financeiro', erro: 'Dados inválidos' });
+    assertEquals(result?.diagnostico, 'Recorrência de erro com correção anterior registrada.');
+    assertEquals(JSON.stringify(result).includes('Nota interna confidencial'), false);
+    assertEquals(registro.resolvido, undefined); // O padrão no banco é false.
+    assertEquals((registro.contexto as Record<string, unknown>).correcoes_anteriores, ['anterior']);
+  } finally { if (key) Deno.env.set('RESEND_API_KEY', key); }
 });
