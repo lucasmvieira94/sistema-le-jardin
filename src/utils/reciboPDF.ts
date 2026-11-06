@@ -81,7 +81,6 @@ export type AssinaturaEmpresa = {
   nome: string;
   cargo: string | null;
   cpf: string | null;
-  rubricaBase64: string;
 };
 
 type ConfiguracaoEmpresaRecibo = {
@@ -97,15 +96,14 @@ type ConfiguracaoEmpresaRecibo = {
 };
 
 /**
- * Recibos oficiais só podem ser emitidos com a identidade e a rubrica
- * institucional previamente cadastradas nas configurações da empresa.
+ * Recibos oficiais exigem a identidade institucional cadastrada.
+ * A assinatura é apresentada exclusivamente no rodapé digital, sem rubrica por imagem.
  */
 export function obterAssinaturaEmpresa(
   empresa: ConfiguracaoEmpresaRecibo | null,
 ): AssinaturaEmpresa {
   const nome = empresa?.assinatura_empresa_nome?.trim();
-  const rubricaBase64 = empresa?.assinatura_empresa_base64?.trim();
-  if (!nome || !rubricaBase64) {
+  if (!nome) {
     throw new Error(
       "Configure a assinatura digital da empresa antes de emitir ou enviar recibos.",
     );
@@ -115,16 +113,7 @@ export function obterAssinaturaEmpresa(
     nome,
     cargo: empresa?.assinatura_empresa_cargo?.trim() || null,
     cpf: empresa?.assinatura_empresa_cpf?.trim() || null,
-    rubricaBase64,
   };
-}
-
-async function sha256Hex(value: string): Promise<string> {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 export async function gerarReciboPDF(
@@ -133,7 +122,7 @@ export async function gerarReciboPDF(
 ): Promise<ReciboResultado> {
   const { data: empresa, error: empresaError } = await supabase
     .from("configuracoes_empresa")
-    .select("nome_empresa, cnpj, endereco, cidade, logo_url, assinatura_empresa_nome, assinatura_empresa_cargo, assinatura_empresa_cpf, assinatura_empresa_base64")
+    .select("nome_empresa, cnpj, endereco, cidade, logo_url, assinatura_empresa_nome, assinatura_empresa_cargo, assinatura_empresa_cpf")
     .limit(1)
     .maybeSingle();
 
@@ -142,7 +131,6 @@ export async function gerarReciboPDF(
   }
 
   const assinatura = obterAssinaturaEmpresa(empresa);
-  const rubricaHash = await sha256Hex(assinatura.rubricaBase64);
 
   const nomeEmpresa = empresa?.nome_empresa ?? "Instituição";
   const cnpj = empresa?.cnpj ?? "";
@@ -220,7 +208,6 @@ export async function gerarReciboPDF(
       nome: assinatura.nome,
       cargo: assinatura.cargo,
       cpf: assinatura.cpf,
-      rubrica_sha256: rubricaHash,
       base_legal: "MP 2.200-2/2001, art. 10, §2º; Lei 14.063/2020",
     },
     lancamentos: lancamentos.map((l) => ({
@@ -462,59 +449,14 @@ export async function gerarReciboPDF(
 
   // Local e data
   y += 16;
-  // Reserva espaço para assinatura e para o bloco fixo de autenticidade.
+  // Reserva apenas o espaço do rodapé digital compartilhado (72 mm + respiro).
   // Recibos extensos continuam em uma nova página sem sobreposição.
-  if (y > pageH - 116) {
+  if (y > pageH - 80) {
     doc.addPage();
     y = 24;
   }
   const localData = `${cidade || "_______________"}, ${formatarData(r.dataPagamento)}.`;
   doc.text(localData, pageW / 2, y, { align: "center" });
-
-  // Assinatura eletrônica institucional. A rubrica e sua identificação fazem
-  // parte dos dados protegidos pelo hash registrado no documento.
-  y += 10;
-  const assinaturaImagemY = y;
-  try {
-    doc.addImage(
-      assinatura.rubricaBase64,
-      assinatura.rubricaBase64.includes("image/jpeg") ? "JPEG" : "PNG",
-      pageW / 2 - 28,
-      assinaturaImagemY,
-      56,
-      18,
-    );
-  } catch {
-    throw new Error("A imagem da assinatura digital da empresa é inválida. Cadastre-a novamente.");
-  }
-  y += 20;
-  doc.setDrawColor(80);
-  doc.line(pageW / 2 - 45, y, pageW / 2 + 45, y);
-  y += 5;
-  doc.setFont("times", "bold");
-  doc.setFontSize(10);
-  doc.text(assinatura.nome, pageW / 2, y, { align: "center" });
-  y += 4;
-  doc.setFont("times", "normal");
-  doc.setFontSize(8.5);
-  const identificacaoAssinante = [assinatura.cargo, assinatura.cpf ? `CPF: ${assinatura.cpf}` : null]
-    .filter(Boolean)
-    .join(" • ");
-  if (identificacaoAssinante) {
-    doc.text(identificacaoAssinante, pageW / 2, y, { align: "center" });
-    y += 4;
-  }
-  doc.setFont("times", "bold");
-  doc.text(`ASSINADO ELETRONICAMENTE POR ${nomeEmpresa.toUpperCase()}`, pageW / 2, y, { align: "center" });
-  y += 3.5;
-  doc.setFont("times", "normal");
-  doc.setFontSize(7.5);
-  doc.text(
-    "MP 2.200-2/2001, art. 10, §2º • Lei 14.063/2020",
-    pageW / 2,
-    y,
-    { align: "center" },
-  );
 
   // ===== Rodapé de autenticidade (hash + QR) =====
   if (autenticidade) {
@@ -522,22 +464,9 @@ export async function gerarReciboPDF(
     renderRodapeDocumentoPDF(doc, autenticidade, margin, {
       nome: assinatura.nome,
       papel: assinatura.cargo || `Representante de ${nomeEmpresa}`,
-      metodo: "Rubrica institucional da empresa",
       assinadoEm: new Date().toISOString(),
     });
   }
-
-  // Rodapé
-  doc.setDrawColor(200);
-  doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text(
-    `Recibo gerado eletronicamente em ${new Date().toLocaleString("pt-BR")}.`,
-    pageW / 2,
-    pageH - 9,
-    { align: "center" }
-  );
 
   // Restringe edição/anotação (PDF/A-like), igual aos demais documentos.
   try {
