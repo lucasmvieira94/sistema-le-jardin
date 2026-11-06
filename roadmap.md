@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Simplificar recibo: remover campo e imagem de assinatura do sócio, mantendo somente rodapé digital e autenticidade
+
 - [x] Revisar erros corrigidos e encerrar dois registros antigos do Painel com evidências, preservando os não confirmados
 - [x] Criar histórico preventivo obrigatório antes das atualizações e consulta automática de correções no diagnóstico
 - [x] Exigir descrição da resolução e preservar observação ao reabrir; testar histórico e regressões

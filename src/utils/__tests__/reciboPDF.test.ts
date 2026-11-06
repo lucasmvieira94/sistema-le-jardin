@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ invoke: vi.fn(), footer: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: () => ({ select: () => ({ limit: () => ({ maybeSingle: async () => ({ data: {
     nome_empresa: 'Empresa', assinatura_empresa_nome: 'Gestora',
-    assinatura_empresa_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8//8/AwMDEwMDAwMDAwAkBgMB/DXemwAAAABJRU5ErkJggg==',
+    assinatura_empresa_base64: null,
   } }) }) }) }), functions: { invoke: mocks.invoke },
 } }));
 vi.mock('../rodapeDocumento', () => ({ carregarLogoRodape: async () => null, renderRodapeDocumentoPDF: mocks.footer }));
@@ -56,15 +56,14 @@ describe("assinatura eletrônica do recibo", () => {
       nome: "Maria Silva",
       cargo: "Diretora",
       cpf: "000.000.000-00",
-      rubricaBase64: "data:image/png;base64,abc",
     });
   });
 
-  it("impede a emissão sem rubrica institucional", () => {
-    expect(() => obterAssinaturaEmpresa({
+  it("permite emissão com identidade institucional sem imagem de assinatura", () => {
+    expect(obterAssinaturaEmpresa({
       assinatura_empresa_nome: "Maria Silva",
       assinatura_empresa_base64: null,
-    })).toThrow("Configure a assinatura digital da empresa");
+    })).toEqual({ nome: "Maria Silva", cargo: null, cpf: null });
   });
 
   it("impede a emissão sem identificação do responsável", () => {
