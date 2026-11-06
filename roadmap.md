@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Criar agenda do Portal de Cuidados com compromissos por residente, data, horário e observações
+- [ ] Avisar compromissos do dia e confirmar ciência compartilhada com status Feito
+- [ ] Testar autorização, confirmação única e apresentação celular/tablet
+
 - [x] Simplificar recibo: remover campo e imagem de assinatura do sócio, mantendo somente rodapé digital e autenticidade
 
 - [x] Revisar erros corrigidos e encerrar dois registros antigos do Painel com evidências, preservando os não confirmados
