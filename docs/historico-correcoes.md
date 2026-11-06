@@ -10,6 +10,12 @@
 
 ## Correções verificadas
 
+### REC-002 — Recibo com assinatura exclusivamente no rodapé digital
+- Ajuste solicitado: retirar campo e imagem de assinatura do sócio, preservando o rodapé SXCare com signatário, horário de Brasília, QR, link, código e SHA-256.
+- Correção: emissão exige a identidade institucional, mas não uma imagem de rubrica; removidos o bloco duplicado de assinatura e a linha adicional de geração. UUID do registro e certificação obrigatória permanecem inalterados.
+- Evidência em 06/11/2026: 10 testes de emissão/reenvio aprovados; PDF sintético gerado no navegador com rodapé real, sem rubrica, inspecionado visualmente em A4.
+- Limite: amostra sem persistência e sem envio; emissão com pagamento real e recebimento por e-mail não verificados nesta alteração.
+
 ### REC-001 — Identificador do recibo no envio por e-mail
 - Causa: o código verificador de oito dígitos era enviado como identificador do documento; o servidor exige o UUID do registro.
 - Correção: `src/utils/reciboPDF.ts` separa UUID do código público. Rodapé e QR continuam usando o código público; reenvios preservam PDF e pagamento original.
