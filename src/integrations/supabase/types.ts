@@ -2146,6 +2146,73 @@ export type Database = {
           },
         ]
       }
+      cuidados_agenda: {
+        Row: {
+          created_at: string
+          criado_por: string
+          data_evento: string
+          horario: string
+          id: string
+          observacoes: string | null
+          residente_id: string
+          tenant_id: string | null
+          titulo: string
+          updated_at: string
+          visto_em: string | null
+          visto_por: string | null
+        }
+        Insert: {
+          created_at?: string
+          criado_por: string
+          data_evento: string
+          horario: string
+          id?: string
+          observacoes?: string | null
+          residente_id: string
+          tenant_id?: string | null
+          titulo: string
+          updated_at?: string
+          visto_em?: string | null
+          visto_por?: string | null
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string
+          data_evento?: string
+          horario?: string
+          id?: string
+          observacoes?: string | null
+          residente_id?: string
+          tenant_id?: string | null
+          titulo?: string
+          updated_at?: string
+          visto_em?: string | null
+          visto_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cuidados_agenda_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_agenda_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_agenda_visto_por_fkey"
+            columns: ["visto_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dashboard_preferencias: {
         Row: {
           created_at: string
@@ -6356,6 +6423,30 @@ export type Database = {
         }
         Returns: string
       }
+      portal_cuidados_agenda: {
+        Args: { _data?: string }
+        Returns: {
+          data_evento: string
+          horario: string
+          id: string
+          observacoes: string
+          residente_id: string
+          residente_nome: string
+          titulo: string
+          visto_em: string
+          visto_por_nome: string
+        }[]
+      }
+      portal_cuidados_criar_evento: {
+        Args: {
+          _data: string
+          _horario: string
+          _observacoes?: string
+          _residente_id: string
+          _titulo: string
+        }
+        Returns: string
+      }
       portal_cuidados_ficha: { Args: { p_residente_id: string }; Returns: Json }
       portal_cuidados_funcionario: { Args: never; Returns: string }
       portal_cuidados_residentes: {
@@ -6369,6 +6460,10 @@ export type Database = {
           responsavel_nome: string
           responsavel_telefone: string
         }[]
+      }
+      portal_cuidados_ver_evento: {
+        Args: { _evento_id: string }
+        Returns: undefined
       }
       portal_dose_emergencia: {
         Args: {
