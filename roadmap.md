@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Destacar contatos e código da área protegida no Portal de Cuidados; links de chamada e celular conferidos com sessão fictícia, 10 testes aprovados
+
 - [x] Resumo de IA por dia na ficha do residente, com abertura do prontuário completo ao tocar
 - [x] Testar separação por dia, acesso protegido e visualização celular/desktop com dados fictícios (14 testes aprovados)
 - [ ] Validar resumo com prontuário real e passe de cuidador: sessão externa indisponível no ambiente
