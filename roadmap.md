@@ -1,5 +1,9 @@
 # Roadmap
 
+- [ ] Rosa: conversa privada contínua por cuidadora, consultas autorizadas e orientação de uso
+- [ ] Rosa: sugestões de aprendizado com revisão/revogação pelo gestor
+- [ ] Rosa: testar segurança, fluxo de conversa e apresentação celular/tablet
+
 - [x] Destacar contatos e código da área protegida no Portal de Cuidados; links de chamada e celular conferidos com sessão fictícia, 10 testes aprovados
 
 - [x] Resumo de IA por dia na ficha do residente, com abertura do prontuário completo ao tocar
