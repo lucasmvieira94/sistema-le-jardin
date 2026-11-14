@@ -68,7 +68,7 @@ export default function RotinaDialog({ open, onOpenChange, rotina, residentePadr
             </Select></div>
           <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
             {(Object.keys(TIPOS) as (keyof typeof TIPOS)[]).map((t) => (
-              <button key={t} type="button" onClick={() => set({ tipo: t, frequencia: t === "orientacao" ? "momento" : f.frequencia === "momento" && t !== "orientacao" ? f.frequencia : f.frequencia, momento: t === "orientacao" ? f.momento ?? "banho" : f.momento })}
+              <button key={t} type="button" onClick={() => set({ tipo: t, frequencia: t === "orientacao" ? "momento" : f.frequencia, momento: t === "orientacao" ? f.momento ?? "banho" : f.momento })}
                 className={`rounded-md py-2 text-sm font-medium ${f.tipo === t ? "bg-background shadow" : "text-muted-foreground"}`}>{TIPOS[t]}</button>
             ))}
           </div>
