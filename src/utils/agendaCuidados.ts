@@ -5,6 +5,7 @@ export interface EventoCuidados {
   id: string; residente_id: string; residente_nome: string; titulo: string;
   data_evento: string; horario: string; observacoes: string | null;
   visto_em: string | null; visto_por_nome: string | null;
+  cancelado_em?: string | null; motivo_cancelamento?: string | null;
 }
 
 export const eventoCuidadosSchema = z.object({
@@ -20,5 +21,5 @@ export const eventoCuidadosSchema = z.object({
 
 /** Ciência é compartilhada: eventos vistos continuam na agenda, mas não geram aviso. */
 export function avisosAgenda(eventos: EventoCuidados[], dia = hojeISO()) {
-  return eventos.filter((e) => e.data_evento === dia && e.visto_em === null);
+  return eventos.filter((e) => e.data_evento === dia && e.visto_em === null && !e.cancelado_em);
 }
