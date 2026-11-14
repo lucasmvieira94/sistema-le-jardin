@@ -37,6 +37,7 @@ export function RegistrarOcorrenciaDialog({ alvo, onClose, onFeito }: { alvo: Oc
     <Dialog open={!!alvo} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{r?.titulo}</DialogTitle><DialogDescription>{r?.residente_nome} · {alvo?.rotulo}</DialogDescription></DialogHeader>
+        {r && <p className="text-xs text-muted-foreground">{TIPOS[r.tipo]} · {descreverFrequencia(r)}</p>}
         {r?.instrucoes && <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{r.instrucoes}</p>}
         {r && <ListaAnexos rotinaId={r.id} />}
         {r?.tipo === "afericao" && <div><Label>{AFERICOES[r.tipo_afericao ?? ""] ?? "Valor"}</Label><Input autoFocus maxLength={40} placeholder={PLACEHOLDER[r.tipo_afericao ?? ""] ?? "Valor"} value={valor} onChange={(e) => setValor(e.target.value)} /></div>}
