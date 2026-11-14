@@ -37,6 +37,7 @@ export function RegistrarOcorrenciaDialog({ alvo, onClose, onFeito }: { alvo: Oc
     <Dialog open={!!alvo} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{r?.titulo}</DialogTitle><DialogDescription>{r?.residente_nome} · {alvo?.rotulo}</DialogDescription></DialogHeader>
+        {r && <p className="text-xs text-muted-foreground">{TIPOS[r.tipo]} · {descreverFrequencia(r)}</p>}
         {r?.instrucoes && <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{r.instrucoes}</p>}
         {r && <ListaAnexos rotinaId={r.id} />}
         {r?.tipo === "afericao" && <div><Label>{AFERICOES[r.tipo_afericao ?? ""] ?? "Valor"}</Label><Input autoFocus maxLength={40} placeholder={PLACEHOLDER[r.tipo_afericao ?? ""] ?? "Valor"} value={valor} onChange={(e) => setValor(e.target.value)} /></div>}
@@ -141,13 +142,14 @@ export default function RotinasDia() {
             {!lista.length && <p className="text-sm text-muted-foreground">Nada pendente.</p>}
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {lista.map((o) => (
-                <Card key={`${o.rotina.id}${o.chave}`} className={`cursor-pointer transition hover:border-primary ${COR[o.status]}`} onClick={() => setDetalhe(o.rotina)}>
+                <Card key={`${o.rotina.id}${o.chave}`} className={`cursor-pointer transition hover:border-primary ${COR[o.status]}`}
+                  onClick={() => (o.execucao ? setDetalhe(o.rotina) : setAlvo(o))}>
                   <CardContent className="space-y-1 p-3">
                     <div className="flex items-center justify-between"><span className="font-semibold">{o.rotulo}</span><Badge variant={o.status === "atrasado" ? "destructive" : "secondary"}>{ROTULO[o.status]}</Badge></div>
                     <p className="text-sm font-medium">{o.rotina.titulo}</p>
                     <p className="text-xs text-muted-foreground">{o.rotina.residente_nome}</p>
                     {o.execucao ? <p className="text-xs">{o.execucao.valor ? <b>{o.execucao.valor} · </b> : null}{o.execucao.feito_por_nome} às {horaBR(o.execucao.feito_em)}</p>
-                      : <Button size="sm" className="mt-1 w-full" onClick={(e) => { e.stopPropagation(); setAlvo(o); }}><CheckCircle2 className="mr-1 h-4 w-4" />{o.rotina.tipo === "afericao" ? "Registrar aferição" : "Feito"}</Button>}
+                      : <p className="flex items-center gap-1 text-xs text-primary"><CheckCircle2 className="h-3.5 w-3.5" />Toque para ver e confirmar</p>}
                   </CardContent>
                 </Card>
               ))}
