@@ -10,6 +10,11 @@
 
 ## Correções verificadas
 
+### CUIDADOS-002 — Contatos da área protegida
+- Inclusão em 14/11/2026: telefones Vitalmed/Constat e código do contratante destacados na página de residentes; atalho Urgência no cabeçalho disponível também durante as tarefas do portal.
+- Evidência: 10 testes aprovados (três valores de contato e sete regressões do portal); navegador conferiu os dois links `tel:`, o código e a abertura da janela no celular com sessão fictícia. Compilação sem erros.
+- Limite: nenhuma chamada efetuada; não confirma atendimento ou cobertura do prestador. Nenhuma permissão ou fluxo clínico alterado.
+
 ### CUIDADOS-001 — Resumo diário sem substituir o prontuário original
 - Implementação em 14/11/2026: cards por data mostram somente análise de IA; toque consulta todos os registros daquela data, incluindo observações e justificativas de retificação. A consulta diária não usa o limite de 60 registros da ficha.
 - Segurança: RPC reutiliza `portal_cuidados_ficha` para validar passe, módulo e acesso ao residente antes de consultar registros; a função de IA usa o cliente anon com passe, nunca service role. Avisos genéricos de função SECURITY DEFINER acessível a anon/authenticated são intencionais para o PIN e foram revisados, não são autorização irrestrita. Não flexibilizar políticas para eliminar esses avisos. Os 276 avisos anteriores não foram alterados.
