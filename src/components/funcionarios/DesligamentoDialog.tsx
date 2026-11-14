@@ -23,6 +23,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, UserMinus, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { toast } from "@/components/ui/use-toast";
 import { useAuditLog } from "@/hooks/useAuditLog";
 
@@ -167,7 +168,7 @@ export default function DesligamentoDialog({
       // Funcionário permanece ATIVO enquanto cumprir aviso prévio trabalhado
       // (data de desligamento ainda no futuro). Nos demais casos é inativado
       // imediatamente: indenizado, dispensado, sem aviso ou aviso já vencido.
-      const updatePayload: Record<string, unknown> = {
+      const updatePayload: Database["public"]["Tables"]["funcionarios"]["Update"] = {
         data_desligamento: dataDesligamento,
         motivo_desligamento: motivo,
         aviso_previo: avisoPrevio,
