@@ -2337,6 +2337,76 @@ export type Database = {
           },
         ]
       }
+      cuidados_rotinas_anexos: {
+        Row: {
+          arquivo_path: string
+          created_at: string
+          enviado_por: string
+          hash_sha256: string
+          id: string
+          motivo_remocao: string | null
+          nome_arquivo: string
+          removido_em: string | null
+          removido_por: string | null
+          rotina_id: string
+          tamanho_bytes: number
+          tenant_id: string | null
+          tipo_mime: string
+        }
+        Insert: {
+          arquivo_path: string
+          created_at?: string
+          enviado_por: string
+          hash_sha256: string
+          id?: string
+          motivo_remocao?: string | null
+          nome_arquivo: string
+          removido_em?: string | null
+          removido_por?: string | null
+          rotina_id: string
+          tamanho_bytes: number
+          tenant_id?: string | null
+          tipo_mime: string
+        }
+        Update: {
+          arquivo_path?: string
+          created_at?: string
+          enviado_por?: string
+          hash_sha256?: string
+          id?: string
+          motivo_remocao?: string | null
+          nome_arquivo?: string
+          removido_em?: string | null
+          removido_por?: string | null
+          rotina_id?: string
+          tamanho_bytes?: number
+          tenant_id?: string | null
+          tipo_mime?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cuidados_rotinas_anexos_enviado_por_fkey"
+            columns: ["enviado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_rotinas_anexos_removido_por_fkey"
+            columns: ["removido_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_rotinas_anexos_rotina_id_fkey"
+            columns: ["rotina_id"]
+            isOneToOne: false
+            referencedRelation: "cuidados_rotinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cuidados_rotinas_execucoes: {
         Row: {
           chave: string
@@ -6774,6 +6844,37 @@ export type Database = {
           residente: string
           responsavel: string
           tipo: string
+        }[]
+      }
+      portal_rotina_anexo_autorizar: {
+        Args: { _rotina_id: string }
+        Returns: {
+          funcionario_id: string
+          tenant_id: string
+        }[]
+      }
+      portal_rotina_anexo_caminho: {
+        Args: { _anexo_id: string }
+        Returns: {
+          arquivo_path: string
+          hash_sha256: string
+          nome_arquivo: string
+          tipo_mime: string
+        }[]
+      }
+      portal_rotina_anexo_remover: {
+        Args: { _anexo_id: string; _motivo: string }
+        Returns: undefined
+      }
+      portal_rotina_anexos: {
+        Args: { _rotina_id: string }
+        Returns: {
+          created_at: string
+          enviado_por_nome: string
+          id: string
+          nome_arquivo: string
+          tamanho_bytes: number
+          tipo_mime: string
         }[]
       }
       portal_rotina_encerrar: {
