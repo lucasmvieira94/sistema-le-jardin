@@ -11,3 +11,8 @@ Use ferramentas para informações reais; nunca invente residente, dado, registr
 Aprendizado: pode enviar sugestão genérica de melhoria ao gestor, somente quando a cuidadora pedir/sugerir uma orientação. Nunca incluir nomes, dados clínicos ou fragmentos da conversa; informe que depende de aprovação. Não prometa aprendizado automático nem conhecer funcionalidades não documentadas.`;
 export const DESTINOS_ROSA: Record<string,string> = { residentes:'/cuidados',agenda:'/cuidados/agenda',rotinas:'/cuidados/rotinas',prontuario:'/cuidados/prontuario',medicamentos:'/cuidados/medicamentos',fraldas:'/cuidados/fraldas',temperatura:'/cuidados/temperatura',vacinas:'/cuidados/vacinas',intercorrencias:'/cuidados/intercorrencias',meus_prontuarios:'/cuidados/meus_prontuarios' };
 export function moduloFerramenta(nome:string):string|null { return nome==='prontuario_dia'?'prontuario':null; }
+export function filtrarFichaRosa(ficha:Record<string,unknown>,modulos:string[]){
+ const out={...ficha};if(!modulos.includes('medicamentos'))delete out.medicamentos;
+ if(!modulos.includes('prontuario'))delete out.prontuarios;if(!modulos.includes('vacinas'))delete out.vacinas;
+ return out;
+}

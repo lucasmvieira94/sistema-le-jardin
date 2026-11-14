@@ -3,7 +3,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { streamResponse, GatewayError, type ResponsesRequest } from 'npm:@lovable.dev/ai-gateway@0.1.11';
 import type {} from '../_shared/ai-gateway/models.d.ts';
 import { z } from 'npm:zod@3';
-import { MANUAL_ROSA, DESTINOS_ROSA, moduloFerramenta } from './conhecimento.ts';
+import { MANUAL_ROSA, DESTINOS_ROSA, moduloFerramenta,filtrarFichaRosa } from './conhecimento.ts';
 const headers={...corsHeaders,'Access-Control-Allow-Headers':`${corsHeaders['Access-Control-Allow-Headers']}, x-portal-token`,'Cache-Control':'no-store'};
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...headers,'Content-Type':'application/json'}});
 const bodySchema=z.object({texto:z.string().trim().min(1).max(4000),pedido_id:z.string().uuid(),pagina:z.string().max(120).optional()});
@@ -61,7 +61,9 @@ Deno.serve(async(req)=>{
     const part:Part={type:'dynamic-tool',toolName:call.name,toolCallId:call.call_id,state:'input-available',input:args};
     try{
      args=z.record(z.unknown()).parse(JSON.parse(call.arguments));part.input=args;emit({type:'tool',part});
-     const needed=moduloFerramenta(call.name);if(needed&&!history.modulos.includes(needed))throw new Error('Módulo não autorizado');
+     const current=await portal.rpc('rosa_historico');if(current.error)throw new Error('Sessão expirada');
+     const live=historicoSchema.parse(current.data);
+     const needed=moduloFerramenta(call.name);if(needed&&!live.modulos.includes(needed))throw new Error('Módulo não autorizado');
      let rpcResult;
      if(call.name==='residentes')rpcResult=await portal.rpc('portal_cuidados_residentes');
      else if(call.name==='ficha_residente')rpcResult=await portal.rpc('portal_cuidados_ficha',{p_residente_id:z.string().uuid().parse(args.residente_id)});
@@ -79,7 +81,7 @@ Deno.serve(async(req)=>{
       const check=await portal.rpc('rosa_historico');if(check.error)throw new Error('Sessão expirada');
       const saved=await admin.from('rosa_orientacoes').insert({tenant_id:history.tenant_id,proposta});if(saved.error)throw new Error('Não foi possível encaminhar');output={status:'pendente',mensagem:'Sugestão enviada para aprovação do gestor.'};
      }else throw new Error('Ferramenta não disponível');
-     if(rpcResult){if(rpcResult.error)throw new Error('Consulta indisponível ou acesso não autorizado');output=rpcResult.data;}
+     if(rpcResult){if(rpcResult.error)throw new Error('Consulta indisponível ou acesso não autorizado');output=call.name==='ficha_residente'?filtrarFichaRosa(z.record(z.unknown()).parse(rpcResult.data),live.modulos):rpcResult.data;}
      part.state='output-available';part.output=output;
     }catch{errorText='Não foi possível consultar ou encaminhar. Confira acesso e informações.';part.state='output-error';part.errorText=errorText;output={error:errorText};}
     parts.push(part);emit({type:'tool',part});input.push({type:'function_call_output',call_id:call.call_id,output:JSON.stringify(output)});

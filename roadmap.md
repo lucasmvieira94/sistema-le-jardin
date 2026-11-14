@@ -1,8 +1,9 @@
 # Roadmap
 
-- [ ] Rosa: conversa privada contínua por cuidadora, consultas autorizadas e orientação de uso
-- [ ] Rosa: sugestões de aprendizado com revisão/revogação pelo gestor
-- [ ] Rosa: testar segurança, fluxo de conversa e apresentação celular/tablet
+- [x] Rosa: conversa privada contínua por cuidadora, consultas autorizadas e orientação de uso
+- [x] Rosa: sugestões de aprendizado com revisão/revogação pelo gestor
+- [x] Rosa: testes SQL de isolamento/aprovação e conversa celular/desktop simulada
+- [ ] Rosa: validar conversa real e revisão do gestor — sessão externa indisponível no ambiente
 
 - [x] Destacar contatos e código da área protegida no Portal de Cuidados; links de chamada e celular conferidos com sessão fictícia, 10 testes aprovados
 

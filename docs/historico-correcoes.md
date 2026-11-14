@@ -10,6 +10,12 @@
 
 ## Correções verificadas
 
+### CUIDADOS-003 — Rosa: conversa e consultas protegidas
+- Conversa contínua privada por cuidadora, identificada pelo passe PIN no servidor; respostas gravadas somente pela função de IA. Ferramentas consultam RPCs existentes e a ficha é filtrada também por módulo.
+- Aprendizado supervisionado: sugestões de funcionamento vão à revisão do gestor; aprovação/revogação afeta próximas respostas, não altera prescrição ou prontuário. Manual versionado acompanha atualizações futuras, sem promessa de treinamento automático.
+- Evidências: 21 regressões aprovadas, incluindo 11 testes SQL executando as migrações reais; bloqueio sem passe, isolamento de histórico, pedido duplicado e aprovação/revogação. Navegador celular/desktop com sessão fictícia conferiu mensagem, resposta e foco; sem erros de execução. Função real sem passe retorna 401; verificação Deno aprovada.
+- Limites: conversa de IA com passe real e revisão com gestor não verificadas neste ambiente externo. Verificação global de lint encontra dívidas anteriores; não encerrar erros do monitor sem validação real. Avisos SECURITY DEFINER revisados: PIN exige autorização e revisão exige gestor/tenant; tabelas de chat não têm acesso direto de cuidadoras/gestores.
+
 ### CUIDADOS-002 — Contatos da área protegida
 - Inclusão em 14/11/2026: telefones Vitalmed/Constat e código do contratante destacados na página de residentes; atalho Urgência no cabeçalho disponível também durante as tarefas do portal.
 - Evidência: 10 testes aprovados (três valores de contato e sete regressões do portal); navegador conferiu os dois links `tel:`, o código e a abertura da janela no celular com sessão fictícia. Compilação sem erros.
