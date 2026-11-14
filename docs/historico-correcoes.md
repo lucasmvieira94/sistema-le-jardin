@@ -14,6 +14,7 @@
 - Inclusão em 14/11/2026: telefones Vitalmed/Constat e código do contratante destacados na página de residentes; atalho Urgência no cabeçalho disponível também durante as tarefas do portal.
 - Evidência: 10 testes aprovados (três valores de contato e sete regressões do portal); navegador conferiu os dois links `tel:`, o código e a abertura da janela no celular com sessão fictícia. Compilação sem erros.
 - Limite: nenhuma chamada efetuada; não confirma atendimento ou cobertura do prestador. Nenhuma permissão ou fluxo clínico alterado.
+- Ajuste posterior em 14/11/2026: removido o bloco da página inicial a pedido do gestor; contatos permanecem somente na janela do atalho Urgência. Dez regressões aprovadas e navegador confirmou ausência dos links na página inicial e presença após abrir o atalho, com sessão fictícia.
 
 ### CUIDADOS-001 — Resumo diário sem substituir o prontuário original
 - Implementação em 14/11/2026: cards por data mostram somente análise de IA; toque consulta todos os registros daquela data, incluindo observações e justificativas de retificação. A consulta diária não usa o limite de 60 registros da ficha.
