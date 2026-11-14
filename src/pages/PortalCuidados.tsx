@@ -12,6 +12,8 @@ import FichaCuidadoResidente from "@/components/cuidados/FichaCuidadoResidente";
 import { PortalCuidadosEmbutido } from "@/components/cuidados/PortalCuidadosContexto";
 import AvisosDoDia from "@/components/cuidados/AvisosDoDia";
 import { useRotinasDia } from "@/components/cuidados/useRotinasDia";
+import AreaProtegida from "@/components/cuidados/AreaProtegida";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const ICONES: Record<string, typeof Pill> = {
   prontuario: FileHeart, medicamentos: Pill, fraldas: Baby, temperatura: Thermometer,
@@ -41,6 +43,7 @@ export default function PortalCuidados() {
   const [residentes, setResidentes] = useState<ResidenteResumo[] | null>(null);
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState<string | null>(null);
+  const [emergenciaAberta, setEmergenciaAberta] = useState(false);
   const [agora, setAgora] = useState(new Date());
   const rotinasDia = useRotinasDia();
 
@@ -87,7 +90,10 @@ export default function PortalCuidados() {
               <p className="text-xs opacity-90">Olá, {sessao.nome.split(" ")[0]} · {formatInTimeZone(agora, "America/Sao_Paulo", "dd/MM/yyyy HH:mm")}</p>
             </div>
           </div>
-          <Button variant="secondary" size="sm" className="shrink-0" onClick={() => navigate("/")} aria-label="Voltar ao Meu RH"><ArrowLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Meu RH</span></Button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="destructive" size="sm" onClick={() => setEmergenciaAberta(true)}><HeartPulse className="mr-1 h-4 w-4" />Urgência</Button>
+            <Button variant="secondary" size="sm" onClick={() => navigate("/")} aria-label="Voltar ao Meu RH"><ArrowLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Meu RH</span></Button>
+          </div>
         </div>
         {/* Navegação fixa entre as tarefas, sem sair do portal */}
         <nav className="border-t border-primary-foreground/20">
@@ -109,6 +115,7 @@ export default function PortalCuidados() {
       {!naHome ? <main className="animate-fade-in pb-8"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
 
       <main className="container mx-auto space-y-6 px-3 py-5 sm:px-4">
+        <AreaProtegida />
         <AvisosDoDia onAbrirAgenda={() => navigate(`/cuidados/agenda?${q}`)} onAbrirRotinas={() => navigate(`/cuidados/rotinas?${q}`)}
           pendentesRotina={rotinasDia.ocorrencias.filter((o) => o.status === "atrasado" || o.status === "agora").length} />
         <section>
@@ -159,6 +166,12 @@ export default function PortalCuidados() {
       </main>
       )}
       <FichaCuidadoResidente residenteId={aberto} onClose={() => setAberto(null)} />
+      <Dialog open={emergenciaAberta} onOpenChange={setEmergenciaAberta}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Urgência e emergência</DialogTitle></DialogHeader>
+          <AreaProtegida />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

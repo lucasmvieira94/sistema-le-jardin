@@ -1,5 +1,7 @@
 # Decisões técnicas
 
+- Protected-area contacts share one typed configuration and reusable portal section, keeping emergency dial links and contractor details consistent across views.
+
 - Daily care-record summaries use the Gateway SDK server-side and PIN-authorized day RPC; content-hash caching never bypasses authorization or replaces original records.
 
 - Before every update, read `docs/historico-correcoes.md`, consult relevant resolved/open entries in `erros_envio_suporte`, and run affected regression tests; record evidence and never close unverified errors. This prevents reintroducing known defects.
