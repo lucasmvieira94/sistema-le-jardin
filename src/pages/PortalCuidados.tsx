@@ -13,6 +13,7 @@ import { PortalCuidadosEmbutido } from "@/components/cuidados/PortalCuidadosCont
 import AvisosDoDia from "@/components/cuidados/AvisosDoDia";
 import { useRotinasDia } from "@/components/cuidados/useRotinasDia";
 import AreaProtegida from "@/components/cuidados/AreaProtegida";
+import RosaAssistente from "@/components/cuidados/RosaAssistente";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const ICONES: Record<string, typeof Pill> = {
@@ -82,7 +83,7 @@ export default function PortalCuidados() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-primary text-primary-foreground">
-        <div className="container mx-auto flex items-center justify-between gap-3 px-4 py-3">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2">
             <HeartPulse className="h-6 w-6" />
             <div>
@@ -91,6 +92,7 @@ export default function PortalCuidados() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <RosaAssistente />
             <Button variant="destructive" size="sm" onClick={() => setEmergenciaAberta(true)}><HeartPulse className="mr-1 h-4 w-4" />Urgência</Button>
             <Button variant="secondary" size="sm" onClick={() => navigate("/")} aria-label="Voltar ao Meu RH"><ArrowLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Meu RH</span></Button>
           </div>
