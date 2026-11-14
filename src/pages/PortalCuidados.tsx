@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { formatInTimeZone } from "date-fns-tz";
-import { ArrowLeft, Baby, FileHeart, FileSearch, HeartPulse, Loader2, Pill, Search, Syringe, Thermometer, AlertTriangle, Lock } from "lucide-react";
+import { ArrowLeft, Baby, FileHeart, FileSearch, HeartPulse, Loader2, Pill, Search, Syringe, Thermometer, AlertTriangle, Lock, CalendarDays, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { temPasseValido } from "@/utils/portalSessao";
 import { atalhosLiberados, filtrarResidentes, idade, podeAcessarPortalCuidados, semCamposProibidos } from "@/utils/portalCuidados";
 import FichaCuidadoResidente from "@/components/cuidados/FichaCuidadoResidente";
 import { PortalCuidadosEmbutido } from "@/components/cuidados/PortalCuidadosContexto";
+import AvisosDoDia from "@/components/cuidados/AvisosDoDia";
+import { useRotinasDia } from "@/components/cuidados/useRotinasDia";
 
 const ICONES: Record<string, typeof Pill> = {
   prontuario: FileHeart, medicamentos: Pill, fraldas: Baby, temperatura: Thermometer,
@@ -40,6 +42,7 @@ export default function PortalCuidados() {
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState<string | null>(null);
   const [agora, setAgora] = useState(new Date());
+  const rotinasDia = useRotinasDia();
 
   useEffect(() => {
     if (!sessao) { navigate("/?destino=cuidados", { replace: true }); return; }
@@ -90,6 +93,8 @@ export default function PortalCuidados() {
         <nav className="border-t border-primary-foreground/20">
           <div className="container mx-auto flex snap-x gap-1 overflow-x-auto px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[{ id: "inicio", nome: "Residentes", icone: HeartPulse, to: `/cuidados?${q}`, end: true },
+              { id: "agenda", nome: "Agenda", icone: CalendarDays, to: `/cuidados/agenda?${q}`, end: false },
+              { id: "rotinas", nome: "Rotinas", icone: ClipboardList, to: `/cuidados/rotinas?${q}`, end: false },
               ...atalhosLiberados(modulos).map((a) => ({ id: a.id, nome: a.nome, icone: ICONES[a.id], to: `/cuidados/${a.id}?${q}`, end: false }))]
               .map((t) => (
                 <NavLink key={t.id} to={t.to} end={t.end}
@@ -104,6 +109,8 @@ export default function PortalCuidados() {
       {!naHome ? <main className="animate-fade-in pb-8"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
 
       <main className="container mx-auto space-y-6 px-3 py-5 sm:px-4">
+        <AvisosDoDia onAbrirAgenda={() => navigate(`/cuidados/agenda?${q}`)} onAbrirRotinas={() => navigate(`/cuidados/rotinas?${q}`)}
+          pendentesRotina={rotinasDia.ocorrencias.filter((o) => o.status === "atrasado" || o.status === "agora").length} />
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Rotina</h2>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-7">

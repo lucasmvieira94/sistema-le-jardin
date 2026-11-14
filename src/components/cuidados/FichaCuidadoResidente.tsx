@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { semCamposProibidos, idade } from "@/utils/portalCuidados";
+import RotinasResidente, { ProximosCompromissos } from "./RotinasResidente";
 
 type Json = Record<string, any>;
 
@@ -57,11 +58,12 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
         {!ficha && !erro && <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
         {r && (
           <Tabs defaultValue="resumo" className="mt-4">
-            <TabsList className="grid grid-cols-4 w-full">
+            <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="resumo">Resumo</TabsTrigger>
               <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
               <TabsTrigger value="acolhimento">Acolhimento</TabsTrigger>
               <TabsTrigger value="saude">Remédios</TabsTrigger>
+              <TabsTrigger value="rotinas">Rotinas</TabsTrigger>
             </TabsList>
 
             <TabsContent value="resumo" className="space-y-4">
@@ -80,7 +82,10 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
                 )}
               </div>
               <Campos dados={{ condicoes_medicas: r.condicoes_medicas, alergias: ficha?.acolhimento?.historico_saude?.alergias, observacoes_gerais: r.observacoes_gerais }} />
+              <ProximosCompromissos residenteId={residenteId!} />
             </TabsContent>
+
+            <TabsContent value="rotinas"><RotinasResidente residenteId={residenteId!} /></TabsContent>
 
             <TabsContent value="prontuarios" className="space-y-3">
               {!ficha?.prontuarios?.length && <p className="text-sm text-muted-foreground">Sem registros.</p>}

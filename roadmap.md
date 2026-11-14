@@ -56,3 +56,4 @@
 - [ ] Validação biométrica do portal no servidor (hoje o passe sai antes do rosto)
 
 - [x] Distrato de contrato de residente (Cancelar contrato, cálculo pela Cláusula Sexta, PDF certificado)
+- [x] Agenda de cuidados finalizada (aviso, ver, editar, cancelar) e rotinas/procedimentos do residente
