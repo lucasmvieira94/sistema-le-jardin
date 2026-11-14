@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import type {} from "../_shared/ai-gateway/models.d.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { generateResponse, GatewayError } from "npm:@lovable.dev/ai-gateway@0.1.11";
 import { z } from "npm:zod@3";
