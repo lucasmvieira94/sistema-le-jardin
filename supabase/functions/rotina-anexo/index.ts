@@ -2,22 +2,13 @@
 // (cabeçalho x-portal-token, conferido no banco) e só então usa o service role
 // para gravar/ler no bucket privado `rotinas-anexos`.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders as base } from "npm:@supabase/supabase-js@2/cors";
+import { tipoConfere } from "./tipo.ts";
 
-const corsHeaders = { ...base, "Access-Control-Allow-Headers": `${base["Access-Control-Allow-Headers"]}, x-portal-token` };
+const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-portal-token", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
 const TIPOS = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX = 10 * 1024 * 1024;
 const UUID = /^[0-9a-f-]{36}$/i;
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-/** Assinatura mínima: confere que os bytes batem com o tipo declarado. */
-export function tipoConfere(mime: string, b: Uint8Array) {
-  if (mime === "application/pdf") return b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
-  if (mime === "image/jpeg") return b[0] === 0xff && b[1] === 0xd8;
-  if (mime === "image/png") return b[0] === 0x89 && b[1] === 0x50;
-  if (mime === "image/webp") return b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50;
-  return false;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
