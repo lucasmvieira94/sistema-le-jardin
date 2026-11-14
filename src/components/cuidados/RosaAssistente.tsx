@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { UIMessage, ChatStatus } from 'ai';
+import type { ChatStatus } from 'ai';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { lerPasse } from '@/utils/portalSessao';
@@ -17,12 +17,13 @@ const partSchema = z.union([z.object({type:z.literal('text'),text:z.string()}),z
 const historySchema=z.object({mensagens:z.array(z.object({id:z.string(),role:z.enum(['user','assistant']),parts:z.array(partSchema)}))});
 const eventSchema=z.discriminatedUnion('type',[z.object({type:z.literal('delta'),text:z.string()}),z.object({type:z.literal('tool'),part:partSchema}),z.object({type:z.literal('done'),parts:z.array(partSchema)}),z.object({type:z.literal('error'),message:z.string()})]);
 const names:Record<string,string>={residentes:'Residentes',ficha_residente:'Ficha do residente',agenda_dia:'Agenda do dia',rotinas:'Rotinas',prontuario_dia:'Prontuário do dia',abrir_modulo:'Abrir tarefa',sugerir_orientacao:'Sugestão ao gestor'};
+type RosaMessage={id:string;role:'user'|'assistant';parts:z.infer<typeof partSchema>[]};
 
 export default function RosaAssistente(){
- const [open,setOpen]=useState(false),[messages,setMessages]=useState<UIMessage[]>([]),[status,setStatus]=useState<ChatStatus>('ready'),[error,setError]=useState(''),[loaded,setLoaded]=useState(false),[text,setText]=useState('');
+ const [open,setOpen]=useState(false),[messages,setMessages]=useState<RosaMessage[]>([]),[status,setStatus]=useState<ChatStatus>('ready'),[error,setError]=useState(''),[loaded,setLoaded]=useState(false),[text,setText]=useState('');
  const location=useLocation(); const textarea=useRef<HTMLTextAreaElement>(null),abort=useRef<AbortController|null>(null);
  const busy=status==='submitted'||status==='streaming';
- async function load(){setError('');setLoaded(false);const result=await supabase.rpc('rosa_historico');if(result.error){setError('Não foi possível abrir a conversa. Confira sua sessão.');return;}const parsed=historySchema.safeParse(result.data);if(!parsed.success){setError('Histórico indisponível.');return;}setMessages(parsed.data.mensagens);setLoaded(true);}
+ async function load(){setError('');setLoaded(false);const result=await supabase.rpc('rosa_historico');if(result.error){setError('Não foi possível abrir a conversa. Confira sua sessão.');return;}const parsed=historySchema.safeParse(result.data);if(!parsed.success){setError('Histórico indisponível.');return;}setMessages(parsed.data.mensagens.map(m=>({id:m.id??'',role:m.role??'assistant',parts:m.parts??[]})));setLoaded(true);setStatus('ready');}
  useEffect(()=>{if(open)void load();},[open]);
  useEffect(()=>{if(open&&loaded&&!busy)textarea.current?.focus();},[open,loaded,busy]);
  useEffect(()=>()=>abort.current?.abort(),[]);
@@ -50,7 +51,7 @@ export default function RosaAssistente(){
  return <>
   <Button variant="secondary" size="sm" onClick={()=>setOpen(true)} aria-label="Conversar com Rosa"><img src={rosa} width={28} height={28} loading="lazy" alt="" className="h-7 w-7 rounded-full"/>Rosa</Button>
   <Dialog open={open} onOpenChange={value=>{if(!value)abort.current?.abort();setOpen(value);}}>
-   <DialogContent className="flex h-[85dvh] max-h-[850px] w-[calc(100%-1rem)] max-w-xl flex-col gap-0 overflow-hidden p-0">
+   <DialogContent className="flex h-[85dvh] max-h-[850px] w-[calc(100%-1rem)] max-w-xl flex-col gap-0 overflow-hidden p-0" aria-describedby={undefined}>
     <DialogHeader className="border-b px-5 py-4 pr-12"><DialogTitle className="flex items-center gap-3"><img src={rosa} alt="Rosa" width={44} height={44} className="h-11 w-11 rounded-full"/><span>Rosa<span className="block text-xs font-normal text-muted-foreground">Assistente de cuidados · Conversa privada</span></span></DialogTitle></DialogHeader>
     <Conversation className="min-h-0 flex-1"><ConversationContent className="gap-4 p-4">
      {loaded&&!messages.length&&<Message from="assistant"><MessageContent><MessageResponse>Olá! Sou a Rosa. Como posso ajudar nos cuidados de hoje?</MessageResponse></MessageContent></Message>}

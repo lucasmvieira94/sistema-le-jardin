@@ -1,5 +1,7 @@
 # Decisões técnicas
 
+- Rosa uses PIN-scoped history and server Gateway read tools with AI Elements; only managers approve generic learning. Update `supabase/functions/rosa-assistente/conhecimento.ts` with every portal feature change to keep guidance current.
+
 - Protected-area contacts share one typed configuration and reusable portal section, keeping emergency dial links and contractor details consistent across views.
 
 - Daily care-record summaries use the Gateway SDK server-side and PIN-authorized day RPC; content-hash caching never bypasses authorization or replaces original records.
