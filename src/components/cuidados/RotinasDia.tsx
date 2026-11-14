@@ -66,17 +66,33 @@ export function EncerrarRotinaDialog({ rotina, onClose, onFeito }: { rotina: Rot
   );
 }
 
-export function CartaoRotina({ r, onEditar, onEncerrar }: { r: RotinaCuidado; onEditar: () => void; onEncerrar: () => void }) {
+/** Detalhes da rotina: descrição completa e documentos anexados (foto/PDF). */
+export function DetalhesRotinaDialog({ rotina, onClose }: { rotina: RotinaCuidado | null; onClose: () => void }) {
   return (
-    <Card><CardContent className="space-y-1 p-3">
+    <Dialog open={!!rotina} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+        <DialogHeader><DialogTitle>{rotina?.titulo}</DialogTitle><DialogDescription>{rotina?.residente_nome} · {rotina && TIPOS[rotina.tipo]}</DialogDescription></DialogHeader>
+        {rotina && <p className="text-xs">{descreverFrequencia(rotina)} · {rotina.fim ? `até ${new Date(`${rotina.fim}T12:00:00`).toLocaleDateString("pt-BR")}` : "contínuo"}</p>}
+        <div><Label>Descrição / instruções</Label>
+          <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{rotina?.instrucoes || "Sem descrição."}</p></div>
+        <div><Label>Documentos anexados</Label><div className="mt-1">{rotina && <ListaAnexos rotinaId={rotina.id} />}</div></div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function CartaoRotina({ r, onEditar, onEncerrar, onAbrir }: { r: RotinaCuidado; onEditar: () => void; onEncerrar: () => void; onAbrir?: () => void }) {
+  return (
+    <Card className={onAbrir ? "cursor-pointer transition hover:border-primary" : ""} onClick={onAbrir}><CardContent className="space-y-1 p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0"><p className="font-semibold">{r.titulo}</p><p className="text-xs text-muted-foreground">{r.residente_nome}</p></div>
         <Badge variant="outline">{TIPOS[r.tipo]}</Badge>
       </div>
       <p className="text-xs">{descreverFrequencia(r)} · {r.fim ? `até ${new Date(`${r.fim}T12:00:00`).toLocaleDateString("pt-BR")}` : "contínuo"}</p>
       {r.instrucoes && <p className="line-clamp-2 text-sm text-muted-foreground">{r.instrucoes}</p>}
-      <ListaAnexos rotinaId={r.id} />
-      <div className="flex gap-2 pt-1">
+      <div onClick={(e) => e.stopPropagation()}><ListaAnexos rotinaId={r.id} /></div>
+      <div className="flex gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+        {onAbrir && <Button size="sm" variant="secondary" onClick={onAbrir}><Info className="mr-1 h-3.5 w-3.5" />Ver detalhes</Button>}
         <Button size="sm" variant="outline" onClick={onEditar}><Pencil className="mr-1 h-3.5 w-3.5" />Editar</Button>
         <Button size="sm" variant="ghost" onClick={onEncerrar}><StopCircle className="mr-1 h-3.5 w-3.5" />Encerrar</Button>
       </div>
@@ -91,6 +107,7 @@ export default function RotinasDia() {
   const [editar, setEditar] = useState<RotinaCuidado | null | undefined>(undefined);
   const [encerrar, setEncerrar] = useState<RotinaCuidado | null>(null);
   const [soPendentes, setSoPendentes] = useState(true);
+  const [detalhe, setDetalhe] = useState<RotinaCuidado | null>(null);
   const lista = soPendentes ? ocorrencias.filter((o) => o.status !== "feito") : ocorrencias;
 
   return (
@@ -106,9 +123,9 @@ export default function RotinasDia() {
                 <h3 className="text-sm font-semibold text-muted-foreground">Orientações</h3>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {orientacoes.map((o) => (
-                    <div key={o.id} className="flex gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                    <div key={o.id} onClick={() => setDetalhe(o)} className="flex cursor-pointer gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
                       <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <div><p><b>{o.residente_nome}</b> · {MOMENTOS[o.momento ?? ""] ?? descreverFrequencia(o)}: {o.titulo}</p>{o.instrucoes && <p className="text-muted-foreground">{o.instrucoes}</p>}<div className="mt-1"><ListaAnexos rotinaId={o.id} /></div></div>
+                      <div><p><b>{o.residente_nome}</b> · {MOMENTOS[o.momento ?? ""] ?? descreverFrequencia(o)}: {o.titulo}</p>{o.instrucoes && <p className="text-muted-foreground">{o.instrucoes}</p>}<div className="mt-1" onClick={(e) => e.stopPropagation()}><ListaAnexos rotinaId={o.id} /></div></div>
                     </div>
                   ))}
                 </div>
@@ -124,13 +141,13 @@ export default function RotinasDia() {
             {!lista.length && <p className="text-sm text-muted-foreground">Nada pendente.</p>}
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {lista.map((o) => (
-                <Card key={`${o.rotina.id}${o.chave}`} className={COR[o.status]}>
+                <Card key={`${o.rotina.id}${o.chave}`} className={`cursor-pointer transition hover:border-primary ${COR[o.status]}`} onClick={() => setDetalhe(o.rotina)}>
                   <CardContent className="space-y-1 p-3">
                     <div className="flex items-center justify-between"><span className="font-semibold">{o.rotulo}</span><Badge variant={o.status === "atrasado" ? "destructive" : "secondary"}>{ROTULO[o.status]}</Badge></div>
                     <p className="text-sm font-medium">{o.rotina.titulo}</p>
                     <p className="text-xs text-muted-foreground">{o.rotina.residente_nome}</p>
                     {o.execucao ? <p className="text-xs">{o.execucao.valor ? <b>{o.execucao.valor} · </b> : null}{o.execucao.feito_por_nome} às {horaBR(o.execucao.feito_em)}</p>
-                      : <Button size="sm" className="mt-1 w-full" onClick={() => setAlvo(o)}><CheckCircle2 className="mr-1 h-4 w-4" />{o.rotina.tipo === "afericao" ? "Registrar aferição" : "Feito"}</Button>}
+                      : <Button size="sm" className="mt-1 w-full" onClick={(e) => { e.stopPropagation(); setAlvo(o); }}><CheckCircle2 className="mr-1 h-4 w-4" />{o.rotina.tipo === "afericao" ? "Registrar aferição" : "Feito"}</Button>}
                   </CardContent>
                 </Card>
               ))}
@@ -138,10 +155,11 @@ export default function RotinasDia() {
           </TabsContent>
           <TabsContent value="ativas" className="grid gap-2 sm:grid-cols-2">
             {!rotinas.length && <p className="text-sm text-muted-foreground">Nenhuma rotina ativa.</p>}
-            {rotinas.map((r) => <CartaoRotina key={r.id} r={r} onEditar={() => setEditar(r)} onEncerrar={() => setEncerrar(r)} />)}
+            {rotinas.map((r) => <CartaoRotina key={r.id} r={r} onEditar={() => setEditar(r)} onEncerrar={() => setEncerrar(r)} onAbrir={() => setDetalhe(r)} />)}
           </TabsContent>
         </Tabs>
       )}
+      <DetalhesRotinaDialog rotina={detalhe} onClose={() => setDetalhe(null)} />
       <RegistrarOcorrenciaDialog alvo={alvo} onClose={() => setAlvo(null)} onFeito={carregar} />
       <RotinaDialog open={editar !== undefined} onOpenChange={(o) => !o && setEditar(undefined)} rotina={editar} onSalvo={carregar} />
       <EncerrarRotinaDialog rotina={encerrar} onClose={() => setEncerrar(null)} onFeito={carregar} />
