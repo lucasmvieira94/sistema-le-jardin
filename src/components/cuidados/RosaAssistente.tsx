@@ -21,15 +21,16 @@ type RosaMessage={id:string;role:'user'|'assistant';parts:z.infer<typeof partSch
 
 export default function RosaAssistente(){
  const [open,setOpen]=useState(false),[messages,setMessages]=useState<RosaMessage[]>([]),[status,setStatus]=useState<ChatStatus>('ready'),[error,setError]=useState(''),[loaded,setLoaded]=useState(false),[text,setText]=useState('');
- const location=useLocation(); const textarea=useRef<HTMLTextAreaElement>(null),abort=useRef<AbortController|null>(null);
+ const location=useLocation(); const composer=useRef<HTMLDivElement>(null),abort=useRef<AbortController|null>(null);
+ const focusComposer=()=>composer.current?.querySelector('textarea')?.focus();
  const busy=status==='submitted'||status==='streaming';
  async function load(){setError('');setLoaded(false);const result=await supabase.rpc('rosa_historico');if(result.error){setError('Não foi possível abrir a conversa. Confira sua sessão.');return;}const parsed=historySchema.safeParse(result.data);if(!parsed.success){setError('Histórico indisponível.');return;}setMessages(parsed.data.mensagens.map(m=>({id:m.id??'',role:m.role??'assistant',parts:m.parts??[]})));setLoaded(true);setStatus('ready');}
  useEffect(()=>{if(open)void load();},[open]);
- useEffect(()=>{if(open&&loaded&&!busy)textarea.current?.focus();},[open,loaded,busy]);
+ useEffect(()=>{if(open&&loaded&&!busy)focusComposer();},[open,loaded,busy]);
  useEffect(()=>()=>abort.current?.abort(),[]);
  async function send(value:string){
   if(busy||!loaded||!value.trim())return;const token=lerPasse()?.token;if(!token){setError('Entre novamente com seu código.');return;}
-  const pedido=crypto.randomUUID(),assistant=crypto.randomUUID();setText('');setError('');setStatus('submitted');textarea.current?.focus();
+  const pedido=crypto.randomUUID(),assistant=crypto.randomUUID();setText('');setError('');setStatus('submitted');focusComposer();
   setMessages(old=>[...old,{id:pedido,role:'user',parts:[{type:'text',text:value.trim()}]},{id:assistant,role:'assistant',parts:[]}]);
   const controller=new AbortController();abort.current=controller;
   try{
@@ -46,7 +47,7 @@ export default function RosaAssistente(){
     }if(chunk.done)break;
    }if(!completed)throw new Error('Resposta interrompida. Atualize para conferir o histórico.');setStatus('ready');
   }catch(e){setError(controller.signal.aborted?'Resposta interrompida; a mensagem permanece no histórico.':e instanceof Error?e.message:'Rosa indisponível.');setStatus('error');setText(value);}
-  finally{abort.current=null;textarea.current?.focus();}
+  finally{abort.current=null;focusComposer();}
  }
  return <>
   <Button variant="secondary" size="sm" onClick={()=>setOpen(true)} aria-label="Conversar com Rosa"><img src={rosa} width={28} height={28} loading="lazy" alt="" className="h-7 w-7 rounded-full"/>Rosa</Button>
@@ -59,7 +60,7 @@ export default function RosaAssistente(){
      {status==='submitted'&&<Shimmer>Rosa está consultando…</Shimmer>}
     </ConversationContent><ConversationScrollButton/></Conversation>
     {error&&<div role="alert" className="border-t px-4 py-2 text-sm text-destructive">{error}<Button variant="link" size="sm" disabled={busy} onClick={()=>void load()}>Atualizar conversa</Button></div>}
-    <div className="border-t p-3"><PromptInput onSubmit={m=>send(m.text)}><PromptInputTextarea ref={textarea} value={text} onChange={e=>setText(e.target.value)} maxLength={4000} placeholder="Pergunte à Rosa…" aria-label="Mensagem para Rosa" className="min-h-20"/><PromptInputFooter className="justify-end"><PromptInputSubmit status={status} disabled={!loaded||(!busy&&!text.trim())} onStop={()=>abort.current?.abort()} aria-label={busy?'Interromper resposta':'Enviar mensagem'} /></PromptInputFooter></PromptInput></div>
+    <div ref={composer} className="border-t p-3"><PromptInput onSubmit={m=>send(m.text)}><PromptInputTextarea value={text} onChange={e=>setText(e.target.value)} maxLength={4000} placeholder="Pergunte à Rosa…" aria-label="Mensagem para Rosa" className="min-h-20"/><PromptInputFooter className="justify-end"><PromptInputSubmit status={status} disabled={!loaded||(!busy&&!text.trim())} onStop={()=>abort.current?.abort()} aria-label={busy?'Interromper resposta':'Enviar mensagem'} /></PromptInputFooter></PromptInput></div>
    </DialogContent>
   </Dialog>
  </>;

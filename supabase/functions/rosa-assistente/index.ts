@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { streamResponse, GatewayError, type ResponsesRequest } from 'npm:@lovable.dev/ai-gateway@0.1.11';
-import type {} from './models.d.ts';
+import type {} from '../_shared/ai-gateway/models.d.ts';
 import { z } from 'npm:zod@3';
 import { MANUAL_ROSA, DESTINOS_ROSA, moduloFerramenta } from './conhecimento.ts';
 const headers={...corsHeaders,'Access-Control-Allow-Headers':`${corsHeaders['Access-Control-Allow-Headers']}, x-portal-token`,'Cache-Control':'no-store'};
@@ -9,7 +9,8 @@ const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,
 const bodySchema=z.object({texto:z.string().trim().min(1).max(4000),pedido_id:z.string().uuid(),pagina:z.string().max(120).optional()});
 type Part={type:'text';text:string}|{type:'dynamic-tool';toolName:string;toolCallId:string;state:'input-available'|'output-available'|'output-error';input:unknown;output?:unknown;errorText?:string};
 const historicoSchema=z.object({conversa_id:z.string().uuid(),tenant_id:z.string().uuid().nullable(),modulos:z.array(z.string()),orientacoes:z.array(z.string()),mensagens:z.array(z.object({role:z.enum(['user','assistant']),parts:z.array(z.record(z.unknown()))}))});
-const tools:NonNullable<ResponsesRequest['tools']> = [
+type RosaRequest=Extract<ResponsesRequest,{model:'openai/gpt-6-astra'}>;
+const tools:NonNullable<RosaRequest['tools']> = [
  {type:'function',name:'residentes',description:'Consultar lista autorizada de residentes.',parameters:{type:'object',properties:{},additionalProperties:false},strict:true},
  {type:'function',name:'ficha_residente',description:'Consultar ficha de saúde do residente autorizado.',parameters:{type:'object',properties:{residente_id:{type:'string'}},required:['residente_id'],additionalProperties:false},strict:true},
  {type:'function',name:'agenda_dia',description:'Consultar compromissos de uma data.',parameters:{type:'object',properties:{data:{type:'string'}},required:['data'],additionalProperties:false},strict:true},
@@ -32,7 +33,7 @@ Deno.serve(async(req)=>{
  if(started.error) return json({error:started.error.code==='55P03'?'A Rosa já está respondendo. Aguarde.':'Não foi possível iniciar. Confira seu acesso e atualize a conversa.'},started.error.code==='55P03'?409:403);
  const h=historicoSchema.safeParse(started.data); if(!h.success) return json({error:'Histórico indisponível.'},503);
  const history=h.data;
- const input:NonNullable<ResponsesRequest['input']> = history.mensagens.map(m=>({role:m.role,content:m.parts.map(p=>p.type==='text'?String(p.text??''):JSON.stringify(p)).join('\n')}));
+ const input:Exclude<NonNullable<RosaRequest['input']>,string> = history.mensagens.map(m=>({role:m.role,content:m.parts.map(p=>p.type==='text'?String(p.text??''):JSON.stringify(p)).join('\n')}));
  const abort=new AbortController(); req.signal.addEventListener('abort',()=>abort.abort(),{once:true});
  const stream=new ReadableStream({async start(controller){
  const emit=(value:unknown)=>{if(!abort.signal.aborted)controller.enqueue(new TextEncoder().encode(JSON.stringify(value)+'\n'));};
