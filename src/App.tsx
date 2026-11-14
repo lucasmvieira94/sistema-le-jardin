@@ -38,6 +38,8 @@ import Unsubscribe from "./pages/Unsubscribe";
 import Landing from "./pages/Landing";
 import AnexoAfastamentoPublico from "./pages/AnexoAfastamentoPublico";
 import PortalCuidados from "./pages/PortalCuidados";
+import AgendaCuidados from "./components/cuidados/AgendaCuidados";
+import RotinasDia from "./components/cuidados/RotinasDia";
 
 // Páginas protegidas (admin)
 import Index from "./pages/Index";
@@ -142,6 +144,8 @@ const App = () => {
                 <Route path="vacinas" element={<ControleVacinasPublico />} />
                 <Route path="intercorrencias" element={<IntercorrenciasPublico />} />
                 <Route path="meus_prontuarios" element={<MeusProntuarios />} />
+                <Route path="agenda" element={<AgendaCuidados />} />
+                <Route path="rotinas" element={<RotinasDia />} />
               </Route>
               <Route path="/landing" element={<Landing />} />
             </Route>
