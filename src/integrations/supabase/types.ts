@@ -5557,6 +5557,115 @@ export type Database = {
           },
         ]
       }
+      rosa_conversas: {
+        Row: {
+          created_at: string
+          funcionario_id: string
+          id: string
+          iniciado_em: string | null
+          pedido_ativo: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          funcionario_id: string
+          id?: string
+          iniciado_em?: string | null
+          pedido_ativo?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          funcionario_id?: string
+          id?: string
+          iniciado_em?: string | null
+          pedido_ativo?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rosa_conversas_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: true
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rosa_mensagens: {
+        Row: {
+          conversa_id: string
+          created_at: string
+          id: string
+          papel: string
+          partes: Json
+          pedido_id: string
+        }
+        Insert: {
+          conversa_id: string
+          created_at?: string
+          id?: string
+          papel: string
+          partes: Json
+          pedido_id: string
+        }
+        Update: {
+          conversa_id?: string
+          created_at?: string
+          id?: string
+          papel?: string
+          partes?: Json
+          pedido_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rosa_mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "rosa_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rosa_orientacoes: {
+        Row: {
+          created_at: string
+          id: string
+          orientacao_aprovada: string | null
+          proposta: string
+          revisado_em: string | null
+          revisado_por: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orientacao_aprovada?: string | null
+          proposta: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orientacao_aprovada?: string | null
+          proposta?: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       solicitacoes_contrato_temporario: {
         Row: {
           contratante_cep: string | null
@@ -7060,6 +7169,19 @@ export type Database = {
       revisar_apropriacao_horas: {
         Args: { p_fim: string; p_funcionario_id?: string; p_inicio: string }
         Returns: Json
+      }
+      rosa_finalizar: {
+        Args: { p_conversa: string; p_partes: Json; p_pedido: string }
+        Returns: undefined
+      }
+      rosa_historico: { Args: never; Returns: Json }
+      rosa_iniciar: {
+        Args: { p_pedido: string; p_texto: string }
+        Returns: Json
+      }
+      rosa_revisar: {
+        Args: { p_aprovar: boolean; p_id: string; p_texto: string }
+        Returns: undefined
       }
       rotate_employer_code: {
         Args: { p_new_code: string; p_old_code: string; p_tenant_id: string }
