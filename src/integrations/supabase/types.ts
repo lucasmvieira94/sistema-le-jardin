@@ -6729,6 +6729,10 @@ export type Database = {
       }
       portal_cuidados_ficha: { Args: { p_residente_id: string }; Returns: Json }
       portal_cuidados_funcionario: { Args: never; Returns: string }
+      portal_cuidados_prontuario_dia: {
+        Args: { p_data: string; p_residente_id: string }
+        Returns: Json
+      }
       portal_cuidados_residentes: {
         Args: never
         Returns: {

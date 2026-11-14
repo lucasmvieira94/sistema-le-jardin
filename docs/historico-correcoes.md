@@ -10,6 +10,13 @@
 
 ## Correções verificadas
 
+### CUIDADOS-001 — Resumo diário sem substituir o prontuário original
+- Implementação em 14/11/2026: cards por data mostram somente análise de IA; toque consulta todos os registros daquela data, incluindo observações e justificativas de retificação. A consulta diária não usa o limite de 60 registros da ficha.
+- Segurança: RPC reutiliza `portal_cuidados_ficha` para validar passe, módulo e acesso ao residente antes de consultar registros; a função de IA usa o cliente anon com passe, nunca service role. Avisos genéricos de função SECURITY DEFINER acessível a anon/authenticated são intencionais para o PIN e foram revisados, não são autorização irrestrita. Não flexibilizar políticas para eliminar esses avisos. Os 276 avisos anteriores não foram alterados.
+- Evidências: 14 testes aprovados, incluindo execução da migração real em PGlite com bloqueio sem passe/módulo/residente autorizado; RPC real sem passe retorna 401, assim como o resumo. Geração real de IA com entrada fictícia concluída; cards e abertura do prontuário inspecionados em desktop e celular com respostas simuladas. Verificação Deno aprovada e aplicação sem erros na compilação.
+- Ajuste de compatibilidade: payload de desligamento passou a usar o tipo Update da tabela, sem alteração de valores ou comportamento, após atualização das declarações Supabase.
+- Limite: consulta/resumo com passe real de cuidador não verificados; acesso externo não permite criar sessão de teste. Nenhum erro administrativo marcado como resolvido.
+
 ### REC-002 — Recibo com assinatura exclusivamente no rodapé digital
 - Ajuste solicitado: retirar campo e imagem de assinatura do sócio, preservando o rodapé SXCare com signatário, horário de Brasília, QR, link, código e SHA-256.
 - Correção: emissão exige a identidade institucional, mas não uma imagem de rubrica; removidos o bloco duplicado de assinatura e a linha adicional de geração. UUID do registro e certificação obrigatória permanecem inalterados.
