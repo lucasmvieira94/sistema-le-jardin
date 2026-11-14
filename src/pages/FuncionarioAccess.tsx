@@ -8,7 +8,6 @@ import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import careLogo from "@/assets/logo-senex-care-new.png";
 import PainelLembretes from "@/components/lembretes/PainelLembretes";
-import ChatLembretes from "@/components/lembretes/ChatLembretes";
 import ValidacaoBiometricaDialog from "@/components/biometria/ValidacaoBiometricaDialog";
 import AvisosPendentesDialog from "@/components/avisos/AvisosPendentesDialog";
 import { toast } from "@/components/ui/use-toast";
@@ -594,8 +593,6 @@ export default function FuncionarioAccess() {
           </div>
         </div>
       </div>
-      {/* Chat IA flutuante */}
-      <ChatLembretes funcionarioId={funcionarioId} />
       {/* Avisos com confirmação de recebimento obrigatória */}
       <AvisosPendentesDialog funcionarioId={funcionarioId} />
     </div>
