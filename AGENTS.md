@@ -1,5 +1,7 @@
 # Decisões técnicas
 
+- Daily care-record summaries use the Gateway SDK server-side and PIN-authorized day RPC; content-hash caching never bypasses authorization or replaces original records.
+
 - Before every update, read `docs/historico-correcoes.md`, consult relevant resolved/open entries in `erros_envio_suporte`, and run affected regression tests; record evidence and never close unverified errors. This prevents reintroducing known defects.
 
 - Completed external-signature envelopes persist one server-rendered final PDF in private storage; manager/token downloads and Resend attachments share those exact integrity-checked bytes, with per-signatory delivery auditing.

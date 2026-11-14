@@ -11,6 +11,7 @@ import { Loader2, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { semCamposProibidos, idade } from "@/utils/portalCuidados";
 import RotinasResidente, { ProximosCompromissos } from "./RotinasResidente";
+import ProntuariosResidente from "./ProntuariosResidente";
 
 type Json = Record<string, any>;
 
@@ -82,24 +83,13 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
                 )}
               </div>
               <Campos dados={{ condicoes_medicas: r.condicoes_medicas, alergias: ficha?.acolhimento?.historico_saude?.alergias, observacoes_gerais: r.observacoes_gerais }} />
-              <ProximosCompromissos residenteId={residenteId!} />
+              {residenteId && <ProximosCompromissos residenteId={residenteId} />}
             </TabsContent>
 
-            <TabsContent value="rotinas"><RotinasResidente residenteId={residenteId!} /></TabsContent>
+            <TabsContent value="rotinas">{residenteId && <RotinasResidente residenteId={residenteId} />}</TabsContent>
 
             <TabsContent value="prontuarios" className="space-y-3">
-              {!ficha?.prontuarios?.length && <p className="text-sm text-muted-foreground">Sem registros.</p>}
-              {ficha?.prontuarios?.map((p: Json, i: number) => (
-                <div key={i} className="rounded-md border p-3">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{dataBR(p.data_registro)} {p.horario_registro?.slice(0, 5)}</span>
-                    <span>{p.funcionario_nome}</span>
-                  </div>
-                  <p className="mt-1 text-sm font-medium">{p.titulo || rotulo(p.tipo_registro ?? "")}</p>
-                  {p.descricao && <p className="text-sm whitespace-pre-wrap">{p.descricao}</p>}
-                  {p.observacoes && <p className="text-xs text-muted-foreground mt-1">{p.observacoes}</p>}
-                </div>
-              ))}
+              {residenteId && <ProntuariosResidente key={residenteId} residenteId={residenteId} registros={ficha?.prontuarios ?? []} />}
             </TabsContent>
 
             <TabsContent value="acolhimento" className="space-y-5">
@@ -114,7 +104,7 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
             <TabsContent value="saude" className="space-y-5">
               <section>
                 <h3 className="mb-2 font-semibold">Medicamentos em uso</h3>
-                <MedicamentosNoMapa residenteId={residenteId!} />
+                {residenteId && <MedicamentosNoMapa residenteId={residenteId} />}
               </section>
               <section>
                 <h3 className="mb-2 font-semibold">Vacinas</h3>

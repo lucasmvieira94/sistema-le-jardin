@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Resumo de IA por dia na ficha do residente, com abertura do prontuário completo ao tocar
+- [ ] Testar separação por dia, acesso protegido e visualização do prontuário
+
 - [ ] Criar agenda do Portal de Cuidados com compromissos por residente, data, horário e observações
 - [ ] Avisar compromissos do dia e confirmar ciência compartilhada com status Feito
 - [ ] Testar autorização, confirmação única e apresentação celular/tablet
