@@ -14,6 +14,7 @@ import { AFERICOES, MOMENTOS, TIPOS, descreverFrequencia, type Ocorrencia, type 
 import { TituloTarefa } from "./PortalCuidadosContexto";
 import RotinaDialog from "./RotinaDialog";
 import { useRotinasDia } from "./useRotinasDia";
+import { ListaAnexos } from "./AnexosRotina";
 
 const COR: Record<string, string> = { atrasado: "border-destructive bg-destructive/5", agora: "border-primary bg-primary/5", proximo: "", feito: "opacity-70" };
 const ROTULO: Record<string, string> = { atrasado: "Atrasado", agora: "Agora", proximo: "Próximo", feito: "Feito" };
@@ -37,6 +38,7 @@ export function RegistrarOcorrenciaDialog({ alvo, onClose, onFeito }: { alvo: Oc
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{r?.titulo}</DialogTitle><DialogDescription>{r?.residente_nome} · {alvo?.rotulo}</DialogDescription></DialogHeader>
         {r?.instrucoes && <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{r.instrucoes}</p>}
+        {r && <ListaAnexos rotinaId={r.id} />}
         {r?.tipo === "afericao" && <div><Label>{AFERICOES[r.tipo_afericao ?? ""] ?? "Valor"}</Label><Input autoFocus maxLength={40} placeholder={PLACEHOLDER[r.tipo_afericao ?? ""] ?? "Valor"} value={valor} onChange={(e) => setValor(e.target.value)} /></div>}
         <div><Label>Observação (opcional)</Label><Textarea rows={2} maxLength={1000} value={obs} onChange={(e) => setObs(e.target.value)} /></div>
         <DialogFooter><Button onClick={salvar} disabled={salvando || (r?.tipo === "afericao" && !valor.trim())}><CheckCircle2 className="mr-1 h-4 w-4" />Confirmar</Button></DialogFooter>
@@ -73,6 +75,7 @@ export function CartaoRotina({ r, onEditar, onEncerrar }: { r: RotinaCuidado; on
       </div>
       <p className="text-xs">{descreverFrequencia(r)} · {r.fim ? `até ${new Date(`${r.fim}T12:00:00`).toLocaleDateString("pt-BR")}` : "contínuo"}</p>
       {r.instrucoes && <p className="line-clamp-2 text-sm text-muted-foreground">{r.instrucoes}</p>}
+      <ListaAnexos rotinaId={r.id} />
       <div className="flex gap-2 pt-1">
         <Button size="sm" variant="outline" onClick={onEditar}><Pencil className="mr-1 h-3.5 w-3.5" />Editar</Button>
         <Button size="sm" variant="ghost" onClick={onEncerrar}><StopCircle className="mr-1 h-3.5 w-3.5" />Encerrar</Button>
@@ -105,7 +108,7 @@ export default function RotinasDia() {
                   {orientacoes.map((o) => (
                     <div key={o.id} className="flex gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
                       <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <div><p><b>{o.residente_nome}</b> · {MOMENTOS[o.momento ?? ""] ?? descreverFrequencia(o)}: {o.titulo}</p>{o.instrucoes && <p className="text-muted-foreground">{o.instrucoes}</p>}</div>
+                      <div><p><b>{o.residente_nome}</b> · {MOMENTOS[o.momento ?? ""] ?? descreverFrequencia(o)}: {o.titulo}</p>{o.instrucoes && <p className="text-muted-foreground">{o.instrucoes}</p>}<div className="mt-1"><ListaAnexos rotinaId={o.id} /></div></div>
                     </div>
                   ))}
                 </div>

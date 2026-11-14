@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { hojeISO } from "@/utils/dateUtils";
 import { AFERICOES, DIAS, MOMENTOS, TIPOS, fimPorDuracao, rotinaSchema, type RotinaCuidado } from "@/utils/rotinasCuidados";
 import { useResidentesPortal } from "./useResidentesPortal";
+import { ListaAnexos, SeletorAnexos } from "./AnexosRotina";
+import { enviarAnexo } from "@/utils/anexosRotina";
 
 type Prazo = "sem" | "dias" | "data";
 
@@ -25,9 +27,11 @@ export default function RotinaDialog({ open, onOpenChange, rotina, residentePadr
   const [prazo, setPrazo] = useState<Prazo>("sem");
   const [dias, setDias] = useState("7");
   const [salvando, setSalvando] = useState(false);
+  const [arquivos, setArquivos] = useState<File[]>([]);
 
   useEffect(() => {
     if (!open) return;
+    setArquivos([]);
     if (rotina) {
       setF({ residente: rotina.residente_id, titulo: rotina.titulo, tipo: rotina.tipo, instrucoes: rotina.instrucoes ?? "", frequencia: rotina.frequencia, horarios: rotina.horarios.map((h) => h.slice(0, 5)), momento: rotina.momento, tipo_afericao: rotina.tipo_afericao, dias_semana: rotina.dias_semana ?? [], inicio: rotina.inicio, fim: rotina.fim });
       setPrazo(rotina.fim ? "data" : "sem");
@@ -43,14 +47,18 @@ export default function RotinaDialog({ open, onOpenChange, rotina, residentePadr
     const v = rotinaSchema.safeParse(dados);
     if (!v.success) return toast({ title: v.error.issues[0].message, variant: "destructive" });
     setSalvando(true);
-    const { error } = await supabase.rpc("portal_rotina_salvar" as any, {
+    const { data: idSalvo, error } = await supabase.rpc("portal_rotina_salvar" as any, {
       _id: rotina?.id ?? null, _residente_id: dados.residente, _titulo: dados.titulo, _tipo: dados.tipo, _instrucoes: dados.instrucoes,
       _frequencia: dados.frequencia, _horarios: dados.horarios, _momento: dados.momento, _tipo_afericao: dados.tipo_afericao,
       _dias_semana: dados.dias_semana, _inicio: dados.inicio, _fim: dados.fim,
     });
+    if (error) { setSalvando(false); return toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" }); }
+    const falhas: string[] = [];
+    for (const a of arquivos) { try { await enviarAnexo(idSalvo as string, a); } catch (e) { falhas.push(`${a.name}: ${(e as Error).message}`); } }
     setSalvando(false);
-    if (error) return toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" });
-    toast({ title: rotina ? "Rotina atualizada" : "Rotina cadastrada" }); onOpenChange(false); onSalvo();
+    if (falhas.length) toast({ title: "Rotina salva, mas um anexo falhou", description: falhas.join("; ") + ". Abra a rotina em Editar e anexe de novo.", variant: "destructive" });
+    else toast({ title: rotina ? "Rotina atualizada" : "Rotina cadastrada" });
+    onOpenChange(false); onSalvo();
   };
 
   return (
@@ -124,6 +132,9 @@ export default function RotinaDialog({ open, onOpenChange, rotina, residentePadr
               </Select></div>
           </div>
           {prazo === "dias" && <div className="flex items-center gap-2"><Input type="number" min={1} max={365} className="w-24" value={dias} onChange={(e) => setDias(e.target.value)} /><span className="text-sm text-muted-foreground">dias{fimCalculado ? ` · até ${new Date(`${fimCalculado}T12:00:00`).toLocaleDateString("pt-BR")}` : ""}</span></div>}
+          <div><Label>Documento do profissional de saúde <span className="text-xs text-muted-foreground">(opcional, até 5)</span></Label>
+            {rotina && <div className="my-1"><ListaAnexos rotinaId={rotina.id} podeRemover /></div>}
+            <SeletorAnexos arquivos={arquivos} onChange={setArquivos} /></div>
           {prazo === "data" && <Input type="date" min={f.inicio} value={f.fim ?? ""} onChange={(e) => set({ fim: e.target.value || null })} />}
         </div>
         <DialogFooter><Button onClick={salvar} disabled={salvando}>{salvando ? "Salvando..." : "Salvar"}</Button></DialogFooter>
