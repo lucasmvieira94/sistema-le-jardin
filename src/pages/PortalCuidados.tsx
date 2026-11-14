@@ -115,7 +115,6 @@ export default function PortalCuidados() {
       {!naHome ? <main className="animate-fade-in pb-8"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
 
       <main className="container mx-auto space-y-6 px-3 py-5 sm:px-4">
-        <AreaProtegida />
         <AvisosDoDia onAbrirAgenda={() => navigate(`/cuidados/agenda?${q}`)} onAbrirRotinas={() => navigate(`/cuidados/rotinas?${q}`)}
           pendentesRotina={rotinasDia.ocorrencias.filter((o) => o.status === "atrasado" || o.status === "agora").length} />
         <section>
