@@ -2148,11 +2148,15 @@ export type Database = {
       }
       cuidados_agenda: {
         Row: {
+          cancelado_em: string | null
+          cancelado_por: string | null
           created_at: string
           criado_por: string
           data_evento: string
+          editado_por: string | null
           horario: string
           id: string
+          motivo_cancelamento: string | null
           observacoes: string | null
           residente_id: string
           tenant_id: string | null
@@ -2162,11 +2166,15 @@ export type Database = {
           visto_por: string | null
         }
         Insert: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           created_at?: string
           criado_por: string
           data_evento: string
+          editado_por?: string | null
           horario: string
           id?: string
+          motivo_cancelamento?: string | null
           observacoes?: string | null
           residente_id: string
           tenant_id?: string | null
@@ -2176,11 +2184,15 @@ export type Database = {
           visto_por?: string | null
         }
         Update: {
+          cancelado_em?: string | null
+          cancelado_por?: string | null
           created_at?: string
           criado_por?: string
           data_evento?: string
+          editado_por?: string | null
           horario?: string
           id?: string
+          motivo_cancelamento?: string | null
           observacoes?: string | null
           residente_id?: string
           tenant_id?: string | null
@@ -2191,8 +2203,22 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "cuidados_agenda_cancelado_por_fkey"
+            columns: ["cancelado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cuidados_agenda_criado_por_fkey"
             columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_agenda_editado_por_fkey"
+            columns: ["editado_por"]
             isOneToOne: false
             referencedRelation: "funcionarios"
             referencedColumns: ["id"]
@@ -2209,6 +2235,158 @@ export type Database = {
             columns: ["visto_por"]
             isOneToOne: false
             referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cuidados_rotinas: {
+        Row: {
+          created_at: string
+          criado_por: string
+          dias_semana: number[]
+          editado_por: string | null
+          encerrada_em: string | null
+          encerrada_por: string | null
+          fim: string | null
+          frequencia: string
+          horarios: string[]
+          id: string
+          inicio: string
+          instrucoes: string | null
+          momento: string | null
+          motivo_encerramento: string | null
+          residente_id: string
+          tenant_id: string | null
+          tipo: string
+          tipo_afericao: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por: string
+          dias_semana?: number[]
+          editado_por?: string | null
+          encerrada_em?: string | null
+          encerrada_por?: string | null
+          fim?: string | null
+          frequencia: string
+          horarios?: string[]
+          id?: string
+          inicio: string
+          instrucoes?: string | null
+          momento?: string | null
+          motivo_encerramento?: string | null
+          residente_id: string
+          tenant_id?: string | null
+          tipo: string
+          tipo_afericao?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string
+          dias_semana?: number[]
+          editado_por?: string | null
+          encerrada_em?: string | null
+          encerrada_por?: string | null
+          fim?: string | null
+          frequencia?: string
+          horarios?: string[]
+          id?: string
+          inicio?: string
+          instrucoes?: string | null
+          momento?: string | null
+          motivo_encerramento?: string | null
+          residente_id?: string
+          tenant_id?: string | null
+          tipo?: string
+          tipo_afericao?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cuidados_rotinas_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_rotinas_editado_por_fkey"
+            columns: ["editado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_rotinas_encerrada_por_fkey"
+            columns: ["encerrada_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_rotinas_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cuidados_rotinas_execucoes: {
+        Row: {
+          chave: string
+          created_at: string
+          data: string
+          feito_em: string
+          feito_por: string
+          horario_previsto: string | null
+          id: string
+          observacao: string | null
+          rotina_id: string
+          valor: string | null
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          data: string
+          feito_em?: string
+          feito_por: string
+          horario_previsto?: string | null
+          id?: string
+          observacao?: string | null
+          rotina_id: string
+          valor?: string | null
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          data?: string
+          feito_em?: string
+          feito_por?: string
+          horario_previsto?: string | null
+          id?: string
+          observacao?: string | null
+          rotina_id?: string
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cuidados_rotinas_execucoes_feito_por_fkey"
+            columns: ["feito_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cuidados_rotinas_execucoes_rotina_id_fkey"
+            columns: ["rotina_id"]
+            isOneToOne: false
+            referencedRelation: "cuidados_rotinas"
             referencedColumns: ["id"]
           },
         ]
@@ -6426,9 +6604,11 @@ export type Database = {
       portal_cuidados_agenda: {
         Args: { _data?: string }
         Returns: {
+          cancelado_em: string
           data_evento: string
           horario: string
           id: string
+          motivo_cancelamento: string
           observacoes: string
           residente_id: string
           residente_nome: string
@@ -6436,6 +6616,26 @@ export type Database = {
           visto_em: string
           visto_por_nome: string
         }[]
+      }
+      portal_cuidados_agenda_periodo: {
+        Args: { _fim: string; _inicio: string; _residente_id?: string }
+        Returns: {
+          cancelado_em: string
+          data_evento: string
+          horario: string
+          id: string
+          motivo_cancelamento: string
+          observacoes: string
+          residente_id: string
+          residente_nome: string
+          titulo: string
+          visto_em: string
+          visto_por_nome: string
+        }[]
+      }
+      portal_cuidados_cancelar_evento: {
+        Args: { _evento_id: string; _motivo: string }
+        Returns: undefined
       }
       portal_cuidados_criar_evento: {
         Args: {
@@ -6446,6 +6646,16 @@ export type Database = {
           _titulo: string
         }
         Returns: string
+      }
+      portal_cuidados_editar_evento: {
+        Args: {
+          _data: string
+          _evento_id: string
+          _horario: string
+          _observacoes?: string
+          _titulo: string
+        }
+        Returns: undefined
       }
       portal_cuidados_ficha: { Args: { p_residente_id: string }; Returns: Json }
       portal_cuidados_funcionario: { Args: never; Returns: string }
@@ -6564,6 +6774,74 @@ export type Database = {
           residente: string
           responsavel: string
           tipo: string
+        }[]
+      }
+      portal_rotina_encerrar: {
+        Args: { _id: string; _motivo: string }
+        Returns: undefined
+      }
+      portal_rotina_executar: {
+        Args: {
+          _chave: string
+          _id: string
+          _observacao?: string
+          _valor?: string
+        }
+        Returns: undefined
+      }
+      portal_rotina_salvar: {
+        Args: {
+          _dias_semana: number[]
+          _fim: string
+          _frequencia: string
+          _horarios: string[]
+          _id: string
+          _inicio: string
+          _instrucoes: string
+          _momento: string
+          _residente_id: string
+          _tipo: string
+          _tipo_afericao: string
+          _titulo: string
+        }
+        Returns: string
+      }
+      portal_rotinas_execucoes: {
+        Args: { _fim: string; _inicio: string; _residente_id?: string }
+        Returns: {
+          chave: string
+          data: string
+          feito_em: string
+          feito_por_nome: string
+          horario_previsto: string
+          id: string
+          observacao: string
+          residente_id: string
+          rotina_id: string
+          tipo_afericao: string
+          titulo: string
+          valor: string
+        }[]
+      }
+      portal_rotinas_listar: {
+        Args: { _incluir_encerradas?: boolean; _residente_id?: string }
+        Returns: {
+          criado_por_nome: string
+          dias_semana: number[]
+          encerrada_em: string
+          fim: string
+          frequencia: string
+          horarios: string[]
+          id: string
+          inicio: string
+          instrucoes: string
+          momento: string
+          motivo_encerramento: string
+          residente_id: string
+          residente_nome: string
+          tipo: string
+          tipo_afericao: string
+          titulo: string
         }[]
       }
       portal_sessao_atual: {
