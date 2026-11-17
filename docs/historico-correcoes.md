@@ -70,4 +70,4 @@
 
 ## Histórico administrativo
 
-Em **Histórico de erros**, selecionar **Resolvidos** para consultar correção, data e observação; selecionar **Em aberto** para pendências. A reabertura mantém a observação anterior. Novas resoluções exigem descrição do que foi corrigido e verificado.
+Em **Histórico de erros**, selecionar **Resolvidos** para consultar correção, data e observação; selecionar **Em aberto** para pendências. A reabertura mantém a observação anterior. Novas resoluções exigem descrição do que foi corrigido e verificado.- ROSA-001: rosa_historico chamava calcular_modulos_funcionario(uuid) inexistente (42883), impedindo abrir conversa. Corrigido para modulos_funcionario(f). Evidência: chamada real com passe PIN de teste retornou 200 com resposta da Rosa.
