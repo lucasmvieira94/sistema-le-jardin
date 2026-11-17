@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Plus, ShieldPlus, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Plus, ShieldPlus, ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,19 @@ export default function EstoqueEmergenciaPortal() {
   const [movs, setMovs] = useState<Mov[]>([]);
   const [f, setF] = useState({ nome: "", qtd: "", lote: "", validade: "", minimo: "" });
   const [salvando, setSalvando] = useState(false);
+  const [remover, setRemover] = useState<Lote | null>(null);
+  const [motivo, setMotivo] = useState("");
+
+  /** Pede ao gestor a remoção do lote; ele some do estoque até a decisão. */
+  const pedirRemocao = async () => {
+    if (!remover) return;
+    setSalvando(true);
+    const { error } = await supabase.rpc("portal_solicitar_remocao_estoque" as any, { p_estoque_id: remover.estoque_id, p_motivo: motivo });
+    setSalvando(false);
+    if (error) { toast({ title: "Não foi possível pedir a remoção", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Remoção enviada ao gestor", description: "O lote fica fora do estoque até o gestor decidir." });
+    setRemover(null); setMotivo(""); carregar();
+  };
 
   const carregar = () => {
     supabase.rpc("portal_estoque_emergencia" as any).then(({ data }) => setLotes((data as Lote[]) ?? []));
@@ -78,6 +93,9 @@ export default function EstoqueEmergenciaPortal() {
               <Badge variant={SIT[l.situacao]?.v ?? "outline"} className="mt-1 text-[10px]">{SIT[l.situacao]?.n ?? l.situacao}</Badge>
             </div>
             <p className="text-lg font-bold">{Number(l.quantidade)}</p>
+            <Button variant="ghost" size="icon" aria-label={`Remover ${l.nome} do estoque de emergência`} onClick={() => { setMotivo(""); setRemover(l); }}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
         ))}
       </section>
@@ -98,6 +116,20 @@ export default function EstoqueEmergenciaPortal() {
           </div>
         ))}
       </section>
+      <Dialog open={!!remover} onOpenChange={(o) => !o && setRemover(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover {remover?.nome}{remover?.lote ? ` (lote ${remover.lote})` : ""}?</DialogTitle>
+            <DialogDescription>O lote sai do estoque de emergência agora e o gestor decide se a remoção vale. Se ele recusar, o lote volta com a mesma quantidade.</DialogDescription>
+          </DialogHeader>
+          <Label htmlFor="motivo-remocao-emerg">Por que remover? *</Label>
+          <Textarea id="motivo-remocao-emerg" value={motivo} maxLength={500} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: lote vencido e descartado" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemover(null)}>Cancelar</Button>
+            <Button variant="destructive" disabled={salvando || motivo.trim().length < 10} onClick={pedirRemocao}>{salvando ? "Enviando..." : "Pedir remoção"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

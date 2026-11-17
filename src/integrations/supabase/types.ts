@@ -5421,7 +5421,7 @@ export type Database = {
           motivo: string
           observacao_gestor: string | null
           quantidade_no_pedido: number | null
-          residente_id: string
+          residente_id: string | null
           revisado_em: string | null
           revisado_por: string | null
           solicitado_por: string
@@ -5436,7 +5436,7 @@ export type Database = {
           motivo: string
           observacao_gestor?: string | null
           quantidade_no_pedido?: number | null
-          residente_id: string
+          residente_id?: string | null
           revisado_em?: string | null
           revisado_por?: string | null
           solicitado_por: string
@@ -5451,7 +5451,7 @@ export type Database = {
           motivo?: string
           observacao_gestor?: string | null
           quantidade_no_pedido?: number | null
-          residente_id?: string
+          residente_id?: string | null
           revisado_em?: string | null
           revisado_por?: string | null
           solicitado_por?: string

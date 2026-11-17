@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 // Executa a migração real de remoção com aprovação do gestor.
 const db = new PGlite();
 const sql = readFileSync('supabase/migrations/20261117155501_ac6dafa2-af03-4616-9e4d-98e7e602acd3.sql', 'utf8');
-const F = '00000000-0000-0000-0000-000000000001', R = '00000000-0000-0000-0000-000000000002', E = '00000000-0000-0000-0000-000000000003';
+const F = '00000000-0000-0000-0000-000000000001', R = '00000000-0000-0000-0000-000000000002', E = '00000000-0000-0000-0000-000000000003', U = '00000000-0000-0000-0000-000000000004';
 
 beforeAll(async () => {
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
@@ -17,12 +17,15 @@ beforeAll(async () => {
     CREATE FUNCTION portal_med_funcionario() RETURNS uuid LANGUAGE sql AS $$ SELECT '${F}'::uuid $$;
     CREATE FUNCTION portal_med_residente_ok(uuid, uuid) RETURNS void LANGUAGE sql AS $$ SELECT $$;
     CREATE FUNCTION eh_gestor(uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT current_setting('test.gestor', true) = 'sim' $$;
+    CREATE FUNCTION portal_eh_supervisor() RETURNS boolean LANGUAGE sql AS $$ SELECT current_setting('test.sup', true) = 'sim' $$;
     CREATE FUNCTION has_tenant_access(uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT true $$;
     INSERT INTO funcionarios VALUES ('${F}', NULL, 'Ana'); INSERT INTO residentes VALUES ('${R}', 'Maria');
     INSERT INTO medicamentos VALUES ('${R}', 'Losartana');
-    INSERT INTO estoque_medicamentos VALUES ('${E}', '${R}', '${R}', 'residente', 7, true, NULL);`);
+    INSERT INTO estoque_medicamentos VALUES ('${E}', '${R}', '${R}', 'residente', 7, true, NULL);
+    INSERT INTO estoque_medicamentos VALUES ('${U}', NULL, '${R}', 'urgencia', 4, true, NULL);`);
   await db.exec(sql);
   await db.exec(readFileSync('supabase/migrations/20261117160723_89c97dea-de9f-4406-aac5-4bf823bcee2d.sql', 'utf8'));
+  await db.exec(readFileSync('supabase/migrations/20261117162012_955f261b-6ff2-4c8c-9213-08b4a213d40a.sql', 'utf8'));
 });
 afterAll(async () => { await db.close(); });
 const ativo = async () => (await db.query<{ ativo: boolean }>(`SELECT ativo FROM estoque_medicamentos WHERE id='${E}'`)).rows[0].ativo;
@@ -51,5 +54,14 @@ describe.sequential('remoção de medicamento do estoque', () => {
     const id = (await db.query<{ id: string }>("SELECT id FROM remocoes_estoque_medicamentos WHERE status='pendente'")).rows[0].id;
     await db.query('SELECT gestor_revisar_remocao_estoque($1, true)', [id]);
     expect(await ativo()).toBe(false);
+  });
+  it('estoque de emergência: só supervisor pede, sem residente', async () => {
+    await expect(db.query(`SELECT portal_solicitar_remocao_estoque('${U}', 'Lote vencido e descartado')`)).rejects.toMatchObject({ code: '42501' });
+    await db.query("SELECT set_config('test.sup', 'sim', false)");
+    await db.query(`SELECT portal_solicitar_remocao_estoque('${U}', 'Lote vencido e descartado')`);
+    expect((await db.query<{ ativo: boolean }>(`SELECT ativo FROM estoque_medicamentos WHERE id='${U}'`)).rows[0].ativo).toBe(false);
+    const id = (await db.query<{ id: string }>("SELECT id FROM remocoes_estoque_medicamentos WHERE status='pendente'")).rows[0].id;
+    await db.query('SELECT gestor_revisar_remocao_estoque($1, false)', [id]);
+    expect((await db.query<{ ativo: boolean }>(`SELECT ativo FROM estoque_medicamentos WHERE id='${U}'`)).rows[0].ativo).toBe(true);
   });
 });

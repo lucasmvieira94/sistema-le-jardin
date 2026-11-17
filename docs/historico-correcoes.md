@@ -14,6 +14,7 @@
 - Cuidadora pede remoção pela lixeira no estoque do residente, com justificativa (mín. 10 letras); o item fica inativo até o gestor decidir em Remoções de Medicamentos. Recusa reativa o mesmo registro (mesma quantidade); aprovação mantém inativo. Mapa não é alterado.
 - Verificação de gestor usa `coalesce(eh_gestor(...), false)` para falhar fechado quando a resposta é nula (achado pelo teste).
 - Evidências: 5 testes SQL em PGlite com as migrações reais + 7 regressões de permissões de medicamentos; compilação OK.
+- Ampliação: lotes do estoque de emergência também, só por supervisores; o gestor vê "Estoque de emergência" com o lote. Teste SQL adicional aprovado (6 no total).
 - Limites: fluxo com passe PIN real e tela do gestor não testados no navegador.
 
 ### CUIDADOS-003 — Rosa: conversa e consultas protegidas
