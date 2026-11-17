@@ -41,6 +41,7 @@ import PortalCuidados from "./pages/PortalCuidados";
 import AgendaCuidados from "./components/cuidados/AgendaCuidados";
 import RotinasDia from "./components/cuidados/RotinasDia";
 import RosaOrientacoes from "./pages/RosaOrientacoes";
+import RemocoesMedicamentos from "./pages/RemocoesMedicamentos";
 
 // Páginas protegidas (admin)
 import Index from "./pages/Index";
@@ -185,6 +186,7 @@ const App = () => {
               <Route path="/relatorios-ia" element={<ProtectedRoute><ModuleGuard modulo="relatorios_ia"><RelatoriosIA /></ModuleGuard></ProtectedRoute>} />
               <Route path="/controle-assinaturas" element={<ProtectedRoute><ControleAssinaturas /></ProtectedRoute>} />
               <Route path="/historico-erros" element={<ProtectedRoute><HistoricoErros /></ProtectedRoute>} />
+              <Route path="/remocoes-medicamentos" element={<ProtectedRoute><RemocoesMedicamentos /></ProtectedRoute>} />
               <Route path="/rosa-orientacoes" element={<ProtectedRoute><RosaOrientacoes /></ProtectedRoute>} />
               <Route path="/canal-denuncias" element={<ProtectedRoute><CanalDenuncias /></ProtectedRoute>} />
               <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />

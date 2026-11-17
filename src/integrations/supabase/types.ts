@@ -5413,6 +5413,76 @@ export type Database = {
           },
         ]
       }
+      remocoes_estoque_medicamentos: {
+        Row: {
+          created_at: string
+          estoque_medicamento_id: string
+          id: string
+          motivo: string
+          observacao_gestor: string | null
+          quantidade_no_pedido: number | null
+          residente_id: string
+          revisado_em: string | null
+          revisado_por: string | null
+          solicitado_por: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estoque_medicamento_id: string
+          id?: string
+          motivo: string
+          observacao_gestor?: string | null
+          quantidade_no_pedido?: number | null
+          residente_id: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          solicitado_por: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estoque_medicamento_id?: string
+          id?: string
+          motivo?: string
+          observacao_gestor?: string | null
+          quantidade_no_pedido?: number | null
+          residente_id?: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          solicitado_por?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remocoes_estoque_medicamentos_estoque_medicamento_id_fkey"
+            columns: ["estoque_medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "estoque_medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remocoes_estoque_medicamentos_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remocoes_estoque_medicamentos_solicitado_por_fkey"
+            columns: ["solicitado_por"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       residentes: {
         Row: {
           ativo: boolean
@@ -6552,6 +6622,25 @@ export type Database = {
         }[]
       }
       gerar_token_convite: { Args: never; Returns: string }
+      gestor_remocoes_estoque: {
+        Args: { p_status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          medicamento: string
+          motivo: string
+          observacao_gestor: string
+          quantidade: number
+          residente: string
+          revisado_em: string
+          solicitante: string
+          status: string
+        }[]
+      }
+      gestor_revisar_remocao_estoque: {
+        Args: { p_aprovar: boolean; p_id: string; p_observacao?: string }
+        Returns: undefined
+      }
       get_contracheque_path: {
         Args: { p_contracheque_id: string; p_funcionario_id: string }
         Returns: string
@@ -7076,6 +7165,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      portal_solicitar_remocao_estoque: {
+        Args: { p_estoque_id: string; p_motivo: string }
+        Returns: string
       }
       prazo_assinatura_em: {
         Args: {

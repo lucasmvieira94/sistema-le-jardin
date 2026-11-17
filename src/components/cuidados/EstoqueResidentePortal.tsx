@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Plus, Package } from "lucide-react";
+import { Plus, Package, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +22,20 @@ export default function EstoqueResidentePortal({ onAlterado }: { onAlterado: () 
   const [itens, setItens] = useState<ItemEstoque[] | null>(null);
   const [f, setF] = useState({ nome: "", qtd: "", lote: "", validade: "" });
   const [salvando, setSalvando] = useState(false);
+  const [remover, setRemover] = useState<ItemEstoque | null>(null);
+  const [motivo, setMotivo] = useState("");
+
+  /** Pede ao gestor a remoção; o remédio some do estoque até a decisão. */
+  const pedirRemocao = async () => {
+    if (!remover) return;
+    setSalvando(true);
+    const { error } = await supabase.rpc("portal_solicitar_remocao_estoque" as any, { p_estoque_id: remover.estoque_id, p_motivo: motivo });
+    setSalvando(false);
+    if (error) { toast({ title: "Não foi possível pedir a remoção", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Remoção enviada ao gestor", description: "O remédio fica fora do estoque até o gestor decidir." });
+    setRemover(null); setMotivo("");
+    carregar(); onAlterado();
+  };
 
   const carregar = (id = residente) => {
     if (!id) return;
@@ -77,10 +93,28 @@ export default function EstoqueResidentePortal({ onAlterado }: { onAlterado: () 
                 <p className={`text-lg font-bold ${Number(i.quantidade) <= 0 ? "text-destructive" : ""}`}>{Number(i.quantidade)}</p>
                 {i.no_mapa && <Badge variant="outline" className="text-[10px]">No mapa</Badge>}
               </div>
+              <Button variant="ghost" size="icon" aria-label={`Remover ${i.nome} do estoque`} onClick={() => { setMotivo(""); setRemover(i); }}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
             </div>
           ))}
         </div>
       </>)}
+
+      <Dialog open={!!remover} onOpenChange={(o) => !o && setRemover(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover {remover?.nome}?</DialogTitle>
+            <DialogDescription>O remédio sai do estoque agora e o gestor decide se a remoção vale. Se ele recusar, o remédio volta com a mesma quantidade.</DialogDescription>
+          </DialogHeader>
+          <Label htmlFor="motivo-remocao">Por que remover? *</Label>
+          <Textarea id="motivo-remocao" value={motivo} maxLength={500} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: remédio acabou e não será mais comprado" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemover(null)}>Cancelar</Button>
+            <Button variant="destructive" disabled={salvando || motivo.trim().length < 10} onClick={pedirRemocao}>{salvando ? "Enviando..." : "Pedir remoção"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
