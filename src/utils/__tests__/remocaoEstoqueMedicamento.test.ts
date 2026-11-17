@@ -22,6 +22,7 @@ beforeAll(async () => {
     INSERT INTO medicamentos VALUES ('${R}', 'Losartana');
     INSERT INTO estoque_medicamentos VALUES ('${E}', '${R}', '${R}', 'residente', 7, true, NULL);`);
   await db.exec(sql);
+  await db.exec(readFileSync('supabase/migrations/20261117160723_89c97dea-de9f-4406-aac5-4bf823bcee2d.sql', 'utf8'));
 });
 afterAll(async () => { await db.close(); });
 const ativo = async () => (await db.query<{ ativo: boolean }>(`SELECT ativo FROM estoque_medicamentos WHERE id='${E}'`)).rows[0].ativo;

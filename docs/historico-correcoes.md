@@ -10,6 +10,12 @@
 
 ## Correções verificadas
 
+### MED-001 — Remoção de medicamento do estoque com aprovação do gestor
+- Cuidadora pede remoção pela lixeira no estoque do residente, com justificativa (mín. 10 letras); o item fica inativo até o gestor decidir em Remoções de Medicamentos. Recusa reativa o mesmo registro (mesma quantidade); aprovação mantém inativo. Mapa não é alterado.
+- Verificação de gestor usa `coalesce(eh_gestor(...), false)` para falhar fechado quando a resposta é nula (achado pelo teste).
+- Evidências: 5 testes SQL em PGlite com as migrações reais + 7 regressões de permissões de medicamentos; compilação OK.
+- Limites: fluxo com passe PIN real e tela do gestor não testados no navegador.
+
 ### CUIDADOS-003 — Rosa: conversa e consultas protegidas
 - Conversa contínua privada por cuidadora, identificada pelo passe PIN no servidor; respostas gravadas somente pela função de IA. Ferramentas consultam RPCs existentes e a ficha é filtrada também por módulo.
 - Aprendizado supervisionado: sugestões de funcionamento vão à revisão do gestor; aprovação/revogação afeta próximas respostas, não altera prescrição ou prontuário. Manual versionado acompanha atualizações futuras, sem promessa de treinamento automático.
