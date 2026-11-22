@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, MessageSquare, AlertTriangle, CheckCircle, Filter, Eye, Baby, Pill, FileText, Bot, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 import { useIntercorrencias, Intercorrencia, IntercorrenciaLog } from '@/hooks/useIntercorrencias';
-import { useSupervisorDashboardData } from '@/hooks/useSupervisorDashboardData';
+import { useSupervisaoCuidados } from '@/hooks/useSupervisaoCuidados';
+import SupervisaoCuidados from '@/components/supervisor/SupervisaoCuidados';
+import { horarioAtualCurto } from '@/utils/dateUtils';
 import { useFuncionarioSession } from '@/hooks/useFuncionarioSession';
 import AssistenteSupervisorChat from '@/components/supervisor/AssistenteSupervisorChat';
 import { formatarTimestampData, formatarTimestampDataHora } from '@/utils/formatTimestamp';
@@ -47,7 +48,9 @@ export default function PainelIntercorrencias() {
   const funcionarioNome = decodeURIComponent(searchParams.get('funcionario_nome') || '');
 
   const { intercorrencias, loading: loadingInter, atualizarStatus, definirPrazo, enviarFeedback, buscarLogs } = useIntercorrencias();
-  const { data: dashData, loading: loadingDash, refetch } = useSupervisorDashboardData();
+  const { data: cuidados, loading: loadingDash, error: erroPainel, refreshing, refetch } = useSupervisaoCuidados();
+  const [hora, setHora] = useState(horarioAtualCurto);
+  useEffect(() => { const timer = setInterval(() => setHora(horarioAtualCurto()), 30000); return () => clearInterval(timer); }, []);
 
   const [activeTab, setActiveTab] = useState('visao-geral');
   const [filtroStatus, setFiltroStatus] = useState<string>('todas');
@@ -101,47 +104,46 @@ export default function PainelIntercorrencias() {
     setDetailsOpen(false);
   };
 
-  const prontuarioPerc = dashData.prontuarios.totalResidentes > 0
-    ? Math.round((dashData.prontuarios.encerrados / dashData.prontuarios.totalResidentes) * 100)
-    : 0;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 to-indigo-900 p-2 sm:p-4">
-      <div className="container mx-auto max-w-5xl">
+    <div className="min-h-screen bg-background text-foreground p-3 sm:p-6">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-xl mb-4">
-          <div className="flex items-center justify-between mb-2">
+        <div className="border-b pb-4 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" onClick={() => navigate(`/?funcionario_id=${funcionarioId}`)}>
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <LayoutDashboard className="w-5 h-5 text-indigo-600" />
+                <h1 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+                  <LayoutDashboard className="w-5 h-5 text-primary" />
                   Dashboard do Supervisor
                 </h1>
-                <p className="text-sm text-gray-500">{funcionarioNome}</p>
+                <p className="text-sm text-muted-foreground">{funcionarioNome}</p>
+                {cuidados && <p className="text-xs text-muted-foreground">Atualizado às {new Date(cuidados.atualizado_em).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })} · atualização a cada 30 s</p>}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={refetch} className="hidden sm:flex">
-                <RefreshCw className="w-4 h-4 mr-1" /> Atualizar
+              <Button variant="outline" size="sm" onClick={() => { void refetch(); }} disabled={refreshing} >
+                <RefreshCw className={`w-4 h-4 mr-1 ${refreshing ? "animate-spin" : ""}`} /> <span className="hidden sm:inline">Atualizar</span>
               </Button>
-              <Button size="sm" onClick={() => setChatOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+              <Button size="sm" onClick={() => setChatOpen(true)} >
                 <Bot className="w-4 h-4 mr-1" /> Assistente IA
               </Button>
             </div>
           </div>
         </div>
 
+        {erroPainel && <div role="alert" className="mb-4 rounded-lg border border-destructive p-3 text-sm text-destructive">{erroPainel}</div>}
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <div className="bg-white rounded-xl p-1 shadow">
+          <div className="border-b pb-3">
             <TabsList className="w-full grid grid-cols-2 h-auto">
               <TabsTrigger value="visao-geral" className="py-2.5 text-sm">
                 <LayoutDashboard className="w-4 h-4 mr-1.5" /> Visão Geral
               </TabsTrigger>
-              <TabsTrigger value="intercorrencias" className="py-2.5 text-sm">
+              <TabsTrigger value="intercorrencias" disabled={!cuidados} className="py-2.5 text-sm">
                 <AlertTriangle className="w-4 h-4 mr-1.5" /> Intercorrências
                 {counts.abertas > 0 && (
                   <Badge variant="destructive" className="ml-1.5 text-[10px] px-1.5 py-0">{counts.abertas}</Badge>
@@ -150,164 +152,8 @@ export default function PainelIntercorrencias() {
             </TabsList>
           </div>
 
-          {/* ==================== VISÃO GERAL ==================== */}
           <TabsContent value="visao-geral" className="space-y-4">
-            {loadingDash ? (
-              <div className="text-center text-white py-12">Carregando dados...</div>
-            ) : (
-              <>
-                {/* KPIs principais */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <KPICard icon={<FileText className="w-5 h-5 text-indigo-500" />} label="Prontuários Hoje" value={`${dashData.prontuarios.encerrados}/${dashData.prontuarios.totalResidentes}`} sub={`${prontuarioPerc}% completos`}
-                    color={prontuarioPerc >= 80 ? 'border-green-200 bg-green-50' : prontuarioPerc >= 50 ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50'} />
-                  <KPICard icon={<AlertTriangle className="w-5 h-5 text-red-500" />} label="Intercorrências" value={String(counts.abertas)} sub={`${counts.criticas} críticas`}
-                    color={counts.criticas > 0 ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'} />
-                  <KPICard icon={<Baby className="w-5 h-5 text-purple-500" />} label="Fraldas em Alerta" value={String(dashData.fraldasEstoque.alertas)} sub={`${dashData.fraldasEstoque.criticos} críticos`}
-                    color={dashData.fraldasEstoque.criticos > 0 ? 'border-red-200 bg-red-50' : dashData.fraldasEstoque.alertas > 0 ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'} />
-                  <KPICard icon={<Pill className="w-5 h-5 text-blue-500" />} label="Medicamentos" value={String(dashData.medicamentosEstoque.alertas)} sub={`${dashData.medicamentosEstoque.vencendo} vencendo`}
-                    color={dashData.medicamentosEstoque.alertas > 0 ? 'border-orange-200 bg-orange-50' : 'border-green-200 bg-green-50'} />
-                </div>
-
-                {/* Prontuários */}
-                <Card className="shadow-lg">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-indigo-500" /> Prontuários do Dia
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4 mb-3">
-                      <Progress value={prontuarioPerc} className="flex-1 h-3" />
-                      <span className="text-sm font-semibold text-gray-700">{prontuarioPerc}%</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                      <div className="bg-green-50 rounded-lg p-2">
-                        <p className="text-lg font-bold text-green-700">{dashData.prontuarios.encerrados}</p>
-                        <p className="text-[11px] text-green-600">Encerrados</p>
-                      </div>
-                      <div className="bg-yellow-50 rounded-lg p-2">
-                        <p className="text-lg font-bold text-yellow-700">{dashData.prontuarios.pendentes}</p>
-                        <p className="text-[11px] text-yellow-600">Pendentes</p>
-                      </div>
-                      <div className="bg-red-50 rounded-lg p-2">
-                        <p className="text-lg font-bold text-red-700">{dashData.prontuarios.atrasados}</p>
-                        <p className="text-[11px] text-red-600">Atrasados</p>
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-2">
-                        <p className="text-lg font-bold text-blue-700">{dashData.prontuarios.totalResidentes}</p>
-                        <p className="text-[11px] text-blue-600">Total Residentes</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Fraldas e Medicamentos lado a lado */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Fraldas */}
-                  <Card className="shadow-lg">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Baby className="w-4 h-4 text-purple-500" /> Estoque de Fraldas
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {dashData.fraldasEstoque.items.length === 0 ? (
-                        <div className="text-center py-4">
-                          <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">Todos os estoques OK</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                          {dashData.fraldasEstoque.items.map((f: any, i: number) => (
-                            <div key={i} className={`p-2 rounded-lg border text-sm ${f.dias_restantes !== null && f.dias_restantes <= 3 ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'}`}>
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-gray-800">{f.tipo_fralda} {f.tamanho}</span>
-                                <Badge variant="outline" className="text-[10px]">{f.quantidade_atual}/{f.quantidade_minima}</Badge>
-                              </div>
-                              <p className="text-xs text-gray-500">
-                                {f.residente_nome}
-                                {f.dias_restantes !== null && ` • ~${f.dias_restantes} dias`}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Medicamentos */}
-                  <Card className="shadow-lg">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Pill className="w-4 h-4 text-blue-500" /> Estoque de Medicamentos
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {dashData.medicamentosEstoque.items.length === 0 ? (
-                        <div className="text-center py-4">
-                          <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">Todos os estoques OK</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                          {dashData.medicamentosEstoque.items.map((m: any, i: number) => (
-                            <div key={i} className={`p-2 rounded-lg border text-sm ${m.controlado ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'}`}>
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-gray-800">
-                                  {m.nome} {m.controlado && <span className="text-red-600 text-[10px]">⚠️ CONTROLADO</span>}
-                                </span>
-                                <Badge variant="outline" className="text-[10px]">{m.quantidade_atual}/{m.quantidade_minima}</Badge>
-                              </div>
-                              {m.data_validade && (
-                                <p className="text-xs text-gray-500">Validade: {formatarTimestampData(m.data_validade)}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Intercorrências recentes */}
-                <Card className="shadow-lg">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-red-500" /> Intercorrências Recentes
-                      </span>
-                      <Button variant="link" size="sm" className="text-indigo-600" onClick={() => setActiveTab('intercorrencias')}>
-                        Ver todas →
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {intercorrencias.filter(i => i.status !== 'encerrada' && i.status !== 'resolvida').length === 0 ? (
-                      <div className="text-center py-4">
-                        <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Nenhuma intercorrência em aberto</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {intercorrencias.filter(i => i.status !== 'encerrada' && i.status !== 'resolvida').slice(0, 5).map(item => {
-                          const prInfo = PRIORIDADES[item.prioridade];
-                          return (
-                            <div key={item.id} className={`p-2.5 rounded-lg border-l-4 cursor-pointer hover:bg-gray-50 transition-colors ${prInfo?.border || ''}`}
-                              onClick={() => { setActiveTab('intercorrencias'); openDetails(item); }}>
-                              <div className="flex justify-between items-start">
-                                <span className="font-medium text-sm text-gray-800">{item.titulo}</span>
-                                <Badge className={`text-[10px] ${STATUS_MAP[item.status]?.color}`}>{STATUS_MAP[item.status]?.label}</Badge>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.descricao}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </>
-            )}
+            {loadingDash ? <p className="py-12 text-center text-muted-foreground">Carregando cuidados...</p> : cuidados ? <SupervisaoCuidados data={cuidados} hora={hora} criticas={counts.criticas} onIntercorrencias={() => setActiveTab('intercorrencias')} /> : <p className="py-8 text-center text-muted-foreground">Entre novamente no portal para consultar a supervisão.</p>}
           </TabsContent>
 
           {/* ==================== INTERCORRÊNCIAS ==================== */}
@@ -391,15 +237,6 @@ export default function PainelIntercorrencias() {
             )}
           </TabsContent>
         </Tabs>
-
-        {/* FAB para assistente IA */}
-        {!chatOpen && (
-          <button onClick={() => setChatOpen(true)}
-            className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-indigo-600 px-5 py-3 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
-            <Bot className="w-5 h-5" />
-            <span className="text-sm font-medium hidden sm:inline">Assistente IA</span>
-          </button>
-        )}
 
         {/* Chat IA */}
         <AssistenteSupervisorChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />

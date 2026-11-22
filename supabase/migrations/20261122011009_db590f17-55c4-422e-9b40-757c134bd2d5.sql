@@ -1,0 +1,42 @@
+CREATE OR REPLACE FUNCTION public.portal_supervisao_painel()
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE f public.funcionarios; t uuid; d date := (now() AT TIME ZONE 'America/Sao_Paulo')::date; resultado jsonb;
+BEGIN
+ SELECT * INTO f FROM public.funcionarios WHERE id=public.portal_funcionario_atual() AND ativo;
+ IF f.id IS NULL OR NOT ('supervisor'=ANY(COALESCE(public.modulos_funcionario(f.id),'{}'::text[]))) THEN
+ RAISE EXCEPTION 'Acesso à supervisão não autorizado' USING ERRCODE='42501'; END IF;
+ t:=f.tenant_id;
+ WITH residentes_ativos AS (SELECT id,nome_completo,quarto FROM public.residentes WHERE ativo AND tenant_id IS NOT DISTINCT FROM t),
+ rotinas AS (SELECT c.id,c.residente_id,r.nome_completo residente_nome,c.titulo,c.tipo,c.instrucoes,c.frequencia,c.horarios,c.momento,c.tipo_afericao,c.dias_semana,c.inicio,c.fim,c.encerrada_em FROM public.cuidados_rotinas c JOIN residentes_ativos r ON r.id=c.residente_id WHERE c.tenant_id IS NOT DISTINCT FROM t AND c.encerrada_em IS NULL AND c.inicio<=d AND (c.fim IS NULL OR c.fim>=d)),
+ execucoes AS (SELECT e.id,e.rotina_id,e.data,e.chave,e.feito_em,fu.nome_completo feito_por_nome,e.valor,e.observacao,c.titulo,c.tipo_afericao,c.residente_id FROM public.cuidados_rotinas_execucoes e JOIN public.cuidados_rotinas c ON c.id=e.rotina_id LEFT JOIN public.funcionarios fu ON fu.id=e.feito_por AND fu.tenant_id IS NOT DISTINCT FROM t WHERE c.tenant_id IS NOT DISTINCT FROM t AND e.data=d),
+ agenda AS (SELECT c.id,c.residente_id,r.nome_completo residente_nome,c.titulo,c.horario,c.observacoes,c.visto_em,fu.nome_completo visto_por_nome FROM public.cuidados_agenda c JOIN residentes_ativos r ON r.id=c.residente_id LEFT JOIN public.funcionarios fu ON fu.id=c.visto_por AND fu.tenant_id IS NOT DISTINCT FROM t WHERE c.tenant_id IS NOT DISTINCT FROM t AND c.data_evento=d AND c.cancelado_em IS NULL),
+ prescricoes AS (SELECT p.id,p.residente_id,p.medicamento_id,p.dosagem,p.frequencia_tipo,p.frequencia_valor,p.horarios,p.dia_semana,p.intervalo_dias,p.data_inicio,p.data_fim,p.via_administracao,jsonb_build_object('nome',m.nome) medicamento,jsonb_build_object('nome_completo',r.nome_completo) residente FROM public.prescricoes_medicamentos p JOIN residentes_ativos r ON r.id=p.residente_id JOIN public.medicamentos m ON m.id=p.medicamento_id WHERE p.tenant_id IS NOT DISTINCT FROM t AND p.ativo AND p.data_inicio<=d AND (p.data_fim IS NULL OR p.data_fim>=d)),
+ administracoes AS (SELECT a.residente_id,a.medicamento_id,a.horario_administracao,a.tipo,a.status FROM public.administracao_medicamentos a WHERE a.tenant_id IS NOT DISTINCT FROM t AND a.data_administracao=d),
+ estoques AS (SELECT e.id,e.residente_id,e.medicamento_id,e.quantidade_atual,e.quantidade_minima,e.data_validade,e.lote,e.tipo_estoque,m.nome,m.controlado,r.nome_completo residente_nome FROM public.estoque_medicamentos e JOIN public.medicamentos m ON m.id=e.medicamento_id LEFT JOIN residentes_ativos r ON r.id=e.residente_id WHERE e.tenant_id IS NOT DISTINCT FROM t AND e.ativo),
+ fraldas AS (SELECT e.id,e.tipo_fralda,e.tamanho,e.quantidade_atual,e.quantidade_minima,e.consumo_medio_diario,r.nome_completo residente_nome FROM public.estoque_fraldas e LEFT JOIN residentes_ativos r ON r.id=e.residente_id WHERE e.tenant_id IS NOT DISTINCT FROM t AND e.ativo),
+ ciclos AS (SELECT c.id,c.residente_id,r.nome_completo residente_nome,c.data_ciclo,c.status,(SELECT count(*) FROM public.prontuario_registros p WHERE p.ciclo_id=c.id AND p.tenant_id IS NOT DISTINCT FROM t) registros FROM public.prontuario_ciclos c JOIN residentes_ativos r ON r.id=c.residente_id WHERE c.tenant_id IS NOT DISTINCT FROM t AND (c.data_ciclo=d OR (c.data_ciclo<d AND c.status IN ('nao_iniciado','em_andamento')))),
+ atividades AS (
+ SELECT e.feito_por funcionario_id,c.residente_id,'Rotina'::text categoria,c.titulo detalhe,e.feito_em momento FROM public.cuidados_rotinas_execucoes e JOIN public.cuidados_rotinas c ON c.id=e.rotina_id WHERE c.tenant_id IS NOT DISTINCT FROM t AND e.data=d
+ UNION ALL SELECT a.funcionario_id,a.residente_id,CASE WHEN a.tipo='emergencia' THEN 'Medicação de emergência' ELSE 'Medicamento' END,m.nome||' · '||a.status,a.created_at FROM public.administracao_medicamentos a JOIN public.medicamentos m ON m.id=a.medicamento_id WHERE a.tenant_id IS NOT DISTINCT FROM t AND a.data_administracao=d
+ UNION ALL SELECT p.funcionario_id,p.residente_id,'Prontuário',p.titulo,p.created_at FROM public.prontuario_registros p WHERE p.tenant_id IS NOT DISTINCT FROM t AND p.data_registro=d
+ UNION ALL SELECT u.funcionario_id,u.residente_id,'Fraldas',u.quantidade_usada::text||' unidade(s)',u.created_at FROM public.uso_fraldas u WHERE u.tenant_id IS NOT DISTINCT FROM t AND u.data_uso=d
+ UNION ALL SELECT a.visto_por,a.residente_id,'Ciência de compromisso',a.titulo,a.visto_em FROM public.cuidados_agenda a WHERE a.tenant_id IS NOT DISTINCT FROM t AND (a.visto_em AT TIME ZONE 'America/Sao_Paulo')::date=d
+ UNION ALL SELECT o.criado_por,o.residente_id,'Observação','Nova observação',o.created_at FROM public.residentes_observacoes o WHERE o.tenant_id IS NOT DISTINCT FROM t AND (o.created_at AT TIME ZONE 'America/Sao_Paulo')::date=d
+ UNION ALL SELECT v.registrado_por_funcionario_id,v.residente_id,'Vacina',v.nome_vacina,v.created_at FROM public.vacinas_residentes v WHERE v.tenant_id IS NOT DISTINCT FROM t AND (v.created_at AT TIME ZONE 'America/Sao_Paulo')::date=d
+ UNION ALL SELECT c.funcionario_responsavel,NULL::uuid,'Temperatura',c.temperatura::text||' °C',c.created_at FROM public.controle_temperatura_medicamentos c WHERE c.tenant_id IS NOT DISTINCT FROM t AND c.data_registro=d),
+ equipe AS (SELECT fu.id,fu.nome_completo,count(*) total,max(a.momento) ultima_atividade FROM atividades a JOIN public.funcionarios fu ON fu.id=a.funcionario_id AND fu.tenant_id IS NOT DISTINCT FROM t GROUP BY fu.id,fu.nome_completo),
+ recentes AS (SELECT a.categoria,a.detalhe,a.momento,fu.nome_completo funcionario_nome,r.nome_completo residente_nome,a.residente_id FROM atividades a LEFT JOIN public.funcionarios fu ON fu.id=a.funcionario_id AND fu.tenant_id IS NOT DISTINCT FROM t LEFT JOIN residentes_ativos r ON r.id=a.residente_id ORDER BY a.momento DESC LIMIT 100)
+ SELECT jsonb_build_object('dia',d,'atualizado_em',now(),'residentes',COALESCE((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.nome_completo) FROM residentes_ativos x),'[]'::jsonb),
+ 'rotinas',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM rotinas x),'[]'::jsonb),'execucoes',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM execucoes x),'[]'::jsonb),
+ 'agenda',COALESCE((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.horario) FROM agenda x),'[]'::jsonb),'prescricoes',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM prescricoes x),'[]'::jsonb),
+ 'administracoes',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM administracoes x),'[]'::jsonb),'estoques',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM estoques x),'[]'::jsonb),
+ 'fraldas',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM fraldas x),'[]'::jsonb),'ciclos',COALESCE((SELECT jsonb_agg(to_jsonb(x)) FROM ciclos x),'[]'::jsonb),
+ 'equipe',COALESCE((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.ultima_atividade DESC) FROM equipe x),'[]'::jsonb),'atividades',COALESCE((SELECT jsonb_agg(to_jsonb(x) ORDER BY x.momento DESC) FROM recentes x),'[]'::jsonb),
+ 'remocoes_pendentes',(SELECT count(*) FROM public.remocoes_estoque_medicamentos WHERE tenant_id IS NOT DISTINCT FROM t AND status='pendente')+(SELECT count(*) FROM public.residentes_observacoes WHERE tenant_id IS NOT DISTINCT FROM t AND status='remocao_pendente'),
+ 'temperatura',jsonb_build_object('registros',(SELECT count(*) FROM public.controle_temperatura_medicamentos WHERE tenant_id IS NOT DISTINCT FROM t AND data_registro=d),'fora_conformidade',(SELECT count(*) FROM public.controle_temperatura_medicamentos WHERE tenant_id IS NOT DISTINCT FROM t AND data_registro=d AND conformidade=false)),
+ 'vacinas_pendentes',(SELECT count(*) FROM public.vacinas_residentes v JOIN residentes_ativos r ON r.id=v.residente_id WHERE v.tenant_id IS NOT DISTINCT FROM t AND v.proxima_dose_prevista<=d)) INTO resultado;
+ RETURN resultado;
+END $$;
+REVOKE ALL ON FUNCTION public.portal_supervisao_painel() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.portal_supervisao_painel() TO anon,authenticated,service_role;

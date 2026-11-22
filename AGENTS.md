@@ -38,3 +38,5 @@
 - Medication RPC authorization uses the valid PIN session and the medication module independently of the care hub module, preserving standalone access without granting care-record access; SQL regression tests execute the production migration in isolated PGlite.
 - Rotinas de cuidado (procedimentos, aferições, orientações) ficam em `cuidados_rotinas`/`cuidados_rotinas_execucoes`, acessadas só por RPCs `portal_rotina*` com passe do PIN + `portal_cuidados`; remédios nunca entram como rotina (ficam no Mapa de Medicamentos) e cada ocorrência é registrada uma única vez, para evitar redundância e registros duplicados.
 - Anexos de rotina (foto/PDF) passam pela função `rotina-anexo`, que valida o passe do PIN no banco antes de usar o service role no bucket privado `rotinas-anexos` e confere o SHA-256 ao entregar, porque o cliente de Storage não envia o cabeçalho do passe.
+
+- Supervisor care monitoring uses a PIN-authorized, tenant-scoped read-only snapshot RPC with 30-second visible-page polling and shared medication/routine rules; only managers continue to decide removal requests.
