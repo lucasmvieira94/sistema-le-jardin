@@ -11,7 +11,7 @@ import { atalhosLiberados, filtrarResidentes, idade, podeAcessarPortalCuidados, 
 import FichaCuidadoResidente from "@/components/cuidados/FichaCuidadoResidente";
 import { PortalCuidadosEmbutido } from "@/components/cuidados/PortalCuidadosContexto";
 import AvisosDoDia from "@/components/cuidados/AvisosDoDia";
-import { useRotinasDia } from "@/components/cuidados/useRotinasDia";
+import RotinasDiaColuna from "@/components/cuidados/RotinasDiaColuna";
 import AreaProtegida from "@/components/cuidados/AreaProtegida";
 import RosaAssistente from "@/components/cuidados/RosaAssistente";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -46,7 +46,6 @@ export default function PortalCuidados() {
   const [aberto, setAberto] = useState<string | null>(null);
   const [emergenciaAberta, setEmergenciaAberta] = useState(false);
   const [agora, setAgora] = useState(new Date());
-  const rotinasDia = useRotinasDia();
 
   useEffect(() => {
     if (!sessao) { navigate("/?destino=cuidados", { replace: true }); return; }
@@ -116,54 +115,48 @@ export default function PortalCuidados() {
 
       {!naHome ? <main className="animate-fade-in pb-8"><PortalCuidadosEmbutido><Outlet /></PortalCuidadosEmbutido></main> : (
 
-      <main className="container mx-auto space-y-6 px-3 py-5 sm:px-4">
-        <AvisosDoDia onAbrirAgenda={() => navigate(`/cuidados/agenda?${q}`)} onAbrirRotinas={() => navigate(`/cuidados/rotinas?${q}`)}
-          pendentesRotina={rotinasDia.ocorrencias.filter((o) => o.status === "atrasado" || o.status === "agora").length} />
-        <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Rotina</h2>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-7">
-            {atalhosLiberados(modulos).map((a) => {
-              const Icone = ICONES[a.id];
-              return (
-                <button key={a.id} onClick={() => navigate(`/cuidados/${a.id}?${q}`)}
-                  className="flex flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center text-xs font-medium sm:p-4 sm:text-sm shadow-sm transition hover:border-primary hover:shadow-md active:scale-95">
-                  <Icone className="h-7 w-7 text-primary" />{a.nome}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Residentes ({lista.length})</h2>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Buscar por nome ou quarto" value={busca} onChange={(e) => setBusca(e.target.value)} />
+      <main className="container mx-auto px-3 py-5 sm:px-4">
+        <div className="grid items-start gap-4 lg:grid-cols-3">
+          {/* Coluna da esquerda: Rotinas do dia */}
+          <section className="lg:order-1 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto lg:pr-1">
+            <RotinasDiaColuna onAbrirRotinas={() => navigate(`/cuidados/rotinas?${q}`)} />
+          </section>
+          {/* Coluna do meio: Compromissos de hoje */}
+          <section className="lg:order-2 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto lg:pr-1">
+            <AvisosDoDia onAbrirAgenda={() => navigate(`/cuidados/agenda?${q}`)} />
+          </section>
+          {/* Coluna da direita: Residentes */}
+          <section className="lg:order-3 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto lg:pr-1">
+            <div className="mb-3 flex flex-col gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Residentes ({lista.length})</h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input className="pl-9" placeholder="Buscar por nome ou quarto" value={busca} onChange={(e) => setBusca(e.target.value)} />
+              </div>
             </div>
-          </div>
-          {residentes === null ? (
-            <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {lista.map((r) => (
-                <Card key={r.id} className="cursor-pointer transition hover:border-primary hover:shadow-md" onClick={() => setAberto(r.id)}>
-                  <CardContent className="flex items-center gap-3 p-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
-                      {r.quarto ?? r.nome_completo.charAt(0)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{r.nome_completo}</p>
-                      <p className="text-xs text-muted-foreground">{r.quarto ? `Quarto ${r.quarto} · ` : ""}{idade(r.data_nascimento)} anos</p>
-                      {r.condicoes_medicas && <p className="truncate text-xs text-muted-foreground">{r.condicoes_medicas}</p>}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {!lista.length && <p className="text-sm text-muted-foreground">Nenhum residente encontrado.</p>}
-            </div>
-          )}
-        </section>
+            {residentes === null ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : (
+              <div className="grid gap-3">
+                {lista.map((r) => (
+                  <Card key={r.id} className="cursor-pointer transition hover:border-primary hover:shadow-md" onClick={() => setAberto(r.id)}>
+                    <CardContent className="flex items-center gap-3 p-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                        {r.quarto ?? r.nome_completo.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{r.nome_completo}</p>
+                        <p className="text-xs text-muted-foreground">{r.quarto ? `Quarto ${r.quarto} · ` : ""}{idade(r.data_nascimento)} anos</p>
+                        {r.condicoes_medicas && <p className="truncate text-xs text-muted-foreground">{r.condicoes_medicas}</p>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {!lista.length && <p className="text-sm text-muted-foreground">Nenhum residente encontrado.</p>}
+              </div>
+            )}
+          </section>
+        </div>
       </main>
       )}
       <FichaCuidadoResidente residenteId={aberto} onClose={() => setAberto(null)} />

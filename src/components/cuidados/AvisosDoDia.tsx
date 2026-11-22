@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BellRing, CalendarDays, CheckCircle2, ClipboardList } from "lucide-react";
+import { BellRing, CalendarDays, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { avisosAgenda, type EventoCuidados } from "@/utils/agendaCuidados";
 
 /** Compromissos de hoje na tela inicial + aviso ao entrar com os ainda não vistos. */
-export default function AvisosDoDia({ onAbrirAgenda, onAbrirRotinas, pendentesRotina }: { onAbrirAgenda: () => void; onAbrirRotinas: () => void; pendentesRotina: number }) {
+export default function AvisosDoDia({ onAbrirAgenda }: { onAbrirAgenda: () => void }) {
   const { toast } = useToast();
   const [eventos, setEventos] = useState<EventoCuidados[]>([]);
   const [popup, setPopup] = useState(false);
@@ -32,34 +32,25 @@ export default function AvisosDoDia({ onAbrirAgenda, onAbrirRotinas, pendentesRo
 
   return (
     <>
-      <section className="grid gap-3 sm:grid-cols-2">
-        <Card className={pendentes.length ? "border-destructive/50" : ""}>
-          <CardContent className="p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-semibold"><CalendarDays className="h-5 w-5 text-primary" />Compromissos de hoje</h2>
-              <Button size="sm" variant="ghost" onClick={onAbrirAgenda}>Agenda</Button>
-            </div>
-            {!eventos.length ? <p className="text-sm text-muted-foreground">Nenhum compromisso hoje.</p> : (
-              <ul className="space-y-1.5">
-                {eventos.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="min-w-0 truncate"><b>{e.horario.slice(0, 5)}</b> {e.titulo} · {e.residente_nome}</span>
-                    {e.visto_em ? <Badge variant="secondary" className="shrink-0"><CheckCircle2 className="mr-1 h-3 w-3" />Feito</Badge>
-                      : <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={() => ver(e.id)}>Visto</Button>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer transition hover:border-primary" onClick={onAbrirRotinas}>
-          <CardContent className="flex h-full items-center gap-3 p-4">
-            <ClipboardList className="h-8 w-8 text-primary" />
-            <div><h2 className="font-semibold">Rotinas do dia</h2>
-              <p className="text-sm text-muted-foreground">{pendentesRotina ? `${pendentesRotina} procedimento(s)/aferição(ões) pendente(s)` : "Nada pendente agora"}</p></div>
-          </CardContent>
-        </Card>
-      </section>
+      <Card className={pendentes.length ? "border-destructive/50" : ""}>
+        <CardContent className="p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-semibold"><CalendarDays className="h-5 w-5 text-primary" />Compromissos de hoje</h2>
+            <Button size="sm" variant="ghost" onClick={onAbrirAgenda}>Agenda</Button>
+          </div>
+          {!eventos.length ? <p className="text-sm text-muted-foreground">Nenhum compromisso hoje.</p> : (
+            <ul className="space-y-1.5">
+              {eventos.map((e) => (
+                <li key={e.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 truncate"><b>{e.horario.slice(0, 5)}</b> {e.titulo} · {e.residente_nome}</span>
+                  {e.visto_em ? <Badge variant="secondary" className="shrink-0"><CheckCircle2 className="mr-1 h-3 w-3" />Feito</Badge>
+                    : <Button size="sm" variant="outline" className="h-7 shrink-0" onClick={() => ver(e.id)}>Visto</Button>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
       <Dialog open={popup} onOpenChange={setPopup}>
         <DialogContent className="max-w-md">
           <DialogHeader>
