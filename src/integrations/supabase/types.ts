@@ -7314,6 +7314,7 @@ export type Database = {
         Args: { p_id: string; p_motivo: string }
         Returns: undefined
       }
+      portal_supervisao_intercorrencias: { Args: never; Returns: Json }
       portal_supervisao_painel: { Args: never; Returns: Json }
       prazo_assinatura_em: {
         Args: {

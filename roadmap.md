@@ -1,7 +1,8 @@
 # Roadmap
 
-- [ ] Atualizar dashboard do supervisor: cuidados do dia, pendências, equipe e insights com atualização automática protegida por passe PIN
-- [ ] Testar permissões e indicadores; conferir celular/desktop e documentar limites de validação real
+- [x] Atualizar dashboard do supervisor: cuidados do dia, pendências, equipe e insights com atualização automática protegida por passe PIN
+- [x] Testar permissões e indicadores; conferir celular/tablet/desktop e documentar limites de validação real (39 testes aprovados)
+- [ ] Validar supervisão com passe PIN real — sessão externa indisponível; consultas e telas verificadas em ambiente isolado/simulado
 
 - [x] Rosa: conversa privada contínua por cuidadora, consultas autorizadas e orientação de uso
 - [x] Rosa: sugestões de aprendizado com revisão/revogação pelo gestor

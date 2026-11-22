@@ -33,14 +33,23 @@ export interface IntercorrenciaLog {
   created_at: string;
 }
 
-export function useIntercorrencias(funcionarioId?: string) {
+export function useIntercorrencias(funcionarioId?: string, opcoes?: { supervisao?: boolean; habilitado?: boolean }) {
   const [intercorrencias, setIntercorrencias] = useState<Intercorrencia[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const supervisao = opcoes?.supervisao ?? false;
+  const habilitado = opcoes?.habilitado ?? true;
 
   const fetchIntercorrencias = useCallback(async () => {
+    if (!habilitado) { setIntercorrencias([]); setLoading(false); return; }
     setLoading(true);
     try {
+      if (supervisao) {
+        const { data, error } = await supabase.rpc('portal_supervisao_intercorrencias');
+        if (error) throw error;
+        setIntercorrencias((data as unknown as Intercorrencia[]) ?? []);
+        return;
+      }
       let query = supabase
         .from('intercorrencias')
         .select('*, funcionarios!intercorrencias_funcionario_id_fkey(nome_completo), residentes(nome_completo)')
@@ -54,15 +63,19 @@ export function useIntercorrencias(funcionarioId?: string) {
       if (error) throw error;
       setIntercorrencias((data as any) || []);
     } catch (error: any) {
+      if (supervisao) setIntercorrencias([]);
       console.error('Erro ao buscar intercorrências:', error);
     } finally {
       setLoading(false);
     }
-  }, [funcionarioId]);
+  }, [funcionarioId, supervisao, habilitado]);
 
   useEffect(() => {
     fetchIntercorrencias();
-  }, [fetchIntercorrencias]);
+    if (!supervisao || !habilitado) return;
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') void fetchIntercorrencias(); }, 30000);
+    return () => clearInterval(timer);
+  }, [fetchIntercorrencias, supervisao, habilitado]);
 
   const criarIntercorrencia = async (dados: {
     titulo: string;

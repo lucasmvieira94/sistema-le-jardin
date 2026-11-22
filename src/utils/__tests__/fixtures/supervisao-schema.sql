@@ -1,0 +1,22 @@
+-- Minimal isolated schema: production RPCs run unchanged against these tables.
+CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+CREATE TABLE funcionarios (id uuid, tenant_id uuid, nome_completo text, ativo boolean);
+CREATE TABLE residentes (id uuid, tenant_id uuid, nome_completo text, quarto text, ativo boolean, valor_mensalidade numeric, cpf_responsavel text);
+CREATE TABLE cuidados_rotinas (id uuid, tenant_id uuid, residente_id uuid, titulo text, tipo text, instrucoes text, frequencia text, horarios time[], momento text, tipo_afericao text, dias_semana integer[], inicio date, fim date, encerrada_em timestamptz);
+CREATE TABLE cuidados_rotinas_execucoes (id uuid, rotina_id uuid, data date, chave text, feito_em timestamptz, feito_por uuid, valor text, observacao text);
+CREATE TABLE cuidados_agenda (id uuid, tenant_id uuid, residente_id uuid, titulo text, horario time, observacoes text, visto_em timestamptz, visto_por uuid, data_evento date, cancelado_em timestamptz);
+CREATE TABLE prescricoes_medicamentos (id uuid, tenant_id uuid, residente_id uuid, medicamento_id uuid, dosagem text, frequencia_tipo text, frequencia_valor integer, horarios text[], dia_semana integer, intervalo_dias integer, data_inicio date, data_fim date, via_administracao text, ativo boolean);
+CREATE TABLE medicamentos (id uuid, nome text, controlado boolean);
+CREATE TABLE administracao_medicamentos (residente_id uuid, medicamento_id uuid, horario_administracao time, tipo text, status text, tenant_id uuid, data_administracao date, funcionario_id uuid, created_at timestamptz);
+CREATE TABLE estoque_medicamentos (id uuid, residente_id uuid, medicamento_id uuid, quantidade_atual numeric, quantidade_minima numeric, data_validade date, lote text, tipo_estoque text, tenant_id uuid, ativo boolean);
+CREATE TABLE estoque_fraldas (id uuid, tipo_fralda text, tamanho text, quantidade_atual integer, quantidade_minima integer, consumo_medio_diario numeric, residente_id uuid, tenant_id uuid, ativo boolean);
+CREATE TABLE prontuario_ciclos (id uuid, residente_id uuid, data_ciclo date, status text, tenant_id uuid);
+CREATE TABLE prontuario_registros (ciclo_id uuid, tenant_id uuid, funcionario_id uuid, residente_id uuid, titulo text, created_at timestamptz, data_registro date);
+CREATE TABLE uso_fraldas (funcionario_id uuid, residente_id uuid, quantidade_usada integer, created_at timestamptz, tenant_id uuid, data_uso date);
+CREATE TABLE residentes_observacoes (criado_por uuid, residente_id uuid, created_at timestamptz, tenant_id uuid, status text);
+CREATE TABLE vacinas_residentes (registrado_por_funcionario_id uuid, residente_id uuid, nome_vacina text, created_at timestamptz, tenant_id uuid, proxima_dose_prevista date);
+CREATE TABLE controle_temperatura_medicamentos (funcionario_responsavel uuid, temperatura numeric, created_at timestamptz, tenant_id uuid, data_registro date, conformidade boolean);
+CREATE TABLE remocoes_estoque_medicamentos (tenant_id uuid, status text);
+CREATE TABLE intercorrencias (id uuid, titulo text, descricao text, categoria text, prioridade text, status text, funcionario_id uuid, residente_id uuid, prazo_resolucao timestamptz, data_resolucao timestamptz, feedback_gestor text, feedback_data timestamptz, feedback_por uuid, imagens text[], created_at timestamptz, updated_at timestamptz, tenant_id uuid);
+CREATE FUNCTION portal_funcionario_atual() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('test.employee', true), '')::uuid $$;
+CREATE FUNCTION modulos_funcionario(uuid) RETURNS text[] LANGUAGE sql AS $$ SELECT nullif(current_setting('test.modules', true), '')::text[] $$;

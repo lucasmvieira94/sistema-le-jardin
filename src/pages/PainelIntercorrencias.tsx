@@ -47,8 +47,8 @@ export default function PainelIntercorrencias() {
   const funcionarioId = searchParams.get('funcionario_id') || '';
   const funcionarioNome = decodeURIComponent(searchParams.get('funcionario_nome') || '');
 
-  const { intercorrencias, loading: loadingInter, atualizarStatus, definirPrazo, enviarFeedback, buscarLogs } = useIntercorrencias();
   const { data: cuidados, loading: loadingDash, error: erroPainel, refreshing, refetch } = useSupervisaoCuidados();
+  const { intercorrencias, loading: loadingInter, atualizarStatus, definirPrazo, enviarFeedback, buscarLogs, refetch: atualizarIntercorrencias } = useIntercorrencias(undefined, { supervisao: true, habilitado: !!cuidados });
   const [hora, setHora] = useState(horarioAtualCurto);
   useEffect(() => { const timer = setInterval(() => setHora(horarioAtualCurto()), 30000); return () => clearInterval(timer); }, []);
 
@@ -120,11 +120,11 @@ export default function PainelIntercorrencias() {
                   Dashboard do Supervisor
                 </h1>
                 <p className="text-sm text-muted-foreground">{funcionarioNome}</p>
-                {cuidados && <p className="text-xs text-muted-foreground">Atualizado às {new Date(cuidados.atualizado_em).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })} · atualização a cada 30 s</p>}
+                {cuidados && <p className="text-xs text-muted-foreground">Atualizado às {new Date(cuidados.atualizado_em).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })} · atualização a cada 30 segundos</p>}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => { void refetch(); }} disabled={refreshing} >
+              <Button variant="outline" size="sm" aria-label="Atualizar" onClick={() => { void refetch(); void atualizarIntercorrencias(); }} disabled={refreshing} >
                 <RefreshCw className={`w-4 h-4 mr-1 ${refreshing ? "animate-spin" : ""}`} /> <span className="hidden sm:inline">Atualizar</span>
               </Button>
               <Button size="sm" onClick={() => setChatOpen(true)} >

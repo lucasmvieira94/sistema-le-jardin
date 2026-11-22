@@ -70,6 +70,12 @@
 - Correção conferida em 04/11/2026: `AlertasProntuariosAtraso.tsx` usa `supabase.rpc.bind(supabase)`.
 - Prevenção: chamar RPC pelo cliente ou manter vínculo explícito ao armazenar a função.
 
+### CUIDADOS-008 — Monitoramento operacional do supervisor
+- Painel integra pendências de rotinas, doses, compromissos e registros do dia, com atividades da equipe, alertas de estoque, conservação e vacinas; atualização a cada 30 segundos enquanto a página está visível.
+- Consultas de supervisão exigem passe PIN válido, funcionário ativo e módulo Supervisão no servidor; dados limitados à instituição e sem informações financeiras. A execução por anon é necessária ao portal PIN e não dispensa esses controles; não remover a autorização para silenciar avisos genéricos de SECURITY DEFINER.
+- Evidências: 39 testes aprovados, incluindo migrações reais em PGlite, negativa sem passe/módulo, funcionário inativo, isolamento de instituição e consulta após nova atividade. Navegador com dados simulados verificou detalhes de rotina, observações do compromisso, atividades por cuidadora, busca e atualização da ciência compartilhada em computador/celular/tablet; compilação OK. Manual da Rosa atualizado e função publicada.
+- Limites: passe PIN real e ações antigas de gestão de intercorrências não verificados neste ambiente externo; nenhum erro do monitor foi encerrado. O navegador detectou `reading 'on'` somente na entrada do plugin PWA de desenvolvimento, não no painel; não tratar isso como prova de resolução dos registros similares do monitor. Indicadores representam registros, não comprovação de desempenho ou atendimento clínico.
+
 ## Não encerrados por falta de evidência
 
 ### HOOKS-001 — `useState` / `useEffect` nulos
