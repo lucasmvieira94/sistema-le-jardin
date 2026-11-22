@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { semCamposProibidos, idade } from "@/utils/portalCuidados";
 import RotinasResidente, { ProximosCompromissos } from "./RotinasResidente";
 import ProntuariosResidente from "./ProntuariosResidente";
+import ObservacoesResidente from "./ObservacoesResidente";
 
 type Json = Record<string, any>;
 
@@ -38,10 +39,13 @@ function Campos({ dados }: { dados?: Json | null }) {
 export default function FichaCuidadoResidente({ residenteId, onClose }: { residenteId: string | null; onClose: () => void }) {
   const [ficha, setFicha] = useState<Json | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [aba, setAba] = useState("resumo");
+  const [totalObs, setTotalObs] = useState<number | null>(null);
 
   useEffect(() => {
     if (!residenteId) return;
-    setFicha(null); setErro(null);
+    setFicha(null); setErro(null); setAba("resumo"); setTotalObs(null);
+    supabase.rpc("portal_observacoes_residente" as any, { p_residente_id: residenteId }).then(({ data }) => setTotalObs(((data as unknown[]) ?? []).length));
     supabase.rpc("portal_cuidados_ficha" as any, { p_residente_id: residenteId }).then(({ data, error }) => {
       if (error) setErro("Não foi possível abrir a ficha. Entre novamente com seu código.");
       else setFicha(semCamposProibidos(data as Json));
@@ -58,13 +62,14 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
         {erro && <p className="mt-6 text-sm text-destructive">{erro}</p>}
         {!ficha && !erro && <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
         {r && (
-          <Tabs defaultValue="resumo" className="mt-4">
-            <TabsList className="grid grid-cols-5 w-full">
+          <Tabs value={aba} onValueChange={setAba} className="mt-4">
+            <TabsList className="flex w-full overflow-x-auto justify-start">
               <TabsTrigger value="resumo">Resumo</TabsTrigger>
               <TabsTrigger value="prontuarios">Prontuários</TabsTrigger>
               <TabsTrigger value="acolhimento">Acolhimento</TabsTrigger>
               <TabsTrigger value="saude">Remédios</TabsTrigger>
               <TabsTrigger value="rotinas">Rotinas</TabsTrigger>
+              <TabsTrigger value="observacoes">Observações{totalObs ? ` (${totalObs})` : ""}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="resumo" className="space-y-4">
@@ -73,6 +78,11 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
                 {idade(r.data_nascimento) !== null && <Badge variant="outline">{idade(r.data_nascimento)} anos</Badge>}
                 <Badge variant="outline">Prontuário {r.numero_prontuario}</Badge>
               </div>
+              {!!totalObs && (
+                <button type="button" onClick={() => setAba("observacoes")} className="w-full rounded-lg border border-primary/40 bg-primary/5 p-3 text-left text-sm">
+                  <strong>{totalObs} observação(ões) importante(s)</strong> sobre este residente. Toque para ler.
+                </button>
+              )}
               <div className="rounded-lg border-2 border-destructive/40 bg-destructive/5 p-4">
                 <p className="text-xs font-semibold uppercase text-destructive">Contato de emergência</p>
                 <p className="mt-1 font-medium">{r.responsavel_nome || "Não informado"}</p>
@@ -85,6 +95,8 @@ export default function FichaCuidadoResidente({ residenteId, onClose }: { reside
               <Campos dados={{ condicoes_medicas: r.condicoes_medicas, alergias: ficha?.acolhimento?.historico_saude?.alergias, observacoes_gerais: r.observacoes_gerais }} />
               {residenteId && <ProximosCompromissos residenteId={residenteId} />}
             </TabsContent>
+
+            <TabsContent value="observacoes">{residenteId && <ObservacoesResidente residenteId={residenteId} modo="portal" onTotal={setTotalObs} />}</TabsContent>
 
             <TabsContent value="rotinas">{residenteId && <RotinasResidente residenteId={residenteId} />}</TabsContent>
 

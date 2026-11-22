@@ -88,7 +88,7 @@ export function AppSidebar() {
     { path: "/financeiro", icon: Wallet, label: "Financeiro", adminOnly: true },
     { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
     { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
-    { path: "/remocoes-medicamentos", icon: Pill, label: "Remoções de Medicamentos", adminOnly: true },
+    { path: "/remocoes-medicamentos", icon: Pill, label: "Aprovações de Remoção", adminOnly: true },
     { path: "/controle-fraldas", icon: Baby, label: "Controle de Fraldas", adminOnly: true },
     { path: "/controle-temperatura", icon: Thermometer, label: "Controle de Temperatura", adminOnly: true },
     { path: "/controle-vacinas", icon: Syringe, label: "Controle de Vacinas", adminOnly: true },

@@ -25,7 +25,8 @@ import ContratosLista from "@/components/residentes/ContratosLista";
 import ContratosTemporarios from "@/components/residentes/ContratosTemporarios";
 import FichaAcolhimentoAdmin from "@/components/residentes/FichaAcolhimentoAdmin";
 import BaixarContratoAssinado from "@/components/residentes/BaixarContratoAssinado";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, StickyNote } from "lucide-react";
+import ObservacoesResidente from "@/components/cuidados/ObservacoesResidente";
 
 interface Residente {
   id: string;
@@ -57,6 +58,7 @@ export default function GerenciamentoResidentes() {
   // Estados para contratos
   const [contratosDialogOpen, setContratosDialogOpen] = useState(false);
   const [selectedResidente, setSelectedResidente] = useState<Residente | null>(null);
+  const [observacoesResidente, setObservacoesResidente] = useState<{ id: string; nome_completo: string } | null>(null);
 
   // Estado para Ficha de Acolhimento
   const [acolhimentoDialogOpen, setAcolhimentoDialogOpen] = useState(false);
@@ -1108,6 +1110,14 @@ export default function GerenciamentoResidentes() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => setObservacoesResidente(residente)}
+                        title="Observações"
+                      >
+                        <StickyNote className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleStatus(residente)}
                         title={residente.ativo ? "Desativar residente" : "Ativar residente"}
                         className={residente.ativo ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
@@ -1172,6 +1182,12 @@ export default function GerenciamentoResidentes() {
               residenteNome={selectedResidente.nome_completo}
             />
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!observacoesResidente} onOpenChange={(o) => !o && setObservacoesResidente(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Observações — {observacoesResidente?.nome_completo}</DialogTitle></DialogHeader>
+          {observacoesResidente && <ObservacoesResidente residenteId={observacoesResidente.id} modo="gestor" />}
         </DialogContent>
       </Dialog>
     </Card>

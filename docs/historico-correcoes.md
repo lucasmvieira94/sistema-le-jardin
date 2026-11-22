@@ -10,6 +10,12 @@
 
 ## Correções verificadas
 
+### CUIDADOS-004 — Observações dos residentes
+- Aba Observações na ficha do Portal de Cuidados e botão no painel do gestor. Sem prazo por padrão ou válida até uma data (Brasília); vencidas são filtradas na consulta, nunca apagadas. Sem edição.
+- Exclusão pela cuidadora pede justificativa e deixa a observação pendente (fora da ficha) até o gestor aprovar/recusar em Aprovações de Remoção; gestor exclui direto com motivo registrado. Rosa ganhou consulta `observacoes`.
+- Evidências: 5 testes SQL em PGlite com a migração real (sem passe, validade, vencida oculta, remoção temporária, só gestor decide, recusa/aprovação). Compilação OK; função da Rosa publicada.
+- Limites: telas não testadas no navegador com passe PIN real nem com sessão de gestor. Testes com data usam `obs_hoje()` para não falhar perto da meia-noite UTC.
+
 ### MED-001 — Remoção de medicamento do estoque com aprovação do gestor
 - Cuidadora pede remoção pela lixeira no estoque do residente, com justificativa (mín. 10 letras); o item fica inativo até o gestor decidir em Remoções de Medicamentos. Recusa reativa o mesmo registro (mesma quantidade); aprovação mantém inativo. Mapa não é alterado.
 - Verificação de gestor usa `coalesce(eh_gestor(...), false)` para falhar fechado quando a resposta é nula (achado pelo teste).

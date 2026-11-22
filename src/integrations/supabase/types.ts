@@ -5627,6 +5627,81 @@ export type Database = {
           },
         ]
       }
+      residentes_observacoes: {
+        Row: {
+          autor_funcionario_id: string | null
+          autor_nome: string | null
+          autor_usuario_id: string | null
+          created_at: string
+          id: string
+          motivo_remocao: string | null
+          observacao_gestor: string | null
+          remocao_solicitada_em: string | null
+          remocao_solicitada_por: string | null
+          residente_id: string
+          revisado_em: string | null
+          revisado_por: string | null
+          status: string
+          tenant_id: string | null
+          texto: string
+          updated_at: string
+          valida_ate: string | null
+        }
+        Insert: {
+          autor_funcionario_id?: string | null
+          autor_nome?: string | null
+          autor_usuario_id?: string | null
+          created_at?: string
+          id?: string
+          motivo_remocao?: string | null
+          observacao_gestor?: string | null
+          remocao_solicitada_em?: string | null
+          remocao_solicitada_por?: string | null
+          residente_id: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          status?: string
+          tenant_id?: string | null
+          texto: string
+          updated_at?: string
+          valida_ate?: string | null
+        }
+        Update: {
+          autor_funcionario_id?: string | null
+          autor_nome?: string | null
+          autor_usuario_id?: string | null
+          created_at?: string
+          id?: string
+          motivo_remocao?: string | null
+          observacao_gestor?: string | null
+          remocao_solicitada_em?: string | null
+          remocao_solicitada_por?: string | null
+          residente_id?: string
+          revisado_em?: string | null
+          revisado_por?: string | null
+          status?: string
+          tenant_id?: string | null
+          texto?: string
+          updated_at?: string
+          valida_ate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "residentes_observacoes_autor_funcionario_id_fkey"
+            columns: ["autor_funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "residentes_observacoes_residente_id_fkey"
+            columns: ["residente_id"]
+            isOneToOne: false
+            referencedRelation: "residentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rosa_conversas: {
         Row: {
           created_at: string
@@ -6622,6 +6697,39 @@ export type Database = {
         }[]
       }
       gerar_token_convite: { Args: never; Returns: string }
+      gestor_criar_observacao: {
+        Args: { p_residente_id: string; p_texto: string; p_valida_ate?: string }
+        Returns: string
+      }
+      gestor_observacoes_remocao: {
+        Args: { p_status?: string }
+        Returns: {
+          autor: string
+          id: string
+          motivo: string
+          observacao_gestor: string
+          residente: string
+          revisado_em: string
+          solicitado_em: string
+          solicitante: string
+          status: string
+          texto: string
+          valida_ate: string
+        }[]
+      }
+      gestor_observacoes_residente: {
+        Args: { p_residente_id: string }
+        Returns: {
+          autor: string
+          created_at: string
+          id: string
+          motivo_remocao: string
+          status: string
+          texto: string
+          valida_ate: string
+          vencida: boolean
+        }[]
+      }
       gestor_remocoes_estoque: {
         Args: { p_status?: string }
         Returns: {
@@ -6637,7 +6745,15 @@ export type Database = {
           status: string
         }[]
       }
+      gestor_remover_observacao: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
       gestor_revisar_remocao_estoque: {
+        Args: { p_aprovar: boolean; p_id: string; p_observacao?: string }
+        Returns: undefined
+      }
+      gestor_revisar_remocao_observacao: {
         Args: { p_aprovar: boolean; p_id: string; p_observacao?: string }
         Returns: undefined
       }
@@ -6782,6 +6898,16 @@ export type Database = {
           ultimo_lancamento: string
         }[]
       }
+      obs_exigir_gestor: { Args: never; Returns: undefined }
+      obs_hoje: { Args: never; Returns: string }
+      obs_portal_contexto: {
+        Args: { p_residente: string }
+        Returns: Record<string, unknown>
+      }
+      obs_validar: {
+        Args: { p_texto: string; p_valida_ate: string }
+        Returns: undefined
+      }
       obter_alertas_estoque_fraldas: {
         Args: never
         Returns: {
@@ -6867,6 +6993,10 @@ export type Database = {
           p_prescrito_por?: string
           p_via?: string
         }
+        Returns: string
+      }
+      portal_criar_observacao: {
+        Args: { p_residente_id: string; p_texto: string; p_valida_ate?: string }
         Returns: string
       }
       portal_cuidados_agenda: {
@@ -7048,6 +7178,16 @@ export type Database = {
           tipo: string
         }[]
       }
+      portal_observacoes_residente: {
+        Args: { p_residente_id: string }
+        Returns: {
+          autor: string
+          created_at: string
+          id: string
+          texto: string
+          valida_ate: string
+        }[]
+      }
       portal_rotina_anexo_autorizar: {
         Args: { _rotina_id: string }
         Returns: {
@@ -7169,6 +7309,10 @@ export type Database = {
       portal_solicitar_remocao_estoque: {
         Args: { p_estoque_id: string; p_motivo: string }
         Returns: string
+      }
+      portal_solicitar_remocao_observacao: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
       }
       prazo_assinatura_em: {
         Args: {

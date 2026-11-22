@@ -16,6 +16,7 @@ const tools:NonNullable<RosaRequest['tools']> = [
  {type:'function',name:'agenda_dia',description:'Consultar compromissos de uma data.',parameters:{type:'object',properties:{data:{type:'string'}},required:['data'],additionalProperties:false},strict:true},
  {type:'function',name:'rotinas',description:'Consultar instruções das rotinas de um residente.',parameters:{type:'object',properties:{residente_id:{type:'string'}},required:['residente_id'],additionalProperties:false},strict:true},
  {type:'function',name:'prontuario_dia',description:'Consultar registros originais do residente em uma data.',parameters:{type:'object',properties:{residente_id:{type:'string'},data:{type:'string'}},required:['residente_id','data'],additionalProperties:false},strict:true},
+ {type:'function',name:'observacoes',description:'Consultar observações ativas (anotações da equipe) de um residente.',parameters:{type:'object',properties:{residente_id:{type:'string'}},required:['residente_id'],additionalProperties:false},strict:true},
  {type:'function',name:'abrir_modulo',description:'Oferecer link autorizado para uma tarefa do portal.',parameters:{type:'object',properties:{modulo:{type:'string',enum:Object.keys(DESTINOS_ROSA)}},required:['modulo'],additionalProperties:false},strict:true},
  {type:'function',name:'sugerir_orientacao',description:'Encaminhar ao gestor uma sugestão genérica de uso, sem dados pessoais, só se a cuidadora pedir. Não modifica regras.',parameters:{type:'object',properties:{proposta:{type:'string'}},required:['proposta'],additionalProperties:false},strict:true},
 ];
@@ -69,6 +70,7 @@ Deno.serve(async(req)=>{
      else if(call.name==='ficha_residente')rpcResult=await portal.rpc('portal_cuidados_ficha',{p_residente_id:z.string().uuid().parse(args.residente_id)});
      else if(call.name==='agenda_dia')rpcResult=await portal.rpc('portal_cuidados_agenda',{_data:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(args.data)});
      else if(call.name==='rotinas')rpcResult=await portal.rpc('portal_rotinas_listar',{_residente_id:z.string().uuid().parse(args.residente_id)});
+     else if(call.name==='observacoes')rpcResult=await portal.rpc('portal_observacoes_residente',{p_residente_id:z.string().uuid().parse(args.residente_id)});
      else if(call.name==='prontuario_dia')rpcResult=await portal.rpc('portal_cuidados_prontuario_dia',{p_residente_id:z.string().uuid().parse(args.residente_id),p_data:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(args.data)});
      else if(call.name==='abrir_modulo'){
       const m=z.string().parse(args.modulo);if(!DESTINOS_ROSA[m]||(!['residentes','agenda','rotinas'].includes(m)&&!history.modulos.includes(m)))throw new Error('Módulo não autorizado');output={link:DESTINOS_ROSA[m],modulo:m};
