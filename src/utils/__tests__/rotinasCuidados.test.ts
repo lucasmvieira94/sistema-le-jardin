@@ -22,11 +22,23 @@ describe("rotinas de cuidado", () => {
     expect(orientacoesVigentes([o], "2026-11-14")).toHaveLength(1);
   });
   it("plantão gera diurno e noturno; dias da semana filtram", () => {
-    expect(ocorrenciasDoDia([{ ...base, frequencia: "plantao" }], [], "2026-11-14", 0)).toHaveLength(2);
+    expect(ocorrenciasDoDia([{ ...base, frequencia: "plantao" }], [], "2026-11-14", 0)).toHaveLength(3);
     expect(vigenteEm({ ...base, dias_semana: [1] }, "2026-11-14")).toBe(false); // sábado
     expect(vigenteEm({ ...base, encerrada_em: "x" }, "2026-11-14")).toBe(false);
   });
   it("curativo por 10 dias termina no 10º dia", () => { expect(fimPorDuracao("2026-11-14", 10)).toBe("2026-11-23"); });
+  it("às 02h o plantão pertence à noite anterior, sem concluir a próxima noite", () => {
+    const r = { ...base, frequencia: "plantao" as const };
+    const ex = [{ id: "e", rotina_id: r.id, data: "2026-11-13", chave: "noturno", feito_em: "2026-11-14T05:00:00Z", feito_por_nome: "B", valor: "12x8", observacao: null, titulo: "", tipo_afericao: null, residente_id: "x" }];
+    const noites = ocorrenciasDoDia([r], ex, "2026-11-14", 120).filter(o => o.chave === "noturno");
+    expect(noites.map(o => [o.data, o.status])).toEqual([["2026-11-13", "feito"], ["2026-11-14", "proximo"]]);
+    expect(ocorrenciasDoDia([r], ex, "2026-11-14", 19 * 60).find(o => o.chave === "noturno")?.status).toBe("agora");
+  });
+  it("vigência e dia da semana do plantão noturno seguem o início da noite", () => {
+    const r = { ...base, frequencia: "plantao" as const, fim: "2026-11-13", dias_semana: [5] };
+    expect(ocorrenciasDoDia([r], [], "2026-11-14", 6 * 60 + 59).map(o => o.data)).toEqual(["2026-11-13"]);
+    expect(ocorrenciasDoDia([r], [], "2026-11-14", 7 * 60)).toHaveLength(0);
+  });
   it("bloqueia remédio e exige horário", () => {
     const v = { residente: "00000000-0000-4000-8000-000000000000", titulo: "Dar dipirona", tipo: "procedimento", instrucoes: "", frequencia: "horarios", horarios: [], momento: null, tipo_afericao: null, dias_semana: [], inicio: "2026-11-14", fim: null };
     const msgs = rotinaSchema.safeParse(v).error!.issues.map((i) => i.message);

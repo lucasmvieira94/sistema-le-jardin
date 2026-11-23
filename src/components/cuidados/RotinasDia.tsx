@@ -27,8 +27,9 @@ export function RegistrarOcorrenciaDialog({ alvo, onClose, onFeito }: { alvo: Oc
   const [valor, setValor] = useState(""); const [obs, setObs] = useState(""); const [salvando, setSalvando] = useState(false);
   const r = alvo?.rotina;
   const salvar = async () => {
+    if (!alvo || !r) return;
     setSalvando(true);
-    const { error } = await supabase.rpc("portal_rotina_executar" as any, { _id: r!.id, _chave: alvo!.chave, _valor: valor || null, _observacao: obs || null });
+    const { error } = await supabase.rpc("portal_rotina_executar", { _id: r.id, _chave: alvo.chave, _data: alvo.data, _valor: valor || undefined, _observacao: obs || undefined });
     setSalvando(false);
     if (error) return toast({ title: "Não foi possível registrar", description: error.message, variant: "destructive" });
     toast({ title: "Registrado" }); setValor(""); setObs(""); onClose(); onFeito();
@@ -142,7 +143,7 @@ export default function RotinasDia() {
             {!lista.length && <p className="text-sm text-muted-foreground">Nada pendente.</p>}
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {lista.map((o) => (
-                <Card key={`${o.rotina.id}${o.chave}`} className={`cursor-pointer transition hover:border-primary ${COR[o.status]}`}
+                <Card key={`${o.rotina.id}${o.data}${o.chave}`} className={`cursor-pointer transition hover:border-primary ${COR[o.status]}`}
                   onClick={() => (o.execucao ? setDetalhe(o.rotina) : setAlvo(o))}>
                   <CardContent className="space-y-1 p-3">
                     <div className="flex items-center justify-between"><span className="font-semibold">{o.rotulo}</span><Badge variant={o.status === "atrasado" ? "destructive" : "secondary"}>{ROTULO[o.status]}</Badge></div>

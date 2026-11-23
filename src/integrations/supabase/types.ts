@@ -7226,6 +7226,7 @@ export type Database = {
       portal_rotina_executar: {
         Args: {
           _chave: string
+          _data?: string
           _id: string
           _observacao?: string
           _valor?: string

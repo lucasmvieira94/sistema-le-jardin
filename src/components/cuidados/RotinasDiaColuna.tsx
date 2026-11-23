@@ -33,7 +33,7 @@ export default function RotinasDiaColuna({ onAbrirRotinas }: { onAbrirRotinas: (
           ) : (
             <ul className="space-y-2">
               {ocorrencias.map((o) => (
-                <li key={`${o.rotina.id}${o.chave}`}>
+                <li key={`${o.rotina.id}${o.data}${o.chave}`}>
                   <button type="button" onClick={() => (o.execucao ? setDetalhe(o.rotina) : setAlvo(o))}
                     className={`w-full rounded-lg border p-2.5 text-left text-sm transition hover:border-primary ${COR[o.status]}`}>
                     <div className="flex items-center justify-between gap-2">

@@ -14,6 +14,11 @@ beforeAll(async () => {
   await db.exec(readFileSync('src/utils/__tests__/fixtures/supervisao-schema.sql', 'utf8'));
   await db.exec(readFileSync('supabase/migrations/20261122011009_db590f17-55c4-422e-9b40-757c134bd2d5.sql', 'utf8'));
   await db.exec(readFileSync('supabase/migrations/20261122011830_f144f889-9a30-414f-8eb3-f603d5832284.sql', 'utf8'));
+  // Minimal prerequisites for the routines migration; the snapshot uses the real observation schema.
+  await db.exec(`CREATE FUNCTION portal_rotinas_listar(uuid,boolean) RETURNS void LANGUAGE sql AS $$ SELECT NULL::void $$;
+    CREATE FUNCTION portal_rotina_executar(uuid,text,text,text) RETURNS void LANGUAGE sql AS $$ SELECT NULL::void $$;
+    CREATE FUNCTION portal_cuidados_funcionario() RETURNS uuid LANGUAGE sql AS $$ SELECT portal_funcionario_atual() $$;`);
+  await db.exec(readFileSync('supabase/migrations/20261123003253_50194dad-74b6-4acb-b432-5e3308a6c9cc.sql', 'utf8'));
   await db.exec(`INSERT INTO funcionarios VALUES ('${f}','${t}','Ana',true);
     INSERT INTO residentes VALUES ('${r}','${t}','Maria','1',true,4000,'privado'), ('${outra}','${outra}','Outra instituição','2',true,5000,'privado');
     INSERT INTO cuidados_agenda (id,tenant_id,residente_id,titulo,data_evento) VALUES ('${r}','${t}','${r}','Consulta',${dia}), ('${outra}','${outra}','${outra}','Outro evento',${dia});
@@ -60,5 +65,10 @@ describe.sequential('supervisão protegida por PIN e cargo', () => {
     await db.exec(`UPDATE funcionarios SET ativo=false WHERE id='${f}'`);
     await expect(snapshot()).rejects.toMatchObject({ code: '42501' });
     await db.exec(`UPDATE funcionarios SET ativo=true WHERE id='${f}'`);
+  });
+  it('inclui autoria real da observação e não inventa autor para anotações do gestor', async () => {
+    await db.exec(`INSERT INTO residentes_observacoes (autor_funcionario_id,residente_id,created_at,tenant_id,status) VALUES ('${f}','${r}',now(),'${t}','ativa');`);
+    const p = await snapshot();
+    expect(p.atividades.find(a => a.categoria === 'Observação')?.funcionario_nome).toBe('Ana');
   });
 });

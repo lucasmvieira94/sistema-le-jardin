@@ -15,7 +15,7 @@ export interface ExecucaoRotina {
   valor: string | null; observacao: string | null; titulo: string; tipo_afericao: string | null; residente_id: string;
 }
 export type StatusOcorrencia = "feito" | "atrasado" | "agora" | "proximo";
-export interface Ocorrencia { rotina: RotinaCuidado; chave: string; rotulo: string; minutos: number; status: StatusOcorrencia; execucao?: ExecucaoRotina }
+export interface Ocorrencia { rotina: RotinaCuidado; data: string; chave: string; rotulo: string; minutos: number; status: StatusOcorrencia; execucao?: ExecucaoRotina }
 
 export const TIPOS: Record<TipoRotina, string> = { procedimento: "Procedimento", afericao: "Aferição", orientacao: "Orientação" };
 export const MOMENTOS: Record<string, string> = { banho: "No banho", refeicao: "Nas refeições", troca: "Nas trocas", dormir: "Ao dormir", acordar: "Ao acordar" };
@@ -38,20 +38,32 @@ export function vigenteEm(r: Pick<RotinaCuidado, "inicio" | "fim" | "encerrada_e
 
 /** Gera as ocorrências que precisam de registro no dia (orientações não geram). */
 export function ocorrenciasDoDia(rotinas: RotinaCuidado[], execucoes: ExecucaoRotina[], dia: string, agoraMin: number): Ocorrencia[] {
-  const feito = new Map(execucoes.filter((e) => e.data === dia).map((e) => [`${e.rotina_id}|${e.chave}`, e]));
+  const feito = new Map(execucoes.map((e) => [`${e.rotina_id}|${e.data}|${e.chave}`, e]));
+  const anterior = diaAnterior(dia);
   const out: Ocorrencia[] = [];
   for (const r of rotinas) {
-    if (r.tipo === "orientacao" || !vigenteEm(r, dia)) continue;
-    const add = (chave: string, rotulo: string, ini: number, fimJanela: number) => {
-      const execucao = feito.get(`${r.id}|${chave}`);
+    if (r.tipo === "orientacao") continue;
+    const add = (chave: string, rotulo: string, ini: number, fimJanela: number, data = dia) => {
+      if (!vigenteEm(r, data)) return;
+      const execucao = feito.get(`${r.id}|${data}|${chave}`);
       const status: StatusOcorrencia = execucao ? "feito" : agoraMin > fimJanela ? "atrasado" : agoraMin >= ini ? "agora" : "proximo";
-      out.push({ rotina: r, chave, rotulo, minutos: ini, status, execucao });
+      out.push({ rotina: r, data, chave, rotulo, minutos: ini, status, execucao });
     };
     if (r.frequencia === "horarios") for (const h of r.horarios) { const hh = h.slice(0, 5); const m = minutos(hh); add(hh, hh, m - MARGEM, m + MARGEM); }
-    else if (r.frequencia === "plantao") { add("diurno", "Plantão diurno", 7 * 60, 19 * 60); add("noturno", "Plantão noturno", 19 * 60, 24 * 60); }
+    else if (r.frequencia === "plantao") {
+      // The 19h–07h shift belongs to its start date, including after midnight.
+      if (agoraMin < 7 * 60) add("noturno", "Plantão noturno · noite anterior", -5 * 60, 7 * 60, anterior);
+      add("diurno", "Plantão diurno", 7 * 60, 19 * 60);
+      add("noturno", "Plantão noturno", 19 * 60, 31 * 60);
+    }
     else add("dia", MOMENTOS[r.momento ?? ""] ?? "Hoje", 0, 24 * 60);
   }
   return out.sort((a, b) => a.minutos - b.minutos || a.rotina.residente_nome.localeCompare(b.rotina.residente_nome));
+}
+
+export function diaAnterior(dia: string) {
+  const d = new Date(`${dia}T12:00:00`); d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** Orientações fixas vigentes (ex.: "No banho: usar sabonete X"), mostradas como lembrete. */

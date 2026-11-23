@@ -13,7 +13,7 @@ CREATE TABLE estoque_fraldas (id uuid, tipo_fralda text, tamanho text, quantidad
 CREATE TABLE prontuario_ciclos (id uuid, residente_id uuid, data_ciclo date, status text, tenant_id uuid);
 CREATE TABLE prontuario_registros (ciclo_id uuid, tenant_id uuid, funcionario_id uuid, residente_id uuid, titulo text, created_at timestamptz, data_registro date);
 CREATE TABLE uso_fraldas (funcionario_id uuid, residente_id uuid, quantidade_usada integer, created_at timestamptz, tenant_id uuid, data_uso date);
-CREATE TABLE residentes_observacoes (criado_por uuid, residente_id uuid, created_at timestamptz, tenant_id uuid, status text);
+CREATE TABLE residentes_observacoes (autor_funcionario_id uuid, autor_usuario_id uuid, autor_nome text, residente_id uuid, created_at timestamptz, tenant_id uuid, status text);
 CREATE TABLE vacinas_residentes (registrado_por_funcionario_id uuid, residente_id uuid, nome_vacina text, created_at timestamptz, tenant_id uuid, proxima_dose_prevista date);
 CREATE TABLE controle_temperatura_medicamentos (funcionario_responsavel uuid, temperatura numeric, created_at timestamptz, tenant_id uuid, data_registro date, conformidade boolean);
 CREATE TABLE remocoes_estoque_medicamentos (tenant_id uuid, status text);
