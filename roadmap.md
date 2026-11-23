@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Corrigir erros recentes: inicialização PWA na prévia, consulta do supervisor e rotina noturna após meia-noite
+- [ ] Validar correções e registrar resolução dos erros comprovados, preservando os não verificados
+
 - [x] Atualizar dashboard do supervisor: cuidados do dia, pendências, equipe e insights com atualização automática protegida por passe PIN
 - [x] Testar permissões e indicadores; conferir celular/tablet/desktop e documentar limites de validação real (39 testes aprovados)
 - [ ] Validar supervisão com passe PIN real — sessão externa indisponível; consultas e telas verificadas em ambiente isolado/simulado

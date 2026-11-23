@@ -91,7 +91,8 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true
+        // Preview has no HMR hot context for the PWA entry; production SW stays enabled.
+        enabled: false
       }
     })
   ].filter(Boolean),
