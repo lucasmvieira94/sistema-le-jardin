@@ -78,6 +78,14 @@
 
 ## Não encerrados por falta de evidência
 
+### Revisão de 22/11/2026 — PWA, supervisão e plantão noturno
+- PWA-001: o script de desenvolvimento chamava `import.meta.hot.on` sem contexto HMR. Desativada apenas a inscrição PWA em desenvolvimento, preservando o service worker publicado. Após aplicar configuração, navegador real na rota `/`: nenhuma exceção e nenhum pedido ao script defeituoso. Seis registros específicos marcados como resolvidos e relidos no banco.
+- SUP-001: a consulta do supervisor referenciava `residentes_observacoes.criado_por`, campo inexistente. Corrigido para `autor_funcionario_id`, sem atribuir ao cuidador uma observação do gestor. Fixture SQL corrigida para os campos reais; regressão executa a migração de produção e verifica autoria/isolamento.
+- ROT-001: confirmações noturnas após meia-noite eram salvas na noite seguinte. Ocorrências usam a data de início do plantão 19h–07h; servidor valida data, vigência, dia da semana e duplicidade. Portal e supervisor consultam também a noite anterior; formulário antigo não pode confirmar outro plantão. Registros históricos não foram movidos sem comprovação da intenção original.
+- Evidências: 43 testes aprovados, incluindo RPCs de produção em PGlite às 02h, 06h59, 07h e 19h, consultas de leitura após registro, duplicidade e bloqueio sem passe/módulo. Duas falhas do Project monitoring encerradas como corrigidas. Manual da Rosa atualizado e função publicada. Compilação OK.
+- REC-001: dois registros antigos com `documentoId: Invalid uuid` marcados resolvidos após confirmar a separação UUID/código público e reexecutar dez testes de emissão/reenvio; recebimento real do e-mail continua não verificado.
+- Limites: acesso externo não fornece sessão real do gestor/cuidador para validar fluxos protegidos no navegador. Dez erros antigos permanecem abertos (oito de hooks, um QueryClient e um teste RLS) por falta de reprodução/verificação autenticada. Avisos genéricos de execução SECURITY DEFINER são necessários ao PIN e mantêm validação de passe/módulo/instituição; não flexibilizar autorização para silenciá-los. Avisos de segurança preexistentes não foram tratados nesta revisão.
+
 ### HOOKS-001 — `useState` / `useEffect` nulos
 - Proteção adicionada: `resolve.dedupe` para React/React DOM no Vite.
 - Não há prova de que duplicação seja a causa; tela pública sem erros não valida o Painel autenticado.
