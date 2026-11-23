@@ -98,3 +98,8 @@
 ## Histórico administrativo
 
 Em **Histórico de erros**, selecionar **Resolvidos** para consultar correção, data e observação; selecionar **Em aberto** para pendências. A reabertura mantém a observação anterior. Novas resoluções exigem descrição do que foi corrigido e verificado.- ROSA-001: rosa_historico chamava calcular_modulos_funcionario(uuid) inexistente (42883), impedindo abrir conversa. Corrigido para modulos_funcionario(f). Evidência: chamada real com passe PIN de teste retornou 200 com resposta da Rosa.
+
+## 2026-11-23 — Assinatura no mesmo rodapé da autenticidade
+- Problema: cada signatário recebia um bloco próprio, com QR repetido, que podia cair em uma página separada; faltavam CPF e local.
+- Correção: rodapé único (assinaturas + QR/código/CRC) na última página, com o texto "Documento AUTÊNTICO", nome, cargo, CPF mascarado, horário de Brasília e local (Cidade/UF de Configurações). Vale para o PDF final do servidor e para o download feito no navegador.
+- Evidência: 12 testes do rodapé e do certificarPDF e 4 testes Deno do PDF final passaram. Vias já salvas não foram geradas de novo.

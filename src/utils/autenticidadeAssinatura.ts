@@ -19,6 +19,7 @@ export async function obterAutenticidadeAssinatura(input: {
     codigo_verificador: codigo,
     hash_documento: hash,
     signatarios: data.signatarios,
+    local_padrao: (data.local_padrao as string | null) ?? null,
     url_verificacao: `https://senexcare.app/verificar-documento?id=${encodeURIComponent(codigo)}&hash=${encodeURIComponent(hash)}`,
   };
 }

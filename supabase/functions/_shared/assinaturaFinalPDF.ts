@@ -13,7 +13,19 @@ export async function hashBytes(bytes: Uint8Array) {
 }
 
 /** Renderização paginada no servidor: conteúdo inteiro, imagens e assinaturas reais. */
-export async function renderizarViaAssinada(env: any, lista: any[], codigo: string): Promise<Uint8Array> {
+/** LGPD: somente os 6 dígitos centrais do CPF. */
+export const mascararCpfServidor = (cpf?: string | null) => {
+  const d = (cpf ?? '').replace(/\D/g, '');
+  return d.length === 11 ? `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**` : null;
+};
+export const textoSignatarioServidor = (s: any, localPadrao?: string | null) => {
+  const data = new Date(s.assinado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(', ', ' às ');
+  const cpf = mascararCpfServidor(s.cpf);
+  const local = s.local ?? localPadrao;
+  return `${s.nome}${s.papel ? `, ${s.papel}` : ''}${cpf ? `, CPF ${cpf}` : ''}, em ${data} (horário oficial de Brasília)${local ? `, ${local}` : ''}`;
+};
+
+export async function renderizarViaAssinada(env: any, lista: any[], codigo: string, localPadrao: string | null = null): Promise<Uint8Array> {
   if (!/^\d{8}$/.test(codigo) || !/^[a-f0-9]{64}$/i.test(env.hash_documento)) throw new Error('Certificação indisponível');
   const assinados = lista.filter(s => s.status === 'assinado' && s.assinado_em);
   if (!assinados.length) throw new Error('Nenhuma assinatura registrada');
@@ -70,21 +82,25 @@ export async function renderizarViaAssinada(env: any, lista: any[], codigo: stri
   const logo = `data:image/jpeg;base64,${pdfBase64(new Uint8Array(await logoResp.arrayBuffer()))}`;
   const url = `https://senexcare.app/verificar-documento?id=${codigo}&hash=${env.hash_documento.toUpperCase()}`;
   const qr = await QRCode.toDataURL(url, { width: 260, margin: 1 });
-  y += 8;
-  for (const s of assinados) {
-    if (y + 65 > 277) novaPagina();
-    doc.setDrawColor(150).setLineWidth(0.25).line(16, y, 194, y);
-    doc.addImage(logo, 'JPEG', 17, y + 2, 22, 22);
-    const data = new Date(s.assinado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(', ', ' às ');
-    doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(35);
-    doc.text(doc.splitTextToSize(`Documento assinado eletronicamente por ${s.nome}, ${s.papel} em ${data}, conforme horário oficial de Brasília.`, 150), 43, y + 7);
-    doc.line(16, y + 27, 194, y + 27);
-    doc.addImage(qr, 'PNG', 17, y + 30, 25, 25);
-    doc.setFontSize(8);
-    doc.text(doc.splitTextToSize(`A autenticidade deste documento pode ser conferida no site ${url}, informando o código verificador ${codigo} e o código CRC/SHA-256 ${env.hash_documento.toUpperCase()}.`, 145), 47, y + 34, { lineHeightFactor: 1.25 });
-    doc.link(47, y + 28, 145, 30, { url });
-    doc.line(16, y + 60, 194, y + 60); y += 67;
-  }
+  // Rodapé único na última página: assinaturas + autenticidade no mesmo bloco, ancorado ao fim da página.
+  const linhas: string[] = ['Documento AUTÊNTICO assinado eletronicamente por:'];
+  doc.setFont('helvetica', 'normal').setFontSize(9);
+  for (const s of assinados) linhas.push(...doc.splitTextToSize(`• ${textoSignatarioServidor(s, localPadrao)}`, 150));
+  const alturaSup = Math.max(28, linhas.length * 4 + 8);
+  const altura = alturaSup + 33;
+  const topo = 297 - 12 - altura;
+  if (y + 4 > topo) novaPagina();
+  doc.setDrawColor(150).setLineWidth(0.25).line(16, topo, 194, topo);
+  doc.addImage(logo, 'JPEG', 17, topo + 3, 22, 22);
+  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(35);
+  doc.text(linhas, 43, topo + 8, { lineHeightFactor: 1.25 });
+  const meio = topo + alturaSup;
+  doc.line(16, meio, 194, meio);
+  doc.addImage(qr, 'PNG', 17, meio + 3, 25, 25);
+  doc.setFontSize(8);
+  doc.text(doc.splitTextToSize(`A autenticidade deste documento pode ser conferida no site ${url}, informando o código verificador ${codigo} e o código CRC/SHA-256 ${env.hash_documento.toUpperCase()}.`, 145), 47, meio + 7, { lineHeightFactor: 1.25 });
+  doc.link(47, meio + 1, 145, 30, { url });
+  doc.line(16, topo + altura, 194, topo + altura);
   return new Uint8Array(doc.output('arraybuffer'));
 }
 
@@ -107,7 +123,8 @@ export async function obterViaFinal(admin: any, envelopeId: string) {
   if (erroLista || !lista?.length || lista.some((s: any) => s.status !== 'assinado')) throw new Error('Assinaturas incompletas');
   const { data: verificacao } = await admin.from('assinatura_verificacoes').select('codigo_verificador').eq('origem', 'envelope').eq('referencia_id', envelopeId).single();
   if (!verificacao) throw new Error('Código de verificação indisponível');
-  const bytes = await renderizarViaAssinada(env, lista, verificacao.codigo_verificador);
+  const { data: cfg } = env.tenant_id ? await admin.from('configuracoes_empresa').select('cidade').eq('tenant_id', env.tenant_id).maybeSingle() : { data: null };
+  const bytes = await renderizarViaAssinada(env, lista, verificacao.codigo_verificador, cfg?.cidade?.trim() || null);
   await PDFDocument.load(bytes); // Nunca armazenar/enviar um arquivo que não seja PDF válido.
   const path = `${envelopeId}/${crypto.randomUUID()}.pdf`;
   const { error: erroUpload } = await admin.storage.from(BUCKET).upload(path, bytes, { contentType: 'application/pdf', upsert: false });

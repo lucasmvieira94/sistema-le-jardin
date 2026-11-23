@@ -22,6 +22,12 @@ Deno.test('PDF final preserva documento longo e possui duas assinaturas sem omit
   assertEquals(content.includes('Representante da Empresa'), true);
 });
 
+Deno.test('rodapé único traz CPF mascarado, horário de Brasília e local', async () => {
+  const { textoSignatarioServidor } = await import('../_shared/assinaturaFinalPDF.ts');
+  assertEquals(textoSignatarioServidor({ nome: 'Ana', papel: 'Contratante', cpf: '12345678901', assinado_em: '2026-11-23T17:17:00Z' }, 'Porto Alegre/RS'),
+    'Ana, Contratante, CPF ***.456.789-**, em 23/11/2026 às 14:17 (horário oficial de Brasília), Porto Alegre/RS');
+});
+
 Deno.test('PDF final bloqueia conteúdo adulterado e documento sem assinatura', async () => {
   const env = { titulo: 'Contrato', conteudo_html: html, hash_documento: 'A'.repeat(64) };
   await assertRejects(() => renderizarViaAssinada(env, assinaturas, '12345678'), Error, 'difere');

@@ -23,6 +23,8 @@ export interface SignatarioPdf {
   metodo: string;
   status: string;
   cpf?: string | null;
+  /** Cidade/UF onde a assinatura ocorreu. */
+  local?: string | null;
   assinado_em?: string | null;
   ip_origem?: string | null;
   user_agent?: string | null;
@@ -39,6 +41,8 @@ export interface DocumentoAssinadoInput {
   signatarios: SignatarioPdf[];
   url_verificacao?: string | null;
   codigo_verificador?: string;
+  /** Cidade/UF da instituição, usada quando o signatário não informou local. */
+  local_padrao?: string | null;
   /** Bytes do PDF que foi efetivamente lido e assinado. Todas as páginas são preservadas. */
   arquivo_original?: ArrayBuffer;
 }
@@ -58,10 +62,13 @@ export function validarDocumentoParaDownload(doc: DocumentoAssinadoInput): void 
 
 /** Mesmo rodapé de duas faixas para cada assinatura real, sem manifesto no PDF. */
 export function blocoAssinaturasHTML(doc: DocumentoAssinadoInput, qrDataUrl: string): string {
-  return assinaturasEfetivas(doc).map((s) => rodapeDocumentoHTML({
+  // Um único rodapé: todas as assinaturas junto do selo de autenticidade, no mesmo bloco/página.
+  return rodapeDocumentoHTML({
     id: doc.codigo_verificador ?? '', hash: normalizarHashDocumento(doc.hash_documento),
     urlVerificacao: doc.url_verificacao ?? '', qrDataUrl,
-  }, { nome: s.nome, papel: s.papel, assinadoEm: s.assinado_em ?? '' })).join('');
+  }, assinaturasEfetivas(doc).map((s) => ({
+    nome: s.nome, papel: s.papel, cpf: s.cpf, local: s.local ?? doc.local_padrao ?? null, assinadoEm: s.assinado_em ?? '',
+  })));
 }
 
 /** Anexa o rodapé ao PDF sem rasterizar, omitir ou reescrever páginas originais. */
