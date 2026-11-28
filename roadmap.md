@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Criar aditivos de prorrogação para contratos e distratos, com histórico preservado e nova data determinada
+- [ ] Integrar PDF certificado, assinatura e prazo vigente; testar autorização e datas
+
 - [x] Corrigir erros recentes: inicialização PWA na prévia, consulta do supervisor e rotina noturna após meia-noite
 - [x] Validar correções (43 testes) e registrar oito erros resolvidos e duas falhas do Project monitoring corrigidas
 - [ ] Confirmar dez erros antigos restantes — oito hooks, QueryClient e teste RLS; sessão externa autenticada indisponível e falhas não reproduzidas
