@@ -1795,6 +1795,66 @@ export type Database = {
           },
         ]
       }
+      contratos_aditivos: {
+        Row: {
+          condicoes: string
+          contrato_id: string
+          created_at: string
+          criado_por: string
+          dados_documento: Json
+          data_anterior: string | null
+          distrato_id: string | null
+          id: string
+          nova_data: string
+          numero_aditivo: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          condicoes?: string
+          contrato_id: string
+          created_at?: string
+          criado_por: string
+          dados_documento: Json
+          data_anterior?: string | null
+          distrato_id?: string | null
+          id: string
+          nova_data: string
+          numero_aditivo: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          condicoes?: string
+          contrato_id?: string
+          created_at?: string
+          criado_por?: string
+          dados_documento?: Json
+          data_anterior?: string | null
+          distrato_id?: string | null
+          id?: string
+          nova_data?: string
+          numero_aditivo?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_aditivos_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_residentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_aditivos_distrato_id_fkey"
+            columns: ["distrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_distratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_distratos: {
         Row: {
           condicao_livre: string | null
@@ -1807,6 +1867,7 @@ export type Database = {
           numero_distrato: string
           observacoes: string | null
           parte_iniciadora: string
+          prazo_prorrogado: string | null
           residente_id: string
           retem_garantia: boolean
           status: string
@@ -1831,6 +1892,7 @@ export type Database = {
           numero_distrato: string
           observacoes?: string | null
           parte_iniciadora?: string
+          prazo_prorrogado?: string | null
           residente_id: string
           retem_garantia?: boolean
           status?: string
@@ -1855,6 +1917,7 @@ export type Database = {
           numero_distrato?: string
           observacoes?: string | null
           parte_iniciadora?: string
+          prazo_prorrogado?: string | null
           residente_id?: string
           retem_garantia?: boolean
           status?: string
@@ -1898,6 +1961,7 @@ export type Database = {
           id: string
           numero_contrato: string
           observacoes: string | null
+          prazo_prorrogado: string | null
           residente_id: string
           servicos_adicionais: string | null
           servicos_inclusos: string[] | null
@@ -1925,6 +1989,7 @@ export type Database = {
           id?: string
           numero_contrato: string
           observacoes?: string | null
+          prazo_prorrogado?: string | null
           residente_id: string
           servicos_adicionais?: string | null
           servicos_inclusos?: string[] | null
@@ -1952,6 +2017,7 @@ export type Database = {
           id?: string
           numero_contrato?: string
           observacoes?: string | null
+          prazo_prorrogado?: string | null
           residente_id?: string
           servicos_adicionais?: string | null
           servicos_inclusos?: string[] | null
@@ -6586,6 +6652,36 @@ export type Database = {
           p_justificativa: string
         }
         Returns: undefined
+      }
+      criar_aditivo_prorrogacao: {
+        Args: {
+          _condicoes: string
+          _contrato: string
+          _distrato: string
+          _id: string
+          _nova_data: string
+          _prazo_atual: string
+        }
+        Returns: {
+          condicoes: string
+          contrato_id: string
+          created_at: string
+          criado_por: string
+          dados_documento: Json
+          data_anterior: string | null
+          distrato_id: string | null
+          id: string
+          nova_data: string
+          numero_aditivo: string
+          tenant_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contratos_aditivos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       criar_ciclo_prontuario_diario: { Args: never; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
