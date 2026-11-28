@@ -64,47 +64,60 @@ export function AppSidebar() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Apenas Dashboard nos itens principais (removendo Registro Ponto e Prontuário)
-  const mainNavItems = [
-    { path: "/dashboard", icon: Home, label: "Dashboard", public: false, adminOnly: false },
+  type ItemMenu = { path: string; icon: typeof Home; label: string; public?: boolean; adminOnly?: boolean; complianceOnly?: boolean };
+
+  // Itens fixos no topo: uso diário do gestor
+  const mainNavItems: ItemMenu[] = [
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/financeiro", icon: Wallet, label: "Financeiro", adminOnly: true },
   ];
 
-  const pontoMenuItems = [
-    { path: "/funcionarios", icon: Users, label: "Funcionários", adminOnly: true },
-    { path: "/cargos", icon: Users, label: "Cargos e Funções", adminOnly: true },
-    { path: "/escalas", icon: Calendar, label: "Escalas", adminOnly: true },
-    { path: "/apropriacao", icon: Clock, label: "Apropriação", adminOnly: true },
-    { path: "/analise-condutas", icon: AlertTriangle, label: "Análise de Condutas", adminOnly: true },
-    { path: "/relatorios", icon: FileText, label: "Relatórios", adminOnly: true },
-    { path: "/faltas", icon: FileX, label: "Afastamentos", adminOnly: true },
-    { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências", adminOnly: true },
-    { path: "/documentos-internos", icon: FileSignature, label: "Documentos Internos", adminOnly: true },
-    { path: "/controle-assinaturas", icon: FileSignature, label: "Controle de Assinaturas", adminOnly: true },
-    { path: "/gestao-gamificacao", icon: Trophy, label: "Gamificação", adminOnly: true },
-    { path: "/contracheques", icon: CreditCard, label: "Contracheques", adminOnly: true },
-  ];
-  const sistemaMenuItems = [
-    { path: "/residentes", icon: Users, label: "Residentes", adminOnly: true },
-    { path: "/financeiro", icon: Wallet, label: "Financeiro", adminOnly: true },
-    { path: "/controle-prontuarios", icon: FileText, label: "Controle de Prontuários", adminOnly: true },
-    { path: "/controle-medicamentos", icon: Pill, label: "Controle de Medicamentos", adminOnly: true },
-    { path: "/remocoes-medicamentos", icon: Pill, label: "Aprovações de Remoção", adminOnly: true },
-    { path: "/controle-fraldas", icon: Baby, label: "Controle de Fraldas", adminOnly: true },
-    { path: "/controle-temperatura", icon: Thermometer, label: "Controle de Temperatura", adminOnly: true },
-    { path: "/controle-vacinas", icon: Syringe, label: "Controle de Vacinas", adminOnly: true },
-    { path: "/gerenciamento-whatsapp", icon: MessageSquare, label: "WhatsApp & IA", adminOnly: true },
-    { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Alertas WhatsApp", adminOnly: true },
-    { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário", adminOnly: true },
-    { path: "/relatorios-ia", icon: Brain, label: "Relatórios com IA", adminOnly: true },
-    { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações", adminOnly: true },
-    { path: "/analise-feedback", icon: BarChart3, label: "Análise de Feedback", adminOnly: true },
-    { path: "/gestao-intercorrencias", icon: AlertTriangle, label: "Intercorrências", adminOnly: true },
-    { path: "/assinaturas", icon: FileSignature, label: "Assinaturas Eletrônicas", adminOnly: true },
-    { path: "/configuracoes/assinatura", icon: CreditCard, label: "Minha Assinatura", adminOnly: true },
-    { path: "/historico-erros", icon: AlertTriangle, label: "Histórico de Erros", adminOnly: true },
-    { path: "/rosa-orientacoes", icon: MessageSquare, label: "Rosa · Orientações", adminOnly: true },
-    { path: "/canal-denuncias", icon: AlertTriangle, label: "Canal de Denúncias", complianceOnly: true },
-    { path: "/configuracoes", icon: Settings, label: "Configurações", adminOnly: true },
+  // Grupos organizados pela rotina de uso do sistema
+  const gruposMenu: { titulo: string; itens: ItemMenu[] }[] = [
+    { titulo: "Residentes e Cuidados", itens: [
+      { path: "/residentes", icon: Users, label: "Residentes" },
+      { path: "/controle-prontuarios", icon: FileText, label: "Prontuários" },
+      { path: "/controle-medicamentos", icon: Pill, label: "Medicamentos" },
+      { path: "/remocoes-medicamentos", icon: Pill, label: "Aprovações de Remoção" },
+      { path: "/controle-fraldas", icon: Baby, label: "Fraldas" },
+      { path: "/controle-temperatura", icon: Thermometer, label: "Temperatura" },
+      { path: "/controle-vacinas", icon: Syringe, label: "Vacinas" },
+      { path: "/gestao-intercorrencias", icon: AlertTriangle, label: "Intercorrências" },
+    ]},
+    { titulo: "Equipe", itens: [
+      { path: "/funcionarios", icon: Users, label: "Funcionários" },
+      { path: "/cargos", icon: Users, label: "Cargos e Funções" },
+      { path: "/escalas", icon: Calendar, label: "Escalas" },
+      { path: "/faltas", icon: FileX, label: "Afastamentos" },
+      { path: "/advertencias-suspensoes", icon: ShieldAlert, label: "Advertências" },
+      { path: "/analise-condutas", icon: AlertTriangle, label: "Análise de Condutas" },
+      { path: "/gestao-gamificacao", icon: Trophy, label: "Gamificação" },
+    ]},
+    { titulo: "Ponto e Folha", itens: [
+      { path: "/apropriacao", icon: Clock, label: "Apropriação de Horas" },
+      { path: "/relatorios", icon: FileText, label: "Folhas de Ponto" },
+      { path: "/contracheques", icon: CreditCard, label: "Contracheques" },
+    ]},
+    { titulo: "Documentos e Assinaturas", itens: [
+      { path: "/documentos-internos", icon: FileSignature, label: "Documentos Internos" },
+      { path: "/controle-assinaturas", icon: FileSignature, label: "Controle de Assinaturas" },
+      { path: "/assinaturas", icon: FileSignature, label: "Assinaturas Eletrônicas" },
+    ]},
+    { titulo: "Comunicação e IA", itens: [
+      { path: "/configuracoes-alertas", icon: Bell, label: "Alertas e Notificações" },
+      { path: "/notificacoes-whatsapp", icon: MessageSquare, label: "Alertas WhatsApp" },
+      { path: "/gerenciamento-whatsapp", icon: MessageSquare, label: "WhatsApp & IA" },
+      { path: "/relatorios-ia", icon: Brain, label: "Relatórios com IA" },
+      { path: "/analise-feedback", icon: BarChart3, label: "Análise de Feedback" },
+      { path: "/rosa-orientacoes", icon: MessageSquare, label: "Rosa · Orientações" },
+    ]},
+    { titulo: "Administração", itens: [
+      { path: "/configuracoes", icon: Settings, label: "Configurações" },
+      { path: "/configuracao-formulario", icon: Settings, label: "Configurar Formulário" },
+      { path: "/configuracoes/assinatura", icon: CreditCard, label: "Minha Assinatura" },
+      { path: "/historico-erros", icon: AlertTriangle, label: "Histórico de Erros" },
+      { path: "/canal-denuncias", icon: AlertTriangle, label: "Canal de Denúncias" },
+    ]},
   ];
 
   return (
@@ -146,7 +159,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainNavItems.map((item) => {
                 const Icon = item.icon;
-                const shouldShow = (item as { complianceOnly?: boolean }).complianceOnly ? (user && ehComite) : (item.public || (user && (!item.adminOnly || isAdmin)));
+                const shouldShow = item.complianceOnly ? (user && ehComite) : (item.public || (user && (!item.adminOnly || isAdmin)));
                 
                 if (!shouldShow) return null;
                 
@@ -165,20 +178,23 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Controle de Ponto - Collapsible Group */}
-        {user && isAdmin && (
-          <SidebarGroup>
-            <Collapsible defaultOpen className="group/collapsible">
+        {/* Grupos recolhíveis: abre por padrão só o grupo da página atual */}
+        {user && isAdmin && gruposMenu.map((grupo) => (
+          <SidebarGroup key={grupo.titulo} className="py-0">
+            <Collapsible
+              defaultOpen={grupo.itens.some((i) => isActive(i.path))}
+              className="group/collapsible"
+            >
               <SidebarGroupLabel asChild>
                 <CollapsibleTrigger className="flex items-center justify-between w-full">
-                  <span>Controle de Ponto</span>
+                  <span>{grupo.titulo}</span>
                   {!isCollapsed && <ChevronDown className="w-3 h-3 transition-transform group-data-[state=open]/collapsible:rotate-180" />}
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
               <CollapsibleContent>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {pontoMenuItems.map((item) => {
+                    {grupo.itens.map((item) => {
                       const Icon = item.icon;
                       return (
                         <SidebarMenuItem key={item.path}>
@@ -196,40 +212,7 @@ export function AppSidebar() {
               </CollapsibleContent>
             </Collapsible>
           </SidebarGroup>
-        )}
-
-        {/* Gestão do Sistema - Collapsible Group */}
-        {user && isAdmin && (
-          <SidebarGroup>
-            <Collapsible defaultOpen className="group/collapsible">
-              <SidebarGroupLabel asChild>
-                <CollapsibleTrigger className="flex items-center justify-between w-full">
-                  <span>Gestão do Sistema</span>
-                  {!isCollapsed && <ChevronDown className="w-3 h-3 transition-transform group-data-[state=open]/collapsible:rotate-180" />}
-                </CollapsibleTrigger>
-              </SidebarGroupLabel>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {sistemaMenuItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <SidebarMenuItem key={item.path}>
-                          <SidebarMenuButton asChild isActive={isActive(item.path)}>
-                            <Link to={item.path}>
-                              <Icon className="w-4 h-4" />
-                              {!isCollapsed && <span>{item.label}</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarGroup>
-        )}
+        ))}
 
         {/* Plataforma SaaS - apenas super-admin */}
         {user && isSuperAdmin && (
