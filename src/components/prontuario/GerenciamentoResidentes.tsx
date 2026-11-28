@@ -115,7 +115,7 @@ export default function GerenciamentoResidentes() {
   const fetchContratos = async () => {
     const { data, error } = await supabase
       .from('contratos_residentes')
-      .select('id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato');
+      .select('id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato, prazo_prorrogado');
 
     if (!error) setContratos((data || []) as ContratoResumo[]);
 
@@ -1034,9 +1034,9 @@ export default function GerenciamentoResidentes() {
                           <Badge variant="outline" className={CONTRATO_STATUS_CLASSES[info.key]}>
                             {info.label}
                           </Badge>
-                          {info.contrato?.data_fim_contrato && (
+                          {(info.contrato?.prazo_prorrogado ?? info.contrato?.data_fim_contrato) && (
                             <span className="text-[11px] text-muted-foreground">
-                              até {format(new Date(info.contrato.data_fim_contrato + "T12:00:00"), "dd/MM/yyyy")}
+                              até {format(new Date((info.contrato?.prazo_prorrogado ?? info.contrato?.data_fim_contrato) + "T12:00:00"), "dd/MM/yyyy")}
                               {info.diasRestantes !== null && info.diasRestantes >= 0 && ` (${info.diasRestantes}d)`}
                             </span>
                           )}
@@ -1141,7 +1141,7 @@ export default function GerenciamentoResidentes() {
       </CardContent>
 
       {/* Dialog para Gerenciar Contratos */}
-      <Dialog open={contratosDialogOpen} onOpenChange={setContratosDialogOpen}>
+      <Dialog open={contratosDialogOpen} onOpenChange={open => { setContratosDialogOpen(open); if (!open) fetchContratos(); }}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>

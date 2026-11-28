@@ -24,6 +24,7 @@ export interface ContratoResumo {
   status: string;
   data_inicio_contrato: string;
   data_fim_contrato?: string | null;
+  prazo_prorrogado?: string | null;
 }
 
 export interface ContratoStatusInfo {
@@ -62,8 +63,8 @@ export function selecionarContratoVigente(
   if (ativos.length === 0) return null;
 
   return [...ativos].sort((a, b) => {
-    const fa = a.data_fim_contrato ?? "9999-12-31";
-    const fb = b.data_fim_contrato ?? "9999-12-31";
+    const fa = a.prazo_prorrogado ?? a.data_fim_contrato ?? "9999-12-31";
+    const fb = b.prazo_prorrogado ?? b.data_fim_contrato ?? "9999-12-31";
     if (fa !== fb) return fa < fb ? 1 : -1;
     return a.data_inicio_contrato < b.data_inicio_contrato ? 1 : -1;
   })[0];
@@ -79,11 +80,12 @@ export function calcularStatusContrato(
     return { key: "sem_contrato", label: LABELS.sem_contrato, diasRestantes: null, contrato: null };
   }
 
-  if (!contrato.data_fim_contrato) {
+  const prazo = contrato.prazo_prorrogado ?? contrato.data_fim_contrato;
+  if (!prazo) {
     return { key: "em_dia", label: LABELS.em_dia, diasRestantes: null, contrato };
   }
 
-  const dias = diffDias(contrato.data_fim_contrato, hoje);
+  const dias = diffDias(prazo, hoje);
   const key: ContratoStatusKey =
     dias < 0 ? "vencido" : dias <= DIAS_ALERTA_RENOVACAO ? "proximo_renovacao" : "em_dia";
 

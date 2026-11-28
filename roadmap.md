@@ -1,7 +1,8 @@
 # Roadmap
 
-- [ ] Criar aditivos de prorrogação para contratos e distratos, com histórico preservado e nova data determinada
-- [ ] Integrar PDF certificado, assinatura e prazo vigente; testar autorização e datas
+- [x] Criar aditivos de prorrogação para contratos de residentes e distratos, com histórico preservado e nova data determinada
+- [x] Integrar PDF certificado, assinatura e prazo vigente; 31 testes aprovados e telas/PDF conferidos com dados fictícios
+- [ ] Validar criação e assinatura de aditivo com gestor real — sessão externa indisponível no ambiente; RPC verificada em banco isolado
 
 - [x] Corrigir erros recentes: inicialização PWA na prévia, consulta do supervisor e rotina noturna após meia-noite
 - [x] Validar correções (43 testes) e registrar oito erros resolvidos e duas falhas do Project monitoring corrigidas

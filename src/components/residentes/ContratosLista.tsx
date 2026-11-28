@@ -35,6 +35,7 @@ import { Eye, MoreHorizontal, FileText, Plus, Edit, Ban, CheckCircle, XCircle, F
 import { supabase } from "@/integrations/supabase/client";
 import DistratoForm, { type DistratoData } from "./DistratoForm";
 import DistratoPDFGenerator from "./DistratoPDFGenerator";
+import AditivosContrato from "./AditivosContrato";
 import { formatarData } from "@/utils/dateUtils";
 import { useContratos } from "./useContratos";
 import ContratoForm from "./ContratoForm";
@@ -73,6 +74,7 @@ export default function ContratosLista({
   const [distratos, setDistratos] = useState<Record<string, DistratoData>>({});
   const [distratoFormOpen, setDistratoFormOpen] = useState(false);
   const [distratoView, setDistratoView] = useState<DistratoData | null>(null);
+  const [aditivosOpen, setAditivosOpen] = useState(false);
 
   const fetchDistratos = async () => {
     const { data } = await supabase
@@ -239,8 +241,9 @@ export default function ContratosLista({
                     <div className="flex flex-wrap items-center gap-1">
                       {getStatusBadge(contrato.status)}
                       {contrato.id && distratos[contrato.id] && contrato.status !== "encerrado" && (
-                        <Badge variant="outline">Em aviso prévio até {formatarData(distratos[contrato.id].data_efetiva)}</Badge>
+                        <Badge variant="outline">Em aviso prévio até {formatarData(distratos[contrato.id].prazo_prorrogado ?? distratos[contrato.id].data_efetiva)}</Badge>
                       )}
+                      {contrato.prazo_prorrogado && <Badge variant="outline">Prorrogado até {formatarData(contrato.prazo_prorrogado)}</Badge>}
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
@@ -260,6 +263,9 @@ export default function ContratosLista({
                           <Eye className="w-4 h-4 mr-2" />
                           Visualizar / PDF
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSelectedContrato(contrato); setAditivosOpen(true); }}>
+                          <Plus className="w-4 h-4 mr-2" /> Aditivos / Prorrogar
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedContrato(contrato);
@@ -273,7 +279,7 @@ export default function ContratosLista({
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedContrato(contrato);
-                              setDistratoView(distratos[contrato.id!]);
+                              if (contrato.id) setDistratoView(distratos[contrato.id]);
                             }}
                           >
                             <FileX className="w-4 h-4 mr-2" />
@@ -323,6 +329,13 @@ export default function ContratosLista({
           </Table>
         </div>
       )}
+
+      {aditivosOpen && selectedContrato && <AditivosContrato
+        contrato={contratos.find(c => c.id === selectedContrato.id) ?? selectedContrato}
+        distrato={selectedContrato.id ? distratos[selectedContrato.id] : undefined}
+        onClose={() => setAditivosOpen(false)}
+        onSaved={async () => { await Promise.all([fetchContratos(residenteId), fetchDistratos()]); }}
+      />}
 
       {/* Dialog para novo contrato */}
       <Dialog open={novoContratoOpen} onOpenChange={setNovoContratoOpen}>

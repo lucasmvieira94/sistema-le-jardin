@@ -1,5 +1,13 @@
 # Histórico de correções e prevenção
 
+## 28/11/2026 — Aditivos de prorrogação
+- Contratos de residentes e distratos ganham Aditivos / Prorrogar: nova data determinada, condições livres, histórico e impressão/PDF certificado/envio para assinatura.
+- RPC atômica exige gestor da instituição, bloqueia prazo não posterior, conflito e contrato encerrado. Solicitação repetida usa o mesmo identificador. Dados jurídicos ficam em snapshot imutável; prazo prorrogado separado preserva certificados originais e orienta alertas e encerramento automático do distrato.
+- Prazo passa a valer na confirmação da criação, antes da assinatura; nenhuma cobrança, quitação ou recálculo financeiro automático. Contratos temporários externos não alterados nesta entrega.
+- Certificação usa o tipo contratual já suportado e referência contratos_aditivos; envelope recebe somente o corpo e acrescenta seu rodapé único, sem repetir o certificado não assinado.
+- Evidências: 31 testes aprovados (oito SQL com migração real em PGlite); navegador com dados fictícios conferiu criação, prazo, histórico, PDF e celular/computador sem exceções; amostra A4 de uma página com rodapé/QR inspecionada. Compilação OK.
+- Limites: sessão real de gestor indisponível no Supabase externo; envio/assinatura/e-mail reais não verificados. Aviso SECURITY DEFINER da RPC revisado: acesso autenticado intencional, autorização gestor/instituição no servidor, sem escrita direta no histórico. Avisos preexistentes não alterados.
+
 ## Consulta obrigatória antes de atualizar
 
 1. Ler este histórico e consultar `erros_envio_suporte` (origem, erro, situação e observação de resolução) para os módulos afetados.

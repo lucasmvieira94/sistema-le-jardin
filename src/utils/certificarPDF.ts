@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { carregarLogoRodape, renderRodapeDocumentoPDF, type SeloAutenticidade } from './rodapeDocumento';
 
 export interface EmissaoPDF {
-  tipo: 'folha_ponto' | 'relatorio' | 'ficha_acolhimento' | 'ficha_funcional';
+  tipo: 'folha_ponto' | 'relatorio' | 'ficha_acolhimento' | 'ficha_funcional' | 'contrato_residente' | 'distrato_residente';
   titulo: string;
   referenciaId?: string;
   referenciaTabela?: string;

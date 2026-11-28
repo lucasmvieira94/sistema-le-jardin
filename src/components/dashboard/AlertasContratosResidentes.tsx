@@ -36,7 +36,7 @@ export default function AlertasContratosResidentes() {
         supabase.from("residentes").select("id, nome_completo").eq("ativo", true),
         supabase
           .from("contratos_residentes")
-          .select("id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato"),
+          .select("id, residente_id, numero_contrato, status, data_inicio_contrato, data_fim_contrato, prazo_prorrogado"),
       ]);
 
       const lista: Item[] = (residentes ?? [])
@@ -46,7 +46,7 @@ export default function AlertasContratosResidentes() {
           );
           if (
             (info.key !== "proximo_renovacao" && info.key !== "vencido") ||
-            !info.contrato?.data_fim_contrato ||
+            !(info.contrato?.prazo_prorrogado ?? info.contrato?.data_fim_contrato) ||
             info.diasRestantes === null
           ) {
             return null;
@@ -55,7 +55,7 @@ export default function AlertasContratosResidentes() {
             residenteId: r.id,
             nome: r.nome_completo,
             numeroContrato: info.contrato.numero_contrato,
-            dataFim: info.contrato.data_fim_contrato,
+            dataFim: info.contrato.prazo_prorrogado ?? info.contrato.data_fim_contrato ?? '',
             diasRestantes: info.diasRestantes,
             vencido: info.key === "vencido",
           } as Item;

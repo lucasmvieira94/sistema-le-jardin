@@ -8,6 +8,7 @@ export interface ContratoData {
   forma_pagamento: string;
   data_inicio_contrato: string;
   data_fim_contrato?: string | null;
+  prazo_prorrogado?: string | null;
   contratante_nome: string;
   contratante_cpf?: string | null;
   contratante_rg?: string | null;

@@ -1,0 +1,2 @@
+CREATE INDEX contratos_aditivos_distrato_idx ON public.contratos_aditivos(distrato_id);
+ALTER POLICY aditivos_gestor_leitura ON public.contratos_aditivos USING ((SELECT coalesce(public.eh_gestor(auth.uid()),false)) AND tenant_id=(SELECT public.get_current_tenant_id()));

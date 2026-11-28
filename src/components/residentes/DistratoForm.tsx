@@ -24,6 +24,7 @@ export interface DistratoData {
   parte_iniciadora: string;
   data_distrato: string;
   data_efetiva: string;
+  prazo_prorrogado?: string | null;
   valor_proporcional: number;
   valor_indenizacao: number;
   valor_adaptacao: number;
@@ -133,7 +134,7 @@ export default function DistratoForm({ contrato, residenteId, onSaved, onCancel 
       const encerrarAgora = r.dataEfetiva <= hojeISO();
       const { error: e2 } = await supabase
         .from("contratos_residentes")
-        .update({ data_fim_contrato: r.dataEfetiva, ...(encerrarAgora ? { status: "encerrado" } : {}) })
+        .update({ data_fim_contrato: r.dataEfetiva, prazo_prorrogado: null, ...(encerrarAgora ? { status: "encerrado" } : {}) })
         .eq("id", contrato.id!);
       if (e2) throw e2;
 
